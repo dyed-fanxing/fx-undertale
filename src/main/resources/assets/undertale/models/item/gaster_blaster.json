@@ -1,0 +1,123 @@
+{
+  "credit": "Made with Blockbench",
+  "texture_size": [
+    128,
+    128
+  ],
+  "display": {
+    "thirdperson_righthand": {
+      "translation": [
+        0,
+        -5,
+        0
+      ],
+      "scale": [
+        0.35,
+        0.35,
+        0.35
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        0,
+        -5,
+        0
+      ],
+      "scale": [
+        0.35,
+        0.35,
+        0.35
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        -1.3099999999999454,
+        19.75,
+        0.01999999999998181
+      ],
+      "translation": [
+        -0.5,
+        0,
+        -1.5
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        -1.3099999999999454,
+        19.75,
+        0.01999999999998181
+      ],
+      "translation": [
+        -0.5,
+        0,
+        -1.75
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "ground": {
+      "translation": [
+        0,
+        0,
+        -4
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "gui": {
+      "rotation": [
+        -85,
+        80,
+        85
+      ],
+      "translation": [
+        -2.25,
+        -6.5,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
+    },
+    "head": {
+      "translation": [
+        0,
+        -8.5,
+        -7.75
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        -90,
+        -79.25,
+        -90
+      ],
+      "translation": [
+        2.5,
+        -7.25,
+        0.5
+      ],
+      "scale": [
+        0.45,
+        0.45,
+        0.45
+      ]
+    }
+  },
+  "textures": {
+    "particle": "item/gaster_blaster"
+  }
+}

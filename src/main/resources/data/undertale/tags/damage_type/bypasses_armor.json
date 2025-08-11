@@ -1,0 +1,12 @@
+// tags/damage_type/bypasses_armor.json
+// 此标签标记所有无视护甲的伤害类型，包括：
+//- 魔法伤害
+//- 虚空伤害
+//- 模组特殊伤害
+{
+    "replace": false,
+    "values": [
+        "undertale:gaster_blaster_beam",
+        "minecraft:magic"
+    ]
+}

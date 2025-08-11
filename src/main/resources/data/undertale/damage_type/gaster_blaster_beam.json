@@ -1,0 +1,8 @@
+// data/undertale/damage_types/gaster_beam.json
+{
+    "exhaustion": 0.1,  // 必须存在，默认 0.1
+    "message_id": "undertale.gaster_blaster",  // 必须存在，格式: modid.message_key
+    "scaling": "when_caused_by_living_non_player",  // 可选
+    "effects": "hurt",  // 可选
+    "message_type": "default"  // 可选
+}

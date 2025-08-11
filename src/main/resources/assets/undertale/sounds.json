@@ -1,0 +1,17 @@
+{
+    "entity.gaster_blaster.whole": {
+        "sounds": [
+            "undertale:gaster_blaster/whole"
+        ]
+    },
+    "entity.gaster_blaster.charge": {
+        "sounds": [
+            "undertale:gaster_blaster/charge"
+        ]
+    },
+    "entity.gaster_blaster.shot": {
+        "sounds": [
+            "undertale:gaster_blaster/shot"
+        ]
+    }
+}
