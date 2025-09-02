@@ -1,7 +1,7 @@
 package com.sakpeipei.mod.undertale.client.render.entity;
 
 import com.sakpeipei.mod.undertale.client.model.entity.SansModel;
-import com.sakpeipei.mod.undertale.entity.Sans;
+import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 

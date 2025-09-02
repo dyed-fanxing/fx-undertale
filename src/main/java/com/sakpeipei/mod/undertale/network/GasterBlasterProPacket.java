@@ -1,7 +1,7 @@
 package com.sakpeipei.mod.undertale.network;
 
 import com.sakpeipei.mod.undertale.Undertale;
-import com.sakpeipei.mod.undertale.entity.GasterBlasterPro;
+import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterPro;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;

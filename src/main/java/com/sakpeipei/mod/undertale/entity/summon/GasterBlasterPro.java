@@ -1,4 +1,4 @@
-package com.sakpeipei.mod.undertale.entity;
+package com.sakpeipei.mod.undertale.entity.summon;
 
 import com.sakpeipei.mod.undertale.registry.ParticleRegistry;
 import com.sakpeipei.mod.undertale.tags.damagetype.DamageTypes;

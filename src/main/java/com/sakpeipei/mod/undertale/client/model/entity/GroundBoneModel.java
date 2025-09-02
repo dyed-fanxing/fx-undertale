@@ -1,0 +1,13 @@
+package com.sakpeipei.mod.undertale.client.model.entity;
+
+import com.sakpeipei.mod.undertale.Undertale;
+import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
+import com.sakpeipei.mod.undertale.entity.summon.GroundBone;
+import net.minecraft.resources.ResourceLocation;
+import software.bernie.geckolib.model.DefaultedEntityGeoModel;
+
+public class GroundBoneModel extends DefaultedEntityGeoModel<GroundBone> {
+    public GroundBoneModel() {
+        super(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "bone"), true);
+    }
+}

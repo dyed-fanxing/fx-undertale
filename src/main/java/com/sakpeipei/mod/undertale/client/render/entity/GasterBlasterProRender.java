@@ -3,7 +3,7 @@ package com.sakpeipei.mod.undertale.client.render.entity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.sakpeipei.mod.undertale.client.model.entity.GasterBlasterProModel;
-import com.sakpeipei.mod.undertale.entity.GasterBlasterPro;
+import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterPro;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.jetbrains.annotations.NotNull;

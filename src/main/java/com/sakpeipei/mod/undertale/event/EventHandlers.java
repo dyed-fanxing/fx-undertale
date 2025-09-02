@@ -2,8 +2,8 @@ package com.sakpeipei.mod.undertale.event;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.Undertale;
-import com.sakpeipei.mod.undertale.entity.GasterBlasterPro;
-import com.sakpeipei.mod.undertale.entity.Sans;
+import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterPro;
+import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.mod.undertale.utils.Tags;
 import net.minecraft.world.damagesource.DamageSource;

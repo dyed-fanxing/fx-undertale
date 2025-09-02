@@ -1,4 +1,4 @@
-package com.sakpeipei.mod.undertale.entity;
+package com.sakpeipei.mod.undertale.entity.summon;
 
 import net.minecraft.world.entity.*;
 

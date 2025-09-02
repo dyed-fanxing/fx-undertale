@@ -1,4 +1,4 @@
-package com.sakpeipei.mod.undertale.entity;
+package com.sakpeipei.mod.undertale.entity.summon;
 
 import com.sakpeipei.mod.undertale.tags.damagetype.DamageTypes;
 import com.sakpeipei.mod.undertale.registry.SoundRegistry;
@@ -150,6 +150,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
         }));
     }
 
+    @Override
     public LivingEntity getOwner() {
         if(owner != null ) return owner;
         if (ownerUUID != null) {
@@ -161,6 +162,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
         }
         return null;
     }
+    @Override
     public void setOwner(LivingEntity owner) {
         this.ownerUUID = owner.getUUID();
         this.owner = owner;
@@ -168,6 +170,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
 
     @Override
     public float getLength() {return super.entityData.get(LENGTH);}
+    @Override
     public float getWidth(){return width;}
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {

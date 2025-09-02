@@ -1,7 +1,7 @@
 package com.sakpeipei.mod.undertale.item;
 
 import com.sakpeipei.mod.undertale.client.render.item.GasterBlasterFixedItemRender;
-import com.sakpeipei.mod.undertale.entity.GasterBlasterFixed;
+import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.ItemRegistry;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
