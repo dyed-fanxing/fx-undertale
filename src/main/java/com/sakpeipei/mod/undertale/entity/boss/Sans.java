@@ -25,6 +25,8 @@ import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -37,6 +39,7 @@ import java.util.UUID;
 
 
 public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, NeutralMob, GeoEntity {
+    private static final Logger log = LoggerFactory.getLogger(Sans.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("move.walk");
     private final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("move.idle");
@@ -75,8 +78,10 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     public void performRangedAttack(@NotNull LivingEntity target, float power) {
         // 示例：发射一个自定义弹射物
         FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(),this.level(),this);
-        Vec3 pos = this.getEyePosition().add(0, 0, 0.5f);
-        bone.setPos(pos.x,pos.y,pos.z);
+        // 旋转
+        Vec3 pos = this.getEyePosition().add(this.getLookAngle().scale(0.5));
+        LogUtils.getLogger().info("航偏{}，仰俯{}",this.getYRot(),this.getXRot());
+        bone.absMoveTo(pos.x,pos.y,pos.z,this.getYRot(),this.getXRot());
 //        bone.shoot(target.getX() - this.getX(),
 //                target.getY() - this.getY(),
 //                target.getZ() - this.getZ(),

@@ -29,7 +29,9 @@ public class GasterBlasterProRender extends GeoEntityRenderer<GasterBlasterPro> 
     @Override
     public void render(@NotNull GasterBlasterPro entity, float entityYaw, float partialTick, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-        if(entity.isFire()) GasterBlasterBeamRenderer.renderPro(entity,partialTick,poseStack,bufferSource,packedLight);
+        if(entity.isFire()) {
+            GasterBlasterBeamRenderer.renderPro(entity,partialTick,poseStack,bufferSource,packedLight);
+        }
     }
 
 }

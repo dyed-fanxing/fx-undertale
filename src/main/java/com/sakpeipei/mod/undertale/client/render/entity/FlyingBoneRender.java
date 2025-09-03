@@ -5,6 +5,7 @@ import com.mojang.math.Axis;
 import com.sakpeipei.mod.undertale.client.model.entity.FlyingBoneModel;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import org.joml.Vector3f;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
@@ -21,6 +22,10 @@ public class FlyingBoneRender extends GeoEntityRenderer<FlyingBone> {
     @Override
     protected void applyRotations(FlyingBone animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
         poseStack.mulPose(Axis.ZP.rotationDegrees(90f));
+
+        poseStack.mulPose(Axis.YP.rotationDegrees(-animatable.getYRot()));
+        poseStack.mulPose(Axis.XP.rotationDegrees(animatable.getXRot()));
         super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
     }
+
 }
