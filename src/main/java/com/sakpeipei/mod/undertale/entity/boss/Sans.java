@@ -3,6 +3,7 @@ package com.sakpeipei.mod.undertale.entity.boss;
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
+import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
@@ -78,14 +79,7 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     public void performRangedAttack(@NotNull LivingEntity target, float power) {
         // 示例：发射一个自定义弹射物
         FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(),this.level(),this);
-        // 旋转
-        Vec3 pos = this.getEyePosition().add(this.getLookAngle().scale(0.5));
-        LogUtils.getLogger().info("航偏{}，仰俯{}",this.getYRot(),this.getXRot());
-        bone.absMoveTo(pos.x,pos.y,pos.z,this.getYRot(),this.getXRot());
-//        bone.shoot(target.getX() - this.getX(),
-//                target.getY() - this.getY(),
-//                target.getZ() - this.getZ(),
-//                1.0F, 0.2F);
+        bone.shoot(target.getX() - this.getX(), target.getY() - this.getY(), target.getZ() - this.getZ(), 1.0F, 0.2F);
         this.level().addFreshEntity(bone);
     }
 

@@ -34,6 +34,7 @@ public class FlyingBone extends Projectile implements GeoEntity {
 
     public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner) {
         this(type, level);
+        this.setPos(owner.getEyePosition().add(owner.getLookAngle().scale(0.5f)));
         setOwner(owner);
     }
     public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner,float damage) {
