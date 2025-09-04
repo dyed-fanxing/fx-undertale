@@ -84,8 +84,8 @@ public class GasterBlasterBeamRenderer{
         // 对上一步压入的实体矩阵做变换，也就是相对实体的y轴移动，调整发射点
         poseStack.translate(0,0.3 * width,0);
         // 旋转矩阵
-        poseStack.mulPose(Axis.YP.rotationDegrees(-entity.getYRot())); // 回滚实体旋转
-        poseStack.mulPose(Axis.XP.rotationDegrees(entity.getXRot()));
+        poseStack.mulPose(Axis.YP.rotationDegrees(entity.getYRot()));
+        poseStack.mulPose(Axis.XP.rotationDegrees(-entity.getXRot()));
     }
     public static void renderBeam(float length,float partialWidth,PoseStack.Pose pose, MultiBufferSource buffer, int packedLight){
         // 光束局部起点

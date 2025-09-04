@@ -3,10 +3,7 @@ package com.sakpeipei.mod.undertale.client;
 import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.client.particle.BallGrowParticle;
 import com.sakpeipei.mod.undertale.client.particle.LightStreakParticle;
-import com.sakpeipei.mod.undertale.client.render.entity.FlyingBoneRender;
-import com.sakpeipei.mod.undertale.client.render.entity.GasterBlasterFixedRender;
-import com.sakpeipei.mod.undertale.client.render.entity.GasterBlasterProRender;
-import com.sakpeipei.mod.undertale.client.render.entity.SansRender;
+import com.sakpeipei.mod.undertale.client.render.entity.*;
 import com.sakpeipei.mod.undertale.network.GasterBlasterProPacket;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.ParticleRegistry;
@@ -33,6 +30,7 @@ public class Setup {
         event.registerEntityRenderer(EntityTypeRegistry.GASTER_BLASTER_PRO.get(), GasterBlasterProRender::new);
         event.registerEntityRenderer(EntityTypeRegistry.SANS.get(), SansRender::new);
         event.registerEntityRenderer(EntityTypeRegistry.FLYING_BONE.get(), FlyingBoneRender::new);
+        event.registerEntityRenderer(EntityTypeRegistry.GROUND_BONE.get(), GroundBoneRender::new);
     }
 
     /**

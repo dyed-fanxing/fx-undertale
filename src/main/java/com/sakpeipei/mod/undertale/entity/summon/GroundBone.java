@@ -4,9 +4,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -16,9 +16,10 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * @author Sakqiongzi
  * @since 2025-08-18 18:44
  */
-public class GroundBone extends Entity implements GeoEntity {
+public class GroundBone extends Entity implements GeoEntity, GeoAnimatable {
 
-    protected GroundBone(EntityType<? extends ThrowableProjectile> type, Level level) {
+
+    public GroundBone(EntityType<? extends Entity> type, Level level) {
         super(type, level);
     }
 

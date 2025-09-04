@@ -5,6 +5,7 @@ import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
+import com.sakpeipei.mod.undertale.entity.summon.GroundBone;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -40,15 +41,19 @@ public class EntityTypeRegistry {
                             .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
                             .build(ResourceLocation.fromNamespaceAndPath(Undertale.MODID,"gaster_blaster").toString())
             );
-    public static final DeferredHolder<EntityType<?>,EntityType<Sans>> SANS = register("sans",
+    public static final DeferredHolder<EntityType<?>, EntityType<Sans>> SANS = register("sans",
             EntityType.Builder.of(Sans::new, MobCategory.MONSTER)
                     .sized(0.5f, 1.8f)  // 碰撞箱
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位)
-            );
+    );
 
     public static final DeferredHolder<EntityType<?>, EntityType<FlyingBone>> FLYING_BONE = register("flying_bone",
             EntityType.Builder.<FlyingBone>of(FlyingBone::new, MobCategory.MISC)
-            .sized(0.1f, 0.5f)  // 碰撞箱
-            .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
+                    .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
+    );
+    public static final DeferredHolder<EntityType<?>, EntityType<GroundBone>> GROUND_BONE = register("ground_bone",
+            EntityType.Builder.of(GroundBone::new, MobCategory.MISC)
+                    .sized(0.1f, 0.5f)  // 碰撞箱
+                    .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
 }

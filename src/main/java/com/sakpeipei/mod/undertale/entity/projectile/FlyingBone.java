@@ -9,11 +9,13 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
 import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -23,7 +25,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * @author Sakqiongzi
  * @since 2025-08-18 18:44
  */
-public class FlyingBone extends Projectile implements GeoEntity {
+public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
 
     private float damage = 1f;
 
@@ -36,6 +38,10 @@ public class FlyingBone extends Projectile implements GeoEntity {
         this(type, level);
         this.setPos(owner.getEyePosition().add(owner.getLookAngle().scale(0.5f)));
         setOwner(owner);
+        this.setBoundingBox(new AABB(
+                -0.05, 0.0, -0.05,
+                0.05, 1.0, 0.05
+        ));
     }
     public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner,float damage) {
         this(type, level, owner);
@@ -84,6 +90,11 @@ public class FlyingBone extends Projectile implements GeoEntity {
 
     }
 
+
+    @Override
+    public AABB getBoundingBoxForCulling() {
+        return super.getBoundingBoxForCulling();
+    }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {

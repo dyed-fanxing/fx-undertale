@@ -79,7 +79,7 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     public void performRangedAttack(@NotNull LivingEntity target, float power) {
         // 示例：发射一个自定义弹射物
         FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(),this.level(),this);
-        bone.shoot(target.getX() - this.getX(), target.getY() - this.getY(), target.getZ() - this.getZ(), 1.0F, 0.2F);
+        bone.shoot(target.getX() - this.getX(), target.getY() - this.getY(), target.getZ() - this.getZ(), 1.0F, 0F);
         this.level().addFreshEntity(bone);
     }
 

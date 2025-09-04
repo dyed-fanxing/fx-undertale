@@ -66,7 +66,7 @@ public class GasterBlasterFixedItem extends Item implements GeoItem {
             ));
             // 4. 设置旋转
             Vec3 direction = targetPos.subtract(blaster.position()).normalize();
-            blaster.setYRot(RotUtils.yRot(direction.z, direction.x));
+            blaster.setYRot(RotUtils.yRot(direction.x, direction.z));
             blaster.setXRot(RotUtils.xRot(direction.y));
             // 6. 生成炮台
             level.addFreshEntity(blaster);

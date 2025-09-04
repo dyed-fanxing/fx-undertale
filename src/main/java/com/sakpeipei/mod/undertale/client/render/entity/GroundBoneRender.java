@@ -14,4 +14,6 @@ public class GroundBoneRender extends GeoEntityRenderer<GroundBone> {
     public GroundBoneRender(EntityRendererProvider.Context renderManager) {
         super(renderManager, new GroundBoneModel());
     }
+
+
 }

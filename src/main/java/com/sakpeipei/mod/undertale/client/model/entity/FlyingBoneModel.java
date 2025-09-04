@@ -10,4 +10,5 @@ public class FlyingBoneModel extends DefaultedEntityGeoModel<FlyingBone> {
     public FlyingBoneModel() {
         super(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "bone"), true);
     }
+
 }
