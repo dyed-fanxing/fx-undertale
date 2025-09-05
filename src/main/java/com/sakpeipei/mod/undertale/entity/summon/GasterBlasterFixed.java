@@ -20,6 +20,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -70,7 +71,9 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
         //只在服务端执行攻击逻辑
         if(!this.level().isClientSide){
             //蓄力，0.88秒 = 17.6T = 18T
-            if(super.tickCount <= CHARGE_TICK) return;
+            if(super.tickCount <= CHARGE_TICK) {
+                return;
+            }
             if(super.tickCount > 46) {
                 super.discard();
                 return;
@@ -104,7 +107,9 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
                 end = target.position();
                 this.entityData.set(LENGTH, (float) start.distanceTo(end));
                 break;
-            } else applyDamage(target); // 对盾牌前的实体造成伤害
+            } else {
+                applyDamage(target); // 对盾牌前的实体造成伤害
+            }
         }
         level().addParticle(ParticleTypes.END_ROD,
                 (start.x + end.x)/2,
@@ -116,7 +121,9 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
     }
     private boolean isBlockingWithShield(LivingEntity target, Vec3 attackDirection) {
         // 1. 检查主手或副手是否举盾
-        if (!(target.isUsingItem() && (target.getUseItem().getItem() instanceof ShieldItem))) return false;
+        if (!(target.isUsingItem() && (target.getUseItem().getItem() instanceof ShieldItem))) {
+            return false;
+        }
         // 2. 检查盾牌是否面向攻击方向（角度阈值约100°）
         Vec3 shieldDirection = target.getViewVector(1.0F); // 实体面朝方向
         double dotProduct = shieldDirection.dot(attackDirection.normalize()); // 点积计算夹角
@@ -126,7 +133,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
     }
     void applyDamage(LivingEntity target) {
         Vec3 deltaMovement = target.getDeltaMovement();
-        DamageSource source = damageSources().source( DamageTypes.GASTER_BLASTER_BEAM, this, getOwner() == null ? owner : this);
+        DamageSource source = damageSources().source( DamageTypes.GASTER_BLASTER_BEAM, this, getOwner() == null ? this : owner);
         target.hurt(source, damage);
         target.invulnerableTime = 0; // 破解无敌帧
         target.setDeltaMovement(deltaMovement); //不击退
@@ -152,12 +159,14 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
 
     @Override
     public LivingEntity getOwner() {
-        if(owner != null ) return owner;
-        if (ownerUUID != null) {
-            LivingEntity entity = (LivingEntity) ((ServerLevel) level()).getEntity(ownerUUID);
+        if(owner != null && !owner.isRemoved()) {
+            return owner;
+        }
+        if (ownerUUID != null && level() instanceof ServerLevel serverLevel) {
+            LivingEntity entity = (LivingEntity) serverLevel.getEntity(ownerUUID);
             if(entity != null) {
                 owner =  entity;
-                return owner;
+                return entity;
             }
         }
         return null;
@@ -167,7 +176,10 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
         this.ownerUUID = owner.getUUID();
         this.owner = owner;
     }
-
+    @Override
+    public @Nullable UUID getOwnerUUID() {
+        return ownerUUID;
+    }
     @Override
     public float getLength() {return super.entityData.get(LENGTH);}
     @Override
@@ -202,4 +214,5 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
     }
+
 }

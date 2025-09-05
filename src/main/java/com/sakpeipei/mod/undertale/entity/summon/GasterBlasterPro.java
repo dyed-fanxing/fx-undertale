@@ -32,6 +32,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
@@ -336,8 +337,15 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
     }
 
     @Override
+    public @Nullable UUID getOwnerUUID() {
+        return null;
+    }
+
+    @Override
     public LivingEntity getOwner() {
-        if(owner != null ) return owner;
+        if(owner != null ) {
+            return owner;
+        }
         if (ownerUUID != null) {
             LivingEntity entity = (LivingEntity) ((ServerLevel) level()).getEntity(ownerUUID);
             if(entity != null) {

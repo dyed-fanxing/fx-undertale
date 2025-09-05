@@ -27,25 +27,24 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  */
 public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
 
-    private float damage = 1f;
+    private float damage;
 
     public FlyingBone(EntityType<? extends Projectile> type, Level level) {
         super(type, level);
-        this.setNoGravity(true);
     }
 
-    public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner) {
+    public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner,float damage) {
         this(type, level);
-        this.setPos(owner.getEyePosition().add(owner.getLookAngle().scale(0.5f)));
+        this.setNoGravity(true);
         setOwner(owner);
         this.setBoundingBox(new AABB(
-                -0.05, 0.0, -0.05,
-                0.05, 1.0, 0.05
+                -0.25, -0.05, -0.25,
+                0.25, 0.05, 0.25
         ));
-    }
-    public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner,float damage) {
-        this(type, level, owner);
         this.damage = damage;
+    }
+    public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner) {
+        this(type, level, owner,1);
     }
 
     @Override
@@ -90,11 +89,6 @@ public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
 
     }
 
-
-    @Override
-    public AABB getBoundingBoxForCulling() {
-        return super.getBoundingBoxForCulling();
-    }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {

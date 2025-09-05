@@ -4,13 +4,18 @@ import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.TimeUtil;
+import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
@@ -41,14 +46,34 @@ import java.util.UUID;
 
 public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, NeutralMob, GeoEntity {
     private static final Logger log = LoggerFactory.getLogger(Sans.class);
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("move.walk");
     private final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("move.idle");
+    private final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("move.walk");
+    private final RawAnimation THROW_UP = RawAnimation.begin().thenLoop("throw.up");
+    private final RawAnimation THROW_DOWN = RawAnimation.begin().thenLoop("throw.down");
+    private final RawAnimation THROW_LEFT = RawAnimation.begin().thenLoop("throw.left");
+    private final RawAnimation THROW_RIGHT = RawAnimation.begin().thenLoop("throw.right");
+    private final RawAnimation THROW_FRONT = RawAnimation.begin().thenLoop("throw.front");
+    private final RawAnimation THROW_BACK = RawAnimation.begin().thenLoop("throw.back");
+    private final RawAnimation CHARGE_FRONT = RawAnimation.begin().thenLoop("charge.front");
+    private final RawAnimation ATTACK_GB_LIFT_SWING = RawAnimation.begin().thenLoop("attack.gb.lift.swing");
+    private final RawAnimation ATTACK_GB_LIFT_CIRCLE = RawAnimation.begin().thenLoop("attack.gb.lift.circle");
+    private final RawAnimation ATTACK_LURKER_CROSS = RawAnimation.begin().thenLoop("attack.lurker.cross");
+    private final RawAnimation ATTACK_LURKER_FRONT = RawAnimation.begin().thenLoop("attack.lurker.front");
+    private final RawAnimation ATTACK_BONE_PROJECTILE = RawAnimation.begin().thenLoop("attack.bone.projectile");
+    private final RawAnimation ATTACK_BONE_ROTATE = RawAnimation.begin().thenLoop("attack.bone.rotate");
+
 
 
     private final static short ATTACK_RANGE = 16; // 攻击距离
 
     private short misses; // miss次数
+
+
+    private int targetChangeTime;
+    private static final UniformInt PERSISTENT_ANGER_TIME = TimeUtil.rangeOfSeconds(30, 60);;
+    private int remainingPersistentAngerTime;
+    @Nullable
+    private UUID persistentAngerTarget;
 
     public Sans(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
@@ -77,10 +102,35 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
 
     @Override
     public void performRangedAttack(@NotNull LivingEntity target, float power) {
-        // 示例：发射一个自定义弹射物
-        FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(),this.level(),this);
-        bone.shoot(target.getX() - this.getX(), target.getY() - this.getY(), target.getZ() - this.getZ(), 1.0F, 0F);
-        this.level().addFreshEntity(bone);
+        int random = this.random.nextInt() * 3;
+        switch ( random ){
+            case 0 -> {
+                int count = 5;
+                int avg = 180 / count;
+                // 飞行骨刺攻击
+                for ( int i = 0,angle = 0; i < count; i++,angle+= avg) {
+                    FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(),this.level(),this);
+                    bone.setPos(this.getEyePosition().add(new Vec3(0,1,0)
+                            // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
+                            .zRot(( angle  - 90) * Mth.DEG_TO_RAD)
+                            .yRot(-this.getYRot() * Mth.DEG_TO_RAD)
+                            .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                    ));
+                    bone.lookAt(EntityAnchorArgument.Anchor.FEET,target.position());
+                    bone.shoot(target.getX() - this.getX(), target.getY() - this.getY(), target.getZ() - this.getZ(), 1.0F, 0F);
+                    this.level().addFreshEntity(bone);
+                }
+            }
+            case 1 -> {
+
+            }
+            case 2 -> {
+
+            }
+            default -> {
+
+            }
+        }
     }
 
     @Override
@@ -205,31 +255,39 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     }
 
 
-
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (target == null) {
+            this.targetChangeTime = 0;
+        } else {
+            this.targetChangeTime = this.tickCount;
+        }
+        super.setTarget(target);
+    }
     //可攻击的中立生物需要实现的
     @Override
     public int getRemainingPersistentAngerTime() {
-        return 0;
+        return this.remainingPersistentAngerTime;
     }
 
     @Override
-    public void setRemainingPersistentAngerTime(int i) {
-
+    public void setRemainingPersistentAngerTime(int time) {
+        this.remainingPersistentAngerTime = time;
     }
 
     @Override
     public @Nullable UUID getPersistentAngerTarget() {
-        return null;
+        return this.persistentAngerTarget;
     }
 
     @Override
     public void setPersistentAngerTarget(@Nullable UUID uuid) {
-
+        this.persistentAngerTarget = uuid;
     }
 
     @Override
     public void startPersistentAngerTimer() {
-
+        this.remainingPersistentAngerTime = PERSISTENT_ANGER_TIME.sample(this.random);
     }
 
 
@@ -244,6 +302,6 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
+        return GeckoLibUtil.createInstanceCache(this);
     }
 }

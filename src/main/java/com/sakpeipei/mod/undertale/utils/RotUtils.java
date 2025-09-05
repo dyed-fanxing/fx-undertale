@@ -17,11 +17,22 @@ public class RotUtils {
         return (float) Math.toDegrees(Math.asin(y));
     }
 
-    public static Vec3 dirRot(Vec3 dir, float xRot, float yRot, float zRot) {
+    /**
+     * 获取绕 dir向量 旋转zRot，yRot，xRot角度的向量
+     * @param dir 向量
+     * @param zRot 绕z轴旋转的角度
+     * @param yRot 绕y轴旋转的角度
+     * @param xRot 绕x轴旋转的角度
+     * @return 绕 dir向量 旋转zRot，yRot，xRot角度的向量
+     */
+    public static Vec3 dirRot(Vec3 dir, float zRot, float yRot, float xRot) {
            return dir.zRot((zRot - 90) * Mth.DEG_TO_RAD)
                 .yRot(-yRot * Mth.DEG_TO_RAD)
                 .xRot(-xRot * Mth.DEG_TO_RAD);
     }
+
+
+
     public static float dirZRot(float rot) {
       return ( rot - 90) * Mth.DEG_TO_RAD;
     }

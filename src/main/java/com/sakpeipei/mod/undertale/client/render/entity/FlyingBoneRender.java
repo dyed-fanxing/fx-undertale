@@ -24,7 +24,6 @@ public class FlyingBoneRender extends GeoEntityRenderer<FlyingBone> {
         poseStack.mulPose(Axis.XP.rotationDegrees(90f - animatable.getXRot() ));
 
 
-
         // 调试信息
         if (animatable.tickCount % 20 == 0) {
             LogUtils.getLogger().info("渲染旋转 - Yaw: {}, Pitch: {}",

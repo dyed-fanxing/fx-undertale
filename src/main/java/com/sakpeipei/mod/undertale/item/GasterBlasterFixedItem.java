@@ -6,6 +6,7 @@ import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.ItemRegistry;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -64,10 +65,12 @@ public class GasterBlasterFixedItem extends Item implements GeoItem {
                 .yRot(-player.getYRot() * Mth.DEG_TO_RAD)
                 .xRot(-player.getXRot() * Mth.DEG_TO_RAD)
             ));
-            // 4. 设置旋转
-            Vec3 direction = targetPos.subtract(blaster.position()).normalize();
-            blaster.setYRot(RotUtils.yRot(direction.x, direction.z));
-            blaster.setXRot(RotUtils.xRot(direction.y));
+////             4. 设置旋转
+//            Vec3 direction = targetPos.subtract(blaster.position()).normalize();
+//            blaster.setYRot(RotUtils.yRot(direction.x, direction.z));
+//            blaster.setXRot(RotUtils.xRot(direction.y));
+            // 使用原版方法，从FEET锚点（底层就是this.position的位置），看向目标位置
+            blaster.lookAt(EntityAnchorArgument.Anchor.FEET,targetPos);
             // 6. 生成炮台
             level.addFreshEntity(blaster);
             return InteractionResultHolder.success(itemStack);
