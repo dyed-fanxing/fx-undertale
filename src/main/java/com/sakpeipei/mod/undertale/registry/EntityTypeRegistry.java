@@ -43,17 +43,21 @@ public class EntityTypeRegistry {
             );
     public static final DeferredHolder<EntityType<?>, EntityType<Sans>> SANS = register("sans",
             EntityType.Builder.of(Sans::new, MobCategory.MONSTER)
-                    .sized(0.5f, 1.8f)  // 碰撞箱
+                    .sized(0.8f, 1.8f)  // 碰撞箱
+                    .eyeHeight(1.6665f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位)
     );
 
     public static final DeferredHolder<EntityType<?>, EntityType<FlyingBone>> FLYING_BONE = register("flying_bone",
             EntityType.Builder.<FlyingBone>of(FlyingBone::new, MobCategory.MISC)
+                    .sized(0.5f,0.5f)
+                    .eyeHeight(0.25f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
     public static final DeferredHolder<EntityType<?>, EntityType<GroundBone>> GROUND_BONE = register("ground_bone",
             EntityType.Builder.of(GroundBone::new, MobCategory.MISC)
-                    .sized(0.1f, 0.5f)  // 碰撞箱
+                    .sized(0.125f, 0.99f)  // 碰撞箱
+                    .eyeHeight(0.5445f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
 }

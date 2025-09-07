@@ -1,12 +1,28 @@
 package com.sakpeipei.mod.undertale.client.render.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.logging.LogUtils;
 import com.mojang.math.Axis;
 import com.sakpeipei.mod.undertale.client.model.entity.FlyingBoneModel;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.constant.DataTickets;
+import software.bernie.geckolib.model.GeoModel;
+import software.bernie.geckolib.model.data.EntityModelData;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
+import software.bernie.geckolib.renderer.GeoRenderer;
 
 /**
  * @author Sakqiongzi
@@ -18,18 +34,13 @@ public class FlyingBoneRender extends GeoEntityRenderer<FlyingBone> {
         super(renderManager, new FlyingBoneModel());
     }
 
+
     @Override
     protected void applyRotations(FlyingBone animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
         poseStack.mulPose(Axis.YP.rotationDegrees( animatable.getYRot() ));
         poseStack.mulPose(Axis.XP.rotationDegrees(90f - animatable.getXRot() ));
-
-
-        // 调试信息
-        if (animatable.tickCount % 20 == 0) {
-            LogUtils.getLogger().info("渲染旋转 - Yaw: {}, Pitch: {}",
-                    animatable.getYRot(), animatable.getXRot());
-        }
-        super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
+        // 由于先旋转，绕X轴旋转90度，导致实体的局部+Y轴对齐到了世界+Z轴，+Z轴则对齐到了世界-Y轴，
+        // 所以下方的变换需要按照该实体目前在世界坐标系中的局部坐标系来变换（+x，+z，-y）
+        poseStack.translate(0,-0.75f,-0.25f);
     }
-
 }

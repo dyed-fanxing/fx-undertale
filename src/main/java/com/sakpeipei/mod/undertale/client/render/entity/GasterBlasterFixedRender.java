@@ -16,14 +16,8 @@ public class GasterBlasterFixedRender extends GeoEntityRenderer<GasterBlasterFix
     }
     @Override
     protected void applyRotations(GasterBlasterFixed animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(animatable.getYRot()));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-animatable.getXRot()));
-
-        // 调试信息
-        if (animatable.tickCount % 20 == 0) {
-            LogUtils.getLogger().info("渲染旋转 - Yaw: {}, Pitch: {}",
-                    animatable.getYRot(), animatable.getXRot());
-        }
+        poseStack.mulPose(Axis.YP.rotationDegrees(-animatable.getYRot()));
+        poseStack.mulPose(Axis.XP.rotationDegrees(animatable.getXRot()));
         super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
     }
 

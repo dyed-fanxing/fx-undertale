@@ -37,15 +37,13 @@ public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
         this(type, level);
         this.setNoGravity(true);
         setOwner(owner);
-        this.setBoundingBox(new AABB(
-                -0.25, -0.05, -0.25,
-                0.25, 0.05, 0.25
-        ));
         this.damage = damage;
     }
     public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner) {
         this(type, level, owner,1);
     }
+
+
 
     @Override
     public void tick() {
@@ -57,16 +55,17 @@ public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
 
         this.checkInsideBlocks();
         Vec3 vec3 = this.getDeltaMovement();
+        if(vec3.length() == 0) {
+            this.discard();
+        }
         double d0 = this.getX() + vec3.x;
         double d1 = this.getY() + vec3.y;
         double d2 = this.getZ() + vec3.z;
-        this.updateRotation();
         float f;
         if (this.isInWater()) {
             for(int i = 0; i < 4; ++i) {
                 this.level().addParticle(ParticleTypes.BUBBLE, d0 - vec3.x * (double)0.25F, d1 - vec3.y * (double)0.25F, d2 - vec3.z * (double)0.25F, vec3.x, vec3.y, vec3.z);
             }
-
             f = 0.8F;
         } else {
             f = 0.99F;

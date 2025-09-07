@@ -1,6 +1,8 @@
 package com.sakpeipei.mod.undertale.item;
 
+import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.client.render.item.GasterBlasterFixedItemRender;
+import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.ItemRegistry;
@@ -24,6 +26,8 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class GasterBlasterFixedItem extends Item implements GeoItem {
@@ -49,8 +53,10 @@ public class GasterBlasterFixedItem extends Item implements GeoItem {
         // 检查冷却
         if (player.getCooldowns().isOnCooldown(ItemRegistry.GASTER_BLASTER.get())) {
             player.displayClientMessage(Component.literal("§c冷却中！"), true);
+            System.out.println("冷却中!!!");
             return InteractionResultHolder.fail(itemStack);
         }
+
         if (!level.isClientSide()) {
             // 1. 射线检测，获取终点射击位置
             HitResult hitResult = player.pick(GasterBlasterFixed.DEFAULT_LENGTH, 1.0f, false);
@@ -73,9 +79,10 @@ public class GasterBlasterFixedItem extends Item implements GeoItem {
             blaster.lookAt(EntityAnchorArgument.Anchor.FEET,targetPos);
             // 6. 生成炮台
             level.addFreshEntity(blaster);
+
+            player.getCooldowns().addCooldown(ItemRegistry.GASTER_BLASTER.get(), CD_TICK);
             return InteractionResultHolder.success(itemStack);
         }
-        player.getCooldowns().addCooldown(ItemRegistry.GASTER_BLASTER.get(), CD_TICK);
         return InteractionResultHolder.consume(itemStack);
     }
 

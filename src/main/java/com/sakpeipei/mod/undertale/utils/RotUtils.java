@@ -8,6 +8,7 @@ import net.minecraft.world.phys.Vec3;
  * 单位向量旋转工具
  */
 public class RotUtils {
+
     // 航偏角度
     public static float yRot(double x,double z) {
         return (float) Math.toDegrees(Math.atan2(x, z));
@@ -16,6 +17,7 @@ public class RotUtils {
     public static float xRot(double y) {
         return (float) Math.toDegrees(Math.asin(y));
     }
+
 
     /**
      * 获取绕 dir向量 旋转zRot，yRot，xRot角度的向量

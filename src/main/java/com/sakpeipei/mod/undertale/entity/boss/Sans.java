@@ -41,6 +41,8 @@ import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -85,16 +87,21 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if(tickCount %5 ==0) log.info("头部{}，身体{}",this.getYHeadRot(),getYRot());
+    }
+
+    @Override
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(3, new RandomLookAroundGoal(this));
 
-
         this.goalSelector.addGoal(9, new LookAtPlayerGoal(this, Player.class, 3.0F, 1.0F));
         this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Mob.class, 8.0F));
         this.goalSelector.addGoal(11,new RandomStrollGoal(this,0.5f));
-        // 远程攻击，需要实现performRangedAttack，继承可远程攻击接口
+        // 远程攻击，需要实现performRangedAttack，然后通过goal去调用
         this.goalSelector.addGoal(2, new RangedAttackGoal(this, 1.0, 20, 16.0F));
 
         this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)));
@@ -102,22 +109,20 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
 
     @Override
     public void performRangedAttack(@NotNull LivingEntity target, float power) {
-        int random = this.random.nextInt() * 3;
+        int random = this.random.nextInt() * 0;
         switch ( random ){
             case 0 -> {
                 int count = 5;
-                int avg = 180 / count;
-                // 飞行骨刺攻击
+                int avg = 180 / (count - 1 );
                 for ( int i = 0,angle = 0; i < count; i++,angle+= avg) {
                     FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(),this.level(),this);
+                    // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
                     bone.setPos(this.getEyePosition().add(new Vec3(0,1,0)
-                            // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
                             .zRot(( angle  - 90) * Mth.DEG_TO_RAD)
-                            .yRot(-this.getYRot() * Mth.DEG_TO_RAD)
+                            .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
                             .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
                     ));
-                    bone.lookAt(EntityAnchorArgument.Anchor.FEET,target.position());
-                    bone.shoot(target.getX() - this.getX(), target.getY() - this.getY(), target.getZ() - this.getZ(), 1.0F, 0F);
+                    bone.shoot(target.getX() - bone.getX(), target.getY(0.5f) - bone.getY(), target.getZ() - bone.getZ(), 1F, 0F);
                     this.level().addFreshEntity(bone);
                 }
             }
@@ -295,7 +300,7 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     public static AttributeSupplier.Builder createAttributes() {
         return PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 2.0)
-                .add(Attributes.MOVEMENT_SPEED, 0.2)
+                .add(Attributes.MOVEMENT_SPEED, 0.3)
                 .add(Attributes.ATTACK_DAMAGE, 1.0)
                 .add(Attributes.FOLLOW_RANGE, 32.0);
     }
