@@ -128,7 +128,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,  IEnti
     }
     void applyDamage(LivingEntity target) {
         Vec3 deltaMovement = target.getDeltaMovement();
-        DamageSource source = damageSources().source( DamageTypes.GASTER_BLASTER_BEAM, this, getOwner() == null ? this : owner);
+        DamageSource source = damageSources().source( DamageTypes.FRAME, this, getOwner() == null ? this : owner);
         if(target.hurt(source, damage)){
             if (this.level() instanceof ServerLevel serverLevel) {
                 serverLevel.sendParticles(

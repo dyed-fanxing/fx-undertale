@@ -1,6 +1,7 @@
 package com.sakpeipei.mod.undertale.entity.projectile;
 
 import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
+import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
@@ -29,22 +30,24 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
 
     private float damage;
+    private byte karma;
     private boolean isFrame; // 是否帧伤
 
     public FlyingBone(EntityType<? extends Projectile> type, Level level) {
         super(type, level);
     }
 
-    public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner,float damage) {
+    public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner,float damage,boolean isFrame,byte karma) {
         this(type, level);
         this.setNoGravity(true);
         setOwner(owner);
         this.damage = damage;
+        this.isFrame = isFrame;
+        this.karma = karma;
     }
-    public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner) {
-        this(type, level, owner,1);
+    public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner,boolean isFrame,byte karma) {
+        this(type, level, owner,1,isFrame,karma);
     }
-
 
 
     @Override
@@ -84,10 +87,8 @@ public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
 
         // 设置伤害逻辑
         if (target instanceof LivingEntity livingTarget) {
-
-            DamageSource damageSource = isFrame?damageSources().source(DamageTypes.FRAME,owner == null?this:owner,this):this.damageSources().mobProjectile(this, owner);
+            DamageSource damageSource = isFrame?damageSources().source(DamageTypes.FRAME,this,owner):this.damageSources().mobProjectile(this, (LivingEntity) owner);
             livingTarget.hurt(damageSource, damage);
-            livingTarget.invulnerableTime = 0; // 破解无敌帧
         }
     }
 

@@ -2,6 +2,7 @@ package com.sakpeipei.mod.undertale.event;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.Undertale;
+import com.sakpeipei.mod.undertale.data.DamageTypeTagsProvider;
 import com.sakpeipei.mod.undertale.data.EntityTypeTagsProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
@@ -22,5 +23,6 @@ public class DataHandler {
         ExistingFileHelper existingFileHelper = event.getExistingFileHelper();
         LogUtils.getLogger().info("数据前");
         event.getGenerator().addProvider(event.includeServer(), new EntityTypeTagsProvider(output, lookupProvider, Undertale.MODID, existingFileHelper));
+        event.getGenerator().addProvider(event.includeServer(), new DamageTypeTagsProvider(output, lookupProvider, Undertale.MODID, existingFileHelper));
     }
 }

@@ -114,7 +114,7 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                 int count = 5;
                 int avg = 180 / (count - 1 );
                 for ( int i = 0,angle = 0; i < count; i++,angle+= avg) {
-                    FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(),this.level(),this);
+                    FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(),this.level(),this,true,(byte) 5);
                     // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
                     bone.setPos(this.getEyePosition().add(new Vec3(0,1,0)
                             .zRot(( angle  - 90) * Mth.DEG_TO_RAD)
@@ -160,7 +160,7 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
             return;
         }
 
-        RandomSource random = this.random; // 使用末影人自身的随机源
+        RandomSource random = this.random; // 使用自身的随机源
         double radius = ATTACK_RANGE;
         int maxAttempts = 5; // 最大尝试次数
 
