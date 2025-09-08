@@ -11,7 +11,6 @@ import net.minecraft.world.damagesource.DamageType;
 public class Tags {
 
     public static final TagKey<DamageType> KARMAR_BUFF = create(Registries.DAMAGE_TYPE, "karmar_buff");
-    public static final TagKey<DamageType> GASTER_BLASTER_BYPASS = create(Registries.DAMAGE_TYPE, "gaster_blaster_bypass_inv");
 
     private static <T> TagKey<T> create(ResourceKey<? extends Registry<T>> registry, String name){
         return TagKey.create(registry,ResourceLocation.fromNamespaceAndPath(Undertale.MODID, name));

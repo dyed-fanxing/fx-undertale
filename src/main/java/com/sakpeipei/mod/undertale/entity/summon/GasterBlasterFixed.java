@@ -1,6 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.summon;
 
-import com.sakpeipei.mod.undertale.tags.damagetype.DamageTypes;
+import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
 import com.sakpeipei.mod.undertale.registry.SoundRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -36,7 +36,7 @@ import java.util.UUID;
 /**
  * 固定动画时间GB
  */
-public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEntity, IEntityWithComplexSpawn {
+public class GasterBlasterFixed extends Entity implements IGasterBlaster,  IEntityWithComplexSpawn,GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private static final RawAnimation WHOLE_ANIM = RawAnimation.begin().thenPlay("whole");
 
@@ -49,7 +49,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
     protected Vec3 end;             // 攻击终点
     protected float damage  = 2f;   // 攻击伤害
     protected UUID ownerUUID;       // 召唤者UUID
-    protected LivingEntity owner;   // 召唤者，用于追踪伤害来源仇恨
+    protected LivingEntity owner;   // 召唤者缓存，用于追踪伤害来源仇恨
 
     // 射线当前长度
     public GasterBlasterFixed(EntityType<? extends Entity> type, Level level) {
@@ -103,22 +103,17 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
                 .sorted(Comparator.comparingDouble(e -> e.distanceToSqr(start))).toList();
 
         for (LivingEntity target : livingEntities) {
-            if (isBlockingWithShield(target, attackDirection)) {
+            if ( isBlockingWithShield(target, attackDirection)) {
                 end = target.position();
                 this.entityData.set(LENGTH, (float) start.distanceTo(end));
                 break;
             } else {
                 applyDamage(target); // 对盾牌前的实体造成伤害
+                // 粒子效果（服务端发送给客户端）
             }
         }
-        level().addParticle(ParticleTypes.END_ROD,
-                (start.x + end.x)/2,
-                (start.y + end.y)/2,
-                (start.z + end.z)/2,
-                end.x - start.x,
-                end.y - start.y,
-                end.z - start.z);
     }
+
     private boolean isBlockingWithShield(LivingEntity target, Vec3 attackDirection) {
         // 1. 检查主手或副手是否举盾
         if (!(target.isUsingItem() && (target.getUseItem().getItem() instanceof ShieldItem))) {
@@ -134,18 +129,19 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster, GeoEnt
     void applyDamage(LivingEntity target) {
         Vec3 deltaMovement = target.getDeltaMovement();
         DamageSource source = damageSources().source( DamageTypes.GASTER_BLASTER_BEAM, this, getOwner() == null ? this : owner);
-        target.hurt(source, damage);
-        target.invulnerableTime = 0; // 破解无敌帧
-        target.setDeltaMovement(deltaMovement); //不击退
-        // 粒子效果（服务端发送给客户端）
-        if (this.level() instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(
-                    ParticleTypes.SOUL_FIRE_FLAME,
-                    target.getX(), target.getEyeY(), target.getZ(),
-                    10, 0.2, 0.2, 0.2, 0.1
-            );
+        if(target.hurt(source, damage)){
+            if (this.level() instanceof ServerLevel serverLevel) {
+                serverLevel.sendParticles(
+                        ParticleTypes.SOUL_FIRE_FLAME,
+                        target.getX(), target.getEyeY(), target.getZ(),
+                        10, 0.2, 0.2, 0.2, 0.1
+                );
+            }
+            target.setDeltaMovement(deltaMovement); //不击退
         }
     }
+
+
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "controller",  state -> {

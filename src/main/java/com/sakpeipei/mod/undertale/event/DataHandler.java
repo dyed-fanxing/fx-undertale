@@ -2,7 +2,7 @@ package com.sakpeipei.mod.undertale.event;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.Undertale;
-import com.sakpeipei.mod.undertale.tags.EntityTypeTagsProvider;
+import com.sakpeipei.mod.undertale.data.EntityTypeTagsProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -11,7 +11,6 @@ import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.logging.Logger;
 
 @EventBusSubscriber(modid = Undertale.MODID)
 public class DataHandler {

@@ -89,7 +89,6 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     @Override
     public void tick() {
         super.tick();
-        if(tickCount %5 ==0) log.info("头部{}，身体{}",this.getYHeadRot(),getYRot());
     }
 
     @Override

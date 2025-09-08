@@ -1,5 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.projectile;
 
+import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
@@ -28,6 +29,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
 
     private float damage;
+    private boolean isFrame; // 是否帧伤
 
     public FlyingBone(EntityType<? extends Projectile> type, Level level) {
         super(type, level);
@@ -77,16 +79,18 @@ public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
 
     @Override
     protected void onHitEntity(@NotNull EntityHitResult result) {
-        super.onHitEntity(result);
         Entity target = result.getEntity();
         Entity owner = this.getOwner();
+
         // 设置伤害逻辑
         if (target instanceof LivingEntity livingTarget) {
-            DamageSource damageSource = this.damageSources().mobProjectile(this, (LivingEntity) owner);
-            livingTarget.hurt(damageSource, damage);
-        }
 
+            DamageSource damageSource = isFrame?damageSources().source(DamageTypes.FRAME,owner == null?this:owner,this):this.damageSources().mobProjectile(this, owner);
+            livingTarget.hurt(damageSource, damage);
+            livingTarget.invulnerableTime = 0; // 破解无敌帧
+        }
     }
+
 
 
     @Override

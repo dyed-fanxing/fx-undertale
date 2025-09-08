@@ -6,11 +6,11 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public interface IGasterBlaster {
+public interface IGasterBlaster extends TraceableEntity{
     Level level();
     @Nullable
     UUID getOwnerUUID();
-    @Nullable
+    @Override
     LivingEntity getOwner();
     void setOwner(LivingEntity owner) ;
     float getLength() ;
