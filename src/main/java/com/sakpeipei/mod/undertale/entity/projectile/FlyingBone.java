@@ -30,7 +30,6 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
 
     private float damage;
-    private byte karma;
     private boolean isFrame; // 是否帧伤
 
     public FlyingBone(EntityType<? extends Projectile> type, Level level) {
@@ -43,7 +42,6 @@ public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
         setOwner(owner);
         this.damage = damage;
         this.isFrame = isFrame;
-        this.karma = karma;
     }
     public FlyingBone(EntityType<? extends Projectile> type,  Level level,LivingEntity owner,boolean isFrame,byte karma) {
         this(type, level, owner,1,isFrame,karma);

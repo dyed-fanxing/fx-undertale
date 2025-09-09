@@ -30,18 +30,6 @@ public class LivingEntityEventHandler {
         }
 
     }
-    //    /**
-//     * 存活实体受伤事件之前
-//     * @param event
-//     */
-//    @SubscribeEvent(priority = EventPriority.HIGH)
-//    public static void onLivingDamagePre(LivingDamageEvent.Pre event){
-//        DamageContainer container = event.getContainer();
-//        DamageSource source = event.getSource();
-//        if (source.is(Tags.GASTER_BLASTER_BYPASS)) {
-//            container.setPostAttackInvulnerabilityTicks(0);
-//        }
-//    }
     /**
      * 存活实体进入伤害事件
      */

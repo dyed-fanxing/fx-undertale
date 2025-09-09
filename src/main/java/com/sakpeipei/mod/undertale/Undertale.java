@@ -35,11 +35,12 @@ public class Undertale {
         modEventBus.addListener(this::commonSetup);
 
 
-        BlockRegistry.register(modEventBus); // 方块注册
-        ItemRegistry.register(modEventBus);  // 物品注册
-        EntityTypeRegistry.register(modEventBus);// 实体注册
-        SoundRegistry.register(modEventBus); // 声音注册
-        ParticleRegistry.register(modEventBus); // 粒子注册
+        BlockRegistry.register(modEventBus);        // 方块注册
+        ItemRegistry.register(modEventBus);         // 物品注册
+        EntityTypeRegistry.register(modEventBus);   // 实体注册
+        MobEffectRegistry.registry(modEventBus);    // buff注册
+        SoundRegistry.register(modEventBus);        // 声音注册
+        ParticleRegistry.register(modEventBus);     // 粒子注册
 
         // 注册当前类以响应游戏事件
         NeoForge.EVENT_BUS.register(this);
