@@ -11,6 +11,7 @@ public class DamageTypes {
 
     public static final ResourceKey<DamageType> GASTER_BLASTER_BEAM = create( "gaster_blaster_beam");
     public static final ResourceKey<DamageType> FRAME = create("frame");
+    public static final ResourceKey<DamageType> KARMA = create("karma");
 
     public static ResourceKey<DamageType> create(String name){
         return   ResourceKey.create(Registries.DAMAGE_TYPE,

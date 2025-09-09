@@ -2,6 +2,7 @@ package com.sakpeipei.mod.undertale.entity.boss;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
+import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -65,7 +66,6 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     private final RawAnimation ATTACK_BONE_ROTATE = RawAnimation.begin().thenLoop("attack.bone.rotate");
 
 
-
     private final static short ATTACK_RANGE = 16; // 攻击距离
 
     private short misses; // miss次数
@@ -126,7 +126,15 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                 }
             }
             case 1 -> {
-
+                GasterBlasterFixed gasterBlasterFixed = new GasterBlasterFixed(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), this.level(), this);
+                int angle = this.random.nextInt() * 180;
+                gasterBlasterFixed.setPos(this.getEyePosition().add(new Vec3(0,1,0)
+                        .zRot(( angle  - 90) * Mth.DEG_TO_RAD)
+                        .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+                        .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                ));
+                gasterBlasterFixed.lookAt(EntityAnchorArgument.Anchor.FEET,target.position().add(0,0.5d,0));
+                this.level().addFreshEntity(gasterBlasterFixed);
             }
             case 2 -> {
 
