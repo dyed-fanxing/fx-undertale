@@ -4,19 +4,24 @@ import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.effect.KarmaMobEffect;
 import com.sakpeipei.mod.undertale.entity.boss.Karma;
 import com.sakpeipei.mod.undertale.registry.MobEffectRegistry;
+import net.minecraft.core.Holder;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TraceableEntity;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerHeartTypeEvent;
 
 import java.util.Map;
 import java.util.UUID;
@@ -78,4 +83,30 @@ public class KarmaHandler {
             entity.addEffect(new MobEffectInstance(MobEffectRegistry.KARMA,-1));
         }
     }
+
+
+
+
+    @SubscribeEvent
+    public void onPlayerHeartType(PlayerHeartTypeEvent event) {
+        Player player = event.getEntity();
+
+        if (player.hasEffect(MobEffectRegistry.KARMA)) {
+            MobEffectInstance instance = player.getEffect(MobEffectRegistry.KARMA);
+            KarmaMobEffect effect = (KarmaMobEffect) instance.getEffect().value();
+            int karamValue = (int) effect.getValue();
+            int currentHealth = Mth.ceil(player.getHealth());
+            // 如果当前渲染的心在紫色心范围内
+            if (shouldRenderAsPurpleHeart(currentHealth, karamValue)) {
+//                event.setType(CustomHeartTypes.PURPLE_HEART);
+            }
+        }
+    }
+
+    private boolean shouldRenderAsPurpleHeart(int currentHealth, int karamValue) {
+        // 计算当前渲染的是第几颗心
+        int heartIndex = (currentHealth + 1) / 2;
+        return heartIndex <= karamValue;
+    }
+
 }

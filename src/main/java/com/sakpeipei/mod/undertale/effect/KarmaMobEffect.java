@@ -52,7 +52,6 @@ public class KarmaMobEffect extends MobEffect {
 
     @Override
     public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
-//        return value != 0 && calculateDuration(value) % DAMAGE_INTERVAL_FRAMES[calculateAmplifier(value)] == 0;
         return value != 0 && duration % DAMAGE_INTERVAL_FRAMES[calculateAmplifier(value)] == 0;
     }
 
@@ -103,7 +102,12 @@ public class KarmaMobEffect extends MobEffect {
         return kr / 10;
     }
 
+    public byte getValue() {
+        return value;
+    }
+
     public Set<String> getActiveAttacks() {
         return activeAttacks;
     }
+
 }
