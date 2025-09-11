@@ -4,6 +4,7 @@ import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.effect.KarmaMobEffect;
 import com.sakpeipei.mod.undertale.entity.boss.Karma;
 import com.sakpeipei.mod.undertale.registry.MobEffectRegistry;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.core.Holder;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -88,25 +89,18 @@ public class KarmaHandler {
 
 
     @SubscribeEvent
-    public void onPlayerHeartType(PlayerHeartTypeEvent event) {
+    public static void onPlayerHeartType(PlayerHeartTypeEvent event) {
         Player player = event.getEntity();
 
         if (player.hasEffect(MobEffectRegistry.KARMA)) {
             MobEffectInstance instance = player.getEffect(MobEffectRegistry.KARMA);
             KarmaMobEffect effect = (KarmaMobEffect) instance.getEffect().value();
-            int karamValue = (int) effect.getValue();
             int currentHealth = Mth.ceil(player.getHealth());
             // 如果当前渲染的心在紫色心范围内
-            if (shouldRenderAsPurpleHeart(currentHealth, karamValue)) {
-//                event.setType(CustomHeartTypes.PURPLE_HEART);
-            }
+//            if( currentHealth <= effect.getValue()){
+                event.setType(Gui.HeartType.valueOf("UNDERTALE_KARMA"));
+//            }
         }
-    }
-
-    private boolean shouldRenderAsPurpleHeart(int currentHealth, int karamValue) {
-        // 计算当前渲染的是第几颗心
-        int heartIndex = (currentHealth + 1) / 2;
-        return heartIndex <= karamValue;
     }
 
 }

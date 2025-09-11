@@ -1,12 +1,9 @@
 package com.sakpeipei.mod.undertale.item;
 
-import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.client.render.item.GasterBlasterFixedItemRender;
-import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.ItemRegistry;
-import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.network.chat.Component;
@@ -26,8 +23,6 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 
 public class GasterBlasterFixedItem extends Item implements GeoItem {
