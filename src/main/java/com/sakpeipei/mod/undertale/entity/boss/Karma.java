@@ -8,8 +8,5 @@ import java.util.Map;
  * 业力
  */
 public interface Karma {
-    // 获取攻击实体到拥有KR攻击类型的映射，Map<实体UUID，攻击类型UUID>
-    Map<String,String> getKarmaAttackType();
-    // 获取攻击类型到第一次攻击增长的KR值的映射，Map<攻击类型UUID，KR值>
-    Map<String,Byte> getKarmaAttackTypeValue();
+    String getStringUUID();
 }

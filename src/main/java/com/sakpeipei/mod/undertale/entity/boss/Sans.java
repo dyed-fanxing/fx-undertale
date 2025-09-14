@@ -1,8 +1,10 @@
 package com.sakpeipei.mod.undertale.entity.boss;
 
 import com.mojang.logging.LogUtils;
+import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
+import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -47,8 +49,6 @@ import java.util.UUID;
 
 public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, NeutralMob, GeoEntity,Karma {
     private static final Logger log = LoggerFactory.getLogger(Sans.class);
-    private static final String GASTER_BLASTER = "gaster_blaster",ATTACK_LURKER_CROSS = "attack.lurker.cross",
-            ATTACK_LURKER_FRONT="attack.lurker.front",ATTACK_BONE_PROJECTILE = "attack_bone_projectile";
 
     private final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("move.idle");
     private final RawAnimation WALK_ANIM = RawAnimation.begin().thenLoop("move.walk");
@@ -70,13 +70,6 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     private final static short ATTACK_RANGE = 16; // 攻击距离
 
     private short misses; // miss次数
-    public static String[] AttackTypes = {ATTACK_BONE_PROJECTILE,GASTER_BLASTER,ATTACK_LURKER_CROSS,ATTACK_LURKER_FRONT};
-    public static Map<String, String> AttackTypeMap = new HashMap<>(); //攻击实体对应攻击类型的映射
-    public static Map<String, Byte> KarmaValueMap = new HashMap<>(); //攻击类型对应第一次增加的KR值的映射
-    static {
-        KarmaValueMap.put(ATTACK_BONE_PROJECTILE,(byte)6);
-        KarmaValueMap.put(GASTER_BLASTER,(byte)10);
-    }
 
     private int targetChangeTime;
     private static final UniformInt PERSISTENT_ANGER_TIME = TimeUtil.rangeOfSeconds(30, 60);;
@@ -116,14 +109,17 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     @Override
     public void performRangedAttack(@NotNull LivingEntity target, float power) {
         int random = this.random.nextInt() * 0;
-        String attackType = AttackTypes[random];
+        String attackTypeUUID = UUID.randomUUID().toString();
+        // 攻击物UUID -> 本次攻击类型UUID，最终存储的用于判重的是 召唤者UUID + 攻击类型UUID
+        // 攻击物UUID -> 攻击类型
+        // 攻击类型 -> KR值
         switch ( random ){
             case 0 -> {
                 int count = 5;
                 int avg = 180 / (count - 1 );
                 for ( int i = 0,angle = 0; i < count; i++,angle+= avg) {
                     FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(),this.level(),this,true,(byte) 5);
-                    AttackTypeMap.put(bone.getStringUUID(),attackType);
+                    bone.setData(AttachmentTypeRegistry.KARMA_ATTACK,new KaramAttackData(attackTypeUUID, (byte) 6));
                     // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
                     bone.setPos(this.getEyePosition().add(new Vec3(0,1,0)
                             .zRot(( angle  - 90) * Mth.DEG_TO_RAD)
@@ -136,7 +132,7 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
             }
             case 1 -> {
                 GasterBlasterFixed gasterBlasterFixed = new GasterBlasterFixed(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), this.level(), this);
-                AttackTypeMap.put(gasterBlasterFixed.getStringUUID(),attackType);
+                gasterBlasterFixed.setData(AttachmentTypeRegistry.KARMA_ATTACK,new KaramAttackData(attackTypeUUID, (byte) 10));
                 int angle = this.random.nextInt() * 180;
                 gasterBlasterFixed.setPos(this.getEyePosition().add(new Vec3(0,1,0)
                         .zRot(( angle  - 90) * Mth.DEG_TO_RAD)
@@ -156,29 +152,19 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     }
 
     @Override
-    public Map<String, String> getKarmaAttackType() {
-        return AttackTypeMap;
-    }
-
-    @Override
-    public Map<String, Byte> getKarmaAttackTypeValue() {
-        return KarmaValueMap;
-    }
-
-    @Override
     public boolean hurt(@NotNull DamageSource source, float power) {
         if(isInvulnerableTo( source)){
             return false;
         }
-        if(misses > 0) {
-            if(source.getEntity() instanceof LivingEntity livingEntity){
-                this.setLastHurtByMob(livingEntity); // 核心：设置仇恨目标
-            }
-            LogUtils.getLogger().info("misses:{}", misses);
-            misses--;
-            teleport();
-            return false;
-        }
+//        if(misses > 0) {
+//            if(source.getEntity() instanceof LivingEntity livingEntity){
+//                this.setLastHurtByMob(livingEntity); // 核心：设置仇恨目标
+//            }
+//            LogUtils.getLogger().info("misses:{}", misses);
+//            misses--;
+//            teleport();
+//            return false;
+//        }
         return super.hurt(source, power);
     }
 

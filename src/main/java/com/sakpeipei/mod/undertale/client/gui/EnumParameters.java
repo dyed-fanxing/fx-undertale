@@ -10,7 +10,7 @@ import net.minecraft.client.gui.Gui.HeartType;
  * @since 2025-09-11 22:25
  */
 public class EnumParameters {
-
+    public static final String KARMA_HEART = "UNDERTALE_KARMA";
     public static final EnumProxy<HeartType> KARMA_HEART_PROXY = new EnumProxy<>(
             HeartType.class, // 第一个参数必须是目标枚举类
             // 后续参数按顺序对应构造函数的参数

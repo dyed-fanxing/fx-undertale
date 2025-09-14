@@ -42,6 +42,11 @@ public class Undertale {
         SoundRegistry.register(modEventBus);        // 声音注册
         ParticleRegistry.register(modEventBus);     // 粒子注册
 
+        //neo forge注册
+
+        AttachmentTypeRegistry.register(modEventBus);
+
+
         // 注册当前类以响应游戏事件
         NeoForge.EVENT_BUS.register(this);
         // 注册将物品添加到创造标签页的方法

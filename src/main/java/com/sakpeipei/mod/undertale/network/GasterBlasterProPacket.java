@@ -46,7 +46,7 @@ public class GasterBlasterProPacket implements CustomPacketPayload {
     }
 
     @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
+    public @NotNull Type<GasterBlasterProPacket> type() {
         return TYPE;
     }
 }

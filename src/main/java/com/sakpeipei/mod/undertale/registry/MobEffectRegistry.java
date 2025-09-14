@@ -9,6 +9,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import java.util.Set;
+
 /**
  * @author yujinbao
  * @since 2025/9/9 13:50

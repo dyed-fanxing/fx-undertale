@@ -14,7 +14,7 @@ public class DamageTypes {
     public static final ResourceKey<DamageType> KARMA = create("karma");
 
     public static ResourceKey<DamageType> create(String name){
-        return   ResourceKey.create(Registries.DAMAGE_TYPE,
+        return  ResourceKey.create(Registries.DAMAGE_TYPE,
                 ResourceLocation.fromNamespaceAndPath(MODID, name));
     }
 }

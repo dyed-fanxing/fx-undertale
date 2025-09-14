@@ -26,7 +26,7 @@ public class LivingEntityEventHandler {
             if (entity instanceof TraceableEntity traceableEntity && traceableEntity.getOwner() instanceof Sans) {
                 //移除 攻击类型判断重复
             }
-            LogUtils.getLogger().info("{}被销毁了", entity);
+//            LogUtils.getLogger().info("{}被销毁了", entity);
         }
 
     }
@@ -35,11 +35,6 @@ public class LivingEntityEventHandler {
      */
     @SubscribeEvent
     public static void onEntityIncomingDamage(LivingIncomingDamageEvent event){
-        DamageContainer container = event.getContainer();
-        DamageSource source = event.getSource();
-        if(source.getEntity() instanceof Sans){
-            container.setPostAttackInvulnerabilityTicks(0);
-        }
     }
 
 

@@ -1,6 +1,8 @@
 package com.sakpeipei.mod.undertale.entity.projectile;
 
 import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
+import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
+import com.sakpeipei.mod.undertale.entity.attachment.KaramMobEffectData;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -15,6 +17,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.event.EventHooks;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoAnimatable;
@@ -22,6 +25,8 @@ import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
+
+import java.util.function.Supplier;
 
 /**
  * @author Sakqiongzi
@@ -58,6 +63,9 @@ public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
 
         this.checkInsideBlocks();
         Vec3 vec3 = this.getDeltaMovement();
+        if(this.moveDist > 100){
+            this.discard();
+        }
         if(vec3.length() == 0) {
             this.discard();
         }
@@ -101,8 +109,10 @@ public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
 
     }
+
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return GeckoLibUtil.createInstanceCache(this);
     }
+
 }
