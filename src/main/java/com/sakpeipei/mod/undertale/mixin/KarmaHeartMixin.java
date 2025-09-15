@@ -5,17 +5,22 @@ import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.client.gui.EnumParameters;
 import com.sakpeipei.mod.undertale.client.gui.KaramHeartType;
+import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.MobEffectRegistry;
+import net.minecraft.Util;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.EventHooks;
 import org.spongepowered.asm.mixin.*;
+
+import java.util.Objects;
 
 @Mixin(Gui.class)
 public abstract class KarmaHeartMixin {
@@ -24,6 +29,14 @@ public abstract class KarmaHeartMixin {
     private RandomSource random;
     @Unique
     private static final Gui.HeartType KARMA_HEART = Gui.HeartType.valueOf(EnumParameters.KARMA_HEART);
+    @Shadow
+    private int tickCount;
+    @Unique
+    private byte lastKarma;     // 上一次的KARMA值
+    @Unique
+    private int lastTotalHearts; // 上一次总心数量
+
+
     @Shadow
     protected abstract void renderHeart(GuiGraphics guiGraphics, Gui.HeartType heartType, int x, int y, boolean isHardcore, boolean isBlinking, boolean isHalf);
     /**
@@ -45,6 +58,16 @@ public abstract class KarmaHeartMixin {
         if(player.hasEffect(MobEffectRegistry.KARMA)){
             karmaValue = player.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).getValue();
         }
+        int totalHearts = currentHealth + absorptionAmount;
+        LogUtils.getLogger().info("玩家受伤时间{},玩家最近一次伤害来源{}",player.hurtTime,player.getLastDamageSource());
+        if(player.hurtTime ==  0){
+            karmaValue = lastKarma;
+        }else{
+            if(Objects.requireNonNull(player.getLastDamageSource()).is(DamageTypes.KARMA)){
+                lastKarma = karmaValue;
+            }
+        }
+        LogUtils.getLogger().info("渲染KR{},总血量{}",karmaValue,totalHearts);
         boolean krO =  karmaValue%2 == 0;
         int diff =  (absorptionAmount - karmaValue) % 2;
         boolean diffB = diff == 1;
@@ -93,19 +116,11 @@ public abstract class KarmaHeartMixin {
                                     if( reverseHalfHeartIndex < karmaValue + 1){
                                         boolean isRight = !isHalf&& (reverseHalfHeartIndex == karmaValue);
                                         guiGraphics.blitSprite(KaramHeartType.getSprite(isHardcore, false, isHalf, isRight),heartX,heartY,9,9);
-                                    }else{
-                                        if(reverseHalfHeartIndex < karmaValue + 3 ){
-                                            LogUtils.getLogger().info("反转索引{},KR值{},吸收值{},最后一颗心没有渲染成紫血",reverseHalfHeartIndex,karmaValue,absorptionAmount);
-                                        }
                                     }
                                 }else{
                                     if( reverseHalfHeartIndex < karmaValue ){
                                         boolean isRight = !isHalf&& (reverseHalfHeartIndex + 1 == karmaValue);
                                         guiGraphics.blitSprite(KaramHeartType.getSprite(isHardcore, false, isHalf, isRight),heartX,heartY,9,9);
-                                    }else{
-                                        if(reverseHalfHeartIndex < karmaValue + 4 ){
-                                            LogUtils.getLogger().info("反转索引{},KR值{},吸收值{},最后一颗心没有渲染成紫血",reverseHalfHeartIndex,karmaValue,absorptionAmount);
-                                        }
                                     }
                                 }
                             }else{

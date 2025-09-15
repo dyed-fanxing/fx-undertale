@@ -49,14 +49,14 @@ public class KaramMobEffectData {
         }else {
             this.value += (byte) value;
         }
-//        sendPacket(entity);
+        sendPacket(entity);
     }
     public void subValue(LivingEntity entity){
         if(this.value == 0) {
             return;
         }
         this.value--;
-//        sendPacket(entity);
+        sendPacket(entity);
     }
 
     public void setValue(byte value) {

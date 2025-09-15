@@ -3,6 +3,7 @@ package com.sakpeipei.mod.undertale.event.handler;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.client.gui.EnumParameters;
+import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.mod.undertale.entity.boss.Karma;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
