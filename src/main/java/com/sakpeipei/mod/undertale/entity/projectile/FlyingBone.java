@@ -1,9 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.projectile;
 
 import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
-import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
-import com.sakpeipei.mod.undertale.entity.attachment.KaramMobEffectData;
-import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
@@ -13,11 +10,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.event.EventHooks;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoAnimatable;
@@ -25,8 +20,6 @@ import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
-
-import java.util.function.Supplier;
 
 /**
  * @author Sakqiongzi
@@ -57,9 +50,10 @@ public class FlyingBone extends Projectile implements GeoEntity, GeoAnimatable {
     public void tick() {
         super.tick();
         HitResult hitresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
-        if (hitresult.getType() != HitResult.Type.MISS && !EventHooks.onProjectileImpact(this, hitresult)) {
-            this.hitTargetOrDeflectSelf(hitresult);
-        }
+        if (!EventHooks.onProjectileImpact(this, hitresult))
+            if (hitresult.getType() != HitResult.Type.MISS) {
+                this.hitTargetOrDeflectSelf(hitresult);
+            }
 
         this.checkInsideBlocks();
         Vec3 vec3 = this.getDeltaMovement();

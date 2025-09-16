@@ -2,19 +2,15 @@ package com.sakpeipei.mod.undertale.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
-import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.client.gui.EnumParameters;
 import com.sakpeipei.mod.undertale.client.gui.KaramHeartType;
 import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.MobEffectRegistry;
-import net.minecraft.Util;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.EventHooks;
@@ -59,7 +55,7 @@ public abstract class KarmaHeartMixin {
             karmaValue = player.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).getValue();
         }
         int totalHearts = currentHealth + absorptionAmount;
-        LogUtils.getLogger().info("玩家受伤时间{},玩家最近一次伤害来源{}",player.hurtTime,player.getLastDamageSource());
+        LogUtils.getLogger().info("玩家受伤时间{},玩家最近一次伤害来源{},hurtDir{}",player.hurtTime,player.getLastDamageSource(),player.getHurtDir());
         if(player.hurtTime ==  0){
             karmaValue = lastKarma;
         }else{

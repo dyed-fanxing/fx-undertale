@@ -38,7 +38,7 @@ public class KarmaMobEffect extends MobEffect {
             byte value = karamData.getValue();
             if(value == 0){
                 entity.removeEffect(MobEffectRegistry.KARMA);
-            }else if(entity.tickCount % 20 == 0){
+            }else if(entity.tickCount % DAMAGE_INTERVAL_FRAMES[calculateAmplifier(value)] == 0){
                 if (entity.getHealth() > 1) {
                     if(entity instanceof Player)                LogUtils.getLogger().info("KR之前{}", karamData.getValue());
 //                    entity.setHealth(entity.getHealth() - 1);
