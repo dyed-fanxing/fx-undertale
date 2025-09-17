@@ -31,26 +31,17 @@ public class KarmaMobEffect extends MobEffect {
 
     @Override
     public boolean applyEffectTick(@NotNull LivingEntity entity, int amplifier) {
-        if(entity.level().isClientSide){
-
-        }else{
+        if(!entity.level().isClientSide){
             KaramMobEffectData karamData = entity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT);
             byte value = karamData.getValue();
             if(value == 0){
                 entity.removeEffect(MobEffectRegistry.KARMA);
-            }else if(entity.tickCount % DAMAGE_INTERVAL_FRAMES[calculateAmplifier(value)] == 0){
+            }else if(entity.tickCount % DAMAGE_INTERVAL_FRAMES[value/10] == 0){
                 if (entity.getHealth() > 1) {
                     if(entity instanceof Player)                LogUtils.getLogger().info("KR之前{}", karamData.getValue());
-//                    entity.setHealth(entity.getHealth() - 1);
                     entity.hurt(entity.damageSources().source(DamageTypes.KARMA), 1.0f);
                 }
                 karamData.subValue(entity);
-
-//            else if (value > 1) {
-//                setValue(persistentData,value - 2);
-//            }else{
-//                setValue(persistentData,value - 1);
-//            }
             }
         }
         return true;
@@ -93,10 +84,6 @@ public class KarmaMobEffect extends MobEffect {
         if(removalReason.shouldDestroy()){
             entity.removeData(AttachmentTypeRegistry.KARMA_MOB_EFFECT);
         }
-    }
-
-    public int calculateAmplifier(int kr) {
-        return kr / 10;
     }
 }
 

@@ -4,7 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.client.gui.EnumParameters;
 import com.sakpeipei.mod.undertale.client.gui.KaramHeartType;
-import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.MobEffectRegistry;
 import net.minecraft.client.gui.Gui;
@@ -16,7 +15,6 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.EventHooks;
 import org.spongepowered.asm.mixin.*;
 
-import java.util.Objects;
 
 @Mixin(Gui.class)
 public abstract class KarmaHeartMixin {
@@ -27,16 +25,13 @@ public abstract class KarmaHeartMixin {
     private static final Gui.HeartType KARMA_HEART = Gui.HeartType.valueOf(EnumParameters.KARMA_HEART);
     @Shadow
     private int tickCount;
-    @Unique
-    private byte lastKarma;     // 上一次的KARMA值
-    @Unique
-    private int lastTotalHearts; // 上一次总心数量
-
 
     @Shadow
     protected abstract void renderHeart(GuiGraphics guiGraphics, Gui.HeartType heartType, int x, int y, boolean isHardcore, boolean isBlinking, boolean isHalf);
     /**
      * 重载renderHearts方法，添加KARMA效果支持
+     * @author Sakpeipei
+     * @reason 复制原版渲染逻辑，添加自定义的渲染KR心（包括右半心）
      */
     @Overwrite
     private void renderHearts(GuiGraphics guiGraphics, Player player, int startX, int startY, int rowSpacing,
@@ -54,31 +49,24 @@ public abstract class KarmaHeartMixin {
         if(player.hasEffect(MobEffectRegistry.KARMA)){
             karmaValue = player.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).getValue();
         }
-        int totalHearts = currentHealth + absorptionAmount;
-        LogUtils.getLogger().info("玩家受伤时间{},玩家最近一次伤害来源{},hurtDir{}",player.hurtTime,player.getLastDamageSource(),player.getHurtDir());
-        if(player.hurtTime ==  0){
-            karmaValue = lastKarma;
-        }else{
-            if(Objects.requireNonNull(player.getLastDamageSource()).is(DamageTypes.KARMA)){
-                lastKarma = karmaValue;
-            }
-        }
-        LogUtils.getLogger().info("渲染KR{},总血量{}",karmaValue,totalHearts);
-        boolean krO =  karmaValue%2 == 0;
-        int diff =  (absorptionAmount - karmaValue) % 2;
-        boolean diffB = diff == 1;
+//        LogUtils.getLogger().info("渲染KR{}",karmaValue);
+        boolean karamEven =  karmaValue%2 == 0; // kr值是否偶数
+        int absorptionDiff = absorptionAmount - karmaValue; // 吸收值和kr值的差值
+        boolean absorptionOdd = absorptionDiff % 2 == 1 ; //吸收值是否为奇数
+
+        boolean karamHealthEven = (-absorptionDiff) %2 ==0;
+        int healthDiff = currentHealth + absorptionDiff;
+        boolean healthOdd = healthDiff %2 == 1;
         for(int heartIndex = maxHealthHearts + absorptionHearts - 1 , i = 0; heartIndex >= 0; --heartIndex , i++) {
             int row = heartIndex / 10;
             int column = heartIndex % 10;
             int heartX = startX + column * 8;
             int heartY = startY - row * rowSpacing;
 
-            // 心形数量少时添加随机偏移
             if (currentHealth + absorptionAmount <= 4) {
                 heartY += this.random.nextInt(2);
             }
 
-            // 高亮心形向上偏移
             if (heartIndex < maxHealthHearts && heartIndex == highlightedHeartIndex) {
                 heartY -= 2;
             }
@@ -89,8 +77,6 @@ public abstract class KarmaHeartMixin {
             int halfHeartIndex = heartIndex * 2;
             int reverseHalfHeartIndex =  ( maxHealthHearts + absorptionHearts - 1 ) * 2 - halfHeartIndex;
             boolean isAbsorptionHeart = heartIndex >= maxHealthHearts;
-
-
             // 渲染吸收护甲心形
             if (isAbsorptionHeart) {
                 int absorptionHalfHearts = halfHeartIndex - maxHealthHalfHearts;
@@ -99,57 +85,59 @@ public abstract class KarmaHeartMixin {
                     Gui.HeartType renderType = (heartType == Gui.HeartType.WITHERED) ? heartType : Gui.HeartType.ABSORBING;
                     this.renderHeart(guiGraphics, renderType, heartX, heartY, isHardcore, false, isHalf);
 
-                    RenderSystem.enableBlend();
-                    // KARMA效果逻辑：替换吸收护甲心形
-                    if(karmaValue != 0){
-                        if(diff < 0) {
-                            if( reverseHalfHeartIndex < karmaValue){
-                                guiGraphics.blitSprite(KaramHeartType.getSprite(isHardcore, false, isHalf, false), heartX, heartY, 9, 9);
-                            }
-                        }else{
-                            if(diffB){
-                                if(krO){
-                                    if( reverseHalfHeartIndex < karmaValue + 1){
-                                        boolean isRight = !isHalf&& (reverseHalfHeartIndex == karmaValue);
-                                        guiGraphics.blitSprite(KaramHeartType.getSprite(isHardcore, false, isHalf, isRight),heartX,heartY,9,9);
-                                    }
-                                }else{
-                                    if( reverseHalfHeartIndex < karmaValue ){
-                                        boolean isRight = !isHalf&& (reverseHalfHeartIndex + 1 == karmaValue);
-                                        guiGraphics.blitSprite(KaramHeartType.getSprite(isHardcore, false, isHalf, isRight),heartX,heartY,9,9);
-                                    }
-                                }
-                            }else{
-                                if( reverseHalfHeartIndex < karmaValue ) {
-                                    guiGraphics.blitSprite(KaramHeartType.getSprite(isHardcore, false, isHalf, false), heartX, heartY, 9, 9);
-                                }
-                            }
+
+                    /*
+                        KARMA效果逻辑：替换吸收护甲心形，判断当前索引的半心是否应该渲染为Karma心
+                        吸收值小于等于KR值，判断索引在KR值范围内，全部渲染成KR心
+                        吸收值大于KR值，则多出来的KR值需要渲染到生命值上
+                            差值为偶数，则代表覆盖后的最后一颗KR心没有右半心，判断索引是否在KR值范围内，走原版逻辑渲染
+                            差值为奇数，则代表覆盖后的KR心最后一颗是右半心，需要自定义渲染右半心的逻辑
+                                当KR值是偶数时，是否渲染成KR心的判断条件为 反转索引 < KR值 + 1
+                                当KR值是奇数时，是否渲染成KR心的判断条件为 反转索引 < KR值
+                     */
+                    if(karmaValue != 0) {
+                        // 以下为上方判断的数学计算简化版
+                        int renderThreshold = karmaValue + ((absorptionDiff > 0 && absorptionOdd && karamEven) ? 1 : 0);
+                        if (reverseHalfHeartIndex < renderThreshold) {
+                            boolean isRight = absorptionDiff > 0 && absorptionOdd && reverseHalfHeartIndex + (karamEven?0:1) == karmaValue;
+                            renderKaramHeart(guiGraphics,heartX,heartY,isHardcore,false,isHalf,isRight);
                         }
                     }
-                    RenderSystem.disableBlend();
                 }
-            }
-
-            Gui.HeartType renderType =  heartType;
-//             KARMA效果逻辑：替换普通生命值心形
-            if(karmaValue != 0 && reverseHalfHeartIndex - ( maxHealth - currentHealth) <= karmaValue){
-                renderType = KARMA_HEART;
             }
 
             // 渲染高亮闪烁的心形（受伤时）
             if (shouldRenderHighlight && halfHeartIndex < displayHealth) {
                 boolean isHalf = halfHeartIndex + 1 == displayHealth;
-                this.renderHeart(guiGraphics, renderType, heartX, heartY, isHardcore, true, isHalf);
+                this.renderHeart(guiGraphics, heartType, heartX, heartY, isHardcore, true, isHalf);
             }
 
             // 渲染普通生命值心形
             if (halfHeartIndex < currentHealth) {
                 boolean isHalf = halfHeartIndex + 1 == currentHealth;
-                this.renderHeart(guiGraphics, renderType, heartX, heartY, isHardcore, false, isHalf);
+                this.renderHeart(guiGraphics, heartType, heartX, heartY, isHardcore, false, isHalf);
             }
+
+//             KARMA效果逻辑：替换普通生命值心形
+            if(karmaValue != 0 && halfHeartIndex < currentHealth && reverseHalfHeartIndex <= karmaValue +  maxHealth - currentHealth ){
+                // 以下为上方判断的数学计算简化版
+                boolean isHalf = halfHeartIndex + 1 == displayHealth;
+                int renderThreshold = (-absorptionDiff) + ((healthDiff > 0 && healthOdd && karamHealthEven) ? 1 : 0);
+                if (reverseHalfHeartIndex < renderThreshold) {
+                    boolean isRight = healthDiff > 0 && healthOdd && reverseHalfHeartIndex + (karamHealthEven?0:1) == (-absorptionDiff);
+                    renderKaramHeart(guiGraphics,heartX,heartY,isHardcore,false,isHalf,isRight);
+                }
+            }
+
+
         }
     }
-
+    @Unique
+    private void renderKaramHeart(GuiGraphics guiGraphics,int x, int y, boolean isHardcore, boolean isBlinking, boolean isHalf,boolean isRight) {
+        RenderSystem.enableBlend();
+        guiGraphics.blitSprite(KaramHeartType.getSprite(isHardcore, false, isHalf, isRight), x, y, 9, 9);
+        RenderSystem.disableBlend();
+    }
 
     @Unique
     private Gui.HeartType getHeartTypeForPlayer(Player player) {
