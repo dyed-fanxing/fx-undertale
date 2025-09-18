@@ -1,7 +1,6 @@
 package com.sakpeipei.mod.undertale.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.client.gui.EnumParameters;
 import com.sakpeipei.mod.undertale.client.gui.KaramHeartType;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
@@ -23,8 +22,6 @@ public abstract class KarmaHeartMixin {
     private RandomSource random;
     @Unique
     private static final Gui.HeartType KARMA_HEART = Gui.HeartType.valueOf(EnumParameters.KARMA_HEART);
-    @Shadow
-    private int tickCount;
 
     @Shadow
     protected abstract void renderHeart(GuiGraphics guiGraphics, Gui.HeartType heartType, int x, int y, boolean isHardcore, boolean isBlinking, boolean isHalf);
@@ -38,7 +35,7 @@ public abstract class KarmaHeartMixin {
                               int highlightedHeartIndex, float maxHealth, int currentHealth,
                               int displayHealth, int absorptionAmount, boolean shouldRenderHighlight) {
 
-        Gui.HeartType heartType = getHeartTypeForPlayer(player);
+        Gui.HeartType heartType = undertale$getHeartTypeForPlayer(player);
         boolean isHardcore = player.level().getLevelData().isHardcore();
         int maxHealthHearts = Mth.ceil(maxHealth / 2.0F);
         int absorptionHearts = Mth.ceil(absorptionAmount / 2.0F);
@@ -52,11 +49,11 @@ public abstract class KarmaHeartMixin {
 //        LogUtils.getLogger().info("渲染KR{}",karmaValue);
         boolean karamEven =  karmaValue%2 == 0; // kr值是否偶数
         int absorptionDiff = absorptionAmount - karmaValue; // 吸收值和kr值的差值
-        boolean absorptionOdd = absorptionDiff % 2 == 1 ; //吸收值是否为奇数
+        boolean absorptionOdd = absorptionDiff % 2 == 1 ; //吸收差值是否为奇数
 
         boolean karamHealthEven = (-absorptionDiff) %2 ==0;
         int healthDiff = currentHealth + absorptionDiff;
-        boolean healthOdd = healthDiff %2 == 1;
+        boolean healthOdd = healthDiff %2 == 1; //血量差值
         for(int heartIndex = maxHealthHearts + absorptionHearts - 1 , i = 0; heartIndex >= 0; --heartIndex , i++) {
             int row = heartIndex / 10;
             int column = heartIndex % 10;
@@ -93,14 +90,14 @@ public abstract class KarmaHeartMixin {
                             差值为偶数，则代表覆盖后的最后一颗KR心没有右半心，判断索引是否在KR值范围内，走原版逻辑渲染
                             差值为奇数，则代表覆盖后的KR心最后一颗是右半心，需要自定义渲染右半心的逻辑
                                 当KR值是偶数时，是否渲染成KR心的判断条件为 反转索引 < KR值 + 1
-                                当KR值是奇数时，是否渲染成KR心的判断条件为 反转索引 < KR值
+                                当KR值是奇数时，是否渲染成KR心的判断条件为 反转索引 + 1 < KR值
                      */
-                    if(karmaValue != 0) {
+                    if(karmaValue > 0) {
                         // 以下为上方判断的数学计算简化版
                         int renderThreshold = karmaValue + ((absorptionDiff > 0 && absorptionOdd && karamEven) ? 1 : 0);
                         if (reverseHalfHeartIndex < renderThreshold) {
                             boolean isRight = absorptionDiff > 0 && absorptionOdd && reverseHalfHeartIndex + (karamEven?0:1) == karmaValue;
-                            renderKaramHeart(guiGraphics,heartX,heartY,isHardcore,false,isHalf,isRight);
+                            undertale$renderKaramHeart(guiGraphics,heartX,heartY,isHardcore,false,isHalf,isRight);
                         }
                     }
                 }
@@ -113,34 +110,32 @@ public abstract class KarmaHeartMixin {
             }
 
             // 渲染普通生命值心形
+            // 渲染普通生命值心形
             if (halfHeartIndex < currentHealth) {
                 boolean isHalf = halfHeartIndex + 1 == currentHealth;
                 this.renderHeart(guiGraphics, heartType, heartX, heartY, isHardcore, false, isHalf);
-            }
 
-//             KARMA效果逻辑：替换普通生命值心形
-            if(karmaValue != 0 && halfHeartIndex < currentHealth && reverseHalfHeartIndex <= karmaValue +  maxHealth - currentHealth ){
-                // 以下为上方判断的数学计算简化版
-                boolean isHalf = halfHeartIndex + 1 == displayHealth;
-                int renderThreshold = (-absorptionDiff) + ((healthDiff > 0 && healthOdd && karamHealthEven) ? 1 : 0);
-                if (reverseHalfHeartIndex < renderThreshold) {
-                    boolean isRight = healthDiff > 0 && healthOdd && reverseHalfHeartIndex + (karamHealthEven?0:1) == (-absorptionDiff);
-                    renderKaramHeart(guiGraphics,heartX,heartY,isHardcore,false,isHalf,isRight);
+                // KARMA效果逻辑：完全复制吸收心的复杂判断
+                if(absorptionDiff < 0) {
+                    int healthIndex =  currentHealth- halfHeartIndex - (currentHealth%2==0?2:1);
+                    int renderThreshold = (-absorptionDiff) + ((healthDiff > 0 && healthOdd && karamHealthEven) ? 1 : 0);
+                    if (healthIndex < renderThreshold) {
+                        boolean isRight = healthDiff > 0 && healthOdd && healthIndex + (karamHealthEven ? 0 : 1) == (-absorptionDiff);
+                        undertale$renderKaramHeart(guiGraphics, heartX, heartY, isHardcore, false, isHalf, isRight);
+                    }
                 }
             }
-
-
         }
     }
     @Unique
-    private void renderKaramHeart(GuiGraphics guiGraphics,int x, int y, boolean isHardcore, boolean isBlinking, boolean isHalf,boolean isRight) {
+    private void undertale$renderKaramHeart(GuiGraphics guiGraphics, int x, int y, boolean isHardcore, boolean isBlinking, boolean isHalf, boolean isRight) {
         RenderSystem.enableBlend();
         guiGraphics.blitSprite(KaramHeartType.getSprite(isHardcore, false, isHalf, isRight), x, y, 9, 9);
         RenderSystem.disableBlend();
     }
 
     @Unique
-    private Gui.HeartType getHeartTypeForPlayer(Player player) {
+    private Gui.HeartType undertale$getHeartTypeForPlayer(Player player) {
         Gui.HeartType gui$hearttype;
         if (player.hasEffect(MobEffects.POISON)) {
             gui$hearttype = Gui.HeartType.POISIONED;
