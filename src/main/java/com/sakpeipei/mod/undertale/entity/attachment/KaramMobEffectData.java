@@ -42,21 +42,17 @@ public class KaramMobEffectData {
     }
 
     public void addValue(LivingEntity entity, int value) {
-        if(this.value >= MAX) {
-            return;
-        }else if(this.value + value >= MAX) {
+        if(this.value + value >= MAX) {
             this.value = MAX;
-        }else {
+        }else if(this.value < MAX) {
             this.value += (byte) value;
         }
-        sendPacket(entity);
     }
     public void subValue(LivingEntity entity){
         if(this.value == 0) {
             return;
         }
         this.value--;
-        sendPacket(entity);
     }
 
     public void setValue(byte value) {
@@ -66,11 +62,11 @@ public class KaramMobEffectData {
         return attacks;
     }
 
-    private void sendPacket(LivingEntity entity){
+    public void sendPacket(LivingEntity entity,float absorptionAmount){
         if(entity instanceof ServerPlayer player){
-            PacketDistributor.sendToPlayer(player,new KaramPacket(entity.getId(),this.value));
+            PacketDistributor.sendToPlayer(player,new KaramPacket(entity.getId(),this.value,absorptionAmount));
         }else{
-            PacketDistributor.sendToPlayersTrackingEntity(entity,new KaramPacket(entity.getId(),this.value));
+            PacketDistributor.sendToPlayersTrackingEntity(entity,new KaramPacket(entity.getId(),this.value,absorptionAmount));
         }
     }
 }

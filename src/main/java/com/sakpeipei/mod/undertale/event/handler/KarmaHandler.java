@@ -42,7 +42,6 @@ public class KarmaHandler {
 
     /**
      * 当KR攻击物被销毁时，移除攻击过的且还处于KR状态下的实体的 来自自身KR攻击招式的判重key
-     * @param event
      */
     @SubscribeEvent
     public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {

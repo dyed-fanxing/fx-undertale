@@ -22,12 +22,6 @@ public class LivingEntityEventHandler {
     @SubscribeEvent
     public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
         Entity entity = event.getEntity();
-        if (entity.getRemovalReason() != null && entity.getRemovalReason().shouldDestroy()) {
-            if (entity instanceof TraceableEntity traceableEntity && traceableEntity.getOwner() instanceof Sans) {
-                //移除 攻击类型判断重复
-            }
-//            LogUtils.getLogger().info("{}被销毁了", entity);
-        }
 
     }
     /**
@@ -41,9 +35,10 @@ public class LivingEntityEventHandler {
 
     @SubscribeEvent
     public static void onDamagePost(LivingDamageEvent.Post event) {
-        LogUtils.getLogger().info("{},{},{},{},{}",
+        LogUtils.getLogger().info("{},当前生命值{},当前吸收值{},原始伤害{},伤害来源{},结算伤害{}",
                 event.getEntity(),
                 event.getEntity().getHealth(),
+                event.getEntity().getAbsorptionAmount(),
                 event.getOriginalDamage(),
                 event.getSource(),
                 event.getNewDamage()

@@ -1,15 +1,19 @@
 package com.sakpeipei.mod.undertale.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.client.gui.EnumParameters;
 import com.sakpeipei.mod.undertale.client.gui.KaramHeartType;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.MobEffectRegistry;
+import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.EventHooks;
 import org.spongepowered.asm.mixin.*;
@@ -24,16 +28,97 @@ public abstract class KarmaHeartMixin {
     private static final Gui.HeartType KARMA_HEART = Gui.HeartType.valueOf(EnumParameters.KARMA_HEART);
 
     @Shadow
+    private int tickCount;
+    @Shadow
+    private int lastHealth;
+    @Shadow
+    private int displayHealth;
+    @Shadow
+    private long lastHealthTime;
+    @Shadow
+    private long healthBlinkTime;
+    @Shadow
+    private float autosaveIndicatorValue;
+    @Shadow
+    private float lastAutosaveIndicatorValue;
+    @Shadow
+    public int leftHeight;
+    @Mutable
+    @Shadow
+    @Final
+    private final Minecraft minecraft;
+
+    protected KarmaHeartMixin(Minecraft minecraft) {
+        this.minecraft = minecraft;
+    }
+
+    @Shadow
     protected abstract void renderHeart(GuiGraphics guiGraphics, Gui.HeartType heartType, int x, int y, boolean isHardcore, boolean isBlinking, boolean isHalf);
+    @Shadow
+    protected abstract Player getCameraPlayer();
+
+    /**
+     * 重载renderHealthLevel方法，添加KARMA效果支持
+     * @author Sakpeipei
+     * @reason 复制原版渲染逻辑，添加自定义的渲染KR心（包括右半心）
+     */
+    @Overwrite
+    private void renderHealthLevel(GuiGraphics p_283143_) {
+        Player player = this.getCameraPlayer();
+        if (player != null) {
+            int health = Mth.ceil(player.getHealth());
+            boolean flag = this.healthBlinkTime > (long)this.tickCount && (this.healthBlinkTime - (long)this.tickCount) / 3L % 2L == 1L;
+            long j = Util.getMillis();
+            if (health < this.lastHealth && player.invulnerableTime > 0) {
+                this.lastHealthTime = j;
+                this.healthBlinkTime = this.tickCount + 20;
+            } else if (health > this.lastHealth && player.invulnerableTime > 0) {
+                this.lastHealthTime = j;
+                this.healthBlinkTime = this.tickCount + 10;
+            }
+
+            if (j - this.lastHealthTime > 1000L) {
+                this.lastHealth = health;
+                this.displayHealth = health;
+                this.lastHealthTime = j;
+            }
+
+            this.lastHealth = health;
+            int k = this.displayHealth;
+            this.random.setSeed(this.tickCount * 312871L);
+            int l = p_283143_.guiWidth() / 2 - 91;
+            int i1 = p_283143_.guiWidth() / 2 + 91;
+            int j1 = p_283143_.guiHeight() - this.leftHeight;
+            float f = Math.max((float)player.getAttributeValue(Attributes.MAX_HEALTH), (float)Math.max(k, health));
+            int absorptionAmount = Mth.ceil(player.getAbsorptionAmount());
+            int l1 = Mth.ceil((f + (float)absorptionAmount) / 2.0F / 10.0F);
+            int i2 = Math.max(10 - (l1 - 2), 3);
+            int j2 = j1 - 10;
+            this.leftHeight += (l1 - 1) * i2 + 10;
+            int k2 = -1;
+            if (player.hasEffect(MobEffects.REGENERATION)) {
+                k2 = this.tickCount % Mth.ceil(f + 5.0F);
+            }
+            // KARMA效果值
+            byte karmaValue = 0;
+            if(player.hasEffect(MobEffectRegistry.KARMA)){
+                karmaValue = player.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).getValue();
+            }
+            this.minecraft.getProfiler().push("health");
+            this.undertale$renderHearts(p_283143_, player, l, j1, i2, k2, f, health, k, absorptionAmount,karmaValue, flag);
+            this.minecraft.getProfiler().pop();
+        }
+
+    }
     /**
      * 重载renderHearts方法，添加KARMA效果支持
      * @author Sakpeipei
      * @reason 复制原版渲染逻辑，添加自定义的渲染KR心（包括右半心）
      */
-    @Overwrite
-    private void renderHearts(GuiGraphics guiGraphics, Player player, int startX, int startY, int rowSpacing,
-                              int highlightedHeartIndex, float maxHealth, int currentHealth,
-                              int displayHealth, int absorptionAmount, boolean shouldRenderHighlight) {
+    @Unique
+    private void undertale$renderHearts(GuiGraphics guiGraphics, Player player, int startX, int startY, int rowSpacing,
+                                        int highlightedHeartIndex, float maxHealth, int currentHealth,
+                                        int displayHealth, int absorptionAmount, int karmaValue, boolean shouldRenderHighlight) {
 
         Gui.HeartType heartType = undertale$getHeartTypeForPlayer(player);
         boolean isHardcore = player.level().getLevelData().isHardcore();
@@ -41,12 +126,6 @@ public abstract class KarmaHeartMixin {
         int absorptionHearts = Mth.ceil(absorptionAmount / 2.0F);
         int maxHealthHalfHearts = maxHealthHearts * 2;
 
-        // KARMA效果值
-        byte karmaValue = 0;
-        if(player.hasEffect(MobEffectRegistry.KARMA)){
-            karmaValue = player.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).getValue();
-        }
-//        LogUtils.getLogger().info("渲染KR{}",karmaValue);
         boolean karamEven =  karmaValue%2 == 0; // kr值是否偶数
         int absorptionDiff = absorptionAmount - karmaValue; // 吸收值和kr值的差值
         boolean absorptionOdd = absorptionDiff % 2 == 1 ; //吸收差值是否为奇数
@@ -108,8 +187,6 @@ public abstract class KarmaHeartMixin {
                 boolean isHalf = halfHeartIndex + 1 == displayHealth;
                 this.renderHeart(guiGraphics, heartType, heartX, heartY, isHardcore, true, isHalf);
             }
-
-            // 渲染普通生命值心形
             // 渲染普通生命值心形
             if (halfHeartIndex < currentHealth) {
                 boolean isHalf = halfHeartIndex + 1 == currentHealth;

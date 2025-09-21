@@ -37,11 +37,18 @@ public class KarmaMobEffect extends MobEffect {
             if(value == 0){
                 entity.removeEffect(MobEffectRegistry.KARMA);
             }else if(entity.tickCount % DAMAGE_INTERVAL_FRAMES[value/10] == 0){
+                float last = entity.getAbsorptionAmount();
                 if (entity.getHealth() > 1) {
                     if(entity instanceof Player)                LogUtils.getLogger().info("KR之前{}", karamData.getValue());
                     entity.hurt(entity.damageSources().source(DamageTypes.KARMA), 1.0f);
                 }
                 karamData.subValue(entity);
+                float current = entity.getAbsorptionAmount();
+                if(current != last){
+                    karamData.sendPacket(entity,current);
+                }else{
+                    karamData.sendPacket(entity,-1f);
+                }
             }
         }
         return true;
@@ -71,8 +78,10 @@ public class KarmaMobEffect extends MobEffect {
                 }
                 if(attacks.contains(key)){
                     karamData.addValue(entity,1);
+                    karamData.sendPacket(entity,-1);
                 }else{
                     karamData.addValue(entity,data.getValue());
+                    karamData.sendPacket(entity,-1);
                     attacks.add(key);
                 }
             }

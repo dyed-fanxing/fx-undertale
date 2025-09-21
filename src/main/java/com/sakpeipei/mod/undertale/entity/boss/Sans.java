@@ -42,6 +42,7 @@ import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -101,40 +102,86 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
         this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Mob.class, 8.0F));
         this.goalSelector.addGoal(11,new RandomStrollGoal(this,0.5f));
         // 远程攻击，需要实现performRangedAttack，然后通过goal去调用
-        this.goalSelector.addGoal(2, new RangedAttackGoal(this, 1.0, 20, 16.0F));
+        this.goalSelector.addGoal(2, new RangedAttackGoal(this, 1.0,  16.0F));
+
+
 
         this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)));
     }
 
     @Override
+    protected void customServerAiStep() {
+        super.customServerAiStep();
+
+    }
+
+    /**
+     */
+    @Override
     public void performRangedAttack(@NotNull LivingEntity target, float power) {
-        int random = this.random.nextInt() * 0;
+    }
+
+
+    public void flyBoneAttack(@NotNull LivingEntity target,int direction,int count,int speed,int type) {
         String attackTypeUUID = UUID.randomUUID().toString();
+        switch (type) {
+            case 1 -> {
+                int angle = 0;
+                int avg = 0;
+                if (count == 1) {
+                    angle = random.nextInt() * 180;
+                } else {
+                    avg = 180 / (count - 1);
+                }
+                for (int i = 0; i < count; i++) {
+                    FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f);
+                    bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
+                    // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
+                    Vec3 relation = new Vec3(0, 1, 0)
+                            .zRot((angle - 90) * Mth.DEG_TO_RAD)
+                            .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+                            .xRot(-this.getXRot() * Mth.DEG_TO_RAD);
+                    bone.delayShoot(20, target, relation);
+//            bone.shoot(target.getX() - bone.getX(), target.getY(0.5f) - bone.getY(), target.getZ() - bone.getZ(), 1F, 0F);
+                    this.level().addFreshEntity(bone);
+                    angle += avg;
+                }
+            }
+            case 2 -> {
+                int angle = 0;
+                int avg = 0;
+                if (count == 1) {
+                    angle = random.nextInt() * 180;
+                } else {
+                    avg = 180 / (count - 1);
+                }
+                for (int i = 0; i < count; i++) {
+                    FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f);
+                    bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
+                    // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
+                    Vec3 relation = new Vec3(0, 1, 0)
+                            .zRot((angle - 90) * Mth.DEG_TO_RAD)
+                            .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+                            .xRot(-this.getXRot() * Mth.DEG_TO_RAD);
+//                    bone.delayRotateShoot(20, target, relation);
+                    this.level().addFreshEntity(bone);
+                    angle += avg;
+                }
+            }
+        }
+    }
+
+    public void gbAttack(@NotNull LivingEntity target,int count,int type) {
         // 攻击物UUID -> 本次攻击类型UUID，最终存储的用于判重的是 召唤者UUID + 攻击类型UUID
         // 攻击物UUID -> 攻击类型
         // 攻击类型 -> KR值
-        switch ( random ){
-            case 0 -> {
-                int count = 5;
-                int avg = 180 / (count - 1 );
-                for ( int i = 0,angle = 0; i < count; i++,angle+= avg) {
-                    FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(),this.level(),this,true,(byte) 5);
-                    bone.setData(AttachmentTypeRegistry.KARMA_ATTACK,new KaramAttackData(attackTypeUUID, (byte) 6));
-                    // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
-                    bone.setPos(this.getEyePosition().add(new Vec3(0,1,0)
-                            .zRot(( angle  - 90) * Mth.DEG_TO_RAD)
-                            .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-                            .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
-                    ));
-                    bone.shoot(target.getX() - bone.getX(), target.getY(0.5f) - bone.getY(), target.getZ() - bone.getZ(), 1F, 0F);
-                    this.level().addFreshEntity(bone);
-                }
-            }
+        String attackTypeUUID = UUID.randomUUID().toString();
+        switch (type){
             case 1 -> {
                 GasterBlasterFixed gasterBlasterFixed = new GasterBlasterFixed(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), this.level(), this);
                 gasterBlasterFixed.setData(AttachmentTypeRegistry.KARMA_ATTACK,new KaramAttackData(attackTypeUUID, (byte) 10));
                 int angle = this.random.nextInt() * 180;
-                gasterBlasterFixed.setPos(this.getEyePosition().add(new Vec3(0,1,0)
+                gasterBlasterFixed.setPos(this.getEyePosition().add(new Vec3(0,2,0)
                         .zRot(( angle  - 90) * Mth.DEG_TO_RAD)
                         .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
                         .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
@@ -142,14 +189,12 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                 gasterBlasterFixed.lookAt(EntityAnchorArgument.Anchor.FEET,target.position().add(0,0.5d,0));
                 this.level().addFreshEntity(gasterBlasterFixed);
             }
-            case 2 -> {
-
-            }
             default -> {
 
             }
         }
     }
+
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float power) {
@@ -275,12 +320,13 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
 
     @Override
     public void setTarget(@Nullable LivingEntity target) {
-        if (target == null) {
+        super.setTarget(target);
+        if(getTarget() == null ){
             this.targetChangeTime = 0;
         } else {
             this.targetChangeTime = this.tickCount;
         }
-        super.setTarget(target);
+
     }
     //可攻击的中立生物需要实现的
     @Override
@@ -325,4 +371,99 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
         return GeckoLibUtil.createInstanceCache(this);
     }
 
+
+
+    private static class RangedAttackGoal extends Goal{
+        private final Sans mob;
+        private final RangedAttackMob rangedAttackMob;
+        @Nullable
+        private LivingEntity target;
+        private int attackTime;
+        private final double speedModifier;
+        private int seeTime;
+        private final float attackRadius;
+        private final float attackRadiusSqr;
+        private int attackCount; //本次招式攻击次数
+
+        public RangedAttackGoal(Sans entity, double speedModifier, float attackRadius) {
+            this.attackTime = 20;
+            this.rangedAttackMob = entity;
+            this.mob = entity;
+            this.speedModifier = speedModifier;
+            this.attackRadius = attackRadius;
+            this.attackRadiusSqr = attackRadius * attackRadius;
+            this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+
+        }
+
+        @Override
+        public boolean canUse() {
+            LivingEntity livingentity = this.mob.getTarget();
+            if (livingentity != null && livingentity.isAlive()) {
+                this.target = livingentity;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+
+
+        @Override
+        public boolean canContinueToUse() {
+            return this.canUse() || this.target.isAlive() && !this.mob.getNavigation().isDone();
+        }
+
+        @Override
+        public void stop() {
+            this.target = null;
+            this.seeTime = 0;
+            this.attackTime = -1;
+        }
+
+        @Override
+        public void tick() {
+            if(target != null){
+                double disSqr = this.mob.distanceToSqr(target.getX(), target.getY(), target.getZ());
+                boolean hasSeeSight = this.mob.getSensing().hasLineOfSight(target);
+                boolean isContinueSee = this.seeTime > 0;
+                if (hasSeeSight != isContinueSee) {
+                    this.seeTime = 0;
+                }
+                if (hasSeeSight) {
+                    ++this.seeTime;
+                } else {
+                    --this.seeTime;
+                }
+
+
+                if ( disSqr <= this.attackRadiusSqr && this.seeTime >= 20) {
+                    this.mob.getNavigation().stop();
+//                    ++this.strafingTime;
+                } else {
+                    this.mob.getNavigation().moveTo(target, this.speedModifier);
+//                    this.strafingTime = -1;
+                }
+
+                int type = mob.random.nextInt(2);
+                if(--attackTime == 0){
+                    if(this.mob.misses >= 0 && this.mob.misses <=30){
+                        switch (type) {
+                            case 0 -> {
+                                mob.flyBoneAttack(target,0,1,1,1);
+                            }
+                            case 1 -> {
+                                mob.gbAttack(target,1,1);
+                            }
+                        }
+                    }else if(this.mob.misses > 30 && this.mob.misses <= 70){
+
+                    }else{
+
+                    }
+                    attackTime = 20;
+                }
+            }
+        }
+    }
 }
