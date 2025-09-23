@@ -14,11 +14,11 @@ import java.util.HashSet;
 public class KaramAttackData {
 
     public static final Codec<KaramAttackData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.STRING.fieldOf("attacks").forGetter(KaramAttackData::getUUID),
+            Codec.STRING.fieldOf("uuid").forGetter(KaramAttackData::getUUID),
             Codec.BYTE.fieldOf("value").forGetter(KaramAttackData::getValue),
             Codec.STRING.listOf().xmap(HashSet::new, ArrayList::new).optionalFieldOf("attackedEntities",new HashSet<>()).forGetter(KaramAttackData::getAttackedEntities)
     ).apply(instance, KaramAttackData::new));
-
+    // 攻击物UUID -> 本次攻击类型UUID，最终存储的用于判重的是 召唤者UUID + 攻击类型UUID
     private String uuid; // 招式类型，判断重复
     private byte value;  // 首次造成的KR值
     private HashSet<String> attackedEntities;   //攻击过的实体，用于当自身消亡时，将攻击过的实体的判重删除

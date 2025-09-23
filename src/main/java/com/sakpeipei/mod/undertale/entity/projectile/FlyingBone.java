@@ -65,7 +65,7 @@ public class FlyingBone extends AbstractHurtingProjectile implements GeoEntity, 
             }
             return;
         }
-        if(this.moveDist > 50){
+        if(this.moveDist > 64){
             this.discard();
         }
         super.tick();
