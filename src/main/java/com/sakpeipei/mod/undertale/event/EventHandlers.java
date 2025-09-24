@@ -5,18 +5,10 @@ import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
-import com.sakpeipei.mod.undertale.utils.Tags;
-import net.minecraft.tags.DamageTypeTags;
-import net.minecraft.world.damagesource.DamageSource;
-import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
-import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import org.slf4j.Logger;
 
 @EventBusSubscriber(modid = Undertale.MODID)
 public class EventHandlers {

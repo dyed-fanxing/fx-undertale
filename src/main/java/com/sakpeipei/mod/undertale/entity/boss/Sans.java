@@ -183,13 +183,10 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                     avg = 180 / (count - 1);
                 }
                 for (int i = 0; i < count; i++) {
-                    GroundBone bone = new GroundBone(EntityTypeRegistry.GROUND_BONE.get(), this.level(), this, 1f);
+                    GroundBone bone = new GroundBone(EntityTypeRegistry.GROUND_BONE.get(), this.level(), this, 1f,true);
                     bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
                     // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
-                    Vec3 relation = new Vec3(0, 1, 0)
-                            .zRot((angle - 90) * Mth.DEG_TO_RAD)
-                            .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-                            .xRot(-this.getXRot() * Mth.DEG_TO_RAD);
+                    Vec3 relation = new Vec3(0, 0, this.random.nextDouble() * 2);
                     bone.delayShoot(20, target, relation);
                     this.level().addFreshEntity(bone);
                     angle += avg;
@@ -436,8 +433,6 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
 
     private static class RangedAttackGoal extends Goal {
         private final Sans mob;
-        @Nullable
-        private LivingEntity target;
         private int cd;
         private final double speedModifier;
         private int seeTime;
@@ -458,13 +453,7 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
         @Override
         public boolean canUse() {
             LivingEntity livingentity = this.mob.getTarget();
-            if (livingentity != null && livingentity.isAlive()) {
-                this.target = livingentity;
-                return true;
-            } else {
-                this.target = null;
-                return false;
-            }
+            return livingentity != null && livingentity.isAlive();
         }
 
 
@@ -480,13 +469,13 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
 
         @Override
         public void stop() {
-            this.target = null;
             this.seeTime = 0;
             this.cd = -1;
         }
 
         @Override
         public void tick() {
+            LivingEntity target = this.mob.getTarget();
             if (target != null) {
                 double disSqr = this.mob.distanceToSqr(target.getX(), target.getY(), target.getZ());
                 boolean hasSeeSight = this.mob.getSensing().hasLineOfSight(target);
@@ -540,6 +529,10 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                                 }
                                 case 1 -> {
                                     mob.gbAttack(target, 1,0, combinationType);
+                                }
+                                case 2 -> {
+
+                                    mob.groundBoneAttack(target);
                                 }
                             }
                         }

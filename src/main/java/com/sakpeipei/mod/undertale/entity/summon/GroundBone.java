@@ -2,6 +2,8 @@ package com.sakpeipei.mod.undertale.entity.summon;
 
 import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
+import com.sakpeipei.mod.undertale.mechanism.AquaAttack;
+import com.sakpeipei.mod.undertale.mechanism.ColorAttack;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -10,9 +12,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Targeting;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -33,7 +38,8 @@ import java.util.UUID;
  * @author Sakqiongzi
  * @since 2025-08-18 18:44
  */
-public class GroundBone extends Entity implements GeoEntity, GeoAnimatable {
+public class GroundBone extends Entity implements Targeting,GeoEntity, GeoAnimatable {
+    private ColorAttack colorAttack;
 
     @Nullable
     private LivingEntity owner;
@@ -41,16 +47,23 @@ public class GroundBone extends Entity implements GeoEntity, GeoAnimatable {
     private UUID ownerUUID;
     private float damage;
     private boolean isMove; //标记是否为移动地面骨头
+    private int delay = 0;
+    private LivingEntity target;
+    private int lifetime = 20;
 
     public GroundBone(EntityType<? extends GroundBone> type, Level level) {
         super(type, level);
     }
     public GroundBone(EntityType<? extends GroundBone> type, Level level, LivingEntity owner, float damage,boolean isMove) {
+        this(type, level,owner,damage,isMove,ColorAttack.WHITE);
+    }
+    public GroundBone(EntityType<? extends GroundBone> type, Level level, LivingEntity owner, float damage,boolean isMove,ColorAttack colorAttack) {
         this(type, level);
         this.setNoGravity(true);
         setOwner(owner);
         this.damage = damage;
         this.isMove = isMove;
+        this.colorAttack = colorAttack;
     }
 
     @Override
@@ -58,12 +71,13 @@ public class GroundBone extends Entity implements GeoEntity, GeoAnimatable {
         super.tick();
         if(isMove){
             Entity entity = this.getOwner();
-                if (this.level().isClientSide || (entity == null || !entity.isRemoved()) && !this.level().getChunkAt(this.blockPosition()).isEmpty()) {
+            if (this.level().isClientSide || (entity == null || !entity.isRemoved()) && !this.level().getChunkAt(this.blockPosition()).isEmpty()) {
                 super.tick();
-
                 HitResult hitresult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity, ClipContext.Block.COLLIDER);
-                if (hitresult.getType() != HitResult.Type.MISS && hitresult instanceof EntityHitResult entityHitResult) {
-                    onHitEntity(entityHitResult.getEntity());
+                if(hitresult.getType() == HitResult.Type.BLOCK) {
+                    this.onHitBlick((BlockHitResult)hitresult);
+                }else if(hitresult.getType() == HitResult.Type.ENTITY){
+                    onHitEntity(((EntityHitResult)hitresult).getEntity());
                 }
                 this.checkInsideBlocks();
                 Vec3 vec3 = this.getDeltaMovement();
@@ -88,37 +102,48 @@ public class GroundBone extends Entity implements GeoEntity, GeoAnimatable {
                 if (particleoptions != null) {
                     this.level().addParticle(particleoptions, d0, d1 + (double)0.5F, d2, (double)0.0F, (double)0.0F, (double)0.0F);
                 }
-
                 this.setPos(d0, d1, d2);
             } else {
                 this.discard();
             }
         }else{
-
-        }
-
-
-        for(LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(0.2, 0.0F, 0.2), this::canHurtTarget)) {
-            onHitEntity(target);
-        }
-    }
-
-    private boolean canHitEntity(Entity entity){
-        return entity.isAlive() && entity != getOwner();
-    }
-    private void onHitEntity(Entity target) {
-        LivingEntity owner = getOwner();
-        if(owner == null){
-            target.hurt(damageSources().source(DamageTypes.FRAME,this),damage);
-        }else{
-            if(owner instanceof Sans){
-                target.hurt(damageSources().source(DamageTypes.FRAME,owner,this),damage);
-            }else{
-                target.hurt(damageSources().indirectMagic(owner,this),damage);
+            if(tickCount > lifetime) {
+                this.discard();
+                return;
+            }
+            Vec3 deltaMovement = getDeltaMovement();
+            setDeltaMovement(deltaMovement.add(0,this.tickCount * this.tickCount * 0.1f,0));
+            for(LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(0.2, 0.0F, 0.2), this::canHitEntity)) {
+                onHitEntity(target);
             }
         }
     }
 
+    private void onHitBlick(BlockHitResult hitResult) {
+        BlockState blockstate = this.level().getBlockState(hitResult.getBlockPos());
+    }
+
+    private boolean canHitEntity(Entity entity){
+        return entity.isAlive() && entity != getOwner() && colorAttack.canHitEntity(entity);
+    }
+    private void onHitEntity(EntityHitResult hitResult) {
+        Entity entity = hitResult.getEntity();
+        LivingEntity owner = getOwner();
+        if(owner == null){
+            entity.hurt(damageSources().source(DamageTypes.FRAME,this),damage);
+        }else{
+            if(owner instanceof Sans){
+                entity.hurt(damageSources().source(DamageTypes.FRAME,owner,this),damage);
+            }else{
+                entity.hurt(damageSources().indirectMagic(owner,this),damage);
+            }
+        }
+    }
+    public void delayShoot(int delay, @NotNull LivingEntity target, Vec3 relation) {
+        this.delay = delay;
+        this.target = target;
+
+    }
 
     public void setOwner(@Nullable LivingEntity owner) {
         this.owner = owner;
@@ -135,7 +160,10 @@ public class GroundBone extends Entity implements GeoEntity, GeoAnimatable {
         }
         return this.owner;
     }
-
+    @Override
+    public @Nullable LivingEntity getTarget() {
+        return target;
+    }
     @Override
     protected void readAdditionalSaveData(@NotNull CompoundTag tag) {
         if (tag.hasUUID("Owner")) {
@@ -190,4 +218,5 @@ public class GroundBone extends Entity implements GeoEntity, GeoAnimatable {
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return GeckoLibUtil.createInstanceCache(this);
     }
+
 }
