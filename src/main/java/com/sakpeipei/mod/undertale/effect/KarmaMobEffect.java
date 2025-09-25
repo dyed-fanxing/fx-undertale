@@ -4,7 +4,7 @@ import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramMobEffectData;
-import com.sakpeipei.mod.undertale.entity.boss.Karma;
+import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.MobEffectRegistry;
 import net.minecraft.world.damagesource.DamageSource;
@@ -65,7 +65,7 @@ public class KarmaMobEffect extends MobEffect {
             return;
         }
         Entity sourceEntity = source.getEntity();
-        if (source.getEntity() instanceof Karma) {
+        if (source.getEntity() instanceof Sans) {
             KaramMobEffectData karamData = entity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT);
             Set<String> attacks = karamData.getAttacks();
             Entity attackEntity = source.getDirectEntity();

@@ -126,8 +126,7 @@ public class GroundBone extends Entity implements Targeting,GeoEntity, GeoAnimat
     private boolean canHitEntity(Entity entity){
         return entity.isAlive() && entity != getOwner() && colorAttack.canHitEntity(entity);
     }
-    private void onHitEntity(EntityHitResult hitResult) {
-        Entity entity = hitResult.getEntity();
+    private void onHitEntity(Entity entity) {
         LivingEntity owner = getOwner();
         if(owner == null){
             entity.hurt(damageSources().source(DamageTypes.FRAME,this),damage);

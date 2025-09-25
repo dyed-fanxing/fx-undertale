@@ -47,7 +47,7 @@ import java.util.EnumSet;
 import java.util.UUID;
 
 
-public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, NeutralMob, GeoEntity, Karma {
+public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, NeutralMob, GeoEntity {
     private static final Logger log = LoggerFactory.getLogger(Sans.class);
 
     private final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("move.idle");
@@ -125,7 +125,7 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     public void flyBoneAttack(@NotNull LivingEntity target, int direction, int count, int speed, int type) {
         String attackTypeUUID = UUID.randomUUID().toString();
         switch (type) {
-            case 1 -> {
+            case 0 -> {
                 int angle = 0;
                 int avg = 0;
                 if (count == 1) {
@@ -142,28 +142,6 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                             .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
                             .xRot(-this.getXRot() * Mth.DEG_TO_RAD);
                     bone.delayShoot(20, target, relation);
-//            bone.shoot(target.getX() - bone.getX(), target.getY(0.5f) - bone.getY(), target.getZ() - bone.getZ(), 1F, 0F);
-                    this.level().addFreshEntity(bone);
-                    angle += avg;
-                }
-            }
-            case 2 -> {
-                int angle = 0;
-                int avg = 0;
-                if (count == 1) {
-                    angle = random.nextInt(180) ;
-                } else {
-                    avg = 180 / (count - 1);
-                }
-                for (int i = 0; i < count; i++) {
-                    FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f);
-                    bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
-                    // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
-                    Vec3 relation = new Vec3(0, 1, 0)
-                            .zRot((angle - 90) * Mth.DEG_TO_RAD)
-                            .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-                            .xRot(-this.getXRot() * Mth.DEG_TO_RAD);
-//                    bone.delayRotateShoot(20, target, relation);
                     this.level().addFreshEntity(bone);
                     angle += avg;
                 }
@@ -171,7 +149,7 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
         }
     }
 
-    public void groundBoneAttack(@NotNull LivingEntity target, int direction, int count, int speed, int type) {
+    public void groundBoneAttack(@NotNull LivingEntity target,int count, int speed, int type) {
         String attackTypeUUID = UUID.randomUUID().toString();
         switch (type) {
             case 0 -> {
@@ -459,7 +437,7 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
 
         @Override
         public boolean canContinueToUse() {
-            return this.canUse() && !this.mob.getNavigation().isDone();
+            return this.canUse() || !this.mob.getNavigation().isDone();
         }
 
         @Override
@@ -497,20 +475,32 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                     this.mob.getNavigation().moveTo(target, this.speedModifier);
 //                    this.strafingTime = -1;
                 }
-                this.mob.lookAt(target, 30.0F, 30.0F);
+                this.mob.getLookControl().setLookAt(target);
                 if(this.seeTime >= 20){
                     // 不同实体攻击类型
-                    int attackType = mob.random.nextInt(2);
+                    int attackType = mob.random.nextInt(1);
                     // 相同实体不同组合攻击类型
-                    int combinationType = mob.random.nextInt(3);
+                    int combinationType = mob.random.nextInt(1);
                     if (--cd == 0) {
+                        LogUtils.getLogger().info("攻击类型{},组合类型{}",attackType,combinationType);
                         if (this.mob.misses >= 0 && this.mob.misses <= 30) {
+//                            switch (attackType) {
+//                                case 0 -> {
+//                                    mob.flyBoneAttack(target, 0, 1, 1, combinationType);
+//                                }
+//                                case 1 -> {
+//                                    mob.gbAttack(target, 1,0, combinationType);
+//                                }
+//                            }
                             switch (attackType) {
                                 case 0 -> {
                                     mob.flyBoneAttack(target, 0, 1, 1, combinationType);
                                 }
                                 case 1 -> {
                                     mob.gbAttack(target, 1,0, combinationType);
+                                }
+                                case 2 -> {
+                                    mob.groundBoneAttack(target,1,1,0);
                                 }
                             }
                         } else if (this.mob.misses > 30 && this.mob.misses <= 70) {
@@ -531,8 +521,7 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                                     mob.gbAttack(target, 1,0, combinationType);
                                 }
                                 case 2 -> {
-
-                                    mob.groundBoneAttack(target);
+                                    mob.groundBoneAttack(target,1,1,0);
                                 }
                             }
                         }
@@ -541,5 +530,11 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                 }
             }
         }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
     }
+
 }

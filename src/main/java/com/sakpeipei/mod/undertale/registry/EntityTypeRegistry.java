@@ -55,7 +55,7 @@ public class EntityTypeRegistry {
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
     public static final DeferredHolder<EntityType<?>, EntityType<GroundBone>> GROUND_BONE = register("ground_bone",
-            EntityType.Builder.of(GroundBone::new, MobCategory.MISC)
+            EntityType.Builder.<GroundBone>of(GroundBone::new, MobCategory.MISC)
                     .sized(0.125f, 0.99f)  // 碰撞箱
                     .eyeHeight(0.5445f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位

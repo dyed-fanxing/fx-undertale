@@ -2,7 +2,7 @@ package com.sakpeipei.mod.undertale.event.handler;
 
 import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
-import com.sakpeipei.mod.undertale.entity.boss.Karma;
+import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.MobEffectRegistry;
 import net.minecraft.server.level.ServerLevel;
@@ -34,7 +34,7 @@ public class KarmaHandler {
     public static void onEntityHurt(LivingDamageEvent.Post event){
         LivingEntity entity = event.getEntity();
         DamageSource source = event.getSource();
-        if(source.getEntity() instanceof Karma && entity.getEffect(MobEffectRegistry.KARMA) == null){
+        if(source.getEntity() instanceof Sans && entity.getEffect(MobEffectRegistry.KARMA) == null){
             // 添加KR效果
             entity.addEffect(new MobEffectInstance(MobEffectRegistry.KARMA,-1));
         }
@@ -46,23 +46,25 @@ public class KarmaHandler {
     @SubscribeEvent
     public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
         Entity entity = event.getEntity();
-        if (entity instanceof TraceableEntity traceableEntity && traceableEntity.getOwner() instanceof Karma owner) {
+        if (entity instanceof TraceableEntity traceableEntity && traceableEntity.getOwner() instanceof Sans owner) {
             Entity.RemovalReason removalReason = entity.getRemovalReason();
             if (removalReason != null && removalReason.shouldDestroy()) {
                 if(entity.level() instanceof ServerLevel level){
                     // 拥有者UUID字符串，攻击过的实体UUID字符串列表
                     KaramAttackData data = entity.getData(AttachmentTypeRegistry.KARMA_ATTACK);
                     HashSet<String> attackedEntities = data.getAttackedEntities();
-                    // 遍历
-                    attackedEntities.forEach(attackedStringUUID -> {
-                        //如果攻击的实体是活体
-                        if(level.getEntity(UUID.fromString(attackedStringUUID)) instanceof LivingEntity attackedEntity){
-                            //判断是否存在KR效果
-                            if(attackedEntity.hasEffect(MobEffectRegistry.KARMA)){
-                                attackedEntity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).getAttacks().remove(owner.getStringUUID() + ':' + data.getUUID());
+                    if(attackedEntities != null && !attackedEntities.isEmpty()){
+                        // 遍历
+                        attackedEntities.forEach(attackedStringUUID -> {
+                            //如果攻击的实体是活体
+                            if(level.getEntity(UUID.fromString(attackedStringUUID)) instanceof LivingEntity attackedEntity){
+                                //判断是否存在KR效果
+                                if(attackedEntity.hasEffect(MobEffectRegistry.KARMA)){
+                                    attackedEntity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).getAttacks().remove(owner.getStringUUID() + ':' + data.getUUID());
+                                }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
             }
         }

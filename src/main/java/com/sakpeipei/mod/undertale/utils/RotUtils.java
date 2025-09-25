@@ -2,6 +2,9 @@ package com.sakpeipei.mod.undertale.utils;
 
 
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -18,6 +21,27 @@ public class RotUtils {
         return (float) Math.toDegrees(Math.asin(y));
     }
 
+
+    public static float shootYRot(Vec3 dir){
+        return (float)(Mth.atan2(dir.x, dir.z) * Mth.RAD_TO_DEG);
+    }
+    public static float shootXRot(Vec3 dir){
+        return  (float)(Mth.atan2(dir.y, dir.horizontalDistance())  * Mth.RAD_TO_DEG);
+    }
+    // 航偏角度
+    public static float shootYRot(double x,double z) {
+        return (float)(Mth.atan2(x, z) * Mth.RAD_TO_DEG);
+    }
+    // 物理仰俯角度（未对齐mc y轴）
+    public static float shootXRot(double y,double d) {
+        return (float)(Mth.atan2(y, d)  * Mth.RAD_TO_DEG);
+    }
+
+    public static void setLookAtByShootRot(Entity entity, Entity target){
+        Vec3 dir = new Vec3(target.getX() - entity.getX(),target.getY(0.5f) - entity.getY(),target.getZ() - entity.getZ());
+        entity.setXRot(shootXRot(dir.y,dir.horizontalDistance()));
+        entity.setYRot(shootYRot(dir.x,dir.z));
+    }
 
     /**
      * 获取绕 dir向量 旋转zRot，yRot，xRot角度的向量
