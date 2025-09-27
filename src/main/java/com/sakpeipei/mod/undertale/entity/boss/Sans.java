@@ -10,6 +10,8 @@ import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
@@ -72,8 +74,8 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
     private short misses; // miss次数
 
     private int targetChangeTime;
+
     private static final UniformInt PERSISTENT_ANGER_TIME = TimeUtil.rangeOfSeconds(30, 60);
-    ;
     private int remainingPersistentAngerTime;
     @Nullable
     private UUID persistentAngerTarget;
@@ -104,8 +106,15 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
         // 远程攻击，需要实现performRangedAttack，然后通过goal去调用
         this.goalSelector.addGoal(2, new RangedAttackGoal(this, 1.0, 16.0F));
 
-
         this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)));
+    }
+
+    @Override
+    public void aiStep() {
+        if (!this.level().isClientSide) {
+            this.updatePersistentAnger((ServerLevel)this.level(), true);
+        }
+        super.aiStep();
     }
 
     @Override
@@ -134,14 +143,11 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                     avg = 180 / (count - 1);
                 }
                 for (int i = 0; i < count; i++) {
-                    FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f);
+                    FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f,speed);
                     bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
                     // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
-                    Vec3 relation = new Vec3(0, 1, 0)
-                            .zRot((angle - 90) * Mth.DEG_TO_RAD)
-                            .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-                            .xRot(-this.getXRot() * Mth.DEG_TO_RAD);
-                    bone.delayShoot(20, target, relation);
+                    Vec3 relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
+                    bone.delayShoot(20,relation);
                     this.level().addFreshEntity(bone);
                     angle += avg;
                 }
@@ -166,27 +172,6 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                     // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
                     Vec3 relation = new Vec3(0, 0, this.random.nextDouble() * 2);
                     bone.delayShoot(20, target, relation);
-                    this.level().addFreshEntity(bone);
-                    angle += avg;
-                }
-            }
-            case 1 -> {
-                int angle = 0;
-                int avg = 0;
-                if (count == 1) {
-                    angle = random.nextInt(180) ;
-                } else {
-                    avg = 180 / (count - 1);
-                }
-                for (int i = 0; i < count; i++) {
-                    FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f);
-                    bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
-                    // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
-                    Vec3 relation = new Vec3(0, 1, 0)
-                            .zRot((angle - 90) * Mth.DEG_TO_RAD)
-                            .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-                            .xRot(-this.getXRot() * Mth.DEG_TO_RAD);
-//                    bone.delayRotateShoot(20, target, relation);
                     this.level().addFreshEntity(bone);
                     angle += avg;
                 }
@@ -394,6 +379,21 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
         this.remainingPersistentAngerTime = PERSISTENT_ANGER_TIME.sample(this.random);
     }
 
+    @Override
+    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putShort("misses",this.misses);
+        this.addPersistentAngerSaveData(tag);
+    }
+
+    @Override
+    public void readAdditionalSaveData(@NotNull CompoundTag tag){
+        super.readAdditionalSaveData(tag);
+        if(tag.contains("misses")){
+            this.misses = tag.getShort("misses");
+        }
+        this.readPersistentAngerSaveData(this.level(), tag);
+    }
 
     public static AttributeSupplier.Builder createAttributes() {
         return PathfinderMob.createMobAttributes()

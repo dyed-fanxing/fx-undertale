@@ -16,6 +16,8 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.constant.DataTickets;
@@ -34,13 +36,12 @@ public class FlyingBoneRender extends GeoEntityRenderer<FlyingBone> {
         super(renderManager, new FlyingBoneModel());
     }
 
-
     @Override
     protected void applyRotations(FlyingBone animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
-        poseStack.mulPose(Axis.YP.rotationDegrees( animatable.getYRot() ));
-        poseStack.mulPose(Axis.XP.rotationDegrees(90f - animatable.getXRot() ));
-        // 由于先旋转，绕X轴旋转90度，导致实体的局部+Y轴对齐到了世界+Z轴，+Z轴则对齐到了世界-Y轴，
-        // 所以下方的变换需要按照该实体目前在世界坐标系中的局部坐标系来变换（+x，+z，-y）
+        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick,animatable.yRotO,animatable.getYRot()) ));
+        poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTick,90f - animatable.xRotO,90f - animatable.getXRot()) ));
+//         由于先旋转，绕X轴旋转90度，导致实体的局部+Y轴对齐到了世界+Z轴，+Z轴则对齐到了世界-Y轴，
+//         所以下方的变换需要按照该实体目前在世界坐标系中的局部坐标系来变换（+x，+z，-y）
         poseStack.translate(0,-0.75f,-0.25f);
     }
 }

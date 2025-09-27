@@ -10,6 +10,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.ShieldItem;
@@ -21,6 +22,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -36,7 +39,8 @@ import java.util.UUID;
 /**
  * 固定动画时间GB
  */
-public class GasterBlasterFixed extends Entity implements IGasterBlaster,  IEntityWithComplexSpawn,GeoEntity {
+public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntityWithComplexSpawn,GeoEntity {
+    private static final Logger log = LoggerFactory.getLogger(GasterBlasterFixed.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private static final RawAnimation WHOLE_ANIM = RawAnimation.begin().thenPlay("whole");
 
@@ -75,7 +79,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,  IEnti
                 return;
             }
             if(super.tickCount > 46) {
-                super.discard();
+                this.discard();
                 return;
             }
             //射击，27T
@@ -186,13 +190,10 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,  IEnti
     }
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        entityData.set(LENGTH,tag.getFloat("Length"));
         ownerUUID = tag.hasUUID("OwnerUUID")?tag.getUUID("OwnerUUID"):null;
     }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
-        tag.putFloat("Length", getLength());
-        tag.putFloat("Width", getWidth());
         tag.putUUID("OwnerUUID", ownerUUID);
     }
 
