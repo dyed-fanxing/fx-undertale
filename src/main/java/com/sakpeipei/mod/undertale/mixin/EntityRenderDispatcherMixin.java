@@ -23,9 +23,9 @@ public class EntityRenderDispatcherMixin {
 
     @Inject(method = "render", at = @At("HEAD"))
     public <E extends Entity> void onRenderStart(E entity, double xa, double ya, double za, float p_114389_, float p_114390_, PoseStack p_114391_, MultiBufferSource p_114392_, int p_114393_, CallbackInfo ci) {
-        if(entity instanceof FlyingBone bone && "a3be642e-6e66-4463-bae3-ff9975510fce".equals(bone.getStringUUID())){
+        if(entity instanceof FlyingBone bone){
             // 打印实体渲染信息
-            log.info("空间位置变换:({},{},{}) " ,xa,ya, za);
+//            log.info("空间位置变换:({},{},{}) " ,xa,ya, za);
         }
     }
 

@@ -7,6 +7,7 @@ import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import com.sakpeipei.mod.undertale.entity.summon.GroundBone;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
+import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -148,7 +149,11 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                     // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
                     Vec3 relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
                     bone.delayShoot(20,relation);
+                    Vec3 targetPos = this.getEyePosition().add(relation.yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD).xRot(-this.getXRot() * Mth.DEG_TO_RAD));
+                    bone.absMoveTo(targetPos.x,targetPos.y,targetPos.z);
+                    bone.lookAt(EntityAnchorArgument.Anchor.FEET,targetPos);
                     this.level().addFreshEntity(bone);
+//                    RotUtils.lookAtByShoot(bone,target);
                     angle += avg;
                 }
             }

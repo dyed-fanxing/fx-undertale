@@ -14,6 +14,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.phys.Vec3;
+import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.slf4j.Logger;
@@ -32,13 +33,18 @@ import software.bernie.geckolib.renderer.GeoRenderer;
  */
 public class FlyingBoneRender extends GeoEntityRenderer<FlyingBone> {
 
+    private static final org.apache.logging.log4j.Logger log = LogManager.getLogger(FlyingBoneRender.class);
+
     public FlyingBoneRender(EntityRendererProvider.Context renderManager) {
         super(renderManager, new FlyingBoneModel());
     }
 
     @Override
     protected void applyRotations(FlyingBone animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTick,animatable.yRotO,animatable.getYRot()) ));
+
+        log.info("{}：旧值({},{}),新值({},{}),{}",animatable.getId(),animatable.yRotO,animatable.xRotO,animatable.getYRot(),animatable.getXRot(),animatable.position());
+
+        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(partialTick,animatable.yRotO,animatable.getYRot()) ));
         poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTick,90f - animatable.xRotO,90f - animatable.getXRot()) ));
 //         由于先旋转，绕X轴旋转90度，导致实体的局部+Y轴对齐到了世界+Z轴，+Z轴则对齐到了世界-Y轴，
 //         所以下方的变换需要按照该实体目前在世界坐标系中的局部坐标系来变换（+x，+z，-y）

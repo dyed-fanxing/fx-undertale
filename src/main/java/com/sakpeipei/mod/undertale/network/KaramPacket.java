@@ -38,7 +38,6 @@ public record KaramPacket(int id,byte value,float absorptionAmount) implements C
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null) {
                 if (level.getEntity(packet.id) instanceof LivingEntity entity) {
-                    LogUtils.getLogger().info("接受到服务端发包，设置KR值{}",packet.value);
                     entity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).setValue(packet.value);
                     if(packet.absorptionAmount != -1){
                         entity.setAbsorptionAmount(packet.absorptionAmount);

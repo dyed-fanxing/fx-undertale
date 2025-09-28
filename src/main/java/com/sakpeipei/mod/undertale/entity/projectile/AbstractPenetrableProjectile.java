@@ -42,13 +42,11 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
         this(type, level,0.1);
     }
 
-
     @Override
     public void tick() {
         Entity entity = this.getOwner();
         if (this.level().isClientSide || (entity == null || !entity.isRemoved()) && this.level().isLoaded(this.blockPosition())) {
             super.tick();
-            if(!this.level().isClientSide) return;
             List<HitResult> hitResults = ProjectileUtils.getEntityHitResultsOnMoveVector(this, this::canHitEntity, this.getClipType());
             for (HitResult hitResult : hitResults) {
                 if (hitResult.getType() != HitResult.Type.MISS && !EventHooks.onProjectileImpact(this, hitResult)) {

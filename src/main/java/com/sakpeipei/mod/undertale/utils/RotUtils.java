@@ -37,13 +37,17 @@ public class RotUtils {
         return (float)(Mth.atan2(y, d)  * Mth.RAD_TO_DEG);
     }
 
+    public static void absRotateByShoot(Entity entity, Entity target){
+        Vec3 dir = new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getY(),target.getZ() - entity.getZ());
+        entity.absRotateTo(shootXRot(dir.y,dir.horizontalDistance()),shootYRot(dir.x,dir.z));
+    }
     public static void lookAtByShoot(Entity entity, Entity target){
-        Vec3 dir = new Vec3(target.getX() - entity.getX(),target.getY(0.5f) - entity.getY(),target.getZ() - entity.getZ());
+        Vec3 dir = new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getY(),target.getZ() - entity.getZ());
         entity.setXRot(shootXRot(dir.y,dir.horizontalDistance()));
         entity.setYRot(shootYRot(dir.x,dir.z));
     }
     public static void lookAtByTowardsMovement(Entity entity, Entity target){
-        Vec3 dir = new Vec3(target.getX() - entity.getX(),target.getY(0.5f) - entity.getY(),target.getZ() - entity.getZ());
+        Vec3 dir = new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getY(),target.getZ() - entity.getZ());
         entity.setXRot((float)(Mth.atan2(dir.y, dir.horizontalDistance()) * Mth.RAD_TO_DEG));
         entity.setYRot((float)(Mth.atan2(dir.z, dir.x) * Mth.RAD_TO_DEG));
     }
