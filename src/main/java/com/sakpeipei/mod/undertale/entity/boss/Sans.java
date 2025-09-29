@@ -148,12 +148,11 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                     bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
                     // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
                     Vec3 relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
-                    bone.delayShoot(20,relation);
-                    Vec3 targetPos = this.getEyePosition().add(relation.yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD).xRot(-this.getXRot() * Mth.DEG_TO_RAD));
-                    bone.absMoveTo(targetPos.x,targetPos.y,targetPos.z);
-                    bone.lookAt(EntityAnchorArgument.Anchor.FEET,targetPos);
+//                    bone.delayShoot(20,relation);
+                    Vec3 pos = this.getEyePosition().add(relation.yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD).xRot(-this.getXRot() * Mth.DEG_TO_RAD));
+                    bone.absMoveTo(pos.x,pos.y,pos.z);
+                    RotUtils.lookAtByShoot(bone,target);
                     this.level().addFreshEntity(bone);
-//                    RotUtils.lookAtByShoot(bone,target);
                     angle += avg;
                 }
             }
@@ -229,15 +228,15 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
         if (isInvulnerableTo(source)) {
             return false;
         }
-        if (misses > 0) {
-            if (source.getEntity() instanceof LivingEntity livingEntity) {
-                this.setLastHurtByMob(livingEntity); // 核心：设置仇恨目标
-            }
-            LogUtils.getLogger().info("misses:{}", misses);
-            misses--;
-            teleport();
-            return false;
-        }
+//        if (misses > 0) {
+//            if (source.getEntity() instanceof LivingEntity livingEntity) {
+//                this.setLastHurtByMob(livingEntity); // 核心：设置仇恨目标
+//            }
+//            LogUtils.getLogger().info("misses:{}", misses);
+//            misses--;
+//            teleport();
+//            return false;
+//        }
         return super.hurt(source, power);
     }
 

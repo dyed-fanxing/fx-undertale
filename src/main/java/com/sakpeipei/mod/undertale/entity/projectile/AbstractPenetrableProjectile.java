@@ -44,6 +44,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
 
     @Override
     public void tick() {
+        super.tick();
         Entity entity = this.getOwner();
         if (this.level().isClientSide || (entity == null || !entity.isRemoved()) && this.level().isLoaded(this.blockPosition())) {
             super.tick();
@@ -59,7 +60,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
             this.checkInsideBlocks();
             Vec3 vec3 = this.getDeltaMovement();
             // 有位移时才更新旋转，否则由子类决定没位移时的朝向
-            if(vec3.lengthSqr() > 0) {
+            if(vec3.lengthSqr() > 1e-8) {
                 this.updateRotation();
             }
             double d0 = this.getX() + vec3.x;
