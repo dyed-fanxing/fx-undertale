@@ -26,7 +26,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * @author Sakqiongzi
  * @since 2025-08-18 18:44
  */
-public class FlyingBone extends Projectile implements GeoEntity {
+public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntity {
 
     private static final Logger log = LoggerFactory.getLogger(FlyingBone.class);
     private float damage;
@@ -53,44 +53,39 @@ public class FlyingBone extends Projectile implements GeoEntity {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
-
-    }
-
-    @Override
     public void tick() {
         super.tick();
-//        if (this.lerpSteps > 0 && this.getDeltaMovement().lengthSqr() < 1e-8) {
-//            this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
-//            this.lerpSteps--;
-//        }
+        if (this.lerpSteps > 0 && this.getDeltaMovement().lengthSqr() == 0.0f) {
+            this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
+            this.lerpSteps--;
+        }
         delay--;
-//        if (!this.level().isClientSide) {
-//            Entity owner = getOwner();
-//            LivingEntity target = null;
-//            if(owner instanceof Targeting targeting){
-//                target = targeting.getTarget();
-//            }
-//            if (delay > 0) {
-//                if (owner != null) {
-//                    this.moveTo(owner.getEyePosition().add(this.relativeDir.yRot(-owner.getYHeadRot() * Mth.DEG_TO_RAD).xRot(-owner.getXRot() * Mth.DEG_TO_RAD)));
-//                }
-//                if (target != null) {
-//                    RotUtils.lookAtByShoot(this,target);
-//                }
-//            }else if(delay == 0){
-//                if (target != null) {
-//                    this.shoot(target.getX() - this.getX(),target.getEyeY() - this.getY(),target.getZ() - this.getZ(),speed,0);
-//                }else{
-//                    if(owner != null){
-//                        Vec3 lookAngle = owner.getLookAngle();
-//                        this.shoot(lookAngle.x,lookAngle.y,lookAngle.z,speed,0);
-//                    }else{
-//                        this.discard();
-//                    }
-//                }
-//            }
-//        }
+        if (!this.level().isClientSide) {
+            Entity owner = getOwner();
+            LivingEntity target = null;
+            if(owner instanceof Targeting targeting){
+                target = targeting.getTarget();
+            }
+            if (delay > 0) {
+                if (owner != null) {
+                    this.moveTo(owner.getEyePosition().add(this.relativeDir.yRot(-owner.getYHeadRot() * Mth.DEG_TO_RAD).xRot(-owner.getXRot() * Mth.DEG_TO_RAD)));
+                }
+                if (target != null) {
+                    RotUtils.lookAtByShoot(this,target);
+                }
+            }else if(delay == 0){
+                if (target != null) {
+                    this.shoot(target.getX() - this.getX(),target.getEyeY() - this.getY(),target.getZ() - this.getZ(),speed,0);
+                }else{
+                    if(owner != null){
+                        Vec3 lookAngle = owner.getLookAngle();
+                        this.shoot(lookAngle.x,lookAngle.y,lookAngle.z,speed,0);
+                    }else{
+                        this.discard();
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -115,10 +110,10 @@ public class FlyingBone extends Projectile implements GeoEntity {
         super.onHitBlock(result);
         this.discard();
     }
-//    public void delayShoot(int delay, Vec3 relativeDir){
-//        this.relativeDir = relativeDir;
-//        this.delay = delay;
-//    }
+    public void delayShoot(int delay, Vec3 relativeDir){
+        this.relativeDir = relativeDir;
+        this.delay = delay;
+    }
 
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
@@ -134,30 +129,20 @@ public class FlyingBone extends Projectile implements GeoEntity {
         this.speed = tag.getFloat("speed");
     }
 
+    @Override
+    public void lerpMotion(double p_37279_, double p_37280_, double p_37281_) {
+        this.setDeltaMovement(p_37279_, p_37280_, p_37281_);
+    }
 
-//    @Override
-//    public void writeSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
-//        buf.writeFloat(getYRot());
-//        buf.writeFloat(getXRot());
-//        buf.writeFloat(getYRot());
-//        buf.writeFloat(getXRot());
-//    }
-//
-//    @Override
-//    public void readSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
-//        setRot(buf.readFloat(),buf.readFloat());
-//        this.yRotO = buf.readFloat();
-//        this.xRotO = buf.readFloat();
-//    }
-//    @Override
-//    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
-//        this.lerpX = x;
-//        this.lerpY = y;
-//        this.lerpZ = z;
-//        this.lerpYRot = yRot;
-//        this.lerpXRot = xRot;
-//        this.lerpSteps = steps;
-//    }
+    @Override
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        this.lerpX = x;
+        this.lerpY = y;
+        this.lerpZ = z;
+        this.lerpYRot = yRot;
+        this.lerpXRot = xRot;
+        this.lerpSteps = steps;
+    }
 
     @Override
     public double lerpTargetX() {
@@ -171,11 +156,14 @@ public class FlyingBone extends Projectile implements GeoEntity {
     public double lerpTargetZ() {
         return this.lerpSteps > 0 ? this.lerpZ : this.getZ();
     }
-
-    @Override
-    public float lerpTargetXRot() {
-        return super.lerpTargetXRot();
-    }
+//    @Override
+//    public float lerpTargetXRot() {
+//        return this.lerpSteps > 0 ? (float)this.lerpXRot : this.getXRot();
+//    }
+//    @Override
+//    public float lerpTargetYRot() {
+//        return this.lerpSteps > 0 ? (float)this.lerpYRot : this.getYRot();
+//    }
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {

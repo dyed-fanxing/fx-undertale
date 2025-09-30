@@ -148,10 +148,10 @@ public class Sans extends PathfinderMob implements Enemy, RangedAttackMob, Neutr
                     bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
                     // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
                     Vec3 relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
-//                    bone.delayShoot(20,relation);
                     Vec3 pos = this.getEyePosition().add(relation.yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD).xRot(-this.getXRot() * Mth.DEG_TO_RAD));
                     bone.absMoveTo(pos.x,pos.y,pos.z);
                     RotUtils.lookAtByShoot(bone,target);
+                    bone.delayShoot(20,relation);
                     this.level().addFreshEntity(bone);
                     angle += avg;
                 }

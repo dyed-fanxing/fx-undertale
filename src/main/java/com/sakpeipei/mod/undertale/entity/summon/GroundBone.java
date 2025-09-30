@@ -2,7 +2,6 @@ package com.sakpeipei.mod.undertale.entity.summon;
 
 import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
-import com.sakpeipei.mod.undertale.mechanism.AquaAttack;
 import com.sakpeipei.mod.undertale.mechanism.ColorAttack;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -121,6 +120,7 @@ public class GroundBone extends Entity implements Targeting,GeoEntity, GeoAnimat
 
     private void onHitBlick(BlockHitResult hitResult) {
         BlockState blockstate = this.level().getBlockState(hitResult.getBlockPos());
+
     }
 
     private boolean canHitEntity(Entity entity){
