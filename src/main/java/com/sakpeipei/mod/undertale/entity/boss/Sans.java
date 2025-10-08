@@ -429,7 +429,6 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                                     colorAttack = ColorAttack.AQUA;
                                 }
                                 groundBoneProjectileAttack(target,count,speed,colorAttack);
-                                cd =
                             }
                             case 3 -> {
 //                                gbAttack(target, count,0);
