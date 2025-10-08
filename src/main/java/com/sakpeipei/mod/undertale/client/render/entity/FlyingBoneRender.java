@@ -41,6 +41,9 @@ public class FlyingBoneRender extends GeoEntityRenderer<FlyingBone> {
 
     @Override
     protected void applyRotations(FlyingBone animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
+//        poseStack.mulPose(Axis.YP.rotationDegrees(animatable.getYRot() ));
+//        poseStack.mulPose(Axis.XP.rotationDegrees(90f - animatable.getXRot()));
+//        log.info("{},{}",animatable.getYRot(),animatable.getXRot());
         poseStack.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(partialTick,animatable.yRotO,animatable.getYRot()) ));
         poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTick,90f - animatable.xRotO,90f - animatable.getXRot()) ));
 //         由于先旋转，绕X轴旋转90度，导致实体的局部+Y轴对齐到了世界+Z轴，+Z轴则对齐到了世界-Y轴，

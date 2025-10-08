@@ -1,6 +1,7 @@
 package com.sakpeipei.mod.undertale.mechanism;
 
 import net.minecraft.world.entity.Entity;
+import software.bernie.geckolib.util.Color;
 
 /**
  * 橙色攻击
@@ -17,7 +18,7 @@ public class OrangeAttack implements ColorAttack{
     }
 
     @Override
-    public int getColor() {
-        return 0;
+    public Color getColor() {
+        return new Color(0xFFFCA600);
     }
 }

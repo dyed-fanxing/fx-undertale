@@ -42,7 +42,7 @@ import java.util.UUID;
 public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntityWithComplexSpawn,GeoEntity {
     private static final Logger log = LoggerFactory.getLogger(GasterBlasterFixed.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private static final RawAnimation WHOLE_ANIM = RawAnimation.begin().thenPlay("whole");
+    private final RawAnimation WHOLE_ANIM = RawAnimation.begin().thenPlay("whole");
 
     public static final byte CHARGE_TICK = 18;
     public static final float DEFAULT_LENGTH = 16f;    // 默认长度
@@ -86,7 +86,6 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
             checkHit();
         }
     }
-
     @Override
     public void checkHit(){
         Vec3 start = this.position();

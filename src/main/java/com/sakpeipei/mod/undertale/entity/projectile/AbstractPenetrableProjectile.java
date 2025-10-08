@@ -1,16 +1,19 @@
 package com.sakpeipei.mod.undertale.entity.projectile;
 
-import com.sakpeipei.mod.undertale.utils.ProjectileUtils;
+import com.sakpeipei.mod.undertale.utils.CollisionDetectionUtils;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileDeflection;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
@@ -30,25 +33,24 @@ import java.util.List;
  */
 public abstract class AbstractPenetrableProjectile extends Projectile {
     private static final Logger log = LoggerFactory.getLogger(AbstractPenetrableProjectile.class);
-    protected Vec3 relativeDir;     // 相对于拥有者的位置向量
     public double accelerationPower;
 
-    public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level, double accelerationPower) {
+    public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level) {
+        this(type, level,0.1);
+    }
+    public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level,double accelerationPower) {
         super(type, level);
         this.accelerationPower = accelerationPower;
     }
 
-    protected AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level) {
-        this(type, level,0.1);
-    }
 
     @Override
     public void tick() {
-        super.tick();
         Entity entity = this.getOwner();
         if (this.level().isClientSide || (entity == null || !entity.isRemoved()) && this.level().isLoaded(this.blockPosition())) {
             super.tick();
-            List<HitResult> hitResults = ProjectileUtils.getEntityHitResultsOnMoveVector(this, this::canHitEntity, this.getClipType());
+            List<HitResult> hitResults = CollisionDetectionUtils.getHitResultsOnMoveVector(this,this::canHitEntity,getClipType(),isCollision());
+//            log.info("攻击检测结果{}",hitResults);
             for (HitResult hitResult : hitResults) {
                 if (hitResult.getType() != HitResult.Type.MISS && !EventHooks.onProjectileImpact(this, hitResult)) {
                     ProjectileDeflection projectileDeflection = this.hitTargetOrDeflectSelf(hitResult);
@@ -60,7 +62,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
             this.checkInsideBlocks();
             Vec3 vec3 = this.getDeltaMovement();
             // 有位移时才更新旋转，否则由子类决定没位移时的朝向
-            if(vec3.lengthSqr() == 0.0F) {
+            if(vec3.lengthSqr() != 0.0F) {
                 this.updateRotation();
             }
             double d0 = this.getX() + vec3.x;
@@ -84,42 +86,53 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
         } else {
             this.discard();
         }
+    }
 
+    protected boolean isCollision(){
+        return true;
+    }
+
+    @Override
+    protected boolean canHitEntity(@NotNull Entity entity) {
+        return super.canHitEntity(entity) && !ownedBy(entity);
+    }
+
+    @Override
+    public boolean hurt(@NotNull DamageSource damageSource, float p_341906_) {
+        return !this.isInvulnerableTo(damageSource);
     }
 
 
-    @Override
-    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
 
+    @Override
+    public boolean shouldRenderAtSqrDistance(double r) {
+        double d0 = this.getBoundingBox().getSize() * (double)2.0F;
+        if (Double.isNaN(d0)) {
+            d0 = 4.0F;
+        }
+
+        d0 *= 64.0F;
+        return r < d0 * d0;
     }
 
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putDouble("acceleration_power", this.accelerationPower);
-        if(relativeDir != null){
-            tag.putDouble("relative_dir_x", relativeDir.x);
-            tag.putDouble("relative_dir_y", relativeDir.y);
-            tag.putDouble("relative_dir_z", relativeDir.z);
-        }
     }
-
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("acceleration_power", 6)) {
             this.accelerationPower = tag.getDouble("acceleration_power");
         }
-        if (tag.contains("relative_dir_x")) {
-            this.relativeDir = new Vec3(tag.getDouble("relative_dir_x"),tag.getDouble("relative_dir_y"),tag.getDouble("relative_dir_z"));
-        }
+
     }
 
-    @Nullable
-    protected ParticleOptions getTrailParticle() {
-        return ParticleTypes.WHITE_ASH;
-    }
+    @Override
+    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
 
+    }
     protected float getInertia() {
         return 0.95F;
     }
@@ -128,17 +141,12 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
         return 0.8F;
     }
 
-    protected ClipContext.Block getClipType() {
+    protected ParticleOptions getTrailParticle() {
+        return ParticleTypes.WHITE_ASH;
+    }
+
+    protected ClipContext.@NotNull Block getClipType() {
         return ClipContext.Block.COLLIDER;
     }
-    // 适度放大
-    @Override
-    public boolean shouldRenderAtSqrDistance(double distance) {
-        double size = this.getBoundingBox().getSize() * 2.0F; // 2倍而不是4倍
-        if (Double.isNaN(size)) {
-            size = 2.0F;
-        }
-        size *= 64.0F;
-        return distance < size * size;
-    }
+
 }

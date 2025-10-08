@@ -1,6 +1,10 @@
 package com.sakpeipei.mod.undertale.mechanism;
 
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import software.bernie.geckolib.util.Color;
 
 /**
  * 水色攻击
@@ -9,15 +13,21 @@ import net.minecraft.world.entity.Entity;
  */
 public class AquaAttack implements ColorAttack{
 
+    private static final Logger log = LogManager.getLogger(AquaAttack.class);
+
     @Override
     public boolean canHitEntity(Entity target){
-        double d0 = target.getX() - target.xo;
-        double d1 = target.getZ() - target.zo;
-        return d0 * d0 + d1 * d1 > (double)2.5000003E-7F;
+        if(target instanceof ServerPlayer player){
+            return player.getKnownMovement().lengthSqr() > 5.0E-5;
+        }
+        double dx = target.getX() - target.xo;
+        double dy = target.getY() - target.yo;
+        double dz = target.getZ() - target.zo;
+        return dx * dx + dy * dy + dz * dz > (double)2.5000003E-7F;
     }
 
     @Override
-    public int getColor() {
-        return 0;
+    public Color getColor() {
+        return new Color(0xFF42FCFF);
     }
 }

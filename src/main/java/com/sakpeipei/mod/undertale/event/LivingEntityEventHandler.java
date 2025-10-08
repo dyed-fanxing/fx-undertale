@@ -2,13 +2,9 @@ package com.sakpeipei.mod.undertale.event;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.Undertale;
-import com.sakpeipei.mod.undertale.entity.boss.Sans;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.TraceableEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.common.damagesource.DamageContainer;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;

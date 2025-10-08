@@ -63,8 +63,8 @@ public class GasterBlasterFixedItem extends Item implements GeoItem {
             blaster.setPos(player.position().add(new Vec3(0,safeDistance,0)
                 // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
                 .zRot((( player.getRandom().nextFloat() * 180 ) - 90) * Mth.DEG_TO_RAD)
-                .yRot(-player.getYRot() * Mth.DEG_TO_RAD)
                 .xRot(-player.getXRot() * Mth.DEG_TO_RAD)
+                .yRot(-player.getYRot() * Mth.DEG_TO_RAD)
             ));
 ////             4. 设置旋转
 //            Vec3 direction = targetPos.subtract(blaster.position()).normalize();

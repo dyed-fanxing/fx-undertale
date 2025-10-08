@@ -4,12 +4,9 @@ import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -27,8 +24,11 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * @since 2025-08-18 18:44
  */
 public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntity {
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     private static final Logger log = LoggerFactory.getLogger(FlyingBone.class);
+    protected Vec3 relativeDir;     // 相对于拥有者的位置向量
+
     private float damage;
     private float speed;
     private int delay;
@@ -59,8 +59,8 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
             this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
             this.lerpSteps--;
         }
-        delay--;
         if (!this.level().isClientSide) {
+            delay--;
             Entity owner = getOwner();
             LivingEntity target = null;
             if(owner instanceof Targeting targeting){
@@ -110,6 +110,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         super.onHitBlock(result);
         this.discard();
     }
+
     public void delayShoot(int delay, Vec3 relativeDir){
         this.relativeDir = relativeDir;
         this.delay = delay;
@@ -120,6 +121,11 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         super.addAdditionalSaveData(tag);
         tag.putInt("delay",delay);
         tag.putFloat("speed",speed);
+        if(relativeDir != null){
+            tag.putDouble("relative_dir_x", relativeDir.x);
+            tag.putDouble("relative_dir_y", relativeDir.y);
+            tag.putDouble("relative_dir_z", relativeDir.z);
+        }
     }
 
     @Override
@@ -127,11 +133,18 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         super.readAdditionalSaveData(tag);
         this.delay = tag.getInt("delay");
         this.speed = tag.getFloat("speed");
+        if (tag.contains("relative_dir_x")) {
+            this.relativeDir = new Vec3(tag.getDouble("relative_dir_x"),tag.getDouble("relative_dir_y"),tag.getDouble("relative_dir_z"));
+        }
     }
 
     @Override
     public void lerpMotion(double p_37279_, double p_37280_, double p_37281_) {
         this.setDeltaMovement(p_37279_, p_37280_, p_37281_);
+        if(this.xRotO == 0 && this.yRotO == 0){
+            this.xRotO = getXRot();
+            this.yRotO = getYRot();
+        }
     }
 
     @Override
@@ -156,23 +169,21 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     public double lerpTargetZ() {
         return this.lerpSteps > 0 ? this.lerpZ : this.getZ();
     }
-//    @Override
-//    public float lerpTargetXRot() {
-//        return this.lerpSteps > 0 ? (float)this.lerpXRot : this.getXRot();
-//    }
-//    @Override
-//    public float lerpTargetYRot() {
-//        return this.lerpSteps > 0 ? (float)this.lerpYRot : this.getYRot();
-//    }
-
     @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-
+    public float lerpTargetXRot() {
+        return this.lerpSteps > 0 ? (float)this.lerpXRot : this.getXRot();
+    }
+    @Override
+    public float lerpTargetYRot() {
+        return this.lerpSteps > 0 ? (float)this.lerpYRot : this.getYRot();
     }
 
     @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {}
+
+    @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return GeckoLibUtil.createInstanceCache(this);
+        return cache;
     }
 
 

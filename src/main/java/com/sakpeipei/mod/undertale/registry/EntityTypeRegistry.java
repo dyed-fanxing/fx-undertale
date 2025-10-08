@@ -2,6 +2,7 @@ package com.sakpeipei.mod.undertale.registry;
 
 import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
+import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
@@ -54,9 +55,15 @@ public class EntityTypeRegistry {
                     .eyeHeight(0.25f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
+    public static final DeferredHolder<EntityType<?>, EntityType<GroundBoneProjectile>> GROUND_BONE_PROJECTILE = register("ground_bone_projectile",
+            EntityType.Builder.<GroundBoneProjectile>of(GroundBoneProjectile::new, MobCategory.MISC)
+                    .sized(0.25f, 0.99f)  // 碰撞箱
+                    .eyeHeight(0.5445f)
+                    .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
+    );
     public static final DeferredHolder<EntityType<?>, EntityType<GroundBone>> GROUND_BONE = register("ground_bone",
             EntityType.Builder.<GroundBone>of(GroundBone::new, MobCategory.MISC)
-                    .sized(0.125f, 0.99f)  // 碰撞箱
+                    .sized(0.25f, 0.99f)  // 碰撞箱
                     .eyeHeight(0.5445f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );

@@ -21,6 +21,9 @@ public class GasterBlasterBeamRenderer{
     private static final ResourceLocation SIDE = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/beam/side.png");
     // 正面材质：前后面
     private static final ResourceLocation FRONT = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/beam/front.png");
+
+    private static final RenderType BEAM_SIDE_TYPE = RenderType.entityCutoutNoCull(SIDE);
+    private static final RenderType BEAM_FRONT_TYPE = RenderType.entityCutoutNoCull(FRONT);
     // 浅灰白色（220,220,220,255）
     static int r=220, g=220, b=220,a = 255;
     /**
@@ -34,7 +37,7 @@ public class GasterBlasterBeamRenderer{
         float partialWidth;
         if(entity.tickCount < GasterBlasterFixed.CHARGE_TICK){
             partialWidth = Mth.lerp((entity.tickCount + partialTicks) / GasterBlasterFixed.CHARGE_TICK, 0, halfWidth);
-            RenderUtils.renderCube(buffer.getBuffer(RenderType.entityTranslucent(FRONT)), partialWidth, poseStack.last(), r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
+            RenderUtils.renderCube(buffer.getBuffer(BEAM_FRONT_TYPE), partialWidth, poseStack.last(), r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
         }else{
             if(entity.tickCount == 46 ) partialWidth = Mth.lerp(partialTicks,width,0);
             else {
@@ -59,7 +62,7 @@ public class GasterBlasterBeamRenderer{
         switch (phase){
             case GasterBlasterPro.PHASE_CHARGE -> {
                 partialWidth = Mth.lerp((entity.timer + partialTicks) / GasterBlasterPro.MAX_CHARGE, 0, halfWidth );
-                RenderUtils.renderCube(buffer.getBuffer(RenderType.entityTranslucent(FRONT)), partialWidth, poseStack.last(), r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
+                RenderUtils.renderCube(buffer.getBuffer(BEAM_FRONT_TYPE), partialWidth, poseStack.last(), r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
                 LogUtils.getLogger().info("宽度{}",partialWidth);
                 poseStack.popPose();
                 return;
@@ -93,11 +96,11 @@ public class GasterBlasterBeamRenderer{
         // 沿着局部Z轴延申光束长度
         Vec3 end = new Vec3(0, 0, 1).scale(length);
         // 渲染四周
-        VertexConsumer sideVertexBuilder = buffer.getBuffer(RenderType.entityTranslucent(SIDE));
+        VertexConsumer sideVertexBuilder = buffer.getBuffer(BEAM_SIDE_TYPE);
         RenderUtils.buildSide(start,end, partialWidth,partialWidth,pose, sideVertexBuilder,r,g,b,a,length,OverlayTexture.NO_OVERLAY, packedLight);
 
 //        // 画前后端面
-        VertexConsumer frontVertexBuilder = buffer.getBuffer(RenderType.entityTranslucent(FRONT));
+        VertexConsumer frontVertexBuilder = buffer.getBuffer(BEAM_FRONT_TYPE);
         RenderUtils.drawXYQuad(start,partialWidth,partialWidth,pose, frontVertexBuilder, r,g,b,a,1,OverlayTexture.NO_OVERLAY,packedLight,0,0,-1);
         RenderUtils.drawXYQuad(end,partialWidth,partialWidth,pose, frontVertexBuilder, r,g,b,a,1,OverlayTexture.NO_OVERLAY,packedLight,0,0,1);
     }

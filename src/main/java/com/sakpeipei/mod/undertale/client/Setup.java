@@ -34,6 +34,7 @@ public class Setup {
         event.registerEntityRenderer(EntityTypeRegistry.SANS.get(), SansRender::new);
         event.registerEntityRenderer(EntityTypeRegistry.FLYING_BONE.get(), FlyingBoneRender::new);
         event.registerEntityRenderer(EntityTypeRegistry.GROUND_BONE.get(), GroundBoneRender::new);
+        event.registerEntityRenderer(EntityTypeRegistry.GROUND_BONE_PROJECTILE.get(), GroundBoneProjectileRender::new);
     }
 
     /**
