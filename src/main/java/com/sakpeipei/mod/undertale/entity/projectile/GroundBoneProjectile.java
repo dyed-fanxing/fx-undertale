@@ -10,9 +10,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -32,26 +30,36 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  */
 public class GroundBoneProjectile extends AbstractPenetrableProjectile implements IEntityWithComplexSpawn, AttackColored,GeoEntity, GeoAnimatable {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-
-    private ColorAttack colorAttack;
-    protected Vec3 targetPos;     // 目标位置
+    private float heightScale = 1.0f;
 
     private float damage;
     private float speed;
     private int delay;
 
+    protected Vec3 targetPos;     // 目标位置
+    private ColorAttack colorAttack;
+
     public GroundBoneProjectile(EntityType<? extends GroundBoneProjectile> type, Level level) {
         super(type, level);
         this.colorAttack = ColorAttack.WHITE;
     }
-    public GroundBoneProjectile(Level level, LivingEntity owner,double x,double y,double z, float damage, float speed, ColorAttack colorAttack) {
+    public GroundBoneProjectile(Level level, LivingEntity owner,float heightScale,float damage, float speed,double x,double y,double z,  ColorAttack colorAttack) {
         this(EntityTypeRegistry.GROUND_BONE_PROJECTILE.get(), level);
         this.setNoGravity(true);
-        setPos(x,y,z);
         setOwner(owner);
+        this.heightScale = heightScale;
         this.damage = damage;
         this.speed = speed;
+        setPos(x,y,z);
         this.colorAttack = colorAttack;
+        // 因为Entity类的构造方法直接使用了getDimensions，而调用时本类的heightScale还没有初始化
+        this.refreshDimensions(); // 立即应用缩放
+    }
+
+
+    @Override
+    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
+        return super.getDimensions(pose).scale(1f,heightScale);
     }
 
     @Override
@@ -143,11 +151,13 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
 
     @Override
     public void writeSpawnData(RegistryFriendlyByteBuf buf) {
+        buf.writeFloat(this.heightScale);
         buf.writeInt(this.colorAttack.getColor().getColor());
     }
 
     @Override
     public void readSpawnData(RegistryFriendlyByteBuf buf) {
+        this.heightScale = buf.readFloat();
         this.colorAttack = ColorAttack.getInstance(buf.readInt());
     }
 

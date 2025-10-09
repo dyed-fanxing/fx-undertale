@@ -42,6 +42,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
+import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -315,8 +316,9 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
         return cache;
     }
 
+    private int globalCD;       //全局CD
 
-    private static class RangedAttackGoal extends Goal {
+    private static class MainAttackGoal extends Goal {
         private final Sans mob;
         private int cd;
         private final double speedModifier;
@@ -324,11 +326,10 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
         private final float attackRadiusSqr;
         private final float backRadiusSqr;
         private final float pursuitRadiusSqr;
+        private int lastAttackType = -1;    //上一次外部攻击类型
+        private int round = 0; //轮次
 
-
-
-
-        public RangedAttackGoal(Sans entity, double speedModifier, float attackRadius) {
+        public MainAttackGoal(Sans entity, double speedModifier, float attackRadius) {
             this.cd = -1;
             this.mob = entity;
             this.speedModifier = speedModifier;
@@ -409,66 +410,86 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                     this.mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
                     // 不同实体攻击类型
 //                    int attackType = mob.random.nextInt(3);
-                    int attackType = 1;
+                    int attackType = lastAttackType == -1 ? 1: lastAttackType;
                     if (--cd == 0) {
                         LogUtils.getLogger().info("攻击类型{}",attackType);
-                        int count = ( MAX_MISSES - this.mob.misses ) / 10 + 1;
                         float diffFactor = (float) mob.level().getDifficulty().getId() / 2;
+                        int count = Mth.ceil(( MAX_MISSES - this.mob.misses + 1 ) * diffFactor);
                         switch (attackType) {
                             case 0 -> {
-                                float speed = mob.random.nextFloat() * 0.4f + 0.8f * diffFactor;
-                                flyBoneTrackAttack(target, count, speed);
+                                float speed = mob.random.nextFloat() * 0.5f + diffFactor;
+                                flyBoneTrackAttack(target,count,speed);
+                                lastAttackType = attackType;
                             }
                             case 1 -> {
-                                float speed = mob.random.nextFloat() * 0.4f + 0.8f * diffFactor;
-                                boolean b = mob.random.nextBoolean();
-                                count *=3;
-                                ColorAttack colorAttack = ColorAttack.WHITE;
-                                if(b){
-                                    count *= 2;
-                                    colorAttack = ColorAttack.AQUA;
-                                }
-                                groundBoneProjectileAttack(target,count,speed,colorAttack);
+                                float speed = mob.random.nextFloat() * 0.4f + diffFactor * 0.8f;
+                                groundBoneProjectileAttack(target,count,speed);
+                                lastAttackType = attackType;
+                            }
+                            case 2 -> {
+
                             }
                             case 3 -> {
 //                                gbAttack(target, count,0);
+
                             }
 
                         }
-                        cd = 40;
                     }
+                    cd = 40;
                 }
             }
         }
 
-        public void flyBoneTrackAttack(@NotNull LivingEntity target, int count, float speed) {
+        /**
+         * 飞行骨持续射击
+         */
+        private void flyBoneTrackAttack(LivingEntity target,int count,float speed) {
             String attackTypeUUID = UUID.randomUUID().toString();
             int angle = 0;
             int avg = 0;
-            count *= 9;
+            int delay = 10;
+            int type = mob.random.nextInt(2);
             for (int i = 0; i < count; i++) {
                 FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), mob.level(), mob, 1f, speed);
                 bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
-                // 生成扇形，不包含下方180度扇形区域， -90 对齐 MC坐标系
+                //位置
                 Vec3 relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
                 Vec3 pos = target.position().add(relation
                         .xRot(-mob.getXRot() * Mth.DEG_TO_RAD)
                         .yRot(-mob.getYHeadRot() * Mth.DEG_TO_RAD)
                 );
                 bone.absMoveTo(pos.x,pos.y,pos.z);
-                RotUtils.lookAtByShoot(bone,target);
-                bone.delayShoot(20,relation);
+                switch (type) {
+                    // 一次性射击
+                    case 0 -> {
+                        RotUtils.lookAtByShoot(bone,target);
+                        bone.delayShoot(10,relation);
+                    }
+                    // 持续射击
+                    case 1 -> {
+                        bone.delayShoot(delay, relation);
+                        delay+=5;
+                    }
+                }
                 mob.level().addFreshEntity(bone);
                 angle += avg;
             }
         }
 
-
-
         /**
          * 地面骨直线运动攻击
          */
-        public void groundBoneProjectileAttack(@NotNull LivingEntity target, int count, float speed,ColorAttack colorAttack) {
+        public void groundBoneProjectileAttack(@NotNull LivingEntity target,int count,float speed) {
+            boolean b = mob.random.nextBoolean();
+            count = count * 3;
+            ColorAttack colorAttack;
+            if(b){
+                count *= 2;
+                colorAttack = ColorAttack.AQUA;
+            } else {
+                colorAttack = ColorAttack.WHITE;
+            }
             Level level = mob.level();
             String attackTypeUUID = UUID.randomUUID().toString();
             Vec3 position = mob.position();
@@ -478,7 +499,7 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                 Vec3 pos = position.add(new Vec3(xOffset, 0, 1f)
                         .yRot(-mob.getYHeadRot() * Mth.DEG_TO_RAD)
                 );
-                GroundBoneProjectile bone = new GroundBoneProjectile(level, mob, pos.x, mob.getY(), pos.z, 1f, speed,colorAttack);
+                GroundBoneProjectile bone = new GroundBoneProjectile(level, mob,2f, 1f, speed,pos.x, mob.getY(), pos.z,colorAttack);
                 bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
                 Vec3 subtract = target.position().subtract(mob.position());
                 bone.delayShoot(10, bone.position().add(subtract));
@@ -487,8 +508,6 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                 xOffset += interval;
             }
         }
-
-
         /**
          * 从自身发出地面骨刺 - 6格内圆形，6格外直线
          */
@@ -592,48 +611,102 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
             }
         }
 
-        public void gbAttack(@NotNull LivingEntity target, int count,int angle, int type) {
-            String attackTypeUUID = UUID.randomUUID().toString();
-            int avg=0;
-            if(count == 1) {
-                angle= mob.random.nextInt() * 360;
-            }else{
-                avg = 180 / (count - 1);
-            }
-            for(int i = 0; i < count; i++) {
-                GasterBlasterFixed gb = new GasterBlasterFixed(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), mob.level(), mob);
-                gb.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 10));
-                Vec3 targetEyePos = target.getEyePosition();
-                switch (type) {
-                    // 召唤在自身周围攻击目标
-                    case 0 -> {
-                        // 先创建单位方向向量
-                        Vec3 direction = new Vec3(0, 1, 0)
-                                .zRot((mob.random.nextFloat() * 180 - 90) * Mth.DEG_TO_RAD);
-                        gb.setPos(mob.getEyePosition().add(
+    }
+
+    public void gb(LivingEntity target,int count,int type){
+        String attackTypeUUID = UUID.randomUUID().toString();
+        int angle = 0;
+        int avg = 0;
+        if(count == 1) {
+            angle= this.random.nextInt() * 360;
+        }else{
+            avg = 180 / (count - 1);
+        }
+        for(int i = 0; i < count; i++) {
+            GasterBlasterFixed gb = new GasterBlasterFixed(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), this.level(), this);
+            gb.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 10));
+            Vec3 targetEyePos = target.getEyePosition();
+            switch (type) {
+                // 召唤在自身周围攻击目标
+                case 0 -> {
+                    // 先创建单位方向向量
+                    Vec3 direction = new Vec3(0, 1, 0)
+                            .zRot((this.random.nextFloat() * 180 - 90) * Mth.DEG_TO_RAD);
+                    gb.setPos(this.getEyePosition().add(
 //                             偏移可能的位置
-                                new Vec3(direction.x * (mob.random.nextDouble() - 0.5) * 12,  // 左右
-                                        direction.y * (mob.random.nextDouble() * 3 + 3),    // 高度
-                                        mob.random.nextDouble() * 5
-                                )
-                                        // 旋转至视线方向，形成视锥
-                                        .xRot(-mob.getXRot() * Mth.DEG_TO_RAD)
-                                        .yRot(-mob.getYHeadRot() * Mth.DEG_TO_RAD)
-                        ));
-                        angle += avg;
-                    }
-                    // 召唤在目标周围攻击目标
-                    case 1 -> {
-                        double radius = mob.random.nextDouble() * 4.0 + (double) ATTACK_RANGE / 2; // 半径
-                        double height = mob.random.nextDouble() * 4; // 0 - 4格随机高度
-                        gb.setPos(targetEyePos.add(Math.sin(angle * Mth.DEG_TO_RAD) * radius, height, Math.cos(angle * Mth.DEG_TO_RAD) * radius));
-                        angle += avg;
-                    }
+                            new Vec3(direction.x * (this.random.nextDouble() - 0.5) * 12,  // 左右
+                                    direction.y * (this.random.nextDouble() * 3 + 3),    // 高度
+                                    this.random.nextDouble() * 5
+                            )
+                                    // 旋转至视线方向，形成视锥
+                                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+                    ));
+                    angle += avg;
                 }
-                gb.lookAt(EntityAnchorArgument.Anchor.FEET, targetEyePos);
-                mob.level().addFreshEntity(gb);
+                // 召唤在目标周围攻击目标
+                case 1 -> {
+                    double radius = this.random.nextDouble() * 4.0 + (double) ATTACK_RANGE / 2; // 半径
+                    double height = this.random.nextDouble() * 4; // 0 - 4格随机高度
+                    gb.setPos(targetEyePos.add(Math.sin(angle * Mth.DEG_TO_RAD) * radius, height, Math.cos(angle * Mth.DEG_TO_RAD) * radius));
+                    angle += avg;
+                }
             }
+            gb.lookAt(EntityAnchorArgument.Anchor.FEET, targetEyePos);
+            this.level().addFreshEntity(gb);
         }
     }
 
+
+    public class GasterBlasterAttackRoundGoal extends AttackRoundGoal{
+        private int offHandCD = 100;
+        public GasterBlasterAttackRoundGoal(Sans entity, int round, int cd, int count, int speed) {
+            super(entity, round, cd, count, speed);
+        }
+
+        @Override
+        public boolean canUse() {
+            return offHandCD == 0 && mob.misses <= MAX_MISSES / 2;
+        }
+
+
+        @Override
+        protected void execute(LivingEntity target) {
+            mob.gb(target);
+        }
+
+    }
+
+    private class AttackRoundGoal extends Goal {
+        protected Sans mob;
+        protected int round;
+        protected int count;
+        protected int speed;
+        protected int cd;
+        public AttackRoundGoal(Sans entity,int round,int cd,int count,int speed) {
+            this.mob = entity;
+            this.round = round;
+            this.cd = cd;
+            this.count = count;
+            this.speed = speed;
+        }
+
+        @Override
+        public boolean canUse() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            while(--cd ==0) {
+                while (--round > 0 ){
+                    LivingEntity target = mob.getTarget();
+                    execute(target);
+                }
+            }
+        }
+
+        protected void execute(LivingEntity target) {
+        }
+    }
 }
