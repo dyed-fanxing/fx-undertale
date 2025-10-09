@@ -18,7 +18,8 @@ public class AquaAttack implements ColorAttack{
     @Override
     public boolean canHitEntity(Entity target){
         if(target instanceof ServerPlayer player){
-            return player.getKnownMovement().lengthSqr() > 5.0E-5;
+            log.info("位移{},速度{},判定{}",player.getKnownMovement(),player.getKnownMovement().lengthSqr(),player.getKnownMovement().lengthSqr() > 1.0E-4);
+            return player.getKnownMovement().lengthSqr() > 1.0E-4;
         }
         double dx = target.getX() - target.xo;
         double dy = target.getY() - target.yo;

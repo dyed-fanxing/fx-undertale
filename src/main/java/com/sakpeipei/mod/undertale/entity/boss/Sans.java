@@ -9,7 +9,6 @@ import com.sakpeipei.mod.undertale.entity.summon.GroundBone;
 import com.sakpeipei.mod.undertale.mechanism.ColorAttack;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
-import com.sakpeipei.mod.undertale.registry.SoundRegistry;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -17,7 +16,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -30,11 +28,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.monster.Enemy;
-import net.minecraft.world.entity.monster.Evoker;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.EvokerFangs;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -42,7 +37,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
-import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -50,17 +44,12 @@ import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.EnumSet;
-import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 
 public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
@@ -113,7 +102,7 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
         this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Mob.class, 8.0F));
         this.goalSelector.addGoal(11, new RandomStrollGoal(this, 0.5f));
         // 远程攻击，需要实现performRangedAttack，然后通过goal去调用
-        this.goalSelector.addGoal(2, new RangedAttackGoal(this, 1.0, 16.0F));
+        this.goalSelector.addGoal(2, new MainAttackGoal(this, 1.0, 16.0F));
 
         this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)));
     }
@@ -316,7 +305,7 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
         return cache;
     }
 
-    private int globalCD;       //全局CD
+    private int globalCD = 0;       //全局CD
 
     private static class MainAttackGoal extends Goal {
         private final Sans mob;
@@ -354,7 +343,7 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
 
         @Override
         public void start() {
-            this.cd = 40;
+            mob.globalCD = 40;
             this.mob.setAggressive(true);
         }
 
@@ -397,6 +386,49 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                     }else{
                         this.mob.teleport();
                     }
+                    if(this.seeTime >= 20){
+                        this.mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+                        // 不同实体攻击类型
+//                    int attackType = mob.random.nextInt(3);
+                        int attackType = round == 0? 1: lastAttackType;
+                        if (--mob.globalCD == 0 || round > 0 && --cd == 0) {
+                            LogUtils.getLogger().info("攻击类型{}",attackType);
+                            int difficulty = mob.level().getDifficulty().getId();
+                            float diffFactor = (float) mob.level().getDifficulty().getId() / 2;
+                            int count = Mth.ceil(( MAX_MISSES - this.mob.misses + 1 ) * diffFactor);
+                            switch (attackType) {
+                                case 0 -> {
+                                    float speed = mob.random.nextFloat() * 0.5f + diffFactor;
+                                    flyBoneTrackAttack(target,count,speed);
+                                    lastAttackType = attackType;
+                                    cd = Mth.ceil(20 * (2 - diffFactor));
+                                    if(round == 0) {
+                                        round = 3 +  2 * (difficulty - 1);
+                                    }
+                                }
+                                case 1 -> {
+                                    float speed = mob.random.nextFloat() * 0.4f + diffFactor * 0.8f;
+                                    groundBoneProjectileAttack(target,count,speed);
+                                    lastAttackType = attackType;
+                                    if(round == 0) {
+                                        round = 3 +  2 * (difficulty - 1);
+                                    }
+                                    cd = Mth.ceil(40 * (2 - diffFactor));
+                                }
+                                case 2 -> {
+
+                                }
+                                case 3 -> {
+                                    mob.gbAttack(target, count,0);
+                                    round = 3;
+                                }
+                            }
+                            round --;
+                            if(round == 0){
+                                mob.globalCD = 100;
+                            }
+                        }
+                    }
                 }else{
                     if(disSqr <= pursuitRadiusSqr){
                         this.mob.getNavigation().moveTo(target, this.speedModifier);
@@ -405,38 +437,6 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                     }
 //                    this.strafingTime = -1;
                     this.mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
-                }
-                if(this.seeTime >= 20){
-                    this.mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
-                    // 不同实体攻击类型
-//                    int attackType = mob.random.nextInt(3);
-                    int attackType = lastAttackType == -1 ? 1: lastAttackType;
-                    if (--cd == 0) {
-                        LogUtils.getLogger().info("攻击类型{}",attackType);
-                        float diffFactor = (float) mob.level().getDifficulty().getId() / 2;
-                        int count = Mth.ceil(( MAX_MISSES - this.mob.misses + 1 ) * diffFactor);
-                        switch (attackType) {
-                            case 0 -> {
-                                float speed = mob.random.nextFloat() * 0.5f + diffFactor;
-                                flyBoneTrackAttack(target,count,speed);
-                                lastAttackType = attackType;
-                            }
-                            case 1 -> {
-                                float speed = mob.random.nextFloat() * 0.4f + diffFactor * 0.8f;
-                                groundBoneProjectileAttack(target,count,speed);
-                                lastAttackType = attackType;
-                            }
-                            case 2 -> {
-
-                            }
-                            case 3 -> {
-//                                gbAttack(target, count,0);
-
-                            }
-
-                        }
-                    }
-                    cd = 40;
                 }
             }
         }
@@ -501,7 +501,7 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                 );
                 GroundBoneProjectile bone = new GroundBoneProjectile(level, mob,2f, 1f, speed,pos.x, mob.getY(), pos.z,colorAttack);
                 bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
-                Vec3 subtract = target.position().subtract(mob.position());
+                Vec3 subtract = target.position().subtract(new Vec3(position.x, target.getY() ,position.z));
                 bone.delayShoot(10, bone.position().add(subtract));
                 bone.setYRot(RotUtils.shootYRot(subtract));
                 level.addFreshEntity(bone);
@@ -613,7 +613,7 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
 
     }
 
-    public void gb(LivingEntity target,int count,int type){
+    public void gbAttack(LivingEntity target,int count,int type){
         String attackTypeUUID = UUID.randomUUID().toString();
         int angle = 0;
         int avg = 0;
@@ -672,12 +672,12 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
 
         @Override
         protected void execute(LivingEntity target) {
-            mob.gb(target);
+            mob.gbAttack(target,5,0);
         }
 
     }
 
-    private class AttackRoundGoal extends Goal {
+    private static class AttackRoundGoal extends Goal {
         protected Sans mob;
         protected int round;
         protected int count;

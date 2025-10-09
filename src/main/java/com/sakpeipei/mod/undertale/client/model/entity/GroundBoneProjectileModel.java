@@ -9,4 +9,7 @@ public class GroundBoneProjectileModel extends DefaultedEntityGeoModel<GroundBon
     public GroundBoneProjectileModel() {
         super(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "bone"));
     }
+
+
+
 }

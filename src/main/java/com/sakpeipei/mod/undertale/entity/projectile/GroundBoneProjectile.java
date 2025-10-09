@@ -161,6 +161,10 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
         this.colorAttack = ColorAttack.getInstance(buf.readInt());
     }
 
+    public float getHeightScale() {
+        return heightScale;
+    }
+
     @Override
     public Color getColor() {
         return colorAttack.getColor();
