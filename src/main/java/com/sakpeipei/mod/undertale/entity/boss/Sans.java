@@ -307,6 +307,10 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
 
     private int globalCD = 0;       //全局CD
 
+    private Goal roundGoal;
+    private Goal gbOffHandGoal;
+    private Goal gravityControlGoal;
+
     private static class MainAttackGoal extends Goal {
         private final Sans mob;
         private int cd;
@@ -388,31 +392,18 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                     }
                     if(this.seeTime >= 20){
                         this.mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
-                        // 不同实体攻击类型
-//                    int attackType = mob.random.nextInt(3);
-                        int attackType = round == 0? 1: lastAttackType;
-                        if (--mob.globalCD == 0 || round > 0 && --cd == 0) {
-                            LogUtils.getLogger().info("攻击类型{}",attackType);
-                            int difficulty = mob.level().getDifficulty().getId();
-                            float diffFactor = (float) mob.level().getDifficulty().getId() / 2;
-                            int count = Mth.ceil(( MAX_MISSES - this.mob.misses + 1 ) * diffFactor);
-                            switch (attackType) {
+                        int difficulty = mob.level().getDifficulty().getId();
+                        float diffFactor = (float) mob.level().getDifficulty().getId() / 2;
+                        int count = Mth.ceil(( MAX_MISSES - this.mob.misses + 1 ) * diffFactor);
+                        if(--round > 0 && --cd == 0){
+                            switch (lastAttackType) {
                                 case 0 -> {
-                                    float speed = mob.random.nextFloat() * 0.5f + diffFactor;
-                                    flyBoneTrackAttack(target,count,speed);
-                                    lastAttackType = attackType;
-                                    cd = Mth.ceil(20 * (2 - diffFactor));
-                                    if(round == 0) {
-                                        round = 3 +  2 * (difficulty - 1);
-                                    }
+                                    float speed = mob.random.nextFloat() * 0.4f + diffFactor * 0.8f;
+                                    mob.flyBoneTrackAttack(target,count,speed);
                                 }
                                 case 1 -> {
                                     float speed = mob.random.nextFloat() * 0.4f + diffFactor * 0.8f;
-                                    groundBoneProjectileAttack(target,count,speed);
-                                    lastAttackType = attackType;
-                                    if(round == 0) {
-                                        round = 3 +  2 * (difficulty - 1);
-                                    }
+                                    mob.groundBoneProjectileAttack(target,count,speed);
                                     cd = Mth.ceil(40 * (2 - diffFactor));
                                 }
                                 case 2 -> {
@@ -423,10 +414,32 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                                     round = 3;
                                 }
                             }
-                            round --;
-                            if(round == 0){
-                                mob.globalCD = 100;
+                        }else if(mob.globalCD == 0){
+                            // 不同实体攻击类型
+//                    int attackType = mob.random.nextInt(3);
+                            int attackType = 1;
+                            LogUtils.getLogger().info("攻击类型{}",attackType);
+                            switch (attackType) {
+                                case 0 -> {
+                                    float speed = mob.random.nextFloat() * 0.4f + diffFactor * 0.8f;
+                                    mob.flyBoneTrackAttack(target,count,speed);
+                                }
+                                case 1 -> {
+                                    float speed = mob.random.nextFloat() * 0.4f + diffFactor * 0.8f;
+                                    mob.groundBoneProjectileAttack(target,count,speed);
+                                    lastAttackType = attackType;
+                                    round = 3 +  2 * (difficulty - 1);
+                                    cd = Mth.ceil(40 * (2 - diffFactor));
+                                }
+                                case 2 -> {
+
+                                }
+                                case 3 -> {
+                                    mob.gbAttack(target, count,0);
+                                    round = 3;
+                                }
                             }
+                            mob.globalCD = 120;
                         }
                     }
                 }else{
@@ -441,73 +454,6 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
             }
         }
 
-        /**
-         * 飞行骨持续射击
-         */
-        private void flyBoneTrackAttack(LivingEntity target,int count,float speed) {
-            String attackTypeUUID = UUID.randomUUID().toString();
-            int angle = 0;
-            int avg = 0;
-            int delay = 10;
-            int type = mob.random.nextInt(2);
-            for (int i = 0; i < count; i++) {
-                FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), mob.level(), mob, 1f, speed);
-                bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
-                //位置
-                Vec3 relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
-                Vec3 pos = target.position().add(relation
-                        .xRot(-mob.getXRot() * Mth.DEG_TO_RAD)
-                        .yRot(-mob.getYHeadRot() * Mth.DEG_TO_RAD)
-                );
-                bone.absMoveTo(pos.x,pos.y,pos.z);
-                switch (type) {
-                    // 一次性射击
-                    case 0 -> {
-                        RotUtils.lookAtByShoot(bone,target);
-                        bone.delayShoot(10,relation);
-                    }
-                    // 持续射击
-                    case 1 -> {
-                        bone.delayShoot(delay, relation);
-                        delay+=5;
-                    }
-                }
-                mob.level().addFreshEntity(bone);
-                angle += avg;
-            }
-        }
-
-        /**
-         * 地面骨直线运动攻击
-         */
-        public void groundBoneProjectileAttack(@NotNull LivingEntity target,int count,float speed) {
-            boolean b = mob.random.nextBoolean();
-            count = count * 3;
-            ColorAttack colorAttack;
-            if(b){
-                count *= 2;
-                colorAttack = ColorAttack.AQUA;
-            } else {
-                colorAttack = ColorAttack.WHITE;
-            }
-            Level level = mob.level();
-            String attackTypeUUID = UUID.randomUUID().toString();
-            Vec3 position = mob.position();
-            double interval = 0.375;
-            double xOffset = -interval * (count - 1) / 2;
-            for (int i = 0; i < count; i++) {
-                Vec3 pos = position.add(new Vec3(xOffset, 0, 1f)
-                        .yRot(-mob.getYHeadRot() * Mth.DEG_TO_RAD)
-                );
-                GroundBoneProjectile bone = new GroundBoneProjectile(level, mob,2f, 1f, speed,pos.x, mob.getY(), pos.z,colorAttack);
-                bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
-                Vec3 subtract = target.position().subtract(new Vec3(position.x, target.getY() ,position.z));
-                bone.delayShoot(10, bone.position().add(subtract));
-                bone.setYRot(RotUtils.shootYRot(subtract));
-                level.addFreshEntity(bone);
-                xOffset += interval;
-            }
-        }
         /**
          * 从自身发出地面骨刺 - 6格内圆形，6格外直线
          */
@@ -613,6 +559,73 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
 
     }
 
+    /**
+     * 飞行骨持续射击
+     */
+    private void flyBoneTrackAttack(LivingEntity target,int count,float speed) {
+        String attackTypeUUID = UUID.randomUUID().toString();
+        int angle = 0;
+        int avg = 0;
+        int delay = 10;
+        int type = this.random.nextInt(2);
+        for (int i = 0; i < count; i++) {
+            FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f, speed);
+            bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
+            //位置
+            Vec3 relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
+            Vec3 pos = target.position().add(relation
+                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+            );
+            bone.absMoveTo(pos.x,pos.y,pos.z);
+            switch (type) {
+                // 一次性射击
+                case 0 -> {
+                    RotUtils.lookAtByShoot(bone,target);
+                    bone.delayShoot(10,relation);
+                }
+                // 持续射击
+                case 1 -> {
+                    bone.delayShoot(delay, relation);
+                    delay += 5;
+                }
+            }
+            this.level().addFreshEntity(bone);
+            angle += avg;
+        }
+    }
+    /**
+     * 地面骨直线运动攻击
+     */
+    public void groundBoneProjectileAttack(@NotNull LivingEntity target,int count,float speed) {
+        Level level = this.level();
+        String attackTypeUUID = UUID.randomUUID().toString();
+
+        count = count * 3;
+        ColorAttack colorAttack;
+        if(this.random.nextBoolean()){
+            count *= 2;
+            colorAttack = ColorAttack.AQUA;
+        } else {
+            colorAttack = ColorAttack.WHITE;
+        }
+        Vec3 position = this.position();
+        double interval = 0.375;
+        double xOffset = -interval * (count - 1) / 2;
+        for (int i = 0; i < count; i++) {
+            Vec3 pos = position.add(new Vec3(xOffset, 0, 1f)
+                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+            );
+            GroundBoneProjectile bone = new GroundBoneProjectile(level, this,2f, 1f, speed,pos.x, this.getY(), pos.z,colorAttack);
+            bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
+            Vec3 subtract = target.position().subtract(new Vec3(position.x, target.getY() ,position.z));
+            bone.delayShoot(10, bone.position().add(subtract));
+            bone.setYRot(RotUtils.shootYRot(subtract));
+            level.addFreshEntity(bone);
+            xOffset += interval;
+        }
+    }
+
     public void gbAttack(LivingEntity target,int count,int type){
         String attackTypeUUID = UUID.randomUUID().toString();
         int angle = 0;
@@ -658,10 +671,10 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
     }
 
 
-    public class GasterBlasterAttackRoundGoal extends AttackRoundGoal{
+    public static class GasterBlasterAttackRoundGoal extends AttackRoundGoal{
         private int offHandCD = 100;
-        public GasterBlasterAttackRoundGoal(Sans entity, int round, int cd, int count, int speed) {
-            super(entity, round, cd, count, speed);
+        public GasterBlasterAttackRoundGoal(Sans entity, int round, int cd, int count) {
+            super(entity, round, cd, count);
         }
 
         @Override
@@ -681,25 +694,23 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
         protected Sans mob;
         protected int round;
         protected int count;
-        protected int speed;
         protected int cd;
-        public AttackRoundGoal(Sans entity,int round,int cd,int count,int speed) {
+        public AttackRoundGoal(Sans entity,int round,int cd,int count) {
             this.mob = entity;
             this.round = round;
             this.cd = cd;
             this.count = count;
-            this.speed = speed;
         }
 
         @Override
         public boolean canUse() {
-            return true;
+            return round > 0;
         }
 
         @Override
         public void tick() {
-            while(--cd ==0) {
-                while (--round > 0 ){
+            if(--cd ==0) {
+                if(--round > 0 ){
                     LivingEntity target = mob.getTarget();
                     execute(target);
                 }
