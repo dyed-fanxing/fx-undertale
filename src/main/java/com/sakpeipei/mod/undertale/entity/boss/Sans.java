@@ -22,11 +22,13 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.TimeUtil;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
@@ -395,6 +397,20 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                     }
 
                     if(this.seeTime >= 20){
+                        boolean onGround =  target.onGround();
+                        boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
+                        boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
+                        // 检查是否需要中断当前攻击（放在CD检查之前）
+                        if (attackType == 2) {
+                            if(onGround && target.getOnPos().getY() != mob.getOnPos().getY()){
+                                mob.globalCD = 120 - round * 20;
+                                round = 0;
+                            }else if(inAir){
+                                mob.globalCD = 120 - round * 20;
+                                round = 0;
+                            }
+                        }
+
                         int difficulty = mob.level().getDifficulty().getId();
                         float diffFactor = (float) difficulty / 2;
                         int count = Mth.ceil((MAX_MISSES - this.mob.misses + 1) * diffFactor);
@@ -402,6 +418,33 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                         if (mob.globalCD == 0){
                             if(round == 0){
                                 cd = 0;
+                                // 定义基础权重
+                                int[] weights = {3, 0, 0,0, 2,0}; // [飞行骨, 地面骨, 地刺波动骨, 地刺召唤骨, Gaster, 重力控制]
+                                if(!inAir){
+                                    weights[2] = 1; // 激活地刺权重
+                                    // 根据条件激活权重
+                                    if(target.getOnPos().getY() == mob.getOnPos().getY()){
+                                        weights[1] = 2; // 激活地面移动骨头权重
+                                    }
+                                }else{
+                                    weights[5] = 5;
+                                }
+                                if(mob.misses <= MAX_MISSES / 2 ) {
+                                    weights[5] = 5;
+                                }
+                                // 计算总权重
+                                int totalWeight = weights[0] + weights[1] + weights[2] + weights[3];
+
+                                // 权重随机选择
+                                int random = mob.random.nextInt(totalWeight);
+                                int current = 0;
+                                for (int i = 0; i < weights.length; i++) {
+                                    current += weights[i];
+                                    if (random < current) {
+                                        attackType = i;
+                                        break;
+                                    }
+                                }
                                 // 新轮次设置
                                 attackType = 1;
                                 switch (attackType) {
@@ -421,7 +464,7 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                                     case 1 -> {
                                         float speed = mob.random.nextFloat() * 0.4f + diffFactor * 0.8f;
                                         mob.groundBoneProjectileAttack(target, 3, speed);
-                                        cd = 10;
+                                        cd = 10 + 10 * ( 3 - difficulty ) ;
                                     }
                                     case 2 -> {
                                         // 其他攻击
@@ -444,11 +487,9 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                     }else{
                         this.mob.teleport();
                     }
-//                    this.strafingTime = -1;
                 }
             }
         }
-
         /**
          * 从自身发出地面骨刺 - 6格内圆形，6格外直线
          */
