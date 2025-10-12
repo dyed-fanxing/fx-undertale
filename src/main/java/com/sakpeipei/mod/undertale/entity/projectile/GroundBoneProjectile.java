@@ -75,7 +75,7 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
 
     @Override
     protected boolean isCollision() {
-        return false;
+        return true;
     }
 
     @Override

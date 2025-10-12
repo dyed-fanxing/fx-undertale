@@ -89,7 +89,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
     }
 
     protected boolean isCollision(){
-        return true;
+        return false;
     }
 
     @Override

@@ -7,14 +7,10 @@ import com.sakpeipei.mod.undertale.client.model.entity.GroundBoneProjectileModel
 import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import org.joml.Vector3d;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
-import software.bernie.geckolib.cache.object.GeoCube;
-import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 import javax.annotation.Nullable;
-import java.util.Optional;
 
 /**
  * @author Sakqiongzi

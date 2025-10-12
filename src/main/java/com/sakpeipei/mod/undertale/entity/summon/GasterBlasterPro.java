@@ -119,10 +119,12 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
                 setDeltaMovement(new Vec3(dirNormalize.x, 0, dirNormalize.z).normalize().scale(horSpeed).add(0, verSpeed, 0));
                 if(targetDisSqr <= DEFAULT_LENGTH_SQR){
                     if(cd == 0) fire();
-                    this.setRot(
-                            Mth.rotLerp(0.1f, getYRot(), RotUtils.yRot(dirNormalize.z, dirNormalize.x)),
-                            Mth.rotLerp(0.1f, getXRot(), RotUtils.xRot(dirNormalize.y)));
-                } else this.setRot(RotUtils.yRot(dirNormalize.z, dirNormalize.x), 0);
+//                    this.setRot(
+//                            Mth.rotLerp(0.1f, getYRot(), RotUtils.yRot(dirNormalize.z, dirNormalize.x)),
+//                            Mth.rotLerp(0.1f, getXRot(), RotUtils.xRot(dirNormalize.y)));
+                } else {
+//                    this.setRot(RotUtils.yRot(dirNormalize.z, dirNormalize.x), 0);
+                }
             }
             else if (!isFire() && owner != null) {
                 Vec3 targetPos = owner.getEyePosition().add(0, bbWidth / 2, 0);
@@ -134,7 +136,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
                 double horSpeed ;
                 if(horDistanceSqr > HOVER_RADIUS_SQR){
                     Vec3 dir = toOwnerDir.normalize();
-                    this.setYRot(RotUtils.yRot(dir.z, dir.x));
+                    this.setYRot(RotUtils.yRotD(dir.z, dir.x));
                     horSpeed = Mth.clamp(Math.sqrt(horDistanceSqr) * 0.5, 0.5, 1);
                 }else {
                     this.setYRot(owner.getYRot());

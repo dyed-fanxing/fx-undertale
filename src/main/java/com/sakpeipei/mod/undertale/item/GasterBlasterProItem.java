@@ -10,6 +10,7 @@ import com.sakpeipei.mod.undertale.registry.ItemRegistry;
 import com.sakpeipei.mod.undertale.utils.RayUtils;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -90,8 +91,7 @@ public class GasterBlasterProItem extends GasterBlasterFixedItem {
                 }
             }else {
                 HitResult hitResult = player.pick(GasterBlasterPro.DEFAULT_LENGTH, 1.0f, false);
-                Vec3 direction = hitResult.getLocation().subtract(blaster.position()).normalize();
-                blaster.absRotateTo(RotUtils.yRot(direction.z, direction.x), RotUtils.xRot(direction.y));
+                blaster.lookAt(EntityAnchorArgument.Anchor.FEET,hitResult.getLocation());
                 blaster.fire();
             }
             if(!exist) {

@@ -11,16 +11,39 @@ import net.minecraft.world.phys.Vec3;
  * 单位向量旋转工具
  */
 public class RotUtils {
-
-    // 航偏角度
-    public static float yRot(double x,double z) {
-        return (float) Math.toDegrees(Math.atan2(x, z));
+    // 航偏角度，同MC默认lookAt方法计算方式，对齐MC世界坐标Z轴
+    public static float yRotD(Vec3 vec3) {
+        return Mth.wrapDegrees((float)(Mth.atan2(vec3.x,vec3.z) * Mth.RAD_TO_DEG - 90.0F));
     }
-    // 物理仰俯角度（未对齐mc y轴）
-    public static float xRot(double y) {
-        return (float) Math.toDegrees(Math.asin(y));
+    // 仰俯角度，同MC默认lookAt方法计算方式，对齐MC世界坐标Y轴
+    public static float xRotD(Vec3 vec3) {
+        return Mth.wrapDegrees((float)(-(Mth.atan2(vec3.y, vec3.horizontalDistance()) * Mth.RAD_TO_DEG)));
+    }
+    // 航偏角度，同上
+    public static float yRotD(double x,double z) {
+        return Mth.wrapDegrees((float)(Mth.atan2(x, z) * Mth.RAD_TO_DEG - 90.0F));
+    }
+    // 仰俯角度，同上
+    public static float xRotD(double y,double hd) {
+        return Mth.wrapDegrees((float)(-(Mth.atan2(y, hd) * Mth.RAD_TO_DEG)));
     }
 
+    // 航偏弧度，同MC默认lookAt方法计算方式，对齐MC世界坐标Z轴
+    public static float yRotR(Vec3 vec3) {
+        return (float) (Mth.atan2(vec3.x,vec3.z) - 0.5);
+    }
+    // 仰俯弧度，同MC默认lookAt方法计算方式，对齐MC世界坐标Y轴
+    public static float xRotR(Vec3 vec3) {
+        return (float)(-Mth.atan2(vec3.y, vec3.horizontalDistance()));
+    }
+    // 航偏弧度，同上
+    public static float yRotR(double x,double z) {
+        return (float) (Mth.atan2(x,z) - 0.5);
+    }
+    // 仰俯弧度，同上
+    public static float xRotR(double y,double hd) {
+        return (float)(-Mth.atan2(y, hd));
+    }
 
     public static float shootYRot(Vec3 dir){
         return (float)(Mth.atan2(dir.x, dir.z) * Mth.RAD_TO_DEG);

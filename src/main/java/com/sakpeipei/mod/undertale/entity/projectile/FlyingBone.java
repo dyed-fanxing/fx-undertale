@@ -4,6 +4,7 @@ import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
@@ -68,7 +69,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
             }
             if (delay > 0) {
                 if (owner != null) {
-                    this.moveTo(owner.getEyePosition().add(this.relativeDir.yRot(-owner.getYHeadRot() * Mth.DEG_TO_RAD).xRot(-owner.getXRot() * Mth.DEG_TO_RAD)));
+                    this.moveTo(owner.getEyePosition().add(this.relativeDir.xRot(-owner.getXRot() * Mth.DEG_TO_RAD).yRot(-owner.getYHeadRot() * Mth.DEG_TO_RAD)));
                 }
                 if (target != null) {
                     RotUtils.lookAtByShoot(this,target);
@@ -122,9 +123,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         tag.putInt("delay",delay);
         tag.putFloat("speed",speed);
         if(relativeDir != null){
-            tag.putDouble("relative_dir_x", relativeDir.x);
-            tag.putDouble("relative_dir_y", relativeDir.y);
-            tag.putDouble("relative_dir_z", relativeDir.z);
+            tag.put("RelativeDir", this.newDoubleList(relativeDir.x, relativeDir.y, relativeDir.z));
         }
     }
 
@@ -133,8 +132,9 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         super.readAdditionalSaveData(tag);
         this.delay = tag.getInt("delay");
         this.speed = tag.getFloat("speed");
-        if (tag.contains("relative_dir_x")) {
-            this.relativeDir = new Vec3(tag.getDouble("relative_dir_x"),tag.getDouble("relative_dir_y"),tag.getDouble("relative_dir_z"));
+        if (tag.contains("RelativeDir")) {
+            ListTag list = tag.getList("RelativeDir", 6);
+            this.relativeDir = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
         }
     }
 
