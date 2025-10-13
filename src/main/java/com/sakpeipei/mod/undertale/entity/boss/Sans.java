@@ -364,8 +364,12 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag){
         super.readAdditionalSaveData(tag);
-        this.physicalStrength = tag.getInt("PhysicalStrength");
-        this.maxPhysicalStrength = tag.getShort("MaxPhysicalStrength");
+        if(tag.contains("PhysicalStrength")){
+            this.physicalStrength = tag.getInt("PhysicalStrength");
+        }
+        if(tag.contains("MaxPhysicalStrength")){
+            this.maxPhysicalStrength = tag.getInt("MaxPhysicalStrength");
+        }
         this.readPersistentAngerSaveData(this.level(), tag);
     }
 

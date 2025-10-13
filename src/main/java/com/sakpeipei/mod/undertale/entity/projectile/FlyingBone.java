@@ -103,14 +103,9 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
             }else{
                 damageSource = this.damageSources().mobProjectile(this, (LivingEntity) owner);
             }
-            if(livingTarget.hurt(damageSource, damage)){
-                return;
-            }else{
+            if(!livingTarget.hurt(damageSource, damage)){
                 this.deflect(ProjectileDeflection.REVERSE, target, this.getOwner(), false);
                 this.setDeltaMovement(this.getDeltaMovement().scale(0.2));
-                if (!this.level().isClientSide && this.getDeltaMovement().lengthSqr() < 1.0E-7) {
-                    this.discard();
-                }
             }
         }
     }
@@ -118,6 +113,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     @Override
     protected void onHitBlock(@NotNull BlockHitResult result) {
         super.onHitBlock(result);
+
         this.discard();
     }
 
