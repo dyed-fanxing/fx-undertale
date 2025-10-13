@@ -1,4 +1,4 @@
-package com.sakpeipei.mod.undertale.data;
+package com.sakpeipei.mod.undertale.data.tags.entitytype;
 
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import net.minecraft.core.HolderLookup;

@@ -1,4 +1,4 @@
-package com.sakpeipei.mod.undertale.event;
+package com.sakpeipei.mod.undertale.event.handler;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.Undertale;

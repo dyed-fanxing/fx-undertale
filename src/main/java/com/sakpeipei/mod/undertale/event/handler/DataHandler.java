@@ -1,9 +1,9 @@
-package com.sakpeipei.mod.undertale.event;
+package com.sakpeipei.mod.undertale.event.handler;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.data.DamageTypeTagsProvider;
-import com.sakpeipei.mod.undertale.data.EntityTypeTagsProvider;
+import com.sakpeipei.mod.undertale.data.tags.entitytype.EntityTypeTagsProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.neoforged.bus.api.SubscribeEvent;

@@ -4,6 +4,7 @@
     "package": "com.sakpeipei.mod.undertale.mixin",
     "compatibilityLevel": "JAVA_21",
     "mixins": [
+        "AbstractArrowMixin"
     ],
     "client": [
         "EntityRenderDispatcherMixin",

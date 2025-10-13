@@ -37,11 +37,10 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraft.world.level.pathfinder.Node;
-import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import org.jetbrains.annotations.NotNull;
@@ -149,6 +148,16 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
         }
         if(physicalStrength > 0) {
             Entity sourceEntity = source.getEntity();
+            // 体力消耗逻辑
+            if(source.is(DamageTypes.MOB_PROJECTILE) || source.is(DamageTypes.ARROW) || source.is(DamageTypes.MAGIC) || source.is(Tags.DamageTypes.IS_ENVIRONMENT)){
+                physicalStrength = Math.max(1 , physicalStrength - 1);
+            }else if(source.is(Tags.DamageTypes.IS_TECHNICAL)){
+                physicalStrength = Math.max(0 , physicalStrength - (int)power);
+                return super.hurt(source, power);
+            }else{
+                physicalStrength = Math.max(1 , physicalStrength - 2);
+            }
+
             if(getTarget() == null){
                 if (sourceEntity instanceof LivingEntity livingEntity) {
                     this.setLastHurtByMob(livingEntity);
@@ -167,14 +176,6 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                 }
             }else{
                 randomTeleport();
-            }
-            // 体力消耗逻辑
-            if(source.is(DamageTypes.MOB_PROJECTILE)){
-                physicalStrength = Math.max(1 , physicalStrength - 1);
-            }else if(source.is(DamageTypes.MAGIC)){
-                physicalStrength = Math.max(1 , physicalStrength - 1);
-            }else{
-                physicalStrength = Math.max(1 , physicalStrength - 2);
             }
             return true;
         }
@@ -355,16 +356,16 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-//        tag.putInt("misses",this.misses);
+        tag.putInt("PhysicalStrength",this.physicalStrength);
+        tag.putInt("MaxPhysicalStrength",this.maxPhysicalStrength);
         this.addPersistentAngerSaveData(tag);
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag){
         super.readAdditionalSaveData(tag);
-//        if(tag.contains("misses")){
-//            this.misses = tag.getShort("misses");
-//        }
+        this.physicalStrength = tag.getInt("PhysicalStrength");
+        this.maxPhysicalStrength = tag.getShort("MaxPhysicalStrength");
         this.readPersistentAngerSaveData(this.level(), tag);
     }
 

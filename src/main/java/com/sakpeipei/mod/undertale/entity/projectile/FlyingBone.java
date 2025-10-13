@@ -1,6 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.projectile;
 
-import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
+import com.sakpeipei.mod.undertale.data.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.nbt.CompoundTag;
@@ -8,6 +8,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.projectile.ProjectileDeflection;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -102,7 +103,15 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
             }else{
                 damageSource = this.damageSources().mobProjectile(this, (LivingEntity) owner);
             }
-            livingTarget.hurt(damageSource, damage);
+            if(livingTarget.hurt(damageSource, damage)){
+                return;
+            }else{
+                this.deflect(ProjectileDeflection.REVERSE, target, this.getOwner(), false);
+                this.setDeltaMovement(this.getDeltaMovement().scale(0.2));
+                if (!this.level().isClientSide && this.getDeltaMovement().lengthSqr() < 1.0E-7) {
+                    this.discard();
+                }
+            }
         }
     }
 

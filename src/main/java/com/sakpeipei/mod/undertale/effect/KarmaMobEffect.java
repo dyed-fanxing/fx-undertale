@@ -1,7 +1,7 @@
 package com.sakpeipei.mod.undertale.effect;
 
 import com.mojang.logging.LogUtils;
-import com.sakpeipei.mod.undertale.data.damagetype.DamageTypes;
+import com.sakpeipei.mod.undertale.data.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramMobEffectData;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
