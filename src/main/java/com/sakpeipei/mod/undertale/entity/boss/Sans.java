@@ -161,20 +161,13 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
             }
             if(sourceEntity != null){
                 if(this.distanceToSqr(sourceEntity) <= 25){
-                    log.info("近战传送");
-                    // 近战传送
                     meleeTeleport(sourceEntity);
                 }else{
-                    log.info("远程传送");
-                    // 远程传送
                     rangedTeleport(source.getDirectEntity());
-                    return true;
                 }
             }else{
-                log.info("随机传送");
                 randomTeleport();
             }
-
             // 体力消耗逻辑
             if(source.is(DamageTypes.MOB_PROJECTILE)){
                 physicalStrength = Math.max(1 , physicalStrength - 1);
@@ -188,15 +181,14 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
 
         return super.hurt(source, power);
     }
-
-    /**
-     * 远程攻击传送
-     */
     private void rangedTeleport(Entity entity) {
         float baseAngle;
+        double r;
         if(entity == null){
             baseAngle = this.getYHeadRot() - 90f;
+            r = 3 ;
         }else{
+            r = entity.getBbWidth() + this.getBbWidth()+ 2*getPickRadius();
             Vec3 movement = entity.getDeltaMovement();
             if(movement.lengthSqr() == 0f){
                 baseAngle = -RotUtils.yRotD(this.position().subtract(entity.position()));
@@ -207,10 +199,10 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
         for(int i = 0; i < 64 ; i++){
             boolean b = random.nextBoolean();
             float angle = baseAngle + (b? 90 : -90);
-            double radius = 3.0 + (0.3 + random.nextDouble() * 0.7);
-            double targetX = this.getX() + Mth.cos(angle * Mth.DEG_TO_RAD) * radius;
+            r = r + 0.5 + random.nextDouble() * 0.5;
+            double targetX = this.getX() + Mth.cos(angle * Mth.DEG_TO_RAD) * r;
             double targetY = this.getY() + random.nextDouble() * 16 - 8;
-            double targetZ = this.getZ() + Math.sin(angle * Mth.DEG_TO_RAD) * radius;
+            double targetZ = this.getZ() + Math.sin(angle * Mth.DEG_TO_RAD) * r;
 
             // 检查视线
             Vec3 from = this.getEyePosition();
@@ -222,9 +214,6 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
             }
         }
     }
-    /**
-     * 近战攻击传送
-     */
     private void meleeTeleport(Entity entity) {
         RandomSource random = this.random;
         for (int i = 0; i < 8; i++) {
@@ -268,6 +257,14 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                 return;
             }
         }
+    }
+    private void teleportTowards(Entity target) {
+        Vec3 dir = new Vec3(target.getX() - Sans.this.getX(), target.getEyeY() - Sans.this.getEyeY(), target.getZ() - Sans.this.getZ());
+        dir = dir.normalize().scale((double) ATTACK_RANGE / 2);
+        Sans.this.tryTeleportTo(
+                Sans.this.getX() + dir.x + (random.nextDouble() - 0.5) * 4,
+                Sans.this.getY() + dir.y + (random.nextDouble() - 0.5) * 16,
+                Sans.this.getZ() + dir.z + (random.nextDouble() - 0.5) * 4);
     }
 
     /**
@@ -407,6 +404,7 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
         private final float pursuitRadiusSqr;
         private int attackType = -1;    //攻击类型
         private int round = 0; //轮次
+        private Vec3 lastTargetPos; //丢失视线后目标最后一次位置
 
         public MainAttackGoal(double speedModifier, float attackRadius) {
             this.cd = -1;
@@ -455,6 +453,9 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                 boolean isContinueSee = this.seeTime > 0;
                 if (hasSeeSight != isContinueSee) {
                     this.seeTime = 0;
+                    if(!hasSeeSight) {
+                        lastTargetPos = target.position();
+                    }
                 }
                 if (hasSeeSight) {
                     ++this.seeTime;
@@ -474,11 +475,8 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                         Sans.this.getNavigation().moveTo(target, speedModifier);
                         // 超出追击范围
                         if(disSqr > pursuitRadiusSqr){
-                            Path path = Sans.this.getNavigation().createPath(target, ATTACK_RANGE / 2 + random.nextInt(4));
-                            if(path != null && !path.isDone()){
-                                BlockPos targetPos = path.getTarget();
-                                Sans.this.teleportTo(targetPos.getX(), targetPos.getY(), targetPos.getZ());
-                            }
+                            // 计算从自身指向目标的向量
+                            teleportTowards(target);
                         }
                     }
 
@@ -568,9 +566,9 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
                     }
                 }else{
                     if(disSqr <= pursuitRadiusSqr){
-                        Sans.this.getNavigation().moveTo(target, this.speedModifier);
+                        Sans.this.getNavigation().moveTo(lastTargetPos.x,lastTargetPos.y,lastTargetPos.z,this.speedModifier);
                     }else{
-                        Sans.this.meleeTeleport(target);
+                        teleportTowards(target);
                     }
                 }
             }
