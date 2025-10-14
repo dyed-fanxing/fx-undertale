@@ -1,7 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.projectile;
 
 import com.sakpeipei.mod.undertale.utils.CollisionDetectionUtils;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -13,7 +12,6 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileDeflection;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
@@ -21,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 /**
@@ -33,14 +30,14 @@ import java.util.List;
  */
 public abstract class AbstractPenetrableProjectile extends Projectile {
     private static final Logger log = LoggerFactory.getLogger(AbstractPenetrableProjectile.class);
-    public double accelerationPower;
+//    public double accelerationPower;
 
     public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level) {
         this(type, level,0.1);
     }
     public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level,double accelerationPower) {
         super(type, level);
-        this.accelerationPower = accelerationPower;
+//        this.accelerationPower = accelerationPower;
     }
 
 
@@ -69,15 +66,20 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
             double d1 = this.getY() + vec3.y;
             double d2 = this.getZ() + vec3.z;
             float f;
-            if (!this.isInWater()) {
-                f = this.getInertia();
-            } else {
+            if (this.isInWater()) {
                 for(int i = 0; i < 4; ++i) {
                     this.level().addParticle(ParticleTypes.BUBBLE, d0 - vec3.x * (double)0.25F, d1 - vec3.y * (double)0.25F, d2 - vec3.z * (double)0.25F, vec3.x, vec3.y, vec3.z);
                 }
                 f = this.getLiquidInertia();
+
+            } else {
+                f = this.getInertia();
             }
-            this.setDeltaMovement(vec3.add(vec3.normalize().scale(this.accelerationPower)).scale(f));
+//            this.setDeltaMovement(vec3.add(vec3.normalize().scale(this.accelerationPower)).scale(f));
+            this.setDeltaMovement(vec3.scale(f));
+            if(!this.isNoGravity()){
+                this.applyGravity();
+            }
             ParticleOptions particleoptions = this.getTrailParticle();
             if (particleoptions != null) {
                 this.level().addParticle(particleoptions, d0, d1 + this.getBbHeight() / 2, d2, 0.0F, 0.0F, 0.0F);
@@ -88,6 +90,9 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
         }
     }
 
+    /**
+     * 用于决定碰撞判定的类型，碰撞判定，还是线段判定
+     */
     protected boolean isCollision(){
         return false;
     }
@@ -118,14 +123,14 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putDouble("acceleration_power", this.accelerationPower);
+//        tag.putDouble("acceleration_power", this.accelerationPower);
     }
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("acceleration_power", 6)) {
-            this.accelerationPower = tag.getDouble("acceleration_power");
-        }
+//        if (tag.contains("acceleration_power", 6)) {
+//            this.accelerationPower = tag.getDouble("acceleration_power");
+//        }
 
     }
 

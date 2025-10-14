@@ -1,5 +1,6 @@
 package com.sakpeipei.mod.undertale.data;
 
+import com.sakpeipei.mod.undertale.common.DamageTypes;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.tags.DamageTypeTags;

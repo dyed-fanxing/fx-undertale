@@ -1,6 +1,7 @@
 package com.sakpeipei.mod.undertale.event.handler;
 
 import com.sakpeipei.mod.undertale.Undertale;
+import com.sakpeipei.mod.undertale.common.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
@@ -11,10 +12,12 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TraceableEntity;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 
 import java.util.HashSet;
 import java.util.UUID;
@@ -31,7 +34,7 @@ public class KarmaHandler {
      * 所以仍可以触发buff效果的onMobHurt方法
      */
     @SubscribeEvent
-    public static void onEntityHurt(LivingDamageEvent.Post event){
+    public static void onLivingDamagePost(LivingDamageEvent.Post event){
         LivingEntity entity = event.getEntity();
         DamageSource source = event.getSource();
         if(source.getEntity() instanceof Sans && entity.getEffect(MobEffectRegistry.KARMA) == null){
@@ -40,6 +43,21 @@ public class KarmaHandler {
         }
     }
 
+    /**
+     * 拦截活体进入伤害，设置无敌帧
+     * 伤害hurt事件顺序，LivingIncomingDamageEvent -> LivingDamageEvent.Pre -> LivingDamageEvent.Post
+     * 其中LivingDamageEvent.Pre -> LivingDamageEvent.Post是actuallyHurt方法内的，在hurt中被调用
+     */
+    @SubscribeEvent
+    public static void onLivingIncomingDamage(LivingIncomingDamageEvent event){
+        DamageSource source = event.getSource();
+        if(source.is(DamageTypes.KARMA)){
+            int tick = 0;
+            Iterable<ItemStack> armorSlots = event.getEntity().getArmorSlots();
+            // 遍历装备槽位，检测有无延长无敌时间的装备或道具
+            event.getContainer().setPostAttackInvulnerabilityTicks(tick);
+        }
+    }
     /**
      * 当KR攻击物被销毁时，移除攻击过的且还处于KR状态下的实体的 来自自身KR攻击招式的判重key
      */

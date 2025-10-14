@@ -1,6 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.projectile;
 
-import com.sakpeipei.mod.undertale.data.DamageTypes;
+import com.sakpeipei.mod.undertale.common.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.AttackColored;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.mechanism.ColorAttack;

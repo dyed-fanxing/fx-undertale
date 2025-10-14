@@ -1,6 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.projectile;
 
-import com.sakpeipei.mod.undertale.data.DamageTypes;
+import com.sakpeipei.mod.undertale.common.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.nbt.CompoundTag;
@@ -8,7 +8,6 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.projectile.ProjectileDeflection;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -57,7 +56,9 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     @Override
     public void tick() {
         super.tick();
-        if (this.lerpSteps > 0 && this.getDeltaMovement().lengthSqr() == 0.0f) {
+        Vec3 movement = this.getDeltaMovement();
+        double speedSqr = movement.lengthSqr();
+        if (this.lerpSteps > 0 && speedSqr == 0.0f) {
             this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
             this.lerpSteps--;
         }
@@ -68,14 +69,18 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
             if(owner instanceof Targeting targeting){
                 target = targeting.getTarget();
             }
-            if (delay > 0) {
+            if(delay < 0){
+                if(speedSqr <= 2.5000003E-7F){
+                    this.discard();
+                }
+            }else if(delay > 0){
                 if (owner != null) {
                     this.moveTo(owner.getEyePosition().add(this.relativeDir.xRot(-owner.getXRot() * Mth.DEG_TO_RAD).yRot(-owner.getYHeadRot() * Mth.DEG_TO_RAD)));
                 }
                 if (target != null) {
                     RotUtils.lookAtByShoot(this,target);
                 }
-            }else if(delay == 0){
+            }else{
                 if (target != null) {
                     this.shoot(target.getX() - this.getX(),target.getEyeY() - this.getY(),target.getZ() - this.getZ(),speed,0);
                 }else{
@@ -94,7 +99,6 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     protected void onHitEntity(@NotNull EntityHitResult result) {
         Entity target = result.getEntity();
         Entity owner = this.getOwner();
-
         // 设置伤害逻辑
         if (target instanceof LivingEntity livingTarget) {
             DamageSource damageSource;
@@ -104,8 +108,15 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
                 damageSource = this.damageSources().mobProjectile(this, (LivingEntity) owner);
             }
             if(!livingTarget.hurt(damageSource, damage)){
-                this.deflect(ProjectileDeflection.REVERSE, target, this.getOwner(), false);
-                this.setDeltaMovement(this.getDeltaMovement().scale(0.2));
+                // TODO 如果是因为无敌导致的，则不应该执行，因为是穿透的，因为继续走，而不是被阻挡，待判定要不要用这个
+//                if(livingTarget.isBlocking()){
+//
+//                }
+                this.setNoGravity(false);
+                this.deflect(ProjectileDeflection.MIRROR_DEFLECT, target, this.getOwner(), false);
+                if(!this.level().isClientSide){
+                    this.setDeltaMovement(this.getDeltaMovement().scale(0.2));
+                }
             }
         }
     }
@@ -120,6 +131,16 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     public void delayShoot(int delay, Vec3 relativeDir){
         this.relativeDir = relativeDir;
         this.delay = delay;
+    }
+
+    @Override
+    protected float getInertia() {
+        return 0.95f;
+    }
+
+    @Override
+    protected double getDefaultGravity() {
+        return 0.05f;
     }
 
     @Override
@@ -142,6 +163,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
             this.relativeDir = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
         }
     }
+
 
     @Override
     public void lerpMotion(double p_37279_, double p_37280_, double p_37281_) {
@@ -182,6 +204,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     public float lerpTargetYRot() {
         return this.lerpSteps > 0 ? (float)this.lerpYRot : this.getYRot();
     }
+
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {}

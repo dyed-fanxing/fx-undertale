@@ -1,6 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.summon;
 
-import com.sakpeipei.mod.undertale.data.DamageTypes;
+import com.sakpeipei.mod.undertale.common.DamageTypes;
 import com.sakpeipei.mod.undertale.registry.SoundRegistry;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;

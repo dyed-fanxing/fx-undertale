@@ -1,7 +1,7 @@
 package com.sakpeipei.mod.undertale.effect;
 
 import com.mojang.logging.LogUtils;
-import com.sakpeipei.mod.undertale.data.DamageTypes;
+import com.sakpeipei.mod.undertale.common.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramMobEffectData;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
@@ -40,9 +40,12 @@ public class KarmaMobEffect extends MobEffect {
                 float last = entity.getAbsorptionAmount();
                 if (entity.getHealth() > 1) {
                     if(entity instanceof Player)                LogUtils.getLogger().info("KR之前{}", karamData.getValue());
-                    entity.hurt(entity.damageSources().source(DamageTypes.KARMA), 1.0f);
+                    if(entity.hurt(entity.damageSources().source(DamageTypes.KARMA), 1.0f)){
+                        karamData.subValue(entity);
+                    }
+                }else{
+                    karamData.setValue((byte) 0);
                 }
-                karamData.subValue(entity);
                 float current = entity.getAbsorptionAmount();
                 if(current != last){
                     karamData.sendPacket(entity,current);

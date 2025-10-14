@@ -2,7 +2,7 @@ package com.sakpeipei.mod.undertale.mixin;
 
 import com.google.common.collect.Lists;
 import com.sakpeipei.mod.undertale.common.CommonHooks;
-import com.sakpeipei.mod.undertale.data.tags.entitytype.EntityTypeTags;
+import com.sakpeipei.mod.undertale.common.tags.entitytype.EntityTypeTags;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.network.protocol.game.ClientboundGameEventPacket;

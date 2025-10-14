@@ -1,7 +1,7 @@
 package com.sakpeipei.mod.undertale.entity.summon;
 
+import com.sakpeipei.mod.undertale.common.DamageTypes;
 import com.sakpeipei.mod.undertale.registry.ParticleRegistry;
-import com.sakpeipei.mod.undertale.data.DamageTypes;
 import com.sakpeipei.mod.undertale.item.GasterBlasterProItem;
 import com.sakpeipei.mod.undertale.registry.ItemRegistry;
 import com.sakpeipei.mod.undertale.registry.SoundRegistry;

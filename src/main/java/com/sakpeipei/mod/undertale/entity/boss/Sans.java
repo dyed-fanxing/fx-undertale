@@ -29,10 +29,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.animal.FlyingAnimal;
-import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -77,11 +75,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
 
     private final static short ATTACK_RANGE = 16;  // 攻击距离
-    private static final short MAX_MISSES = 50;    // 最大默认闪避次数nm
 
     private int physicalStrength;     // 当前体力
     private int maxPhysicalStrength;  // 最大体力
-    private int targetChangeTime;
 
     private static final UniformInt PERSISTENT_ANGER_TIME = TimeUtil.rangeOfSeconds(30, 60);
     private int remainingPersistentAngerTime;
@@ -109,13 +105,13 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         this.goalSelector.addGoal(2, new MainAttackGoal(1.0, 16.0F));
 
 
-
-        this.goalSelector.addGoal(3, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
         this.goalSelector.addGoal(9, new LookAtPlayerGoal(this, Player.class, 3.0F, 1.0F));
         this.goalSelector.addGoal(10, new LookAtPlayerGoal(this, Mob.class, 8.0F));
         this.goalSelector.addGoal(11, new RandomStrollGoal(this, 0.5f));
 
-        this.targetSelector.addGoal(1, (new HurtByTargetGoal(this)));
+        this.targetSelector.addGoal(0, new LookforAngerGoal());
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
     }
 
     @Override
@@ -267,7 +263,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                 Sans.this.getY() + dir.y + (random.nextDouble() - 0.5) * 16,
                 Sans.this.getZ() + dir.z + (random.nextDouble() - 0.5) * 4);
     }
-
     /**
      * Sans的传送逻辑（基于末影人原版代码优化）
      * @return 是否传送成功
@@ -313,18 +308,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                 DefaultAnimations.genericWalkIdleController(this),
                 DefaultAnimations.genericLivingController(this)
         );
-    }
-
-
-    @Override
-    public void setTarget(@Nullable LivingEntity target) {
-        super.setTarget(target);
-        if (getTarget() == null) {
-            this.targetChangeTime = 0;
-        } else {
-            this.targetChangeTime = this.tickCount;
-        }
-
     }
 
     //可攻击的中立生物需要实现的
@@ -386,8 +369,30 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         return cache;
     }
 
-    private int globalCD = 0;       //全局CD
-    private boolean isSpecial = false; //标识需要特殊处理的阶段，即初见杀，饶恕阶段，特殊攻击
+
+    class LookforAngerGoal extends Goal{
+        public LookforAngerGoal() {
+            super();
+        }
+
+        @Override
+        public boolean canUse() {
+            return Sans.this.getTarget() == null && Sans.this.getPersistentAngerTarget() != null;
+        }
+
+        @Override
+        public void start() {
+            if (Sans.this.level() instanceof ServerLevel level) {
+                if(level.getEntity(Sans.this.getPersistentAngerTarget()) instanceof LivingEntity entity){
+                    Sans.this.setTarget(entity);
+                }
+            }
+        }
+    }
+
+    private int globalCD = 0;           //全局CD
+    private boolean isSpecial = false;  //标识需要特殊处理的阶段，即初见杀，饶恕阶段，特殊攻击
+
 
     class TransitionPhaseGoal extends Goal{
         public TransitionPhaseGoal() {
@@ -435,13 +440,17 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         @Override
         public void start() {
             globalCD = 40;
+            // 必须要初始化lastTargetPos的位置
+            // 因为如果第一次攻击，Sans传送至方块后方，没有视线，isContinueSee 和hasSeeSight 均是false
+            // 那么就导致激怒后直接进入没有视线的分支，又因为在追击范围内，会向lastTargetPos移动，如果lastTargetPos是null，就会报错
+            lastTargetPos = Sans.this.getTarget().position();
             Sans.this.setAggressive(true);
         }
 
         @Override
         public void stop() {
             this.seeTime = 0;
-            this.cd = -1;
+            this.cd = 0;
             Sans.this.setAggressive(false);
         }
         @Override
@@ -453,7 +462,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         public void tick() {
             LivingEntity target = getTarget();
             if (target != null) {
-                double disSqr = distanceToSqr(target.getX(), target.getY(), target.getZ());
+                double disSqr = Sans.this.distanceToSqr(target.getX(), target.getY(), target.getZ());
                 boolean hasSeeSight = Sans.this.getSensing().hasLineOfSight(target);
                 boolean isContinueSee = this.seeTime > 0;
                 if (hasSeeSight != isContinueSee) {
@@ -501,7 +510,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                         }
 
                         int difficulty = Sans.this.level().getDifficulty().getId();
-                        float diffFactor = (float) difficulty / 2;
                         // 全局CD冷却结束，且轮次为0，则选择新的攻击类型
                         if (Sans.this.globalCD == 0){
                             if(round == 0){
@@ -545,12 +553,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                 // 统一的攻击执行
                                 switch (attackType) {
                                     case 0 -> {
-                                        float speed = Sans.this.random.nextFloat() * 0.4f + diffFactor * 0.8f;
+                                        float speed = Sans.this.random.nextFloat() * 0.4f + difficulty * 0.5f;
                                         int type = Sans.this.random.nextInt(2);
                                         cd = Sans.this.flyBoneTrackAttack(target, 5, speed,type,difficulty) + 30 - 10 * difficulty ;
                                     }
                                     case 1 -> {
-                                        float speed = Sans.this.random.nextFloat() * 0.4f + diffFactor * 0.8f;
+                                        float speed = Sans.this.random.nextFloat() * 0.4f + difficulty * 0.5f;
                                         Sans.this.groundBoneProjectileAttack(target, 3, speed);
                                         cd = 40 - 10 * difficulty;
                                     }

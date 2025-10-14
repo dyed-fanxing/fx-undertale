@@ -1,6 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.summon;
 
-import com.sakpeipei.mod.undertale.data.DamageTypes;
+import com.sakpeipei.mod.undertale.common.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.mechanism.ColorAttack;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
