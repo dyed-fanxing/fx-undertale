@@ -58,7 +58,7 @@ import java.util.EnumSet;
 import java.util.UUID;
 
 
-public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
+public class Sans extends Monster implements NeutralMob, GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private static final Logger log = LoggerFactory.getLogger(Sans.class);
     private final RawAnimation THROW_UP_ANIM = RawAnimation.begin().thenLoop("throw.up");
@@ -128,7 +128,6 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
 
     @Override
     protected void customServerAiStep() {
-        super.customServerAiStep();
         if(this.globalCD > 0) {
             this.globalCD--;
         }
@@ -139,6 +138,7 @@ public class Sans extends Monster implements Enemy,NeutralMob, GeoEntity {
         }else{
             isSpecial = true;
         }
+        super.customServerAiStep();
     }
 
     @Override
