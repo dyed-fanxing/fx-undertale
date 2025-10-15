@@ -58,9 +58,12 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
             }
             this.checkInsideBlocks();
             Vec3 vec3 = this.getDeltaMovement();
+            double speedSqr = vec3.lengthSqr();
             // 有位移时才更新旋转，否则由子类决定没位移时的朝向
-            if(vec3.lengthSqr() != 0.0F) {
+            if(speedSqr > 2.5000003E-7F){
                 this.updateRotation();
+            }else if(speedSqr != 0f){
+                this.discard();
             }
             double d0 = this.getX() + vec3.x;
             double d1 = this.getY() + vec3.y;

@@ -36,7 +36,7 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
     private float speed;
     private int delay;
 
-    protected Vec3 targetPos;     // 目标位置
+    protected Vec3 movement;     // 运动向量
     private ColorAttack colorAttack;
 
     public GroundBoneProjectile(EntityType<? extends GroundBoneProjectile> type, Level level) {
@@ -68,7 +68,7 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
         if(!this.level().isClientSide) {
             delay--;
             if(delay == 0){
-                this.shoot(targetPos.x - this.getX(),targetPos.y - this.getY(),targetPos.z - this.getZ(), speed ,0);
+                this.shoot(movement.x,movement.y,movement.z, speed ,0);
             }
         }
     }
@@ -107,9 +107,9 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
         this.discard();
     }
 
-    public void delayShoot(int delay, @NotNull Vec3 targetPos) {
+    public void delayShoot(int delay, @NotNull Vec3 movement) {
         this.delay = delay;
-        this.targetPos = targetPos;
+        this.movement = movement;
     }
     @Override
     public void lerpMotion(double p_37279_, double p_37280_, double p_37281_) {
@@ -125,8 +125,8 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
         tag.putInt("Color",this.colorAttack.getColor().getColor());
         tag.putInt("Delay",delay);
         tag.putFloat("Speed",speed);
-        if(targetPos != null){
-            tag.put("TargetPos", this.newDoubleList(targetPos.x, targetPos.y, targetPos.z));
+        if(movement != null){
+            tag.put("Movement", this.newDoubleList(movement.x, movement.y, movement.z));
         }
     }
 
@@ -137,9 +137,9 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
         if(tag.contains("Color")){
             this.colorAttack = ColorAttack.getInstance(tag.getInt("Color"));
         }
-        if (tag.contains("TargetPos")) {
-            ListTag list = tag.getList("TargetPos", 6);
-            this.targetPos = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
+        if (tag.contains("Movement")) {
+            ListTag list = tag.getList("Movement", 6);
+            this.movement = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
         }
     }
 

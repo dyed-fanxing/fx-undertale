@@ -28,11 +28,14 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     private static final Logger log = LoggerFactory.getLogger(FlyingBone.class);
-    protected Vec3 relativeDir;     // 相对于拥有者的位置向量
+    protected Vec3 targetPos;   // 目标位置
+    private boolean isTrackTarget = false; //是否追踪目标
+    private int delay;
 
     private float damage;
     private float speed;
-    private int delay;
+
+
     // 核心插值属性
     public int lerpSteps;
     private double lerpX;
@@ -40,6 +43,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     private double lerpZ;
     private double lerpYRot;
     private double lerpXRot;
+
 
     public FlyingBone(EntityType<? extends FlyingBone> type, Level level) {
         super(type, level);
@@ -56,40 +60,28 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     @Override
     public void tick() {
         super.tick();
-        Vec3 movement = this.getDeltaMovement();
-        double speedSqr = movement.lengthSqr();
-        if (this.lerpSteps > 0 && speedSqr == 0.0f) {
+        if (this.lerpSteps > 0 && this.getDeltaMovement().lengthSqr() == 0.0f) {
             this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
             this.lerpSteps--;
         }
         if (!this.level().isClientSide) {
             delay--;
             Entity owner = getOwner();
-            LivingEntity target = null;
-            if(owner instanceof Targeting targeting){
-                target = targeting.getTarget();
-            }
-            if(delay < 0){
-                if(speedSqr <= 2.5000003E-7F){
-                    this.discard();
+            if(isTrackTarget){
+                if(owner instanceof Targeting targeting){
+                    LivingEntity target = targeting.getTarget();
+                    if (target != null) {
+                        this.targetPos = target.getEyePosition();
+                    }
                 }
-            }else if(delay > 0){
-                if (owner != null) {
-                    this.moveTo(owner.getEyePosition().add(this.relativeDir.xRot(-owner.getXRot() * Mth.DEG_TO_RAD).yRot(-owner.getYHeadRot() * Mth.DEG_TO_RAD)));
-                }
-                if (target != null) {
-                    RotUtils.lookAtByShoot(this,target);
+                if(delay > 0){
+                    RotUtils.lookAtByShoot(this,targetPos);
+                }else if(delay == 0) {
+                    this.shoot(targetPos.x - this.getX(),targetPos.y - this.getEyeY(),targetPos.z - this.getZ(), speed,0);
                 }
             }else{
-                if (target != null) {
-                    this.shoot(target.getX() - this.getX(),target.getEyeY() - this.getY(),target.getZ() - this.getZ(),speed,0);
-                }else{
-                    if(owner != null){
-                        Vec3 lookAngle = owner.getLookAngle();
-                        this.shoot(lookAngle.x,lookAngle.y,lookAngle.z,speed,0);
-                    }else{
-                        this.discard();
-                    }
+                if(delay == 0) {
+                    this.shoot(targetPos.x - this.getX(),targetPos.y - this.getEyeY(),targetPos.z - this.getZ(), speed,0);
                 }
             }
         }
@@ -124,18 +116,21 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     @Override
     protected void onHitBlock(@NotNull BlockHitResult result) {
         super.onHitBlock(result);
-
         this.discard();
     }
 
-    public void delayShoot(int delay, Vec3 relativeDir){
-        this.relativeDir = relativeDir;
+    public void delayTrackShoot(int delay){
+        this.delay = delay;
+        this.isTrackTarget = true;
+    }
+    public void delayShoot(int delay,Vec3 targetPos){
+        this.targetPos = targetPos;
         this.delay = delay;
     }
 
     @Override
     protected float getInertia() {
-        return 0.95f;
+        return 0.99f;
     }
 
     @Override
@@ -148,9 +143,10 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         super.addAdditionalSaveData(tag);
         tag.putInt("delay",delay);
         tag.putFloat("speed",speed);
-        if(relativeDir != null){
-            tag.put("RelativeDir", this.newDoubleList(relativeDir.x, relativeDir.y, relativeDir.z));
+        if(targetPos != null){
+            tag.put("TargetPos", this.newDoubleList(targetPos.x, targetPos.y, targetPos.z));
         }
+        tag.putBoolean("IsTrackTarget",isTrackTarget);
     }
 
     @Override
@@ -158,10 +154,11 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         super.readAdditionalSaveData(tag);
         this.delay = tag.getInt("delay");
         this.speed = tag.getFloat("speed");
-        if (tag.contains("RelativeDir")) {
-            ListTag list = tag.getList("RelativeDir", 6);
-            this.relativeDir = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
+        if (tag.contains("TargetPos")) {
+            ListTag list = tag.getList("TargetPos", 6);
+            this.targetPos = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
         }
+        tag.getBoolean("IsTrackTarget");
     }
 
 

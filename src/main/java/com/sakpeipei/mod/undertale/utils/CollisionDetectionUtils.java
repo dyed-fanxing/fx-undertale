@@ -66,4 +66,5 @@ public class CollisionDetectionUtils {
         results.sort(Comparator.comparingDouble(a -> from.distanceToSqr(a.getLocation())));
         return results;
     }
+
 }

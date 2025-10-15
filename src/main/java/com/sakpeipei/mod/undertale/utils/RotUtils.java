@@ -45,11 +45,11 @@ public class RotUtils {
         return (float)(-Mth.atan2(y, hd));
     }
 
-    public static float shootYRot(Vec3 dir){
-        return (float)(Mth.atan2(dir.x, dir.z) * Mth.RAD_TO_DEG);
+    public static float shootYRot(Vec3 vec3){
+        return (float)(Mth.atan2(vec3.x, vec3.z) * Mth.RAD_TO_DEG);
     }
-    public static float shootXRot(Vec3 dir){
-        return  (float)(Mth.atan2(dir.y, dir.horizontalDistance())  * Mth.RAD_TO_DEG);
+    public static float shootXRot(Vec3 vec3){
+        return  (float)(Mth.atan2(vec3.y, vec3.horizontalDistance())  * Mth.RAD_TO_DEG);
     }
     // 航偏角度
     public static float shootYRot(double x,double z) {
@@ -65,11 +65,16 @@ public class RotUtils {
         entity.absRotateTo(shootXRot(dir.y,dir.horizontalDistance()),shootYRot(dir.x,dir.z));
     }
     public static void lookAtByShoot(Entity entity, Entity target){
-        Vec3 dir = new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getY(),target.getZ() - entity.getZ());
-        entity.setXRot(shootXRot(dir.y,dir.horizontalDistance()));
-        entity.setYRot(shootYRot(dir.x,dir.z));
+        lookAtByShootMotion(entity,new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getEyeY(),target.getZ() - entity.getZ()));
     }
-    public static void lookAtByTowardsMovement(Entity entity, Entity target){
+    public static void lookAtByShoot(Entity entity, Vec3 targetPos){
+        lookAtByShootMotion(entity,new Vec3(targetPos.x - entity.getX(),targetPos.y - entity.getEyeY(),targetPos.z - entity.getZ()));
+    }
+    public static void lookAtByShootMotion(Entity entity,Vec3 vec3){
+        entity.setXRot(shootXRot(vec3.y,vec3.horizontalDistance()));
+        entity.setYRot(shootYRot(vec3.x,vec3.z));
+    }
+    public static void lookAtByTowardsMotion(Entity entity, Entity target){
         Vec3 dir = new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getY(),target.getZ() - entity.getZ());
         entity.setXRot((float)(Mth.atan2(dir.y, dir.horizontalDistance()) * Mth.RAD_TO_DEG));
         entity.setYRot((float)(Mth.atan2(dir.z, dir.x) * Mth.RAD_TO_DEG));

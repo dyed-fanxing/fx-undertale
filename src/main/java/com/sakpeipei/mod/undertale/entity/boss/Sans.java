@@ -396,7 +396,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
     class TransitionPhaseGoal extends Goal{
         public TransitionPhaseGoal() {
-            this.setFlags(EnumSet.of(Goal.Flag.MOVE));
+            this.setFlags(EnumSet.of(Flag.MOVE));
         }
 
         @Override
@@ -553,7 +553,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                 // 统一的攻击执行
                                 switch (attackType) {
                                     case 0 -> {
-                                        float speed = Sans.this.random.nextFloat() * 0.4f + difficulty * 0.5f;
+                                        float speed = Sans.this.random.nextFloat() * 0.2f + difficulty * 0.5f + 0.5f;
                                         int type = Sans.this.random.nextInt(2);
                                         cd = Sans.this.flyBoneTrackAttack(target, 5, speed,type,difficulty) + 30 - 10 * difficulty ;
                                     }
@@ -598,31 +598,75 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         int angle = 0;
         int avg = 180 / (count - 1);
         int delay = 10;
+        int pattern = this.random.nextInt(3);
         for (int i = 0; i < count; i++) {
             FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f, speed);
             bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
             //位置
-            Vec3 relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
-            Vec3 pos = this.getEyePosition().add(relation
-                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
-                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-            );
-            bone.absMoveTo(pos.x,pos.y,pos.z);
+            Vec3 relation,pos;
             switch (type) {
                 // 一次性射击
                 case 0 -> {
-                    RotUtils.lookAtByShoot(bone,target);
-                    bone.delayShoot(delay,relation);
+                    Vec3  centerPos = this.getEyePosition();
+                    switch (pattern) {
+                        case 0 -> {
+                            relation = new Vec3(0, 0.5, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
+                            pos = centerPos.add(relation
+                                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+                            );
+                            angle += avg;
+                            bone.absMoveTo(pos.x,pos.y,pos.z);
+                        }
+                        case 1 -> {
+                            relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
+                            pos = centerPos.add(relation
+                                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+                            );
+                            angle += avg;
+                            bone.absMoveTo(pos.x,pos.y,pos.z);
+                        }
+                    }
+                    Vec3 movement = target.getEyePosition().subtract(centerPos);
+                    bone.setXRot(RotUtils.shootXRot(movement));
+                    bone.setYRot(RotUtils.shootYRot(movement));
+                    bone.delayShoot(delay,bone.getEyePosition().add(movement));
                 }
                 // 持续射击
                 case 1 -> {
+                    switch (pattern) {
+                        case 0 -> {
+                            do{
+                                pos = this.position().add(
+//                             偏移可能的位置
+                                        new Vec3((this.random.nextDouble() - 0.5) * 12,  // 左右
+                                                this.random.nextDouble() * 3 + this.getBbHeight() * 0.5f,    // 高度
+                                                this.random.nextDouble() * 3
+                                        )
+                                                // 旋转至视线方向，形成视锥
+                                                .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                                                .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+                                );
+                                bone.absMoveTo(pos.x,pos.y,pos.z);
+                            }while(!bone.level().noCollision(bone, bone.getBoundingBox()));
+                        }
+                        case 1 -> {
+                            relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
+                            pos = this.getEyePosition().add(relation
+                                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+                            );
+                            angle += avg;
+                            bone.absMoveTo(pos.x,pos.y,pos.z);
+                        }
+                    }
                     RotUtils.lookAtByShoot(bone,target);
-                    bone.delayShoot(delay, relation);
+                    bone.delayTrackShoot(delay);
                     delay += 8 - difficulty;
                 }
             }
             this.level().addFreshEntity(bone);
-            angle += avg;
         }
         return delay;
     }
@@ -651,9 +695,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             );
             GroundBoneProjectile bone = new GroundBoneProjectile(level, this,heightAdd, 1f, speed,pos.x, this.getY(), pos.z,colorAttack);
             bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
-            Vec3 subtract = target.position().subtract(new Vec3(position.x, target.getY() ,position.z));
-            bone.delayShoot(10, bone.position().add(subtract));
-            bone.setYRot(RotUtils.shootYRot(subtract));
+            Vec3 motion = target.position().subtract(new Vec3(position.x, target.getY() ,position.z));
+            bone.delayShoot(10, motion);
+            bone.setYRot(RotUtils.shootYRot(motion));
             level.addFreshEntity(bone);
             xOffset += interval;
         }
