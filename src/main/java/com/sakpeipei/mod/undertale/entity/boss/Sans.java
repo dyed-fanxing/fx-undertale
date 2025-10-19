@@ -542,7 +542,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                     }
                                 }
                                 // 新轮次设置
-                                attackType = 0;
+                                attackType = 1;
                                 switch (attackType) {
                                     case 0, 1 -> round = 3 + 2 * (difficulty - 1);
                                     case 3 -> round = 3;
@@ -553,9 +553,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                 // 统一的攻击执行
                                 switch (attackType) {
                                     case 0 -> {
-                                        float speed = Sans.this.random.nextFloat() * 0.2f + difficulty * 0.5f + 0.5f;
-                                        int type = Sans.this.random.nextInt(2);
-                                        cd = Sans.this.flyBoneTrackAttack(target, 5, speed,type,difficulty) + 30 - 10 * difficulty ;
+                                        cd = Sans.this.flyBoneTrackAttack(target,difficulty) + 30 - 10 * difficulty ;
                                     }
                                     case 1 -> {
                                         float speed = Sans.this.random.nextFloat() * 0.4f + difficulty * 0.5f;
@@ -593,82 +591,158 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
      * 飞行骨持续射击
      * @return 需要执行完攻击的总tick
      */
-    private int flyBoneTrackAttack(LivingEntity target,int count,float speed,int type,int difficulty) {
+    private int flyBoneTrackAttack(LivingEntity target, int difficulty) {
+        float speed = this.random.nextFloat() * 0.2f + difficulty * 0.5f + 0.5f;
         String attackTypeUUID = UUID.randomUUID().toString();
-        int angle = 0;
-        int avg = 180 / (count - 1);
         int delay = 10;
-        int pattern = this.random.nextInt(3);
-        for (int i = 0; i < count; i++) {
-            FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f, speed);
-            bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
-            //位置
-            Vec3 relation,pos;
-            switch (type) {
-                // 一次性射击
-                case 0 -> {
-                    Vec3  centerPos = this.getEyePosition();
-                    switch (pattern) {
-                        case 0 -> {
-                            relation = new Vec3(0, 0.5, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
-                            pos = centerPos.add(relation
-                                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
-                                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-                            );
-                            angle += avg;
-                            bone.absMoveTo(pos.x,pos.y,pos.z);
-                        }
-                        case 1 -> {
-                            relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
-                            pos = centerPos.add(relation
-                                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
-                                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-                            );
-                            angle += avg;
-                            bone.absMoveTo(pos.x,pos.y,pos.z);
+        switch (this.random.nextInt(2)) {
+            // 一次性射击
+            case 0 -> {
+                Vec3 centerPos = new Vec3(this.getX(),this.getY(0.5f),this.getZ());
+                switch (this.random.nextInt(3)) {
+                    // 圆
+                    case 0 -> {
+                        // 根据难度确定层数和每层数量
+                        for (int layer = 0; layer < 3; layer++) {
+                            // 当前层的数量和半径
+                            int count = (5 + difficulty) * (layer + 1);
+                            float radius = 0.4f + layer * 0.3f;
+                            int angleStep = 360 / count;
+                            int layerOffset = angleStep / 2 * layer;
+                            for (int i = 0; i < count; i++) {
+                                FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
+                                // 计算当前角度，层偏移角度 实现错位
+                                int angle = i * angleStep + layerOffset;
+                                Vec3 pos = centerPos.add(new Vec3(
+                                        radius * Mth.cos(angle * Mth.DEG_TO_RAD),
+                                        radius * Mth.sin(angle * Mth.DEG_TO_RAD),
+                                        (2-layer)*0.5)
+                                        .xRot(-this.getXRot() * Mth.DEG_TO_RAD).yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD));
+                                bone.absMoveTo(pos.x, pos.y, pos.z);
+
+                                // 射击逻辑
+                                Vec3 movement = target.getEyePosition().subtract(centerPos);
+                                bone.setXRot(RotUtils.shootXRot(movement));
+                                bone.setYRot(RotUtils.shootYRot(movement));
+
+                                bone.delayShoot(delay, bone.getEyePosition().add(movement));
+                                this.level().addFreshEntity(bone);
+                            }
+                            delay += 6 - difficulty;
                         }
                     }
-                    Vec3 movement = target.getEyePosition().subtract(centerPos);
-                    bone.setXRot(RotUtils.shootXRot(movement));
-                    bone.setYRot(RotUtils.shootYRot(movement));
-                    bone.delayShoot(delay,bone.getEyePosition().add(movement));
+                    // 长方形
+                    case 1 -> {
+                        for (int layer = 0; layer < 3; layer++) {
+                            int cols = 3 * (layer * 2 + 1) + difficulty;
+                            float startX = -(cols - 1) * 0.2f;
+                            float startY = -layer * 0.3f;
+                            for (int row = 0; row < layer + 1; row++) {
+                                for (int col = 0; col < cols; col++) {
+                                    FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
+                                    Vec3 pos = centerPos.add(new Vec3(startX + col * 0.4f, startY + row * 0.6f, 1)
+                                            .xRot(-this.getXRot() * Mth.DEG_TO_RAD).yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD));
+                                    bone.absMoveTo(pos.x, pos.y, pos.z);
+                                    Vec3 movement = target.getEyePosition().subtract(centerPos);
+                                    bone.setXRot(RotUtils.shootXRot(movement));
+                                    bone.setYRot(RotUtils.shootYRot(movement));
+
+                                    bone.delayShoot(delay, bone.getEyePosition().add(movement));
+                                    this.level().addFreshEntity(bone);
+                                }
+                            }
+                            delay += 6 - difficulty;
+                        }
+                    }
+                    // 倒三角
+                    case 2 -> {
+                        for (int layer = 0; layer < 3; layer++) {
+                            for (int repeat = 0; repeat < layer + 1; repeat++) {
+                                int rows = 2 + difficulty;
+                                float startY = - (rows - 1) * 0.15f;
+                                float offset = (repeat - layer * 0.5f) * (rows * 0.375f + 0.375f);
+                                // 奇数层：正三角形（顶点在上，底边在下）
+                                for (int row = 0; row < rows; row++) {
+                                    int cols = row + 1; // 正：倒
+                                    float startX = -(cols - 1) * 0.1875f + offset;
+                                    for (int col = 0; col < cols; col++) {
+                                        FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
+                                        Vec3 pos = centerPos.add(new Vec3(startX + col * 0.375f, startY + row * 0.3f, 1)
+                                                .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                                                .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD));
+                                        bone.absMoveTo(pos.x, pos.y, pos.z);
+
+                                        Vec3 movement = target.getEyePosition().subtract(centerPos);
+                                        bone.setXRot(RotUtils.shootXRot(movement));
+                                        bone.setYRot(RotUtils.shootYRot(movement));
+                                        bone.delayShoot(delay, bone.getEyePosition().add(movement));
+                                        this.level().addFreshEntity(bone);
+                                    }
+                                }
+                            }
+                            delay += 6 - difficulty;
+                        }
+                    }
                 }
-                // 持续射击
-                case 1 -> {
-                    switch (pattern) {
-                        case 0 -> {
-                            do{
-                                pos = this.position().add(
-//                             偏移可能的位置
-                                        new Vec3((this.random.nextDouble() - 0.5) * 12,  // 左右
-                                                this.random.nextDouble() * 3 + this.getBbHeight() * 0.5f,    // 高度
+            }
+            // 持续射击
+            case 1 -> {
+                switch (this.random.nextInt(2)) {
+                    case 0 -> {
+                        int count = 6 * difficulty; // 模式0的count
+                        for (int i = 0; i < count; i++) {
+                            FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
+                            do {
+                                Vec3 pos = this.position().add(
+                                        new Vec3((this.random.nextDouble() - 0.5) * 12,
+                                                this.random.nextDouble() * 3 + this.getBbHeight() * 0.5f,
                                                 this.random.nextDouble() * 3
                                         )
-                                                // 旋转至视线方向，形成视锥
                                                 .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
                                                 .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
                                 );
-                                bone.absMoveTo(pos.x,pos.y,pos.z);
-                            }while(!bone.level().noCollision(bone, bone.getBoundingBox()));
+                                bone.absMoveTo(pos.x, pos.y, pos.z);
+                            } while (!bone.level().noCollision(bone, bone.getBoundingBox()));
+
+                            RotUtils.lookAtByShoot(bone, target);
+                            bone.delayTrackShoot(delay);
+                            delay += 6 - difficulty;
+                            this.level().addFreshEntity(bone);
                         }
-                        case 1 -> {
-                            relation = new Vec3(0, 1, 0).zRot((angle - 90) * Mth.DEG_TO_RAD);
-                            pos = this.getEyePosition().add(relation
+                    }
+                    case 1 -> {
+                        int count = 6 * difficulty;
+                        float avg = 180f / (count - 1);
+                        for (int i = 0; i < count; i++) {
+                            FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
+                            // 椭圆参数方程，从-90度到90度（上半椭圆）
+                            float angle =  i * avg;
+                            float r = 1.3f + difficulty * 0.1f;
+                            // 椭圆上的点：x = a*cos(θ), y = b*sin(θ)
+                            Vec3 pos = new Vec3(getX(),getY(0.5f),getZ()).add(
+                                    new Vec3( r * Mth.cos(angle * Mth.DEG_TO_RAD), r * Mth.sin(angle * Mth.DEG_TO_RAD), 0)
                                     .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
                                     .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
                             );
-                            angle += avg;
-                            bone.absMoveTo(pos.x,pos.y,pos.z);
+                            bone.absMoveTo(pos.x, pos.y, pos.z);
+
+                            RotUtils.lookAtByShoot(bone, target);
+                            bone.delayTrackShoot(delay);
+                            delay += 6 - difficulty;
+                            this.level().addFreshEntity(bone);
                         }
                     }
-                    RotUtils.lookAtByShoot(bone,target);
-                    bone.delayTrackShoot(delay);
-                    delay += 8 - difficulty;
                 }
             }
-            this.level().addFreshEntity(bone);
         }
         return delay;
+    }
+
+    // 提取出来的创建bone方法
+    private FlyingBone createFlyingBone(float speed, String attackTypeUUID) {
+        FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f, speed);
+        bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
+        return bone;
     }
     /**
      * 地面骨直线运动攻击

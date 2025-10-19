@@ -66,9 +66,8 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         }
         if (!this.level().isClientSide) {
             delay--;
-            Entity owner = getOwner();
             if(isTrackTarget){
-                if(owner instanceof Targeting targeting){
+                if(this.getOwner() instanceof Targeting targeting){
                     LivingEntity target = targeting.getTarget();
                     if (target != null) {
                         this.targetPos = target.getEyePosition();
@@ -79,10 +78,8 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
                 }else if(delay == 0) {
                     this.shoot(targetPos.x - this.getX(),targetPos.y - this.getEyeY(),targetPos.z - this.getZ(), speed,0);
                 }
-            }else{
-                if(delay == 0) {
-                    this.shoot(targetPos.x - this.getX(),targetPos.y - this.getEyeY(),targetPos.z - this.getZ(), speed,0);
-                }
+            }else if(delay == 0){
+                this.shoot(targetPos.x - this.getX(),targetPos.y - this.getEyeY(),targetPos.z - this.getZ(), speed,0);
             }
         }
     }
@@ -101,13 +98,12 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
             }
             if(!livingTarget.hurt(damageSource, damage)){
                 // TODO 如果是因为无敌导致的，则不应该执行，因为是穿透的，因为继续走，而不是被阻挡，待判定要不要用这个
-//                if(livingTarget.isBlocking()){
-//
-//                }
-                this.setNoGravity(false);
-                this.deflect(ProjectileDeflection.MIRROR_DEFLECT, target, this.getOwner(), false);
-                if(!this.level().isClientSide){
-                    this.setDeltaMovement(this.getDeltaMovement().scale(0.2));
+                if(livingTarget.isBlocking()){
+                    this.setNoGravity(false);
+                    this.deflect(ProjectileDeflection.MIRROR_DEFLECT, target, this.getOwner(), false);
+                    if(!this.level().isClientSide){
+                        this.setDeltaMovement(this.getDeltaMovement().scale(0.2));
+                    }
                 }
             }
         }
@@ -158,7 +154,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
             ListTag list = tag.getList("TargetPos", 6);
             this.targetPos = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
         }
-        tag.getBoolean("IsTrackTarget");
+        this.isTrackTarget = tag.getBoolean("IsTrackTarget");
     }
 
 

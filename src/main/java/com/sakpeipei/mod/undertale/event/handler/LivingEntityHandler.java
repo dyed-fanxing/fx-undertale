@@ -5,6 +5,7 @@ import com.sakpeipei.mod.undertale.Undertale;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -14,7 +15,15 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
  * @since 2025-09-08 23:05
  */
 @EventBusSubscriber(modid = Undertale.MODID)
-public class LivingEntityEventHandler {
+public class LivingEntityHandler {
+    @SubscribeEvent
+    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+//        Entity entity = event.getEntity();
+//        if(entity instanceof FlyingBone){
+//            entity.discard();
+//            event.setCanceled(true);
+//        }
+    }
     @SubscribeEvent
     public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
         Entity entity = event.getEntity();
