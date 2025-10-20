@@ -2,7 +2,32 @@
 	"format_version": "1.8.0",
 	"animations": {
 		"animation.bone.new": {
-			"animation_length": 1
+			"animation_length": 1,
+			"bones": {
+				"body": {
+					"position": {
+						"vector": [0, 0, 0]
+					},
+					"scale": {
+						"0.0": {
+							"vector": [1, 1, 1]
+						},
+						"1.0": {
+							"vector": [1, 2.2, 1]
+						}
+					}
+				},
+				"edge-up": {
+					"position": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"1.0": {
+							"vector": [0, 16, 0]
+						}
+					}
+				}
+			}
 		}
 	},
 	"geckolib_format_version": 2

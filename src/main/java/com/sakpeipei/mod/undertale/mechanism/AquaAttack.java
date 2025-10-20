@@ -1,6 +1,5 @@
 package com.sakpeipei.mod.undertale.mechanism;
 
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -16,14 +15,12 @@ import software.bernie.geckolib.util.Color;
  */
 public class AquaAttack implements ColorAttack{
 
-    private static final Logger log = LogManager.getLogger(AquaAttack.class);
-
     @Override
     public boolean canHitEntity(Entity target){
         if(target instanceof ServerPlayer player){
             // 移动向量
             Vec3 knownMovement = player.getKnownMovement();
-            return knownMovement.horizontalDistanceSqr() > 1.0E-4 || Mth.square(knownMovement.y) > 0.1;
+            return knownMovement.horizontalDistanceSqr() > 1.0E-4 || Mth.square(knownMovement.y) > 0.02;
         }
         double dx = target.getX() - target.xo;
         double dy = target.getY() - target.yo;

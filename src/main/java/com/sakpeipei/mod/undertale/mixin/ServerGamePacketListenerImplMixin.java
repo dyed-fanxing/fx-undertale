@@ -81,9 +81,8 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
         PacketUtils.ensureRunningOnSameThread(packet, self, player.serverLevel());
 
         // 记录移动包基本信息
-        LOGGER.info("=== 开始处理移动包 ===");
-        LOGGER.info("玩家: {}, 在地面: {}, 骑乘: {}",
-                player.getName().getString(), packet.isOnGround(), player.isPassenger());
+//        LOGGER.info("=== 开始处理移动包 ===");
+//        LOGGER.info("玩家: {}, 在地面: {}, 骑乘: {}",player.getName().getString(), packet.isOnGround(), player.isPassenger());
 
         if (containsInvalidValues(packet.getX(0.0), packet.getY(0.0), packet.getZ(0.0),
                 packet.getYRot(0.0F), packet.getXRot(0.0F))) {
@@ -104,8 +103,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                 float yRot = Mth.wrapDegrees(packet.getYRot(player.getYRot()));
                 float xRot = Mth.wrapDegrees(packet.getXRot(player.getXRot()));
 
-                LOGGER.info("客户端位置: ({}, {}, {}), 服务端位置: ({}, {}, {})",
-                        clientX, clientY, clientZ, player.getX(), player.getY(), player.getZ());
+//                LOGGER.info("客户端位置: ({}, {}, {}), 服务端位置: ({}, {}, {})",clientX, clientY, clientZ, player.getX(), player.getY(), player.getZ());
 
                 if (player.isPassenger()) {
                     player.absMoveTo(player.getX(), player.getY(), player.getZ(), yRot, xRot);
@@ -116,8 +114,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                     double startZ = player.getZ();
 
                     // 记录移动前的关键状态
-                    LOGGER.info("移动前 - lastGood: ({}, {}, {}), 位置: ({}, {}, {})",
-                            this.lastGoodX, this.lastGoodY, this.lastGoodZ, startX, startY, startZ);
+//                    LOGGER.info("移动前 - lastGood: ({}, {}, {}), 位置: ({}, {}, {})",this.lastGoodX, this.lastGoodY, this.lastGoodZ, startX, startY, startZ);
 
                     // 预期移动向量
                     double expectedDx = clientX - this.lastGoodX;
@@ -125,8 +122,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                     double expectedDz = clientZ - this.lastGoodZ;
                     double expectedDistSqr = expectedDx * expectedDx + expectedDy * expectedDy + expectedDz * expectedDz;
 
-                    LOGGER.info("预期移动: ({}, {}, {}), 距离平方: {}",
-                            expectedDx, expectedDy, expectedDz, expectedDistSqr);
+//                    LOGGER.info("预期移动: ({}, {}, {}), 距离平方: {}",expectedDx, expectedDy, expectedDz, expectedDistSqr);
 
                     if (player.isSleeping()) {
                         if (expectedDistSqr > 1.0) {
@@ -139,7 +135,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                             ++this.receivedMovePacketCount;
                             int i = this.receivedMovePacketCount - this.knownMovePacketCount;
                             if (i > 5) {
-                                LOGGER.debug("{} 移动包过于频繁 ({} packets since last tick)", player.getName().getString(), i);
+//                                LOGGER.debug("{} 移动包过于频繁 ({} packets since last tick)", player.getName().getString(), i);
                                 i = 1;
                             }
 
@@ -147,7 +143,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                                     (!player.level().getGameRules().getBoolean(GameRules.RULE_DISABLE_ELYTRA_MOVEMENT_CHECK) || !isFallFlying)) {
                                 float threshold = isFallFlying ? 300.0F : 100.0F;
                                 if (expectedDistSqr - player.getDeltaMovement().lengthSqr() > (threshold * i) && !this.isSingleplayerOwner()) {
-                                    LOGGER.warn("{} 移动过快! {},{},{}", player.getName().getString(), expectedDx, expectedDy, expectedDz);
+//                                    LOGGER.warn("{} 移动过快! {},{},{}", player.getName().getString(), expectedDx, expectedDy, expectedDz);
                                     self.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
                                     return;
                                 }
@@ -162,11 +158,11 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                         double actualDz = clientZ - this.lastGoodZ;
                         boolean isJumping = actualDy > 0.0;
 
-                        LOGGER.info("实际移动向量: ({}, {}, {}), 是否跳跃: {}", actualDx, actualDy, actualDz, isJumping);
+//                        LOGGER.info("实际移动向量: ({}, {}, {}), 是否跳跃: {}", actualDx, actualDy, actualDz, isJumping);
 
                         if (player.onGround() && !packet.isOnGround() && isJumping) {
                             player.jumpFromGround();
-                            LOGGER.info("触发跳跃");
+//                            LOGGER.info("触发跳跃");
                         }
 
                         boolean wasOnGround = player.verticalCollisionBelow;
@@ -179,13 +175,13 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                         double diffY = clientY - player.getY();
                         double diffZ = clientZ - player.getZ();
 
-                        LOGGER.info("移动后差异 - 原始: ({}, {}, {})", diffX, diffY, diffZ);
+//                        LOGGER.info("移动后差异 - 原始: ({}, {}, {})", diffX, diffY, diffZ);
 
                         // Y轴差异的特殊处理
                         if (diffY > -0.5 || diffY < 0.5) {
                             double originalDiffY = diffY;
                             diffY = 0.0;
-                            LOGGER.info("Y轴差异归零: {} -> {}", originalDiffY, diffY);
+//                            LOGGER.info("Y轴差异归零: {} -> {}", originalDiffY, diffY);
                         }
 
                         double totalDiffSqr = diffX * diffX + diffY * diffY + diffZ * diffZ;
@@ -195,10 +191,10 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                                 !player.isSleeping() && !player.gameMode.isCreative() &&
                                 player.gameMode.getGameModeForPlayer() != GameType.SPECTATOR) {
                             movedWrongly = true;
-                            LOGGER.warn("{} 移动异常! 差异平方: {}", player.getName().getString(), totalDiffSqr);
+//                            LOGGER.warn("{} 移动异常! 差异平方: {}", player.getName().getString(), totalDiffSqr);
                         }
 
-                        LOGGER.info("移动异常检测 - 差异平方: {}, 阈值: 0.0625, 结果: {}", totalDiffSqr, movedWrongly);
+//                        LOGGER.info("移动异常检测 - 差异平方: {}, 阈值: 0.0625, 结果: {}", totalDiffSqr, movedWrongly);
 
                         if (player.noPhysics || player.isSleeping() ||
                                 (!movedWrongly || !serverlevel.noCollision(player, aabb)) &&
@@ -209,7 +205,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
 
                             // 计算最终移动向量
                             Vec3 finalMovement = new Vec3(player.getX() - startX, player.getY() - startY, player.getZ() - startZ);
-                            LOGGER.info("最终移动向量: {}，最终是否移动：{}", finalMovement, Mth.square(finalMovement.y) > 0.01);
+//                            LOGGER.info("最终移动向量: {}，最终是否移动：{}", finalMovement, Mth.square(finalMovement.y) > 0.01);
 
                             player.setKnownMovement(finalMovement);
                             player.setOnGroundWithMovement(packet.isOnGround(), finalMovement);
@@ -220,7 +216,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                             this.lastGoodY = player.getY();
                             this.lastGoodZ = player.getZ();
 
-                            LOGGER.info("更新lastGood位置: ({}, {}, {})", this.lastGoodX, this.lastGoodY, this.lastGoodZ);
+//                            LOGGER.info("更新lastGood位置: ({}, {}, {})", this.lastGoodX, this.lastGoodY, this.lastGoodZ);
 
                             if (isJumping) {
                                 player.resetFallDistance();
@@ -229,7 +225,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                             player.checkMovementStatistics(finalMovement.x, finalMovement.y, finalMovement.z);
 
                         } else {
-                            LOGGER.info("移动被拒绝，传送回原位置");
+//                            LOGGER.info("移动被拒绝，传送回原位置");
                             self.teleport(startX, startY, startZ, yRot, xRot);
                             player.doCheckFallDamage(player.getX() - startX, player.getY() - startY, player.getZ() - startZ, packet.isOnGround());
                         }
@@ -237,7 +233,7 @@ public abstract class ServerGamePacketListenerImplMixin extends ServerCommonPack
                 }
             }
         }
-        LOGGER.info("=== 移动包处理结束 ===\n");
+//        LOGGER.info("=== 移动包处理结束 ===\n");
     }
 
     // 辅助方法 - 需要复制原版的方法
