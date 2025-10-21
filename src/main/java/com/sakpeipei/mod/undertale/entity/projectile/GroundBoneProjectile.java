@@ -13,10 +13,13 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.portal.DimensionTransition;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -25,11 +28,14 @@ import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.Color;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.Arrays;
+
 /**
  * @author Sakqiongzi
  * @since 2025-10-06 21:18
  */
 public class GroundBoneProjectile extends AbstractPenetrableProjectile implements IEntityWithComplexSpawn, AttackColored,GeoEntity, GeoAnimatable {
+    private static final Logger log = LogManager.getLogger(GroundBoneProjectile.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private float height = 1.0f;
 
@@ -51,9 +57,11 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
         this.height = height;
         this.damage = damage;
         this.speed = speed;
-        setPos(x,y,z);
         this.colorAttack = colorAttack;
         // 因为Entity类的构造方法直接使用了getDimensions，而调用时本类的heightScale还没有初始化
+        this.refreshDimensions();
+        setPos(x,y,z);
+        System.out.println(22);
     }
 
 
@@ -66,6 +74,13 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
     @Override
     public void tick() {
         super.tick();
+        AABB currentBb = this.getBoundingBox();
+        log.info("Tick {} , 碰撞箱 {}" ,this.tickCount,currentBb);
+
+        // 检查是否与方块碰撞
+        boolean colliding = !this.level().noCollision(this, currentBb);
+        log.info("是否碰撞 {}" ,colliding);
+
         if(!this.level().isClientSide) {
             delay--;
             if(delay == 0){

@@ -540,7 +540,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                     for (int i = this.step; i < steps.size(); i++) {
                                         sum += steps.get(i).baseCD;
                                     }
-                                    Sans.this.globalCD = 120 - sum * 20;
+                                    Sans.this.globalCD = 120 - sum ;
                                     steps.clear();
                                     this.step = -1;
                                 }
@@ -553,18 +553,18 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                             if(this.step == -1){
                                 cd = 0;
                                 // 定义基础权重
-                                int[] weights = {3, 0, 0,0, 2,0}; // [飞行骨一次性,飞行骨持续性, 地面运动骨, 地刺波动骨, 地刺召唤骨, Gaster炮阵列, 重力控制]
+                                int[] weights = {0, 0,1, 0,0, 0,0}; // [飞行骨一次性,飞行骨持续性, 地面运动骨, 地刺波动骨, 地刺召唤骨, Gaster炮阵列, 重力控制]
                                 if(inAir){
                                     weights[5] = 5;
                                 }else{
-                                    weights[2] = 1; // 激活地刺权重
+//                                    weights[3] = 3; // 激活地刺权重
                                     // 根据条件激活权重
                                     if(target.getOnPos().getY() == Sans.this.getOnPos().getY()){
-                                        weights[1] = 2; // 激活地面移动骨头权重
+                                        weights[2] = 3; // 激活地面移动骨头权重
                                     }
                                 }
                                 if(Sans.this.physicalStrength <= maxPhysicalStrength / 2 ) {
-                                    weights[5] = 5;
+                                    weights[6] = 5;
                                 }
                                 // 计算总权重
                                 int totalWeight = weights[0] + weights[1] + weights[2] + weights[3];
@@ -576,7 +576,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                     current += weights[i];
                                     if (random < current) {
                                         for (int j = 0; j < 3 + 2 * (difficulty - 1); j++) {
-                                            steps.add(new AttackStepConfig(i,30));
+                                            steps.add(new GroundBoneProjectileStepConfig(i,30,3,1,ColorAttack.AQUA,1.0f));
                                         }
                                         break;
                                     }
@@ -611,6 +611,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                 if(this.step == steps.size()) {
                                     Sans.this.globalCD = 120;
                                     this.step = -1;
+                                    this.steps.clear();
                                 }
                             }
                         }
