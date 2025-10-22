@@ -414,14 +414,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
     // 攻击步骤配置
     class AttackStepConfig{
-        private final int type;
         private final int baseCD;
         private IntSupplier supplier;
 
-
-        public AttackStepConfig(int type, int baseCD) {
-            this.type = type;
+        public AttackStepConfig(int baseCD,IntSupplier supplier) {
             this.baseCD = baseCD;
+            this.supplier = supplier;
         }
     }
     class GroundBoneProjectileStepConfig extends AttackStepConfig{
@@ -429,11 +427,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         int speed;
         ColorAttack colorAttack;
         float addHeight; //增加的高度
-        public GroundBoneProjectileStepConfig(int type, int baseCD) {
-            super(type, baseCD);
+        public GroundBoneProjectileStepConfig(int baseCD,IntSupplier supplier) {
+            super(baseCD,supplier);
         }
-        public GroundBoneProjectileStepConfig(int type, int baseCD,int count,int speed, ColorAttack colorAttack, float addHeight) {
-            super(type, baseCD);
+        public GroundBoneProjectileStepConfig(int baseCD,IntSupplier supplier,int count,int speed, ColorAttack colorAttack, float addHeight) {
+            super(baseCD,supplier);
             this.count = count;
             this.speed = speed;
             this.colorAttack = colorAttack;
@@ -583,6 +581,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                     current += weights[i];
                                     if (random < current) {
                                         for (int j = 0; j < 3 + 2 * (difficulty - 1); j++) {
+                                            new AttackStepConfig(1,1,()->Sans.this.continueFlyingBone())
                                             steps.add(new GroundBoneProjectileStepConfig(i,30,3,1,ColorAttack.AQUA,1.0f));
                                         }
                                         break;
