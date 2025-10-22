@@ -28,7 +28,6 @@ import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.Color;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import java.util.Arrays;
 
 /**
  * @author Sakqiongzi
@@ -50,7 +49,7 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
         super(type, level);
         this.colorAttack = ColorAttack.WHITE;
     }
-    public GroundBoneProjectile(Level level, LivingEntity owner,float height,float damage, float speed,double x,double y,double z,  ColorAttack colorAttack) {
+    public GroundBoneProjectile(Level level, LivingEntity owner,double x,double y,double z,float height,float damage, float speed,  ColorAttack colorAttack) {
         this(EntityTypeRegistry.GROUND_BONE_PROJECTILE.get(), level);
         this.setNoGravity(true);
         setOwner(owner);
