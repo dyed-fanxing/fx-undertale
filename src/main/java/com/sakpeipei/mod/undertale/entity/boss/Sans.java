@@ -53,10 +53,15 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 
 public class Sans extends Monster implements NeutralMob, GeoEntity {
@@ -411,6 +416,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     class AttackStepConfig{
         private final int type;
         private final int baseCD;
+        private IntSupplier supplier;
+
 
         public AttackStepConfig(int type, int baseCD) {
             this.type = type;
@@ -433,7 +440,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             this.addHeight = addHeight;
         }
     }
-
+    // 攻击任务接口
+    @FunctionalInterface
+    interface AttackAction {
+        int execute(LivingEntity target);
+    }
     class MainAttackGoal extends Goal {
         private int cd;
         private final double speedModifier;
@@ -443,7 +454,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         private final float pursuitRadiusSqr;
         private Vec3 lastTargetPos; //丢失视线后目标最后一次位置
         private List<AttackStepConfig> steps = new ArrayList<>(); //攻击步骤序列
-        private int step;   // 当前步骤
 
         public MainAttackGoal(double speedModifier, float attackRadius) {
             this.cd = -1;
@@ -474,7 +484,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             // 那么就导致激怒后直接进入没有视线的分支，又因为在追击范围内，会向lastTargetPos移动，如果lastTargetPos是null，就会报错
             lastTargetPos = Sans.this.getTarget().position();
             Sans.this.setAggressive(true);
-            this.step = -1;
         }
 
         @Override
@@ -482,7 +491,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             this.seeTime = 0;
             this.cd = 0;
             this.steps.clear();
-            this.step = 0;
             Sans.this.setAggressive(false);
         }
         @Override
@@ -530,19 +538,18 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                         boolean onGround =  target.onGround();
                         boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
                         boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
+                        boolean isEmpty = steps.isEmpty();
                         // 检查是否需要中断当前攻击（放在CD检查之前）
-                        AttackStepConfig step;
-                        if(this.step != -1){
-                            step = steps.get(this.step);
-                            if (step.type == 2) {
+                        if(!isEmpty){
+                            AttackStepConfig first = this.steps.getFirst();
+                            if (first.type == 2) {
                                 if((onGround && target.getOnPos().getY() != Sans.this.getOnPos().getY()) || inAir){
                                     int sum = 0;
-                                    for (int i = this.step; i < steps.size(); i++) {
-                                        sum += steps.get(i).baseCD;
+                                    for (AttackStepConfig step : steps) {
+                                        sum += step.baseCD;
                                     }
                                     Sans.this.globalCD = 120 - sum ;
                                     steps.clear();
-                                    this.step = -1;
                                 }
                             }
                         }
@@ -550,7 +557,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                         int difficulty = Sans.this.level().getDifficulty().getId();
                         // 全局CD冷却结束，且当前步骤为-1，则选择新的攻击类型
                         if (Sans.this.globalCD == 0){
-                            if(this.step == -1){
+                            if(isEmpty){
                                 cd = 0;
                                 // 定义基础权重
                                 int[] weights = {0, 0,1, 0,0, 0,0}; // [飞行骨一次性,飞行骨持续性, 地面运动骨, 地刺波动骨, 地刺召唤骨, Gaster炮阵列, 重力控制]
@@ -581,11 +588,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                         break;
                                     }
                                 }
-                                this.step = 0;
                             }
                             if(cd-- == 0){
                                 // 统一的攻击执行
-                                step = steps.get(this.step++);
+                                AttackStepConfig step = steps.removeFirst();
                                 switch (step.type) {
                                     case 0 -> {
                                         cd = Sans.this.continueFlyingBone(target,difficulty) + step.baseCD - 10 * difficulty ;
@@ -608,10 +614,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                         cd = 40;
                                     }
                                 }
-                                if(this.step == steps.size()) {
+                                if(steps.isEmpty()) {
                                     Sans.this.globalCD = 120;
-                                    this.step = -1;
-                                    this.steps.clear();
                                 }
                             }
                         }
@@ -626,7 +630,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             }
         }
     }
-
     /**
      * 飞行骨一次性射击
      * @return 需要执行完攻击的总tick
