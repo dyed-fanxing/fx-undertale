@@ -54,14 +54,12 @@ import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.lang.annotation.Target;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 
 public class Sans extends Monster implements NeutralMob, GeoEntity {
@@ -107,6 +105,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(1,new MovementGoal(1.0, 16.0F));
         // 远程攻击，需要实现performRangedAttack，然后通过goal去调用
         this.goalSelector.addGoal(1, new TransitionPhaseGoal());
         // 远程攻击，需要实现performRangedAttack，然后通过goal去调用
@@ -412,55 +411,40 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         }
     }
 
-    // 攻击步骤配置
-    class AttackAction{
-        private final int baseCD;
-        private final IntSupplier action; // 攻击行为
-        public AttackAction(int baseCD,IntSupplier action) {
-            this.baseCD = baseCD;
-            this.action = action;
-        }
-    }
-    class GroundBoneProjectileAttack extends AttackAction{
-        int count;
-        int speed;
-        ColorAttack colorAttack;
-        float addHeight; //增加的高度
-        public GroundBoneProjectileAttack(int baseCD,IntSupplier action) {
-            super(baseCD,action);
-        }
-        public GroundBoneProjectileAttack(int baseCD,IntSupplier action,int count,int speed, ColorAttack colorAttack, float addHeight) {
-            super(baseCD,action);
-            this.count = count;
-            this.speed = speed;
-            this.colorAttack = colorAttack;
-            this.addHeight = addHeight;
-        }
-    }
-    private final int[][][] patterns = {
-            {{0}},
-            {{1}},
-            {{2,0,0},{2,0,0},{2,1,1}},
-            {}
+    private final int[][][] sequences = {
+            {{0,30}},
+            {{1,30}},
+            {{2,20,0,0},{2,30,1,1},{2,20,0,0},{2,20,1,1}},
+            {{3,30}},
+            {{4,30}},
+            {{5,30}},
+            {{6,30}}
     };
+    private final List<List<Integer>> stateSequences = Arrays.asList(
+            Arrays.asList(0,1,9),
+            Arrays.asList(2,3,4,7,8,11),
+            Arrays.asList(5,10),
+            Arrays.asList(6,12)
+    );
 
     class MainAttackGoal extends Goal {
-        private int cd;
         private final double speedModifier;
-        private int seeTime;
         private final float attackRadiusSqr;
         private final float backRadiusSqr;
         private final float pursuitRadiusSqr;
-        private Vec3 lastTargetPos; //丢失视线后目标最后一次位置
-        private final List<AttackAction> steps = new ArrayList<>(); //攻击步骤序列
-        private final boolean[] shows = new boolean[7];
+        private int seeTime;
+
+        private int cd;
+        private int sequence;
+        private int step;
+        private int showFlag = 0; // 教学演示攻击
 
         public MainAttackGoal(double speedModifier, float attackRadius) {
-            this.cd = -1;
             this.speedModifier = speedModifier;
             this.attackRadiusSqr = attackRadius * attackRadius;
             this.backRadiusSqr = this.attackRadiusSqr / 4;
             this.pursuitRadiusSqr = this.attackRadiusSqr + this.attackRadiusSqr / 2 ;
+            this.cd = -1;
             this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         }
 
@@ -478,20 +462,16 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
         @Override
         public void start() {
-            globalCD = 40;
-            // 必须要初始化lastTargetPos的位置
-            // 因为如果第一次攻击，Sans传送至方块后方，没有视线，isContinueSee 和hasSeeSight 均是false
-            // 那么就导致激怒后直接进入没有视线的分支，又因为在追击范围内，会向lastTargetPos移动，如果lastTargetPos是null，就会报错
-            lastTargetPos = Sans.this.getTarget().position();
             Sans.this.setAggressive(true);
+            seeTime = 0;
+            globalCD = 40;
+            sequence = -1;
         }
 
         @Override
         public void stop() {
-            this.seeTime = 0;
-            this.cd = 0;
-            this.steps.clear();
             Sans.this.setAggressive(false);
+            cd = 0;
         }
         @Override
         public boolean requiresUpdateEveryTick() {
@@ -504,20 +484,14 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             if (target != null) {
                 double disSqr = Sans.this.distanceToSqr(target.getX(), target.getY(), target.getZ());
                 boolean hasSeeSight = Sans.this.getSensing().hasLineOfSight(target);
-                boolean isContinueSee = this.seeTime > 0;
-                if (hasSeeSight != isContinueSee) {
-                    this.seeTime = 0;
-                    if(!hasSeeSight) {
-                        lastTargetPos = target.position();
-                    }
-                }
-                if (hasSeeSight) {
-                    ++this.seeTime;
-                } else {
-                    --this.seeTime;
+
+                if(hasSeeSight){
+                    seeTime ++;
+                }else{
+                    seeTime = Math.min(0,seeTime - 1);
                 }
                 Sans.this.getLookControl().setLookAt(target, 30.0F, 30.0F);
-                if(this.seeTime > 0){
+                if(seeTime > 0){
                     //                    ++this.strafingTime;
                     if (disSqr <= backRadiusSqr){
                         Sans.this.getNavigation().stop();
@@ -527,108 +501,149 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                         Sans.this.getNavigation().stop();
                     }else{
                         Sans.this.getNavigation().moveTo(target, speedModifier);
-                        // 超出追击范围
                         if(disSqr > pursuitRadiusSqr){
-                            // 计算从自身指向目标的向量
                             teleportTowards(target);
                         }
+                        return;
                     }
-
                     if(this.seeTime >= 20 && !Sans.this.isSpecial){
                         boolean onGround =  target.onGround();
                         boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
                         boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
-                        boolean isEmpty = steps.isEmpty();
-
                         int difficulty = Sans.this.level().getDifficulty().getId();
                         // 全局CD冷却结束
                         if (Sans.this.globalCD == 0){
-                            // 没有攻击步骤，则选择新的攻击序列
-                            if(isEmpty){
+                            // 没有执行的攻击序列，则选择新的攻击序列
+                            if(sequence == -1){
+                                step = 0;
                                 cd = 0;
-                                int count =  3 + 2 * (difficulty - 1);
-                                boolean flag = true;
-                                while(count > 0&& flag){
-                                    // 定义基础权重
-                                    int[] weights = {1, 1,0, 0,0, 0,0}; // [飞行骨一次性,飞行骨持续性, 地面运动骨, 地刺波动骨, 地刺召唤骨, Gaster炮阵列, 重力控制]
-                                    if(inAir){
-                                        weights[5] = 5;
-                                    }else{
-                                        // weights[3] = 3; // 激活地刺权重
-                                        // 根据条件激活权重
-                                        if(target.getOnPos().getY() == Sans.this.getOnPos().getY()){
-                                            weights[2] = 3; // 激活地面移动骨头权重
-                                        }
+                                int showFlag0 = 0;
+                                List<Integer> availableList = new ArrayList<>(stateSequences.getFirst());
+                                showFlag0 |= 7;
+                                if(onGround){
+                                    showFlag0 |= 8; // 激活地刺
+                                    availableList.addAll(stateSequences.get(1));
+                                    if(target.getOnPos().getY() == Sans.this.getOnPos().getY()){
+                                        showFlag0 |= 16;  // 激活地面移动骨头
+                                        availableList.addAll(stateSequences.get(2));
                                     }
-                                    if(Sans.this.physicalStrength <= maxPhysicalStrength / 2 ) {
-                                        weights[6] = 5;
-                                    }
-                                    // 计算总权重
-                                    int totalWeight = 0;
-                                    for (int i = 0; i < weights.length; i++) {
-                                        totalWeight+=weights[i];
-                                        if(!shows[i] && weights[i] != 0) {
-                                            shows[i] = true;
-                                            flag = false;
-                                            for (int j = 0; j < count; j++) {
-                                                switch (i){
-                                                    case 0 -> {
-                                                        this.steps.add(new AttackAction(30,() -> Sans.this.continueFlyingBone(target,difficulty)));
-                                                    }
-                                                    case 1 -> {
-                                                        this.steps.add(new AttackAction(30,() -> Sans.this.onceFlyingBone(target,difficulty)));
-                                                    }
-                                                    case 2 -> {
-                                                        this.steps.add(new GroundBoneProjectileAttack(20,() -> Sans.this.groundBoneProjectileAttack(target,difficulty,0,0.0f)));
-                                                        this.steps.add(new GroundBoneProjectileAttack(30,() -> Sans.this.groundBoneProjectileAttack(target,difficulty,1,1.0f)));
-                                                    }
-                                                    case 3 -> {
-                                                        this.steps.add(new AttackAction(30,() -> Sans.this.groundBoneSpursAttack(target,1,1)));
-                                                    }
-                                                }
-                                                steps.add(new AttackAction(1,() -> Sans.this.continueFlyingBone(target,difficulty)));
-                                            }
-                                            break;
-                                        }
-                                    }
-                                    if(flag){
-                                        // 权重随机选择
-                                        int random = Sans.this.random.nextInt(totalWeight);
-                                        int current = 0;
-                                        for (int i = 0; i < weights.length; i++) {
-                                            current += weights[i];
-                                            if (random < current) {
-                                                switch (i){
-                                                    case 0 -> {
-                                                        steps.add(new AttackAction(1,() -> Sans.this.continueFlyingBone(target,difficulty)));
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    count--;
+                                }
+                                if(inAir || Sans.this.physicalStrength <= maxPhysicalStrength / 2 ) {
+                                    showFlag0 |= 32; // 激活重力控制
+                                    availableList.addAll(stateSequences.get(3));
+                                }
+                                if(showFlag < showFlag0){
+                                    // 找到第一个不同的位（第一个可用的未展示攻击）
+                                    int diff = showFlag ^ showFlag0;
+                                    sequence = Integer.numberOfTrailingZeros(diff);
+                                    showFlag |= (1 << sequence);
+                                }else{
+                                    // 没有教学序列就用标记数组来随机选
+                                    sequence = availableList.get(Sans.this.random.nextInt(availableList.size()));
                                 }
                             }
                             if(cd-- == 0){
                                 // 统一的攻击执行
-                                AttackAction step = steps.removeFirst();
-                                cd = step.action.getAsInt() + step.baseCD - 10 * difficulty;
-                                if(steps.isEmpty()) {
+                                cd = Sans.this.executeAttack(sequence,step,target,difficulty);
+                                if(step++ == Sans.this.sequences[sequence].length) {
                                     Sans.this.globalCD = 120;
+                                    step = 0;
                                 }
                             }
                         }
                     }
-                }else{
+                }else if(seeTime == 0){
+                    Vec3 pos = target.position();
                     if(disSqr <= pursuitRadiusSqr){
-                        Sans.this.getNavigation().moveTo(lastTargetPos.x,lastTargetPos.y,lastTargetPos.z,this.speedModifier);
+                        Sans.this.getNavigation().moveTo(pos.x,pos.y,pos.z,this.speedModifier);
                     }else{
                         teleportTowards(target);
                     }
                 }
             }
         }
+    }
+    private int executeAttack(int sequence ,int step,LivingEntity target,int difficulty){
+        int[] params = sequences[sequence][step];
+        int type = params[0];
+        int baseCD = params[1];
+        switch (type){
+            case 0 -> {
+                return Sans.this.continueFlyingBone(target,difficulty) + baseCD - difficulty * 10;
+            }
+            case 1 -> {
+                return Sans.this.onceFlyingBone(target,difficulty) + baseCD - difficulty * 10;
+            }
+            case 2 -> {
+                return Sans.this.groundBoneProjectileAttack(target,difficulty,params[2],params[3]) + baseCD - difficulty * 10;
+            }
+            case 3 -> {
+                return Sans.this.groundBoneSpursAttack(target,1,1) + baseCD - difficulty * 10;
+            }
+            case 4 -> {
+                return Sans.this.groundBoneAreaSpursAttack(target,1,1f) + baseCD - difficulty * 10;
+            }
+            case 5 -> {
+            }
+        }
+        return 0;
+    }
+    /**
+     * 飞行骨持续射击
+     * @return 需要执行完攻击的总tick
+     */
+    private int continueFlyingBone(LivingEntity target, int difficulty) {
+        float speed = this.random.nextFloat() * 0.2f + difficulty * 0.5f + 0.5f;
+        String attackTypeUUID = UUID.randomUUID().toString();
+        int delay = 10;
+        switch (this.random.nextInt(2)) {
+            case 0 -> {
+                int count = 6 * difficulty; // 模式0的count
+                for (int i = 0; i < count; i++) {
+                    FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
+                    do {
+                        Vec3 pos = this.position().add(
+                                new Vec3((this.random.nextDouble() - 0.5) * 12,
+                                        this.random.nextDouble() * 3 + this.getBbHeight() * 0.5f,
+                                        this.random.nextDouble() * 3
+                                )
+                                        .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                                        .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+                        );
+                        bone.absMoveTo(pos.x, pos.y, pos.z);
+                    } while (!bone.level().noCollision(bone, bone.getBoundingBox()));
+
+                    RotUtils.lookAtByShoot(bone, target);
+                    bone.delayTrackShoot(delay);
+                    delay += 6 - difficulty;
+                    this.level().addFreshEntity(bone);
+                }
+            }
+            case 1 -> {
+                int count = 6 * difficulty;
+                float avg = 180f / (count - 1);
+                for (int i = 0; i < count; i++) {
+                    FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
+                    // 椭圆参数方程，从-90度到90度（上半椭圆）
+                    float angle =  i * avg;
+                    float r = 1.3f + difficulty * 0.1f;
+                    // 椭圆上的点：x = a*cos(θ), y = b*sin(θ)
+                    Vec3 pos = new Vec3(getX(),getY(0.5f),getZ()).add(
+                            new Vec3( r * Mth.cos(angle * Mth.DEG_TO_RAD), r * Mth.sin(angle * Mth.DEG_TO_RAD), 0)
+                                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+                    );
+                    bone.absMoveTo(pos.x, pos.y, pos.z);
+
+                    RotUtils.lookAtByShoot(bone, target);
+                    bone.delayTrackShoot(delay);
+                    delay += 6 - difficulty;
+                    this.level().addFreshEntity(bone);
+                }
+            }
+        }
+        return delay;
+
     }
     /**
      * 飞行骨一次性射击
@@ -726,63 +741,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         }
         return delay;
     }
-    /**
-     * 飞行骨持续射击
-     * @return 需要执行完攻击的总tick
-     */
-    private int continueFlyingBone(LivingEntity target, int difficulty) {
-        float speed = this.random.nextFloat() * 0.2f + difficulty * 0.5f + 0.5f;
-        String attackTypeUUID = UUID.randomUUID().toString();
-        int delay = 10;
-        switch (this.random.nextInt(2)) {
-            case 0 -> {
-                int count = 6 * difficulty; // 模式0的count
-                for (int i = 0; i < count; i++) {
-                    FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
-                    do {
-                        Vec3 pos = this.position().add(
-                                new Vec3((this.random.nextDouble() - 0.5) * 12,
-                                        this.random.nextDouble() * 3 + this.getBbHeight() * 0.5f,
-                                        this.random.nextDouble() * 3
-                                )
-                                        .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
-                                        .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-                        );
-                        bone.absMoveTo(pos.x, pos.y, pos.z);
-                    } while (!bone.level().noCollision(bone, bone.getBoundingBox()));
-
-                    RotUtils.lookAtByShoot(bone, target);
-                    bone.delayTrackShoot(delay);
-                    delay += 6 - difficulty;
-                    this.level().addFreshEntity(bone);
-                }
-            }
-            case 1 -> {
-                int count = 6 * difficulty;
-                float avg = 180f / (count - 1);
-                for (int i = 0; i < count; i++) {
-                    FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
-                    // 椭圆参数方程，从-90度到90度（上半椭圆）
-                    float angle =  i * avg;
-                    float r = 1.3f + difficulty * 0.1f;
-                    // 椭圆上的点：x = a*cos(θ), y = b*sin(θ)
-                    Vec3 pos = new Vec3(getX(),getY(0.5f),getZ()).add(
-                            new Vec3( r * Mth.cos(angle * Mth.DEG_TO_RAD), r * Mth.sin(angle * Mth.DEG_TO_RAD), 0)
-                                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
-                                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-                    );
-                    bone.absMoveTo(pos.x, pos.y, pos.z);
-
-                    RotUtils.lookAtByShoot(bone, target);
-                    bone.delayTrackShoot(delay);
-                    delay += 6 - difficulty;
-                    this.level().addFreshEntity(bone);
-                }
-            }
-        }
-        return delay;
-
-    }
     private FlyingBone createFlyingBone(float speed, String attackTypeUUID) {
         FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f, speed);
         bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
@@ -790,7 +748,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     }
 
     /**
-     * 地面骨直线运动攻击
+     * 地面骨墙直线运动攻击
      */
     public int groundBoneProjectileAttack(@NotNull LivingEntity target,int difficulty,int isAqua,float addHeight) {
         Level level = this.level();
@@ -818,12 +776,13 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     /**
      * 从自身发出地面骨刺 - 6格内圆形，6格外直线
      */
-    public int groundBoneSpursAttack(@NotNull LivingEntity target, int count, int delay) {
+    public int groundBoneSpursAttack(@NotNull LivingEntity target,int difficulty, int delay) {
         String attackTypeUUID = UUID.randomUUID().toString();
         Vec3 position = this.position();
         Vec3 targetPos = target.position();
+        int count = difficulty * 3;
 
-        double distance = position.distanceToSqr(targetPos);
+        double distanceSqr = position.distanceToSqr(targetPos);
         double minY = Math.min(target.getY(), this.getY());
         double maxY = Math.max(target.getY(), this.getY()) + 1.0;
         float baseAngle = (float)Mth.atan2(targetPos.z - position.z, targetPos.x - position.x) * Mth.RAD_TO_DEG;
@@ -833,7 +792,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             double targetX = position.x, targetZ = position.z;
             float boneRotation;
 
-            if (distance <= 36.0) {
+            if (distanceSqr <= 36.0) {
                 // 圆形模式
                 float angle = i * (360.0f / count) * Mth.DEG_TO_RAD;
                 targetX += Mth.cos(angle) * 3.0;
