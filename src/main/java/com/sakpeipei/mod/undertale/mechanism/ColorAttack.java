@@ -42,5 +42,4 @@ public interface ColorAttack {
     static ColorAttack getInstance(int color) {
         return REGISTRY.getOrDefault(color, WHITE);
     }
-
 }
