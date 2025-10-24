@@ -30,7 +30,7 @@ import java.util.UUID;
  * @author Sakqiongzi
  * @since 2025-08-18 18:44
  */
-public class GroundBone extends Entity implements GeoEntity, GeoAnimatable {
+public class GroundBone extends Entity implements GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private ColorAttack colorAttack;
     @Nullable
@@ -38,48 +38,48 @@ public class GroundBone extends Entity implements GeoEntity, GeoAnimatable {
     @Nullable
     private UUID ownerUUID;
     private float damage;
-    private float speed;
-    private int delay = 0;
-    private int lifetime = 20;
+    private int delay;
 
     public GroundBone(EntityType<? extends GroundBone> type, Level level) {
         super(type, level);
     }
 
-    public GroundBone(Level level, LivingEntity owner, float damage,float speed,int delay,double x, double y, double z) {
-        this(level, owner, damage, speed,delay,x,y,z, ColorAttack.WHITE);
+    public GroundBone(Level level, LivingEntity owner, float damage,int delay,double x, double y, double z) {
+        this(level, owner, damage,delay,x,y,z, ColorAttack.WHITE);
     }
 
-    public GroundBone(Level level, LivingEntity owner, float damage, float speed,int delay,double x, double y, double z, ColorAttack colorAttack) {
+    public GroundBone(Level level, LivingEntity owner, float damage,int delay,double x, double y, double z, ColorAttack colorAttack) {
         this(EntityTypeRegistry.GROUND_BONE.get(), level);
         this.setNoGravity(true);
         setOwner(owner);
         this.damage = damage;
-        this.speed = speed;
         this.delay = delay;
-        setPos(x,y,z);
+        setPos(x,y - this.getBbHeight(),z);
         this.colorAttack = colorAttack;
     }
 
     @Override
     public void tick() {
         super.tick();
-        if(delay-- <= 0){
-            if (tickCount > lifetime) {
-                this.discard();
-                return;
+        delay--;
+        if (delay > -50 && delay <= 0) {
+            if(delay > -20){
+                float progress = (-delay) / 20.0f;
+                setDeltaMovement(0, getBbHeight() * 4 * progress * progress * progress, 0);
+            }else{
+                setDeltaMovement(0, 0, 0);
             }
-            for (LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(0.2, 0.0F, 0.2), this::canHitEntity)) {
+            for (LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class,
+                    this.getBoundingBox().inflate(0.2, 0.0F, 0.2), this::canHitEntity)) {
                 onHitEntity(target);
             }
-            Vec3 deltaMovement = getDeltaMovement();
-            setDeltaMovement(deltaMovement.add(0, this.tickCount * this.tickCount * 0.1f, 0));
+        }else if (delay < -50) {
+            this.discard();
         }
     }
 
     private void onHitBlick(BlockHitResult hitResult) {
         BlockState blockstate = this.level().getBlockState(hitResult.getBlockPos());
-
     }
 
     private boolean canHitEntity(Entity entity) {

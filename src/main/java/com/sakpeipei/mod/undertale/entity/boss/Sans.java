@@ -364,7 +364,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
     public static AttributeSupplier.Builder createAttributes() {
         return PathfinderMob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 2.0)
+                .add(Attributes.MAX_HEALTH, 1.0)
                 .add(Attributes.MOVEMENT_SPEED, 0.3)
                 .add(Attributes.ATTACK_DAMAGE, 1.0)
                 .add(Attributes.FOLLOW_RANGE, 32.0);
@@ -576,12 +576,15 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                 return params[1] - ( params[2] == 0? difficulty*5: difficulty*10 );
             }
             case 3 -> {
-                return Sans.this.groundBoneSpursAttack(target,1,1) + params[1] - difficulty * 10;
+                return Sans.this.groundBoneWaveSpursAttack(target,1,params[2]) + params[1] - difficulty * 10;
             }
             case 4 -> {
-//                return Sans.this.groundBoneAreaSpursAttack(target,1,1f) + baseCD - difficulty * 10;
+                Sans.this.groundBoneAreaSpursAttack(target,1,10,params[2]);
+                return params[1] - difficulty * 10;
             }
             case 5 -> {
+                Sans.this.gbAttack(target,difficulty,params[2]);
+                return params[1] - difficulty * 10;
             }
         }
         return 0;
@@ -798,16 +801,17 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     /**
      * 从自身发出地面骨刺 - 6格内圆形，6格外直线
      */
-    public int groundBoneSpursAttack(@NotNull LivingEntity target,int difficulty, int delay) {
+    public int groundBoneWaveSpursAttack(@NotNull LivingEntity target,int difficulty,int isAqua) {
         String attackTypeUUID = UUID.randomUUID().toString();
         Vec3 position = this.position();
         Vec3 targetPos = target.position();
         int count = difficulty * 3;
-
         double distanceSqr = position.distanceToSqr(targetPos);
         double minY = Math.min(target.getY(), this.getY());
         double maxY = Math.max(target.getY(), this.getY()) + 1.0;
         float baseAngle = (float)Mth.atan2(targetPos.z - position.z, targetPos.x - position.x) * Mth.RAD_TO_DEG;
+
+        ColorAttack colorAttack = isAqua == 0?ColorAttack.WHITE:ColorAttack.AQUA;
 
         for (int i = 0; i < count; i++) {
             // 根据距离选择攻击模式
@@ -828,7 +832,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                 boneRotation = baseAngle + 90.0f;
             }
 
-            createGroundBone(targetX, targetZ, minY, maxY, boneRotation, delay, attackTypeUUID);
+            createGroundBone(targetX, targetZ, minY, maxY, boneRotation, 0, attackTypeUUID,colorAttack);
         }
         return 0;
     }
@@ -836,32 +840,28 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     /**
      * 在目标脚下直接生成地面骨刺 - 圆形生成
      */
-    public void groundBoneAreaSpursAttack(@NotNull LivingEntity target, int count, float radius, int delay) {
+    public void groundBoneAreaSpursAttack(@NotNull LivingEntity target,int difficulty, int delay,int isAqua) {
         String attackTypeUUID = UUID.randomUUID().toString();
         Vec3 targetPos = target.position();
-
         // 计算施法者和目标的高度范围（参考幻魔者设计）
         double minY = Math.min(target.getY(), this.getY());
         double maxY = Math.max(target.getY(), this.getY()) + 1.0;
-
-        // 计算每个骨刺的角度间隔（完整圆形）
-        float angleIncrement = 360.0f / count;
-
-        for (int i = 0; i < count; i++) {
-            // 计算当前骨刺的角度（均匀分布在360度圆环上）
-            float angle = i * angleIncrement;
-            float radian = angle * Mth.DEG_TO_RAD;
-
-            // 计算骨刺的目标位置（以目标为中心的圆形）
-            double targetX = targetPos.x + Mth.cos(radian) * radius;
-            double targetZ = targetPos.z + Mth.sin(radian) * radius;
-
-            // 使用地面检测方法生成骨刺
-            createGroundBone(targetX, targetZ, minY, maxY, angle, delay, attackTypeUUID);
+        ColorAttack colorAttack = isAqua == 0?ColorAttack.WHITE:ColorAttack.AQUA;
+        for(int i = 0; i< difficulty; i++) {
+            int count = 8 * ( i + 1);
+            int interval = 360 / count;
+            float r = 0.5f * ( i +1);
+            for (int j = 0,angle = interval/2; j < count; j++,angle += interval) {
+                // 计算骨刺的目标位置（以目标为中心的圆形）
+                double targetX = targetPos.x + r * Mth.cos(angle * Mth.DEG_TO_RAD);
+                double targetZ = targetPos.z + r * Mth.sin(angle * Mth.DEG_TO_RAD);
+                // 使用地面检测方法生成骨刺
+                createGroundBone(targetX, targetZ, minY, maxY, angle, delay, attackTypeUUID,colorAttack);
+            }
         }
     }
 
-    private void createGroundBone(double targetX, double targetZ, double minY, double maxY, float rotation, int delay, String attackUUID) {
+    private void createGroundBone(double targetX, double targetZ, double minY, double maxY, float rotation, int delay, String attackUUID,ColorAttack colorAttack) {
         Level level = this.level();
         // 从最高Y坐标开始搜索地面
         BlockPos searchPos = BlockPos.containing(targetX, maxY, targetZ);
@@ -891,7 +891,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         if (foundValidGround) {
             double spawnY = searchPos.getY() + collisionHeight;
             // 创建骨刺实体
-            GroundBone bone = new GroundBone(level, this, 1f, 1f, delay, targetX, spawnY, targetZ);
+            GroundBone bone = new GroundBone(level, this, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), delay, targetX, spawnY, targetZ,colorAttack);
             bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackUUID, (byte) 6));
             // 设置旋转：骨刺指向圆心（目标位置）
             bone.setYRot(rotation);
