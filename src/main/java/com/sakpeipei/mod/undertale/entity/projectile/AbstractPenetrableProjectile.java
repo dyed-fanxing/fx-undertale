@@ -124,17 +124,16 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
     }
 
     @Override
-    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
-//        tag.putDouble("acceleration_power", this.accelerationPower);
-    }
-    @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
 //        if (tag.contains("acceleration_power", 6)) {
 //            this.accelerationPower = tag.getDouble("acceleration_power");
 //        }
-
+    }
+    @Override
+    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+//        tag.putDouble("acceleration_power", this.accelerationPower);
     }
 
     @Override

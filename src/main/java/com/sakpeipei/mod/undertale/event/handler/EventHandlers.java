@@ -4,10 +4,13 @@ import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
+import com.sakpeipei.mod.undertale.entity.summon.GroundBone;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
+import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 @EventBusSubscriber(modid = Undertale.MODID)
@@ -30,7 +33,14 @@ public class EventHandlers {
 
     }
 
-
+    @SubscribeEvent
+    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+//        Entity entity = event.getEntity();
+//        if(entity instanceof GroundBone){
+//            entity.discard();
+//            event.setCanceled(true);
+//        }
+    }
 
 
 }

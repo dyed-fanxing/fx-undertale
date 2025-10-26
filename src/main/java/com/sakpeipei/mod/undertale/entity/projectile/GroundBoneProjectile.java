@@ -12,7 +12,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -136,16 +135,6 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
     }
 
     @Override
-    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        tag.putInt("Color",this.colorAttack.getColor().getColor());
-        tag.putInt("Delay",delay);
-        tag.putFloat("Speed",speed);
-        if(movement != null){
-            tag.put("Movement", this.newDoubleList(movement.x, movement.y, movement.z));
-        }
-    }
-
-    @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         this.delay = tag.getInt("Delay");
         this.speed = tag.getFloat("Speed");
@@ -158,6 +147,15 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
         }
     }
 
+    @Override
+    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
+        tag.putInt("Color",this.colorAttack.getColor().getColor());
+        tag.putInt("Delay",delay);
+        tag.putFloat("Speed",speed);
+        if(movement != null){
+            tag.put("Movement", this.newDoubleList(movement.x, movement.y, movement.z));
+        }
+    }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {

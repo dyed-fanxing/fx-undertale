@@ -25,8 +25,9 @@ public abstract class ColorAttackRenderer<T extends Entity & GeoAnimatable & Att
         Color color = animatable.getColor();
         if (animatable.isInvisible() && !animatable.isInvisibleTo(ClientUtil.getClientPlayer()))
             color = Color.ofARGB(Mth.ceil(color.getAlpha() * 38 / 255f), color.getRed(), color.getGreen(), color.getBlue());
-
         return color;
     }
+
+
 
 }

@@ -23,11 +23,11 @@ import java.util.HashSet;
 import java.util.UUID;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/9/9 13:17
  */
 @EventBusSubscriber(modid = Undertale.MODID)
-public class KarmaHandler {
+public class KarmaAndFrameHandler {
     /**
      * 被sans第一次攻击之后添加KR效果(只是一个表面,不做具体数据处理,数据处理在KarmaMobEffect里处理)，时间无限，
      * 因为LivingEntity hurt方法中的buff的onMobHurt方法是在实体收拾事件Post之后触发的,
@@ -51,7 +51,7 @@ public class KarmaHandler {
     @SubscribeEvent
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event){
         DamageSource source = event.getSource();
-        if(source.is(DamageTypes.KARMA)){
+        if(source.is(DamageTypes.KARMA) || source.is(DamageTypes.FRAME)){
             int tick = 0;
             Iterable<ItemStack> armorSlots = event.getEntity().getArmorSlots();
             // 遍历装备槽位，检测有无延长无敌时间的装备或道具

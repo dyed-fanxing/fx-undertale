@@ -8,13 +8,16 @@ import com.sakpeipei.mod.undertale.entity.summon.GroundBone;
 import com.sakpeipei.mod.undertale.mechanism.ColorAttack;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
+import com.sakpeipei.mod.undertale.registry.SoundRegistry;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -41,7 +44,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
-import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -53,13 +55,8 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import java.lang.annotation.Target;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.IntSupplier;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class Sans extends Monster implements NeutralMob, GeoEntity {
@@ -414,8 +411,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             {{0,30,0},{0,30,1}},            // 飞行骨持续性攻击
             {{1,30,0},{1,30,1},{1,30,2}},   // 飞行骨一次性攻击
             {{2,20,0,0,0},{2,40,1,1,0},{2,20,0,0,0},{2,40,1,1,0},{2,20,0,0,0},{2,40,1,1,0},{2,20,0,0,0},{2,40,1,1,0},{2,20,0,0,0},{2,40,1,1,0}},      // 地面骨墙运动攻击
-            {{3,30}},                       // 骨刺波动攻击
-            {{4,30}},                       // 指定区域波动攻击
+            {{3,30,0},{3,30,1},{3,30,0},{3,30,1}},                       // 骨刺波动
+            {{4,30,0},{4,30,1},{4,30,0},{4,30,1}},                       // 指定骨刺
             {{5,30}},                       // GB炮阵列
             {{6,30}},                       // 重力控制
 
@@ -538,12 +535,30 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                     // 没有教学序列就用标记数组来随机选
                                     sequence = availableList.get(Sans.this.random.nextInt(availableList.size()));
                                 }
-                                sequence = 0;
+                                sequence = 4;
                             }
                             if(cd-- == 0){
                                 log.info("{}",sequence);
                                 // 统一的攻击执行
-                                cd = Sans.this.executeAttack(sequence,step++,target,difficulty);
+                                int[] params = sequences[sequence][step++];
+                                cd = switch (params[0]) {
+                                    case 0 -> Sans.this.continueFlyingBone(target, difficulty, params[2]) + params[1] - difficulty * 10;
+                                    case 1 -> Sans.this.onceFlyingBone(target, difficulty, params[2]) + params[1] - difficulty * 10;
+                                    case 2 -> {
+                                        Sans.this.groundBoneProjectileAttack(target, difficulty, params[2], params[3], params[4]);
+                                        yield params[1] - (params[2] == 0 ? difficulty * 5 : difficulty * 10);
+                                    }
+                                    case 3 -> Sans.this.groundBoneWaveSpinesAttack(target, difficulty, params[2]) + params[1] - difficulty * 10;
+                                    case 4 -> {
+                                        level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+                                        yield  params[1] - difficulty * 8 + Sans.this.groundBoneAreaSpinesAttack(target, difficulty, params[2]);
+                                    }
+                                    case 5 -> {
+                                        Sans.this.gbAttack(target, difficulty, params[2]);
+                                        yield  params[1] - difficulty * 10;
+                                    }
+                                    default -> throw new IllegalStateException("Unexpected value: " + params[0]);
+                                };
                                 if(step == Sans.this.sequences[sequence].length) {
                                     Sans.this.globalCD = 120;
                                     sequence = -1;
@@ -576,11 +591,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                 return params[1] - ( params[2] == 0? difficulty*5: difficulty*10 );
             }
             case 3 -> {
-                return Sans.this.groundBoneWaveSpursAttack(target,1,params[2]) + params[1] - difficulty * 10;
+                return Sans.this.groundBoneWaveSpinesAttack(target,difficulty,params[2]) + params[1] - difficulty * 10;
             }
             case 4 -> {
-                Sans.this.groundBoneAreaSpursAttack(target,1,10,params[2]);
-                return params[1] - difficulty * 10;
+                Sans.this.groundBoneAreaSpinesAttack(target,difficulty,params[2]);
+                level().playSound(null,target.getX(),target.getY(),target.getZ(),SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(),SoundSource.HOSTILE);
+                return params[1] - difficulty * 8;
             }
             case 5 -> {
                 Sans.this.gbAttack(target,difficulty,params[2]);
@@ -624,13 +640,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             case 1 -> {
                 float speed = this.random.nextFloat() * 0.5f + 0.5f * difficulty;
                 int count = 6 * difficulty;
-                float avg = 180f / (count - 1);
-                for (int i = 0; i < count; i++) {
+                float interval = 180f / (count - 1);
+                float angle =0;
+                for (int i = 0; i < count; i++,angle+=interval) {
                     FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
                     // 椭圆参数方程，从-90度到90度（上半椭圆）
-                    float angle =  i * avg;
                     float r = 1.3f + difficulty * 0.1f;
-                    // 椭圆上的点：x = a*cos(θ), y = b*sin(θ)
                     Vec3 pos = new Vec3(getX(),getY(0.5f),getZ()).add(
                             new Vec3( r * Mth.cos(angle * Mth.DEG_TO_RAD), r * Mth.sin(angle * Mth.DEG_TO_RAD), 0)
                                     .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
@@ -666,12 +681,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                     // 当前层的数量和半径
                     int count = (5 + difficulty) * (layer + 1);
                     float radius = 0.4f + layer * 0.3f;
-                    int angleStep = 360 / count;
-                    int layerOffset = angleStep / 2 * layer;
+                    float interval = 360f / count;
+                    float layerOffset = interval / 2 * layer;
                     for (int i = 0; i < count; i++) {
                         FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
                         // 计算当前角度，层偏移角度 实现错位
-                        int angle = i * angleStep + layerOffset;
+                        float angle = i * interval + layerOffset;
                         Vec3 pos = centerPos.add(new Vec3(
                                 radius * Mth.cos(angle * Mth.DEG_TO_RAD),
                                 radius * Mth.sin(angle * Mth.DEG_TO_RAD),
@@ -695,7 +710,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             case 1 -> {
                 for (int layer = 0; layer < 3; layer++) {
                     int count = 5 + difficulty*2;
-                    int avg = 180 / (count - 1);
+                    float interval = 180f / (count - 1);
                     float rX = 0.8f + difficulty*0.1f;
                     float rZ = 1f+difficulty * 0.1f;
                     float rotate = 0f;
@@ -706,8 +721,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                         l = 2;
                         rotate = 45f;
                     }
+                    float angle = 0;
                     for (int j = 0; j < l; j++,rotate =-rotate) {
-                        for (int i = 0,angle=0; i < count; i++,angle+=avg) {
+                        for (int i = 0; i < count; i++,angle+=interval) {
                             FlyingBone bone = createFlyingBone(speed, attackTypeUUID);
                             Vec3 pos = centerPos.add(new Vec3(
                                             rX * Mth.cos(angle * Mth.DEG_TO_RAD),
@@ -801,7 +817,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     /**
      * 从自身发出地面骨刺 - 6格内圆形，6格外直线
      */
-    public int groundBoneWaveSpursAttack(@NotNull LivingEntity target,int difficulty,int isAqua) {
+    public int groundBoneWaveSpinesAttack(@NotNull LivingEntity target,int difficulty,int isAqua) {
         String attackTypeUUID = UUID.randomUUID().toString();
         Vec3 position = this.position();
         Vec3 targetPos = target.position();
@@ -832,7 +848,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                 boneRotation = baseAngle + 90.0f;
             }
 
-            createGroundBone(targetX, targetZ, minY, maxY, boneRotation, 0, attackTypeUUID,colorAttack);
+            createGroundBone(attackTypeUUID,targetX, targetZ, minY, maxY,0, 0f,colorAttack,false,10);
         }
         return 0;
     }
@@ -840,28 +856,38 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     /**
      * 在目标脚下直接生成地面骨刺 - 圆形生成
      */
-    public void groundBoneAreaSpursAttack(@NotNull LivingEntity target,int difficulty, int delay,int isAqua) {
+    public int groundBoneAreaSpinesAttack(@NotNull LivingEntity target,int difficulty,int isAqua) {
         String attackTypeUUID = UUID.randomUUID().toString();
         Vec3 targetPos = target.position();
         // 计算施法者和目标的高度范围（参考幻魔者设计）
         double minY = Math.min(target.getY(), this.getY());
         double maxY = Math.max(target.getY(), this.getY()) + 1.0;
+        int delay = 13 - difficulty;
+        float offsetY =  1f - (float) difficulty / 3;
+        int lifetime = 10;
         ColorAttack colorAttack = isAqua == 0?ColorAttack.WHITE:ColorAttack.AQUA;
-        for(int i = 0; i< difficulty; i++) {
+        // 使用地面检测方法生成骨刺
+        createGroundBone(attackTypeUUID,targetPos.x, targetPos.z, minY, maxY,delay, offsetY,colorAttack,true,lifetime);
+        for(int i = 0; i < 3*(difficulty+1); i++) {
             int count = 8 * ( i + 1);
-            int interval = 360 / count;
+            float interval = 360f / count;
             float r = 0.5f * ( i +1);
-            for (int j = 0,angle = interval/2; j < count; j++,angle += interval) {
+            float angle = interval/2;
+            for (int j = 0; j < count; j++,angle += interval) {
                 // 计算骨刺的目标位置（以目标为中心的圆形）
-                double targetX = targetPos.x + r * Mth.cos(angle * Mth.DEG_TO_RAD);
-                double targetZ = targetPos.z + r * Mth.sin(angle * Mth.DEG_TO_RAD);
-                // 使用地面检测方法生成骨刺
-                createGroundBone(targetX, targetZ, minY, maxY, angle, delay, attackTypeUUID,colorAttack);
+                createGroundBone(attackTypeUUID,
+                        targetPos.x + r * Mth.cos(angle * Mth.DEG_TO_RAD),
+                        targetPos.z + r * Mth.sin(angle * Mth.DEG_TO_RAD),
+                        minY, maxY, delay, offsetY,colorAttack,false,lifetime);
             }
         }
+        return delay;
     }
 
-    private void createGroundBone(double targetX, double targetZ, double minY, double maxY, float rotation, int delay, String attackUUID,ColorAttack colorAttack) {
+    /**
+     * @param offsetY 根据难度决定骨刺上升多少，最大为自身高度1.0f
+     */
+    private void createGroundBone( String attackUUID,double targetX, double targetZ, double minY, double maxY, int delay,float offsetY,ColorAttack colorAttack,boolean isPlaySound,int lifetime) {
         Level level = this.level();
         // 从最高Y坐标开始搜索地面
         BlockPos searchPos = BlockPos.containing(targetX, maxY, targetZ);
@@ -891,12 +917,17 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         if (foundValidGround) {
             double spawnY = searchPos.getY() + collisionHeight;
             // 创建骨刺实体
-            GroundBone bone = new GroundBone(level, this, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), delay, targetX, spawnY, targetZ,colorAttack);
+            GroundBone bone = new GroundBone(level, this, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), delay, targetX, spawnY  - offsetY, targetZ,colorAttack,isPlaySound,lifetime);
             bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackUUID, (byte) 6));
             // 设置旋转：骨刺指向圆心（目标位置）
-            bone.setYRot(rotation);
+            bone.setYRot(this.getYRot());
             level.addFreshEntity(bone);
             level.gameEvent(GameEvent.ENTITY_PLACE, new Vec3(targetX, spawnY, targetZ), GameEvent.Context.of(this));
+            ((ServerLevel) level).sendParticles( ParticleTypes.EFFECT, targetX, spawnY, targetZ,
+                    1,  // 数量
+                    0, 0, 0,  // 偏移范围
+                    0  // 速度
+            );
         }
     }
 

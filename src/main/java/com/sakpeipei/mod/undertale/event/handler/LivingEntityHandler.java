@@ -17,14 +17,6 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 @EventBusSubscriber(modid = Undertale.MODID)
 public class LivingEntityHandler {
     @SubscribeEvent
-    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
-//        Entity entity = event.getEntity();
-//        if(entity instanceof FlyingBone){
-//            entity.discard();
-//            event.setCanceled(true);
-//        }
-    }
-    @SubscribeEvent
     public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
         Entity entity = event.getEntity();
 
@@ -40,13 +32,13 @@ public class LivingEntityHandler {
 
     @SubscribeEvent
     public static void onDamagePost(LivingDamageEvent.Post event) {
-        LogUtils.getLogger().info("{},当前生命值{},当前吸收值{},原始伤害{},伤害来源{},结算伤害{}",
-                event.getEntity(),
-                event.getEntity().getHealth(),
-                event.getEntity().getAbsorptionAmount(),
-                event.getOriginalDamage(),
-                event.getSource(),
-                event.getNewDamage()
-        );
+//        LogUtils.getLogger().info("{},当前生命值{},当前吸收值{},原始伤害{},伤害来源{},结算伤害{}",
+//                event.getEntity(),
+//                event.getEntity().getHealth(),
+//                event.getEntity().getAbsorptionAmount(),
+//                event.getOriginalDamage(),
+//                event.getSource(),
+//                event.getNewDamage()
+//        );
     }
 }

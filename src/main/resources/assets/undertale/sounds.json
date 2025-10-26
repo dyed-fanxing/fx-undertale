@@ -1,4 +1,24 @@
 {
+    "entity.enemy_encounter_attack_tip": {
+        "sounds": [
+            "undertale:enemy_encounter_attack_tip"
+        ]
+    },
+    "entity.sans.slam": {
+        "sounds": [
+            "undertale:sans/slam"
+        ]
+    },
+    "entity.sans.bone_spine": {
+        "sounds": [
+            "undertale:sans/bone_spine"
+        ]
+    },
+    "entity.sans.teleport_time_jump": {
+        "sounds": [
+            "undertale:sans/teleport_time_jump"
+        ]
+    },
     "entity.gaster_blaster.whole": {
         "sounds": [
             "undertale:gaster_blaster/whole"
