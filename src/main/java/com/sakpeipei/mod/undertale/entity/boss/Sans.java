@@ -56,7 +56,6 @@ import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class Sans extends Monster implements NeutralMob, GeoEntity {
@@ -86,6 +85,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     private int remainingPersistentAngerTime;
     @Nullable
     private UUID persistentAngerTarget;
+    private Vec3 position;
 
     public Sans(EntityType<? extends Monster> type, Level level) {
         super(type, level);
@@ -548,10 +548,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                         Sans.this.groundBoneProjectileAttack(target, difficulty, params[2], params[3], params[4]);
                                         yield params[1] - (params[2] == 0 ? difficulty * 5 : difficulty * 10);
                                     }
-                                    case 3 -> Sans.this.groundBoneWaveSpinesAttack(target, difficulty, params[2]) + params[1] - difficulty * 10;
+                                    case 3 -> Sans.this.groundBoneWaveSpineTargetAttack(target, difficulty, params[2],params[3],params[4]) + params[1] - difficulty * 10;
                                     case 4 -> {
                                         level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
-                                        yield  params[1] - difficulty * 8 + Sans.this.groundBoneAreaSpinesAttack(target, difficulty, params[2]);
+                                        yield  params[1] - difficulty * 8 + Sans.this.groundBoneAreaSpineAttack(target, difficulty, params[2]);
                                     }
                                     case 5 -> {
                                         Sans.this.gbAttack(target, difficulty, params[2]);
@@ -591,10 +591,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                 return params[1] - ( params[2] == 0? difficulty*5: difficulty*10 );
             }
             case 3 -> {
-                return Sans.this.groundBoneWaveSpinesAttack(target,difficulty,params[2]) + params[1] - difficulty * 10;
+                return Sans.this.groundBoneWaveSpineTargetAttack(target,difficulty,params[2],params[3],params[4]) + params[1] - difficulty * 10;
             }
             case 4 -> {
-                Sans.this.groundBoneAreaSpinesAttack(target,difficulty,params[2]);
+                Sans.this.groundBoneAreaSpineAttack(target,difficulty,params[2]);
                 level().playSound(null,target.getX(),target.getY(),target.getZ(),SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(),SoundSource.HOSTILE);
                 return params[1] - difficulty * 8;
             }
@@ -815,9 +815,65 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     }
 
     /**
-     * 从自身发出地面骨刺 - 6格内圆形，6格外直线
+     * 地面骨向目标直线波动攻击
      */
-    public int groundBoneWaveSpinesAttack(@NotNull LivingEntity target,int difficulty,int isAqua) {
+    public int groundBoneWaveSpineTargetAttack(@NotNull LivingEntity target, int difficulty, int isAqua, int type, int count) {
+        String attackTypeUUID = UUID.randomUUID().toString();
+        Vec3 position = this.position();
+        Vec3 targetPos = target.position();
+        double minY = Math.min(target.getY(), this.getY());
+        double maxY = Math.max(target.getY(), this.getY()) + 1.0;
+        ColorAttack colorAttack = isAqua == 0 ? ColorAttack.WHITE : ColorAttack.AQUA;
+
+        int rows = ATTACK_RANGE + difficulty;
+        int cols = 3 + difficulty;
+        float colSpacing = 0.375f;
+        float rowSpacing = 1.0f;
+
+        float[] colOffsets = new float[cols];
+        float centerOffset = (cols - 1) * 0.5f;
+        for (int col = 0; col < cols; col++) {
+            colOffsets[col] = (col - centerOffset) * colSpacing;
+        }
+
+        for (int i = 0; i < count; i++) {
+            Vec3 startPos;
+            if (type == 1) {
+                float angle = i * (360f / count) * Mth.DEG_TO_RAD;
+                float radius = 2.0f; // 圆形半径
+                startPos = position.add(radius * Mth.cos(angle), 0, radius * Mth.sin(angle));
+            } else {
+                float offset = i - (count - 1) * 0.5f; // 左右偏移量
+                startPos = position.add(new Vec3(offset, 0, 0).yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD));
+            }
+
+            // 从当前起点到目标的方向
+            Vec3 attackDir = targetPos.subtract(startPos);
+            double horDis = attackDir.horizontalDistance();
+            double xUnit = attackDir.x / horDis;
+            double zUnit = attackDir.z / horDis;
+            double perpX = -zUnit;
+            double perpZ = xUnit;
+
+            // 生成攻击矩阵
+            for (int row = 0; row < rows; row++) {
+                double baseX = startPos.x + row * rowSpacing * xUnit;
+                double baseZ = startPos.z + row * rowSpacing * zUnit;
+
+                for (int col = 0; col < cols; col++) {
+                    double spawnX = baseX + colOffsets[col] * perpX;
+                    double spawnZ = baseZ + colOffsets[col] * perpZ;
+
+                    createGroundBone(attackTypeUUID, spawnX, spawnZ, minY, maxY, 0, 0f, colorAttack, false, 10);
+                }
+            }
+        }
+        return 0;
+    }
+    /**
+     * 地面骨自身范围扩张波动攻击
+     */
+    public int groundBoneWaveSpineAttack(@NotNull LivingEntity target,int difficulty,int isAqua) {
         String attackTypeUUID = UUID.randomUUID().toString();
         Vec3 position = this.position();
         Vec3 targetPos = target.position();
@@ -852,11 +908,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         }
         return 0;
     }
-
     /**
      * 在目标脚下直接生成地面骨刺 - 圆形生成
      */
-    public int groundBoneAreaSpinesAttack(@NotNull LivingEntity target,int difficulty,int isAqua) {
+    public int groundBoneAreaSpineAttack(@NotNull LivingEntity target,int difficulty,int isAqua) {
         String attackTypeUUID = UUID.randomUUID().toString();
         Vec3 targetPos = target.position();
         // 计算施法者和目标的高度范围（参考幻魔者设计）
