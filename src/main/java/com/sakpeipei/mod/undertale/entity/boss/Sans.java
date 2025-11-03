@@ -873,40 +873,30 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     /**
      * 地面骨自身范围扩张波动攻击
      */
-    public int groundBoneWaveSpineAttack(@NotNull LivingEntity target,int difficulty,int isAqua) {
+    public int groundSpikeCircleAttack(@NotNull LivingEntity target,int difficulty) {
         String attackTypeUUID = UUID.randomUUID().toString();
-        Vec3 position = this.position();
         Vec3 targetPos = target.position();
-        int count = difficulty * 3;
-        double distanceSqr = position.distanceToSqr(targetPos);
+        // 计算施法者和目标的高度范围（参考幻魔者设计）
         double minY = Math.min(target.getY(), this.getY());
         double maxY = Math.max(target.getY(), this.getY()) + 1.0;
-        float baseAngle = (float)Mth.atan2(targetPos.z - position.z, targetPos.x - position.x) * Mth.RAD_TO_DEG;
-
-        ColorAttack colorAttack = isAqua == 0?ColorAttack.WHITE:ColorAttack.AQUA;
-
-        for (int i = 0; i < count; i++) {
-            // 根据距离选择攻击模式
-            double targetX = position.x, targetZ = position.z;
-            float boneRotation;
-
-            if (distanceSqr <= 36.0) {
-                // 圆形模式
-                float angle = i * (360.0f / count) * Mth.DEG_TO_RAD;
-                targetX += Mth.cos(angle) * 3.0;
-                targetZ += Mth.sin(angle) * 3.0;
-                boneRotation = i * (360.0f / count) + 90.0f;
-            } else {
-                // 直线模式
-                float distanceFromMob = 2.0f + i * 2.0f;
-                targetX += Mth.cos(baseAngle * Mth.DEG_TO_RAD) * distanceFromMob;
-                targetZ += Mth.sin(baseAngle * Mth.DEG_TO_RAD) * distanceFromMob;
-                boneRotation = baseAngle + 90.0f;
+        int delay = 13 - difficulty;
+        float offsetY =  1f - (float) difficulty / 3;
+        int lifetime = 10;
+        // 使用地面检测方法生成骨刺
+        for(int i = 0; i < 3*(difficulty+1); i++) {
+            int count = 8 * ( i + 1);
+            float interval = 360f / count;
+            float r = 1f * ( i +1);
+            float angle = interval/2;
+            for (int j = 0; j < count; j++,angle += interval) {
+                // 计算骨刺的目标位置（以目标为中心的圆形）
+                createGroundBone(attackTypeUUID,
+                        targetPos.x + r * Mth.cos(angle * Mth.DEG_TO_RAD),
+                        targetPos.z + r * Mth.sin(angle * Mth.DEG_TO_RAD),
+                        minY, maxY, delay, offsetY,ColorAttack.WHITE,false,lifetime);
             }
-
-            createGroundBone(attackTypeUUID,targetX, targetZ, minY, maxY,0, 0f,colorAttack,false,10);
         }
-        return 0;
+        return delay;
     }
     /**
      * 在目标脚下直接生成地面骨刺 - 圆形生成
