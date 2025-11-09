@@ -84,6 +84,7 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
         if (delay >= -lifetime && delay < 0) {
             float progress = (float) (-delay) / lifetime;
             float easedProgress = (float) Math.sin(progress * Math.PI); // 从0到1再到0
+
             setPos(getX(), startY + this.getBbHeight() * easedProgress, getZ());
             // 碰撞检测
             if (!this.level().isClientSide) {
@@ -95,11 +96,6 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
             this.discard();
         }
     }
-
-    private void onHitBlick(BlockHitResult hitResult) {
-        BlockState blockstate = this.level().getBlockState(hitResult.getBlockPos());
-    }
-
     private boolean canHitEntity(Entity entity) {
         return entity.isAlive() && entity != getOwner() && colorAttack.canHitEntity(entity);
     }
@@ -111,7 +107,7 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
         } else {
             if (owner instanceof Sans) {
                 entity.hurt(damageSources().source(DamageTypes.FRAME, this, owner), damage);
-            } else {
+             } else {
                 entity.hurt(damageSources().indirectMagic(owner, this), damage);
             }
         }
