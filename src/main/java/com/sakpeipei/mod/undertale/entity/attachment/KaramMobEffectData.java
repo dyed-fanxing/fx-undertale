@@ -13,6 +13,7 @@ import java.util.HashSet;
 /**
  * @author Sakqiongzi
  * @since 2025-09-13 22:12
+ * KR buff，附着在被KR攻击物攻击的实体身上
  */
 public class KaramMobEffectData {
     public static final Codec<KaramMobEffectData> CODEC = RecordCodecBuilder.create(instance -> instance.group(

@@ -5,7 +5,9 @@
     "compatibilityLevel": "JAVA_21",
     "mixins": [
         "AbstractArrowMixin",
-        "ServerGamePacketListenerImplMixin"
+        "LivingEntityGravityMixin",
+        "ServerGamePacketListenerImplMixin",
+        "SimpleEntityGroundMixin"
     ],
     "client": [
         "EntityRenderDispatcherMixin",

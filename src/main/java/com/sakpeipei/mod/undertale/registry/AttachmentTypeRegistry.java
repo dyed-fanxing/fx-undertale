@@ -1,6 +1,7 @@
 package com.sakpeipei.mod.undertale.registry;
 
 import com.sakpeipei.mod.undertale.Undertale;
+import com.sakpeipei.mod.undertale.entity.attachment.GravityData;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramMobEffectData;
 import net.neoforged.bus.api.IEventBus;
@@ -22,6 +23,9 @@ public class AttachmentTypeRegistry {
     );
     public static final Supplier<AttachmentType<KaramAttackData>> KARMA_ATTACK = ATTACHMENT_TYPES.register(
             "karma_attack", () -> AttachmentType.builder(KaramAttackData::new).serialize(KaramAttackData.CODEC).build()
+    );
+    public static final Supplier<AttachmentType<GravityData>> GRAVITY = ATTACHMENT_TYPES.register(
+            "gravity", () -> AttachmentType.builder(GravityData::new).serialize(GravityData.CODEC).build()
     );
     public static void register(IEventBus bus) {
         ATTACHMENT_TYPES.register(bus);

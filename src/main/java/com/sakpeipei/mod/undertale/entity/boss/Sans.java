@@ -778,7 +778,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     /**
      * 地面骨墙直线运动攻击
      */
-    public void groundBoneProjectileAttack(@NotNull LivingEntity target,int difficulty,int isAqua,float addHeight,int type) {
+    private void groundBoneProjectileAttack(@NotNull LivingEntity target,int difficulty,int isAqua,float addHeight,int type) {
         Level level = this.level();
         String attackTypeUUID = UUID.randomUUID().toString();
         int count = (difficulty + isAqua ) * 3;
@@ -809,7 +809,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     /**
      * 地面骨向目标直线波动攻击
      */
-    public int groundBoneWaveSpineTargetAttack(@NotNull LivingEntity target, int difficulty,int count,int type, int isAqua ) {
+    private int groundBoneWaveSpineTargetAttack(@NotNull LivingEntity target, int difficulty,int count,int type, int isAqua ) {
         int delay = 25 - difficulty * 5,iDelay = 10;
         String attackTypeUUID = UUID.randomUUID().toString();
         Vec3 position = this.position();
@@ -866,7 +866,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     /**
      * 地面骨自身范围扩张波动攻击
      */
-    public int selfSpikeAttack(@NotNull LivingEntity target,int difficulty) {
+    private int selfSpikeAttack(@NotNull LivingEntity target,int difficulty) {
         String attackTypeUUID = UUID.randomUUID().toString();
         double minY = Math.min(target.getY(), this.getY());
         double maxY = Math.max(target.getY(), this.getY()) + 1.0;
@@ -891,14 +891,14 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     /**
      * 在目标脚下直接生成地面骨刺 - 圆形生成
      */
-    public int targetSpineAttack(@NotNull LivingEntity target,int difficulty) {
+    private int targetSpineAttack(@NotNull LivingEntity target,int difficulty) {
         Vec3 pos = target.position();
         return circleSpineAttack(target,3*(difficulty+1),pos.x,pos.z,13 - difficulty,10,1f - (float) difficulty / 3);
     }
     /**
      * 在目标周围随机生成地面骨刺
      */
-    public int randomAreaSpineAttack(@NotNull LivingEntity target,int difficulty) {
+    private int randomAreaSpineAttack(@NotNull LivingEntity target,int difficulty) {
         Vec3 pos = target.position();
         return circleSpineAttack(target,3 + difficulty,pos.x + this.random.nextDouble() * ATTACK_RANGE,pos.z + this.random.nextDouble() * ATTACK_RANGE
                 ,13 - difficulty,10 + this.random.nextInt(15),0f);
@@ -982,7 +982,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         }
     }
 
-    public void gbAttack(LivingEntity target,int count,int type){
+    private void gbAttack(LivingEntity target,int count,int type){
         String attackTypeUUID = UUID.randomUUID().toString();
         int angle = 0;
         int avg = 0;
@@ -1024,5 +1024,28 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             gb.lookAt(EntityAnchorArgument.Anchor.FEET, targetEyePos);
             this.level().addFreshEntity(gb);
         }
+    }
+
+
+    public class GravityControlGoal extends Goal {
+
+        @Override
+        public boolean canUse() {
+            LivingEntity target = Sans.this.getTarget();
+            target.getData(AttachmentTypeRegistry.GRAVITY)
+            return target != null;
+        }
+
+    }
+    public class GravityControlCollisionDetectionGoal extends Goal {
+
+        @Override
+        public boolean canUse() {
+            LivingEntity target = Sans.this.getTarget();
+            boolean b = target.onGround();
+            target
+            return target != null;
+        }
+
     }
 }
