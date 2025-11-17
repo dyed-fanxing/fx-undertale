@@ -24,9 +24,6 @@ public abstract class KarmaHeartMixin {
     @Final
     @Shadow
     private RandomSource random;
-    @Unique
-    private static final Gui.HeartType KARMA_HEART = Gui.HeartType.valueOf(EnumParameters.KARMA_HEART);
-
     @Shadow
     private int tickCount;
     @Shadow
@@ -37,10 +34,6 @@ public abstract class KarmaHeartMixin {
     private long lastHealthTime;
     @Shadow
     private long healthBlinkTime;
-    @Shadow
-    private float autosaveIndicatorValue;
-    @Shadow
-    private float lastAutosaveIndicatorValue;
     @Shadow
     public int leftHeight;
     @Mutable
