@@ -1,6 +1,10 @@
 package com.sakpeipei.mod.undertale.entity.boss;
 
+import com.sakpeipei.mod.undertale.entity.attachment.GravityData;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
+import com.sakpeipei.mod.undertale.entity.common.AttackType;
+import com.sakpeipei.mod.undertale.entity.common.AttackComboType;
+import com.sakpeipei.mod.undertale.entity.common.AttackUnit;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
@@ -49,33 +53,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.*;
 
-
 public class Sans extends Monster implements NeutralMob, GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private static final Logger log = LoggerFactory.getLogger(Sans.class);
-    private final RawAnimation THROW_UP_ANIM = RawAnimation.begin().thenLoop("throw.up");
-    private final RawAnimation THROW_DOWN_ANIM = RawAnimation.begin().thenLoop("throw.down");
-    private final RawAnimation THROW_LEFT_ANIM = RawAnimation.begin().thenLoop("throw.left");
-    private final RawAnimation THROW_RIGHT_ANIM = RawAnimation.begin().thenLoop("throw.right");
-    private final RawAnimation THROW_FRONT_ANIM = RawAnimation.begin().thenLoop("throw.front");
-    private final RawAnimation THROW_BACK_ANIM = RawAnimation.begin().thenLoop("throw.back");
-    private final RawAnimation CHARGE_FRONT_ANIM = RawAnimation.begin().thenLoop("charge.front");
-    private final RawAnimation ATTACK_GB_LIFT_SWING_ANIM = RawAnimation.begin().thenLoop("attack.gb.lift.swing");
-    private final RawAnimation ATTACK_GB_LIFT_CIRCLE_ANIM = RawAnimation.begin().thenLoop("attack.gb.lift.circle");
-    private final RawAnimation ATTACK_LURKER_CROSS_ANIM = RawAnimation.begin().thenLoop("attack.lurker.cross");
-    private final RawAnimation ATTACK_LURKER_FRONT_ANIM = RawAnimation.begin().thenLoop("attack.lurker.front");
-    private final RawAnimation ATTACK_BONE_PROJECTILE_ANIM = RawAnimation.begin().thenLoop("attack.bone.projectile");
-    private final RawAnimation ATTACK_BONE_ROTATE_ANIM = RawAnimation.begin().thenLoop("attack.bone.rotate");
-
 
     private final static short ATTACK_RANGE = 16;  // 攻击距离
 
@@ -102,10 +94,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(0,new GravityControlCollisionDetectionGoal());
         // 远程攻击，需要实现performRangedAttack，然后通过goal去调用
         this.goalSelector.addGoal(1, new TransitionPhaseGoal());
         // 远程攻击，需要实现performRangedAttack，然后通过goal去调用
-        this.goalSelector.addGoal(2, new MainAttackGoal(1.0, 16.0F));
+        this.goalSelector.addGoal(1, new AttackExecutorGoal());
+        this.goalSelector.addGoal(2, new AttackSelectorGoal(1.0, 16.0F));
 
 
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
@@ -305,13 +299,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         return false;
     }
 
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(
-                DefaultAnimations.genericWalkIdleController(this),
-                DefaultAnimations.genericLivingController(this)
-        );
-    }
 
     //可攻击的中立生物需要实现的
     @Override
@@ -395,6 +382,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
     private int globalCD = 0;           //全局CD
     private boolean isSpecial = false;  //标识需要特殊处理的阶段，即初见杀，饶恕阶段，特殊攻击
+    private int mainAttack = -1;
 
     class TransitionPhaseGoal extends Goal{
         public TransitionPhaseGoal() {
@@ -407,16 +395,51 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         }
     }
 
+    private final AttackComboType[] attackTypes = {
+            new AttackComboType(ANIM_BONE_PROJECTILE, new AttackUnit[]{
+                    new AttackUnit(0, 30, new int[]{4}, true,  0),
+                    new AttackUnit(0, 30, new int[]{4}, true, 1)
+            }),
+            new AttackComboType(ANIM_BONE_PROJECTILE, new AttackUnit[]{
+                    new AttackUnit(1, 30, new int[]{10}, true,  0),
+                    new AttackUnit(1, 30, new int[]{10}, true,  1),
+                    new AttackUnit(1, 30, new int[]{10}, true, 2)
+            }),
+            new AttackComboType(ANIM_BONE_PROJECTILE, new AttackUnit[]{
+                    new AttackUnit(2, 20, new int[]{10}, true,  0, 0, 0),
+                    new AttackUnit(2, 40, new int[]{10}, false, 1, 1, 0)
+            }),
+            new AttackComboType(ANIM_LURKER_FRONT, new AttackUnit[]{
+                    new AttackUnit(3, 0, new int[]{10}, true, 0, 1, 1),
+                    new AttackUnit(3, 30, new int[]{10}, false,  0, 2, 1)
+            }),
+            new AttackComboType(ANIM_LURKER_FRONT, new AttackUnit[]{
+                    new AttackUnit(4, 30, new int[]{10}, true,  0, 1, 1)
+            }),
+            new AttackComboType(ANIM_LURKER_FRONT, 3, new AttackUnit[]{
+                    new AttackUnit(5, 30, new int[]{10}, true),
+                    new AttackUnit(5, 30, new int[]{10}, false)
+            }),
+            new AttackComboType(ANIM_LURKER_FRONT, new AttackUnit[]{
+                    new AttackUnit(6, 30, new int[]{10})
+            }),
+            new AttackComboType(ANIM_GB_LIFT_SWING, new AttackUnit[]{
+                    new AttackUnit(7, 30, new int[]{10})
+            }),
+            new AttackComboType(THROW_ANIM_NAMES[0], new AttackUnit[]{  // 重力控制用特殊处理
+                    new AttackUnit(8, 30, new int[]{10})
+            })
+    };
     private final int[][][] sequences = {
             {{0,30,0},{0,30,1}},            // 飞行骨持续性攻击
             {{1,30,0},{1,30,1},{1,30,2}},   // 飞行骨一次性攻击
-            {{2,20,0,0,0},{2,40,1,1,0},{2,20,0,0,0},{2,40,1,1,0},{2,20,0,0,0},{2,40,1,1,0},{2,20,0,0,0},{2,40,1,1,0},{2,20,0,0,0},{2,40,1,1,0}},      // 地面骨墙运动攻击
-            {{3,0,0,1,1},{3,30,0,2,1}},                       // 骨刺波动，朝向目标
-            {{4,30,0,1,1}},                                 // 骨刺波动，自身周围
-            {{5,30},{5,30},{5,30},{5,30}},                       // 目标骨刺
-            {{6,30}},                                            // 目标周围随机骨刺
+            {{2,20,0,0,0},{2,40,1,1,0}},      // 地面骨墙运动攻击
+            {{3,0,0,1,1},{3,30,0,2,1}},                             // 骨刺波动，朝向目标
+            {{4,30,0,1,1}},                                         // 骨刺波动，自身周围
+            {{5,30},{5,30},{5,30},{5,30}},                          // 目标骨刺
+            {{6,30}},                                               // 目标周围随机骨刺
             {{7,30}},                                                   // GB炮阵列
-            {{8,30}},                                                   // 重力控制
+            {{8,30,}},                                                   // 重力控制
             {{3,30,1,1,0},{3,30,2,2,0},{3,30,2,1,0}},                       // 骨刺波动进阶
             {{3,0,2,1,0},{3,40,1,1,1}, {3,0,3,1,0},{3,40,2,1,1}, {3,0,4,1,1},{3,40,3,1,0}},                       // 骨刺波动进阶
             {{3,0,3,1,0},{3,40,1,2,1}, {3,0,3,1,0},{3,40,2,1,1}, {3,0,4,1,1},{3,40,3,1,0}},                       // 骨刺波动进阶
@@ -428,24 +451,20 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             Arrays.asList(8)
     );
 
-    class MainAttackGoal extends Goal {
+    class AttackSelectorGoal extends Goal {
         private final double speedModifier;
         private final float attackRadiusSqr;
         private final float backRadiusSqr;
         private final float pursuitRadiusSqr;
         private int seeTime;
 
-        private int cd;
-        private int sequence;
-        private int step;
         private int showFlag = 0; // 教学演示攻击
 
-        public MainAttackGoal(double speedModifier, float attackRadius) {
+        public AttackSelectorGoal(double speedModifier, float attackRadius) {
             this.speedModifier = speedModifier;
             this.attackRadiusSqr = attackRadius * attackRadius;
             this.backRadiusSqr = this.attackRadiusSqr / 4;
             this.pursuitRadiusSqr = this.attackRadiusSqr + this.attackRadiusSqr / 2 ;
-            this.cd = -1;
             this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
         }
 
@@ -466,14 +485,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             Sans.this.setAggressive(true);
             seeTime = 0;
             globalCD = 40;
-            cd = 0;
-            sequence = -1;
         }
 
         @Override
         public void stop() {
             Sans.this.setAggressive(false);
-            cd = 0;
         }
         @Override
         public boolean requiresUpdateEveryTick() {
@@ -486,7 +502,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             if (target != null) {
                 double disSqr = Sans.this.distanceToSqr(target.getX(), target.getY(), target.getZ());
                 boolean hasSeeSight = Sans.this.getSensing().hasLineOfSight(target);
-                if(hasSeeSight){ seeTime ++; }
+                if(hasSeeSight){ seeTime++; }
                 else{ seeTime = Math.min(0,seeTime - 1); }
 
                 Sans.this.getLookControl().setLookAt(target, 30.0F, 30.0F);
@@ -505,85 +521,38 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                         }
                         return;
                     }
+
                     if(this.seeTime >= 20 && !Sans.this.isSpecial){
                         boolean onGround =  target.onGround();
                         boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
                         boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
-                        int difficulty = Sans.this.level().getDifficulty().getId();
-                        // 全局CD冷却结束
-                        if (Sans.this.globalCD == 0){
-                            // 没有执行的攻击序列，则选择新的攻击序列
-                            if(sequence == -1){
-                                step = 0;
-                                cd = 0;
-                                int showFlag0 = 0;
-                                List<Integer> availableList = new ArrayList<>(stateSequences.getFirst());
-                                showFlag0 |= 7;
-                                if(onGround){
-                                    showFlag0 |= 8; // 激活地刺
-                                    availableList.addAll(stateSequences.get(1));
-                                    if(target.getOnPos().getY() == Sans.this.getOnPos().getY()){
-                                        showFlag0 |= 16;  // 激活地面移动骨头
-                                        availableList.addAll(stateSequences.get(2));
-                                    }
-                                }
-                                if(inAir || Sans.this.physicalStrength <= maxPhysicalStrength / 2 ) {
-                                    showFlag0 |= 32; // 激活重力控制
-                                    availableList.addAll(stateSequences.get(3));
-                                }
-                                if(showFlag < showFlag0){
-                                    // 找到第一个不同的位（第一个可用的未展示攻击）
-                                    int diff = showFlag ^ showFlag0;
-                                    sequence = Integer.numberOfTrailingZeros(diff);
-                                    showFlag |= (1 << sequence);
-                                }else{
-                                    // 没有教学序列就用标记数组来随机选
-                                    sequence = availableList.get(Sans.this.random.nextInt(availableList.size()));
-                                }
-                                sequence = 4;
-                            }
-                            if(cd-- <= 0){
-                                log.info("{}",sequence);
-                                // 统一的攻击执行
-                                int[] params;
-                                do{
-                                    params = sequences[sequence][step++];
-                                    cd = switch (params[0]) {
-                                        case 0 -> Sans.this.continueFlyingBone(target, difficulty, params[2]) + params[1] - difficulty * 10;
-                                        case 1 -> Sans.this.onceFlyingBone(target, difficulty, params[2]) + params[1] - difficulty * 10;
-                                        case 2 -> {
-                                            Sans.this.groundBoneProjectileAttack(target, difficulty, params[2], params[3], params[4]);
-                                            yield params[1] - (params[2] == 0 ? difficulty * 5 : difficulty * 10);
-                                        }
-                                        case 3 -> {
-                                            // 需要播放音效的那次攻击
-                                            if(params[1] == 0){
-                                                level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
-                                            }
-                                            yield Sans.this.groundBoneWaveSpineTargetAttack(target, difficulty, params[2], params[3], params[4]) + params[1] - difficulty * 10;
-                                        }
-                                        case 4 -> {
-                                            // 需要播放音效的那次攻击
-                                            level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
-                                            yield Sans.this.selfSpikeAttack(target, difficulty) + params[1] - difficulty * 10;
-                                        }
-                                        case 5 -> {
-                                            level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
-                                            yield  params[1] - difficulty * 8 + Sans.this.targetSpineAttack(target, difficulty);
-                                        }
-                                        case 6 -> params[1] - difficulty * 8 + Sans.this.randomAreaSpineAttack(target, difficulty);
-                                        case 7 -> {
-                                            Sans.this.gbAttack(target, difficulty, params[2]);
-                                            yield  params[1] - difficulty * 10;
-                                        }
-                                        default -> throw new IllegalStateException("Unexpected value: " + params[0]);
-                                    };
-                                }while (params[1] <= 0);
-                                if(step == Sans.this.sequences[sequence].length) {
-                                    Sans.this.globalCD = 120;
-                                    sequence = -1;
+                        // 全局CD冷却结束，没有执行的攻击序列，则选择新的攻击序列，触发动画
+                        if (Sans.this.globalCD == 0 && Sans.this.mainAttack == -1){
+                            int showFlag0 = 0;
+                            List<Integer> availableList = new ArrayList<>(stateSequences.getFirst());
+                            showFlag0 |= 7;
+                            if(onGround){
+                                showFlag0 |= 8; // 激活地刺
+                                availableList.addAll(stateSequences.get(1));
+                                if(target.getOnPos().getY() == Sans.this.getOnPos().getY()){
+                                    showFlag0 |= 16;  // 激活地面移动骨头
+                                    availableList.addAll(stateSequences.get(2));
                                 }
                             }
+                            if(inAir || Sans.this.physicalStrength <= maxPhysicalStrength / 2 ) {
+                                showFlag0 |= 32; // 激活重力控制
+                                availableList.addAll(stateSequences.get(3));
+                            }
+                            if(showFlag < showFlag0){
+                                // 找到第一个不同的位（第一个可用的未展示攻击）
+                                int diff = showFlag ^ showFlag0;
+                                Sans.this.mainAttack = Integer.numberOfTrailingZeros(diff);
+                                showFlag |= (1 << Sans.this.mainAttack);
+                            }else{
+                                // 没有教学序列就用标记数组来随机选
+                                Sans.this.mainAttack = availableList.get(Sans.this.random.nextInt(availableList.size()));
+                            }
+//                            Sans.this.mainAttack = 8;
                         }
                     }
                 }else if(seeTime == 0){
@@ -597,6 +566,152 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             }
         }
     }
+    private class AttackExecutorGoal extends Goal{
+        private int animTick;
+        private int step;
+        private int cd;
+        private int round;
+        public AttackExecutorGoal() {
+            super();
+        }
+
+        @Override
+        public void start() {
+            animTick = 0;
+            step = 0;
+            cd = -1;
+            round = attackTypes[Sans.this.mainAttack].getRound();
+        }
+
+        @Override
+        public void stop() {
+            cd = -1;
+        }
+
+        @Override
+        public boolean canUse() {
+            return Sans.this.mainAttack != -1;
+        }
+
+        @Override
+        public void tick() {
+            LivingEntity target = Sans.this.getTarget();
+            if (target == null) {
+                return;
+            }
+            AttackComboType attackType = Sans.this.attackTypes[Sans.this.mainAttack];
+            AttackUnit[] steps = attackType.getSteps();
+            if(step < steps.length){
+                if(steps[step].isTriggerAnim()){
+                    if(animTick == 0) {
+                        triggerAnim(steps[step]);
+                    }
+                }
+                animTick++;
+                int[] hitTick = steps[step].getHitTick();
+                for (int i : hitTick) {
+                    if(animTick == i) {
+                        do{
+                            cd = executeAttack(target, steps[step]);
+                            step++;
+                        }while( cd <=0 );
+                    }
+                }
+                if(cd-- == 0){
+                    animTick = 0;
+                }
+            }else{
+                round--;
+                if(round == 0 ){
+                    Sans.this.globalCD = 120;
+                    Sans.this.mainAttack = -1;
+                }
+                animTick = 0;
+            }
+        }
+    }
+
+    private class GravityControlCollisionDetectionGoal extends Goal {
+        private boolean lastOnGround;
+
+        @Override
+        public void start() {
+            LivingEntity target = Sans.this.getTarget();
+            if (target != null) {
+                this.lastOnGround = target.onGround();
+            }else{
+                this.lastOnGround = false;
+            }
+        }
+
+        @Override
+        public boolean canUse() {
+            LivingEntity target = Sans.this.getTarget();
+            if (target != null) {
+                GravityData gravityData = target.getData(AttachmentTypeRegistry.GRAVITY);
+                return gravityData != null;
+            }else return false;
+        }
+
+        @Override
+        public void tick() {
+            LivingEntity target = Sans.this.getTarget();
+            boolean onGround = target.onGround();
+            if(onGround && lastOnGround != onGround){
+                log.info("落地");
+//                Sans.this.targetSpineAttack(target,Sans.this.level().getDifficulty().getId());
+            }
+        }
+    }
+
+    private void triggerAnim(AttackUnit unit){
+        if (unit.getId() == 8) {
+            int direction = this.random.nextInt(6);
+            unit.setParams(direction);
+            this.triggerAnim("trigger", THROW_ANIM_NAMES[direction]);
+        } else {
+            this.triggerAnim("trigger", this.attackTypes[this.mainAttack].getAnimName());
+        }
+    }
+    private int executeAttack(LivingEntity target,AttackUnit unit){
+        int difficulty = this.level().getDifficulty().getId();
+        int[] params = unit.getParams();
+        return switch (unit.getId()) {
+            case 0 -> Sans.this.continueFlyingBone(target, difficulty, params[0]) + unit.getCd() ;
+            case 1 -> Sans.this.onceFlyingBone(target, difficulty, params[0]) + unit.getCd();
+            case 2 -> {
+                Sans.this.groundBoneProjectileAttack(target, difficulty, params[0], params[1], params[2]);
+                yield unit.getCd() - (params[0] == 0 ? difficulty * 5 : difficulty * 10);
+            }
+            case 3 -> {
+                // 需要播放音效的那次攻击
+                if(unit.getCd() == 0){
+                    level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+                }
+                yield Sans.this.groundBoneWaveSpineTargetAttack(target, difficulty, params[0], params[1], params[2]) + unit.getCd();
+            }
+            case 4 -> {
+                // 需要播放音效的那次攻击
+                level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+                yield Sans.this.selfSpikeAttack(target, difficulty) + unit.getCd();
+            }
+            case 5 -> {
+                level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+                yield  unit.getCd() + Sans.this.targetSpineAttack(target, difficulty);
+            }
+            case 6 -> unit.getCd() + Sans.this.randomAreaSpineAttack(target, difficulty);
+            case 7 -> {
+                Sans.this.gbAttack(target, difficulty, params[0]);
+                yield  unit.getCd() ;
+            }
+            case 8 -> {
+                GravityData.applyRelativeGravity(Sans.this, target, GravityData.RelativeDirection.values()[params[0]]);
+                yield  unit.getCd();
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + unit.getId());
+        };
+    }
+
     /**
      * 飞行骨持续射击
      * @return 需要执行完攻击的总tick
@@ -1027,25 +1142,66 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     }
 
 
-    public class GravityControlGoal extends Goal {
+    private static final String ANIM_CHARGE_FRONT = "charge.front";
+    private static final String ANIM_GB_LIFT_SWING = "attack.gb.lift.swing";
+    private static final String ANIM_GB_LIFT_CIRCLE = "attack.gb.lift.circle";
+    private static final String ANIM_LURKER_CROSS = "attack.spine.cross";
+    private static final String ANIM_LURKER_FRONT = "attack.spine.front";
+    private static final String ANIM_BONE_PROJECTILE = "attack.bone.projectile";
+    private static final String ANIM_CAST = "attack.cast";
+    private static final String ANIM_CAST_LEFT = "attack.cast.left";
+    private static final String ANIM_BONE_ROTATE = "attack.bone.rotate";
 
-        @Override
-        public boolean canUse() {
-            LivingEntity target = Sans.this.getTarget();
-            target.getData(AttachmentTypeRegistry.GRAVITY)
-            return target != null;
+    private final static String[] THROW_ANIM_NAMES = new String[]{"throw.up","throw.down","throw.left","throw.right","throw.front","throw.back"};
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        AnimationController<Sans> triggerController = new AnimationController<>(this,"trigger", state -> {
+            AnimationController<Sans> controller = state.getController();
+            // 检查是否有触发的动画正在播放
+            if (state.getController().isPlayingTriggeredAnimation()) {
+                if (controller.getCurrentAnimation() != null) {
+                    log.info("触发的动画{},状态{}",controller.getCurrentAnimation().animation().name(), controller.getAnimationState());
+                }
+                return PlayState.CONTINUE;
+            }
+            return PlayState.STOP;
+        });
+
+        // 注册其他动画 - 直接写在注册里
+        triggerController.triggerableAnim(ANIM_CHARGE_FRONT, RawAnimation.begin().thenPlay(ANIM_CHARGE_FRONT));
+        triggerController.triggerableAnim(ANIM_GB_LIFT_SWING, RawAnimation.begin().thenPlay(ANIM_GB_LIFT_SWING));
+        triggerController.triggerableAnim(ANIM_GB_LIFT_CIRCLE, RawAnimation.begin().thenPlay(ANIM_GB_LIFT_CIRCLE));
+        triggerController.triggerableAnim(ANIM_LURKER_CROSS, RawAnimation.begin().thenPlay(ANIM_LURKER_CROSS));
+        triggerController.triggerableAnim(ANIM_LURKER_FRONT, RawAnimation.begin().thenPlay(ANIM_LURKER_FRONT));
+        triggerController.triggerableAnim(ANIM_BONE_PROJECTILE, RawAnimation.begin().thenPlay(ANIM_BONE_PROJECTILE));
+        triggerController.triggerableAnim(ANIM_BONE_ROTATE, RawAnimation.begin().thenPlay(ANIM_BONE_ROTATE));
+        // 接收触发动画
+        triggerController.receiveTriggeredAnimations();
+
+        AnimationController<Sans> throwController = new AnimationController<>(this,"throw", state -> {
+            AnimationController<Sans> controller = state.getController();
+            // 检查是否有触发的动画正在播放
+            if (state.getController().isPlayingTriggeredAnimation()) {
+                if (controller.getCurrentAnimation() != null) {
+                    log.info("触发的动画{},状态{}",controller.getCurrentAnimation().animation().name(), controller.getAnimationState());
+                }
+                return PlayState.CONTINUE;
+            }
+            return PlayState.STOP;
+        });
+
+        // 注册可触发动画
+        for (String throwAnimName : THROW_ANIM_NAMES) {
+            throwController.triggerableAnim(throwAnimName, RawAnimation.begin().thenPlay(throwAnimName));
         }
-
+        throwController.receiveTriggeredAnimations();
+        throwController.setAnimationSpeed(4);
+        controllers.add(
+                DefaultAnimations.genericWalkIdleController(this),
+                DefaultAnimations.genericLivingController(this),
+                triggerController,
+                throwController
+        );
     }
-    public class GravityControlCollisionDetectionGoal extends Goal {
 
-        @Override
-        public boolean canUse() {
-            LivingEntity target = Sans.this.getTarget();
-            boolean b = target.onGround();
-            target
-            return target != null;
-        }
-
-    }
 }

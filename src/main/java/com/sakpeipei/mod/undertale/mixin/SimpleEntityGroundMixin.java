@@ -57,38 +57,38 @@ public abstract class SimpleEntityGroundMixin {
 //        }
 //    }
 
-    /**
-     * 修改整个地面检测逻辑
-     */
-    @Inject(
-            method = "move",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/Entity;setOnGroundWithMovement(ZLnet/minecraft/world/phys/Vec3;)V"
-            ),
-            cancellable = true)
-    private void onSetOnGroundWithMovement(MoverType moverType, Vec3 movement, CallbackInfo ci) {
-        Entity entity = (Entity)(Object)this;
-
-        if (entity.hasData(AttachmentTypeRegistry.GRAVITY)) {
-            GravityData gravityData = entity.getData(AttachmentTypeRegistry.GRAVITY);
-            Vec3 gravityDir = gravityData.getDownDirection();
-
-            // 使用原版碰撞检测
-            Vec3 actualMovement = this.collide(movement);
-
-            // 计算在重力方向上的碰撞
-            double intendedMovementInGravityDir = movement.dot(gravityDir);
-            double actualMovementInGravityDir = actualMovement.dot(gravityDir);
-            boolean hasGravityCollision = !Mth.equal(intendedMovementInGravityDir, actualMovementInGravityDir);
-            boolean isMovingTowardsGravity = intendedMovementInGravityDir < 0.0;
-
-            // 设置地面状态
-            boolean customOnGround = hasGravityCollision && isMovingTowardsGravity;
-            entity.setOnGroundWithMovement(customOnGround, actualMovement);
-
-            // 取消原版的设置
-            ci.cancel();
-        }
-    }
+//    /**
+//     * 修改整个地面检测逻辑
+//     */
+//    @Inject(
+//            method = "move",
+//            at = @At(
+//                    value = "INVOKE",
+//                    target = "Lnet/minecraft/world/entity/Entity;setOnGroundWithMovement(ZLnet/minecraft/world/phys/Vec3;)V"
+//            ),
+//            cancellable = true)
+//    private void onSetOnGroundWithMovement(MoverType moverType, Vec3 movement, CallbackInfo ci) {
+//        Entity entity = (Entity)(Object)this;
+//
+//        if (entity.hasData(AttachmentTypeRegistry.GRAVITY)) {
+//            GravityData gravityData = entity.getData(AttachmentTypeRegistry.GRAVITY);
+//            Vec3 gravityDir = gravityData.getDownDirection();
+//
+//            // 使用原版碰撞检测
+//            Vec3 actualMovement = this.collide(movement);
+//
+//            // 计算在重力方向上的碰撞
+//            double intendedMovementInGravityDir = movement.dot(gravityDir);
+//            double actualMovementInGravityDir = actualMovement.dot(gravityDir);
+//            boolean hasGravityCollision = !Mth.equal(intendedMovementInGravityDir, actualMovementInGravityDir);
+//            boolean isMovingTowardsGravity = intendedMovementInGravityDir < 0.0;
+//
+//            // 设置地面状态
+//            boolean customOnGround = hasGravityCollision && isMovingTowardsGravity;
+//            entity.setOnGroundWithMovement(customOnGround, actualMovement);
+//
+//            // 取消原版的设置
+//            ci.cancel();
+//        }
+//    }
 }

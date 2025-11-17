@@ -35,18 +35,18 @@ public abstract class LivingEntityGravityMixin {
     @Shadow
     public float yya;
 
-    /**
-     * 完全接管有自定义重力实体的运动逻辑
-     */
-    @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
-    private void onTravelWithCustomGravity(Vec3 travelVector, CallbackInfo ci) {
-        LivingEntity entity = (LivingEntity)(Object)this;
-
-        if (entity.hasData(AttachmentTypeRegistry.GRAVITY)) {
-            GravityData gravityData = entity.getData(AttachmentTypeRegistry.GRAVITY);
-
-            ci.cancel(); // 取消原版逻辑
-        }
-    }
+//    /**
+//     * 完全接管有自定义重力实体的运动逻辑
+//     */
+//    @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
+//    private void onTravelWithCustomGravity(Vec3 travelVector, CallbackInfo ci) {
+//        LivingEntity entity = (LivingEntity)(Object)this;
+//
+//        if (entity.hasData(AttachmentTypeRegistry.GRAVITY)) {
+//            GravityData gravityData = entity.getData(AttachmentTypeRegistry.GRAVITY);
+//
+//            ci.cancel(); // 取消原版逻辑
+//        }
+//    }
 
 }

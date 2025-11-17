@@ -6,7 +6,7 @@
 				"identifier": "geometry.sans",
 				"texture_width": 128,
 				"texture_height": 128,
-				"visible_bounds_width": 3,
+				"visible_bounds_width": 5,
 				"visible_bounds_height": 3.5,
 				"visible_bounds_offset": [0, 1.25, 0]
 			},
@@ -170,7 +170,7 @@
 				{
 					"name": "right arm2",
 					"parent": "right arm",
-					"pivot": [-9, 13.75, -1],
+					"pivot": [-9, 13.75, 1],
 					"rotation": [0, 0, -65],
 					"cubes": [
 						{
@@ -185,7 +185,10 @@
 								"down": {"uv": [59, 5], "uv_size": [4, -5]}
 							}
 						}
-					]
+					],
+					"locators": {
+						"right locator": [7, 7, 0]
+					}
 				},
 				{
 					"name": "left arm",
@@ -209,7 +212,7 @@
 				{
 					"name": "left arm2",
 					"parent": "left arm",
-					"pivot": [9, 13.75, -2],
+					"pivot": [9, 13.75, 2],
 					"rotation": [0, 0, 65],
 					"cubes": [
 						{
@@ -224,7 +227,10 @@
 								"down": {"uv": [58, 39], "uv_size": [4, -5]}
 							}
 						}
-					]
+					],
+					"locators": {
+						"left locator": [7, 7, 0]
+					}
 				},
 				{
 					"name": "right leg",
@@ -259,7 +265,7 @@
 				{
 					"name": "right-shoe",
 					"parent": "right leg",
-					"pivot": [1.5, 0, -3.5],
+					"pivot": [1.5, 0, 3.5],
 					"cubes": [
 						{
 							"origin": [-5.5, 0, -2],
@@ -344,7 +350,7 @@
 				{
 					"name": "left-shoe",
 					"parent": "left leg",
-					"pivot": [-1.5, 0, -3.5],
+					"pivot": [-1.5, 0, 3.5],
 					"cubes": [
 						{
 							"origin": [4.5, 0, -2],
