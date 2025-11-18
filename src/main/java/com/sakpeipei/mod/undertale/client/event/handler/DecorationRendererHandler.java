@@ -17,6 +17,8 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import static software.bernie.geckolib.GeckoLibConstants.LOGGER;
+
 /**
  * @author yujinbao
  * @since 2025/11/17 16:13
@@ -26,15 +28,22 @@ import java.util.List;
 public class DecorationRendererHandler {
     private final static List<Decoration> DECORATIONS = new ArrayList<>();
 
-
     @SubscribeEvent
     private static void onClientTick(ClientTickEvent.Post event) {
+        if (DECORATIONS.isEmpty()) {
+            return;
+        }
+
         DECORATIONS.forEach(Decoration::tick);
         DECORATIONS.removeIf(Decoration::isRemoved);
     }
+
     @SubscribeEvent
     private static void onRenderLevelStage(RenderLevelStageEvent event) {
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_PARTICLES) {
+            if (DECORATIONS.isEmpty()) {
+                return;
+            }
             PoseStack poseStack = event.getPoseStack();
             Camera camera = event.getCamera();
             Frustum frustum = event.getFrustum();
@@ -50,13 +59,11 @@ public class DecorationRendererHandler {
             // 遍历所有装饰物
             for (Decoration decoration : DECORATIONS) {
                 if (!decoration.isRemoved()) {
-                    // 统一的视锥体裁剪（每个装饰物都需要）
                     if (decoration.shouldRender(frustum,cameraPos.x, cameraPos.y, cameraPos.z)) {
-                        decoration.render(poseStack,camera,partialTick, bufferSource,event.getModelViewMatrix(),event.getProjectionMatrix());
+                        decoration.render(poseStack,partialTick,bufferSource, camera,event.getModelViewMatrix(),event.getProjectionMatrix());
                     }
                 }
             }
-
             poseStack.popPose();
             bufferSource.endBatch(); // 统一的批处理提交
         }

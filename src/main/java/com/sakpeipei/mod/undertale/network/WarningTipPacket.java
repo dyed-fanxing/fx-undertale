@@ -10,6 +10,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 public record WarningTipPacket(double minX,double minY,double minZ,double maxX,double maxY,double maxZ,int lifetime,int color) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<WarningTipPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "warning_tip_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, WarningTipPacket> STREAM_CODEC = CustomPacketPayload.codec(WarningTipPacket::write, WarningTipPacket::new);
+    private static final Logger log = LogManager.getLogger(WarningTipPacket.class);
 
     public WarningTipPacket(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int lifetime,int color) {
         this.minX = minX;

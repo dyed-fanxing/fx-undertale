@@ -10,9 +10,12 @@ import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import com.sakpeipei.mod.undertale.entity.summon.GroundBone;
 import com.sakpeipei.mod.undertale.mechanism.ColorAttack;
+import com.sakpeipei.mod.undertale.network.KaramPacket;
+import com.sakpeipei.mod.undertale.network.WarningTipPacket;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.SoundRegistry;
+import com.sakpeipei.mod.undertale.utils.EntityUtils;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
@@ -49,6 +52,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -63,7 +67,9 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class Sans extends Monster implements NeutralMob, GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -552,7 +558,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                                 // 没有教学序列就用标记数组来随机选
                                 Sans.this.mainAttack = availableList.get(Sans.this.random.nextInt(availableList.size()));
                             }
-//                            Sans.this.mainAttack = 8;
+                            Sans.this.mainAttack = 5;
                         }
                     }
                 }else if(seeTime == 0){
@@ -1008,7 +1014,21 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
      */
     private int targetSpineAttack(@NotNull LivingEntity target,int difficulty) {
         Vec3 pos = target.position();
-        return circleSpineAttack(target,3*(difficulty+1),pos.x,pos.z,13 - difficulty,10,1f - (float) difficulty / 3);
+        int radiusCount = 3 * (difficulty + 1);
+        float offsetY = 1f - (float) difficulty / 3;
+        float radiusSize = (radiusCount - 1) * 0.5f;
+        double minY = Math.min(target.getY(), this.getY());
+        double maxY = Math.max(target.getY(), this.getY()) + 1.0;
+        Level level = this.level();
+        double groundY = EntityUtils.findGroundY(this.level(), pos.x, pos.z, minY, maxY);
+        if(groundY != level.getMinBuildHeight()){
+            PacketDistributor.sendToPlayersTrackingEntity(this,
+                    new WarningTipPacket(pos.x - radiusSize,pos.y,pos.z - radiusSize,pos.x + radiusSize,pos.y + offsetY,pos.z + radiusSize,
+                            10, Color.RED.getRGB()));
+//        return circleSpineAttack(target,3*(difficulty+1),pos.x,pos.z,13 - difficulty,10,1f - (float) difficulty / 3);
+            return squareSpineAttack(target,radiusCount,pos.x,pos.z,13 - difficulty,10,offsetY);
+        }
+        return 0;
     }
     /**
      * 在目标周围随机生成地面骨刺
@@ -1050,45 +1070,46 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         return delay;
     }
     /**
+     * 实心正方形骨刺攻击
+     * @param target 目标
+     * @param size 正方形半径（从中心到边的格数）
+     * @param x 中心坐标x
+     * @param z 中心坐标z
+     * @param delay 延迟
+     * @param lifetime 生命周期
+     * @param offsetY 减少骨刺刺出的高度
+     * @return 执行CD
+     */
+    private int squareSpineAttack(LivingEntity target, int size, double x, double z, int delay, int lifetime, float offsetY) {
+        String attackTypeUUID = UUID.randomUUID().toString();
+        double minY = Math.min(target.getY(), this.getY());
+        double maxY = Math.max(target.getY(), this.getY()) + 1.0;
+
+        // 生成整个实心正方形区域
+        for (int i = -size; i <= size; i++) {
+            for (int j = -size; j <= size; j++) {
+                double boneX = x + i * 0.5f;
+                double boneZ = z + j * 0.5f;
+                boolean isCenter = (i == 0 && j == 0);
+                createGroundBone(attackTypeUUID, boneX, boneZ, minY, maxY, delay, lifetime, offsetY, ColorAttack.WHITE, isCenter);
+            }
+        }
+        return delay;
+    }
+    /**
      * @param offsetY 根据难度决定骨刺上升多少，最大为自身高度1.0f
      */
-    private void createGroundBone( String attackUUID,double targetX, double targetZ, double minY, double maxY, int delay,int lifetime,float offsetY,ColorAttack colorAttack,boolean isPlaySound) {
+    private void createGroundBone(String attackUUID,double targetX, double targetZ, double minY, double maxY, int delay,int lifetime,float offsetY,ColorAttack colorAttack,boolean isPlaySound) {
         Level level = this.level();
-        // 从最高Y坐标开始搜索地面
-        BlockPos searchPos = BlockPos.containing(targetX, maxY, targetZ);
-        boolean foundValidGround = false;
-        double collisionHeight = 0.0;
-        // 向下搜索直到找到固体地面
-        do {
-            BlockPos posBelow = searchPos.below();
-            BlockState blockBelow = level.getBlockState(posBelow);
-            // 检查下方方块的上表面是否坚固（可以站立）
-            if (blockBelow.isFaceSturdy(level, posBelow, Direction.UP)) {
-                // 如果当前位置有方块，计算其碰撞箱高度
-                if (!level.isEmptyBlock(searchPos)) {
-                    BlockState blockAtPos = level.getBlockState(searchPos);
-                    VoxelShape collisionShape = blockAtPos.getCollisionShape(level, searchPos);
-                    if (!collisionShape.isEmpty()) {
-                        collisionHeight = collisionShape.max(Direction.Axis.Y);
-                    }
-                }
-                foundValidGround = true;
-                break;
-            }
-            // 继续向下搜索
-            searchPos = searchPos.below();
-        } while(searchPos.getY() >= Mth.floor(minY) - 1);
+        double spawnY = EntityUtils.findGroundY(level, targetX, targetZ, minY, maxY);
         // 如果找到有效地面，生成骨刺
-        if (foundValidGround) {
-            double spawnY = searchPos.getY() + collisionHeight;
-            // 创建骨刺实体
+        if (spawnY != level.getMinBuildHeight()) {
             GroundBone bone = new GroundBone(level, this, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), delay, targetX, spawnY  - offsetY, targetZ,colorAttack,isPlaySound,lifetime);
             bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackUUID, (byte) 6));
             // 设置旋转：骨刺指向圆心（目标位置）
             bone.setYRot(this.getYHeadRot());
             level.addFreshEntity(bone);
             level.gameEvent(GameEvent.ENTITY_PLACE, new Vec3(targetX, spawnY, targetZ), GameEvent.Context.of(this));
-
             ((ServerLevel) level).sendParticles(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT,colorAttack.getColor().getColor()) ,targetX, spawnY, targetZ,
                     1,  // 数量
                     0, 0, 0,  // 偏移范围

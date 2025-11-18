@@ -25,6 +25,7 @@ public abstract class Decoration implements Tickable {
 
     public Decoration(int age, int lifetime) {
         this.age = age;
+        this.lifetime = lifetime;
     }
     public Decoration(int lifetime) {
         this(0,lifetime);

@@ -10,6 +10,8 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.plaf.ColorUIResource;
 import java.awt.*;
@@ -22,6 +24,7 @@ import java.awt.*;
  */
 @OnlyIn(Dist.CLIENT)
 public class WarningTip extends Decoration {
+    private static final Logger log = LogManager.getLogger(WarningTip.class);
     private final AABB area;
     private final float r, g, b, a;
 
@@ -31,10 +34,11 @@ public class WarningTip extends Decoration {
         this.r = r; this.g = g; this.b = b;this.a = a;
     }
     public WarningTip(AABB area, int lifetime, int color) {
-        this(area,lifetime,ColorUtils.getRed(color),ColorUtils.getGreen(color),ColorUtils.getBlue(color),ColorUtils.getAlpha(color));
+        this(area,lifetime,ColorUtils.getRed(color)/255.0f,ColorUtils.getGreen(color)/255.0f,ColorUtils.getBlue(color)/255.0f,ColorUtils.getAlpha(color)/255.0f);
     }
     @Override
     protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {
+        // 确保这个方法被正确重写
         VertexConsumer consumer = bufferSource.getBuffer(RenderType.LINES);
         LevelRenderer.renderLineBox(poseStack, consumer, area, r, g, b, a);
     }
