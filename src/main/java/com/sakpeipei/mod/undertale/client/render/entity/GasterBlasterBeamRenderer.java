@@ -30,7 +30,7 @@ public class GasterBlasterBeamRenderer{
      * 渲染固定 GB
      * @param partialTicks 部分刻时间（用于平滑动画）
      */
-    public static void renderFixed(GasterBlasterFixed entity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight){
+    public static void render(GasterBlasterFixed entity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight){
         float width = entity.getWidth();
         float halfWidth = width * 0.5f;
         translate(entity,entity.getWidth(),poseStack);
@@ -44,7 +44,7 @@ public class GasterBlasterBeamRenderer{
                 if(entity.tickCount == 18) partialWidth = Mth.lerp(partialTicks,halfWidth,width);
                 else partialWidth = entity.getWidth() + (float) Math.sin((entity.tickCount + partialTicks) * 0.5f) * 0.1f  ;
             }
-            renderBeam(entity.getLength(),partialWidth,poseStack.last(),buffer,packedLight);
+            render(entity.getLength(),partialWidth,poseStack.last(),buffer,packedLight);
         }
         poseStack.popPose();
     }
@@ -53,7 +53,7 @@ public class GasterBlasterBeamRenderer{
      * 渲染Pro GB
      * @param partialTicks 部分刻时间（用于平滑动画）
      */
-    public static void renderPro(GasterBlasterPro entity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+    public static void render(GasterBlasterPro entity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         translate(entity,entity.getWidth(),poseStack);
         float width = entity.getWidth();
         float halfWidth = width * 0.5f;
@@ -72,7 +72,7 @@ public class GasterBlasterBeamRenderer{
             case GasterBlasterPro.PHASE_DECAY -> partialWidth = Mth.lerp((entity.timer + partialTicks) / 2, width, 0);
         }
         LogUtils.getLogger().info("宽度{}",partialWidth);
-        renderBeam(entity.getLength(),partialWidth,poseStack.last(),buffer,packedLight);
+        render(entity.getLength(),partialWidth,poseStack.last(),buffer,packedLight);
         poseStack.popPose();
     }
 
@@ -90,7 +90,7 @@ public class GasterBlasterBeamRenderer{
         poseStack.mulPose(Axis.YP.rotationDegrees(-entity.getYRot()));
         poseStack.mulPose(Axis.XP.rotationDegrees(entity.getXRot()));
     }
-    public static void renderBeam(float length,float partialWidth,PoseStack.Pose pose, MultiBufferSource buffer, int packedLight){
+    public static void render(float length,float partialWidth,PoseStack.Pose pose, MultiBufferSource buffer, int packedLight){
         // 光束局部起点
         Vec3 start = Vec3.ZERO;
         // 沿着局部Z轴延申光束长度

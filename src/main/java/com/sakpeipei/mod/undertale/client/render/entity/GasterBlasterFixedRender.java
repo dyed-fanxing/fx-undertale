@@ -28,7 +28,7 @@ public class GasterBlasterFixedRender extends GeoEntityRenderer<GasterBlasterFix
     @Override
     public void render(@NotNull GasterBlasterFixed entity, float entityYaw, float partialTick, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-        GasterBlasterBeamRenderer.renderFixed(entity, partialTick, poseStack, bufferSource, packedLight);
+        GasterBlasterBeamRenderer.render(entity, partialTick, poseStack, bufferSource, packedLight);
     }
 
     @Override

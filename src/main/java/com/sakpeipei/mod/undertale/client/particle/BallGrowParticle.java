@@ -51,6 +51,7 @@ public class BallGrowParticle extends TextureSheetParticle {
         public Provider(SpriteSet pSprite) {
             this.sprite = pSprite;
         }
+        @Override
         public Particle createParticle(@NotNull GrowTrackEntityOption options, @NotNull ClientLevel level, double x, double y, double z, double xd, double yd, double zd) {
             BallGrowParticle particle = new BallGrowParticle(options,level, x,y,z,level.getEntity(options.entityId()));
             particle.setSprite(sprite.get(0,1)); // 关键初始化！
