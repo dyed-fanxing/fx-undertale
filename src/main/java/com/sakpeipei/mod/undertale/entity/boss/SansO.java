@@ -2,7 +2,6 @@ package com.sakpeipei.mod.undertale.entity.boss;
 
 import com.sakpeipei.mod.undertale.entity.attachment.GravityData;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
-import com.sakpeipei.mod.undertale.entity.common.AttackType;
 import com.sakpeipei.mod.undertale.entity.common.AttackComboType;
 import com.sakpeipei.mod.undertale.entity.common.AttackUnit;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
@@ -10,7 +9,6 @@ import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import com.sakpeipei.mod.undertale.entity.summon.GroundBone;
 import com.sakpeipei.mod.undertale.mechanism.ColorAttack;
-import com.sakpeipei.mod.undertale.network.KaramPacket;
 import com.sakpeipei.mod.undertale.network.WarningTipPacket;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
@@ -23,6 +21,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializer;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -31,6 +33,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.TimeUtil;
 import net.minecraft.util.valueproviders.UniformInt;
+import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffects;
@@ -48,7 +51,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
@@ -57,7 +59,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -71,9 +72,12 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class Sans extends Monster implements NeutralMob, GeoEntity {
+public class SansO extends Monster implements NeutralMob, GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private static final Logger log = LoggerFactory.getLogger(Sans.class);
+
+    private final EntityDataAccessor<Byte> ATTACK_ID = SynchedEntityData.defineId(SansO.class, EntityDataSerializers.BYTE);
+
+    private static final Logger log = LoggerFactory.getLogger(SansO.class);
 
     private final static short ATTACK_RANGE = 16;  // 攻击距离
 
@@ -85,7 +89,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
     @Nullable
     private UUID persistentAngerTarget;
 
-    public Sans(EntityType<? extends Monster> type, Level level) {
+    public SansO(EntityType<? extends Monster> type, Level level) {
         super(type, level);
         physicalStrength = level.getDifficulty().getId() * 50;
         maxPhysicalStrength = physicalStrength;
@@ -259,12 +263,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         }
     }
     private void teleportTowards(Entity target) {
-        Vec3 dir = new Vec3(target.getX() - Sans.this.getX(), target.getEyeY() - Sans.this.getEyeY(), target.getZ() - Sans.this.getZ());
+        Vec3 dir = new Vec3(target.getX() - SansO.this.getX(), target.getEyeY() - SansO.this.getEyeY(), target.getZ() - SansO.this.getZ());
         dir = dir.normalize().scale((double) ATTACK_RANGE / 2);
-        Sans.this.tryTeleportTo(
-                Sans.this.getX() + dir.x + (random.nextDouble() - 0.5) * 4,
-                Sans.this.getY() + dir.y + (random.nextDouble() - 0.5) * 16,
-                Sans.this.getZ() + dir.z + (random.nextDouble() - 0.5) * 4);
+        SansO.this.tryTeleportTo(
+                SansO.this.getX() + dir.x + (random.nextDouble() - 0.5) * 4,
+                SansO.this.getY() + dir.y + (random.nextDouble() - 0.5) * 16,
+                SansO.this.getZ() + dir.z + (random.nextDouble() - 0.5) * 4);
     }
     /**
      * Sans的传送逻辑（基于末影人原版代码优化）
@@ -352,6 +356,22 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         this.readPersistentAngerSaveData(this.level(), tag);
     }
 
+    @Override
+    protected void defineSynchedData(SynchedEntityData.@NotNull Builder buf) {
+        super.defineSynchedData(buf);
+        buf.define(ATTACK_ID,(byte)-1);
+    }
+
+    private byte attackId;
+
+    public void setAttackId(byte id){
+        this.attackId = id;
+    }
+
+    public byte getAttackId() {
+        return attackId;
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
         return PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 1.0)
@@ -373,14 +393,14 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
         @Override
         public boolean canUse() {
-            return Sans.this.getTarget() == null && Sans.this.getPersistentAngerTarget() != null;
+            return SansO.this.getTarget() == null && SansO.this.getPersistentAngerTarget() != null;
         }
 
         @Override
         public void start() {
-            if (Sans.this.level() instanceof ServerLevel level) {
-                if(level.getEntity(Sans.this.getPersistentAngerTarget()) instanceof LivingEntity entity){
-                    Sans.this.setTarget(entity);
+            if (SansO.this.level() instanceof ServerLevel level) {
+                if(level.getEntity(SansO.this.getPersistentAngerTarget()) instanceof LivingEntity entity){
+                    SansO.this.setTarget(entity);
                 }
             }
         }
@@ -476,26 +496,26 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
         @Override
         public boolean canUse() {
-            LivingEntity livingentity = Sans.this.getTarget();
+            LivingEntity livingentity = SansO.this.getTarget();
             return livingentity != null && livingentity.isAlive();
         }
 
 
         @Override
         public boolean canContinueToUse() {
-            return this.canUse() || !Sans.this.getNavigation().isDone();
+            return this.canUse() || !SansO.this.getNavigation().isDone();
         }
 
         @Override
         public void start() {
-            Sans.this.setAggressive(true);
+            SansO.this.setAggressive(true);
             seeTime = 0;
             globalCD = 40;
         }
 
         @Override
         public void stop() {
-            Sans.this.setAggressive(false);
+            SansO.this.setAggressive(false);
         }
         @Override
         public boolean requiresUpdateEveryTick() {
@@ -506,65 +526,65 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         public void tick() {
             LivingEntity target = getTarget();
             if (target != null) {
-                double disSqr = Sans.this.distanceToSqr(target.getX(), target.getY(), target.getZ());
-                boolean hasSeeSight = Sans.this.getSensing().hasLineOfSight(target);
+                double disSqr = SansO.this.distanceToSqr(target.getX(), target.getY(), target.getZ());
+                boolean hasSeeSight = SansO.this.getSensing().hasLineOfSight(target);
                 if(hasSeeSight){ seeTime++; }
                 else{ seeTime = Math.min(0,seeTime - 1); }
 
-                Sans.this.getLookControl().setLookAt(target, 30.0F, 30.0F);
+                SansO.this.getLookControl().setLookAt(target, 30.0F, 30.0F);
                 if(seeTime > 0){
                     //                    ++this.strafingTime;
                     if (disSqr <= backRadiusSqr){
-                        Sans.this.getNavigation().stop();
-                        Sans.this.getMoveControl().strafe(-0.75f,0.0f);
-                        Sans.this.setYRot(Mth.rotateIfNecessary(Sans.this.getYRot(), Sans.this.yHeadRot, 0.0F));
+                        SansO.this.getNavigation().stop();
+                        SansO.this.getMoveControl().strafe(-0.75f,0.0f);
+                        SansO.this.setYRot(Mth.rotateIfNecessary(SansO.this.getYRot(), SansO.this.yHeadRot, 0.0F));
                     }else if(disSqr > backRadiusSqr && disSqr <= attackRadiusSqr){
-                        Sans.this.getNavigation().stop();
+                        SansO.this.getNavigation().stop();
                     }else{
-                        Sans.this.getNavigation().moveTo(target, speedModifier);
+                        SansO.this.getNavigation().moveTo(target, speedModifier);
                         if(disSqr > pursuitRadiusSqr){
                             teleportTowards(target);
                         }
                         return;
                     }
 
-                    if(this.seeTime >= 20 && !Sans.this.isSpecial){
+                    if(this.seeTime >= 20 && !SansO.this.isSpecial){
                         boolean onGround =  target.onGround();
                         boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
                         boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
                         // 全局CD冷却结束，没有执行的攻击序列，则选择新的攻击序列，触发动画
-                        if (Sans.this.globalCD == 0 && Sans.this.mainAttack == -1){
+                        if (SansO.this.globalCD == 0 && SansO.this.mainAttack == -1){
                             int showFlag0 = 0;
                             List<Integer> availableList = new ArrayList<>(stateSequences.getFirst());
                             showFlag0 |= 7;
                             if(onGround){
                                 showFlag0 |= 8; // 激活地刺
                                 availableList.addAll(stateSequences.get(1));
-                                if(target.getOnPos().getY() == Sans.this.getOnPos().getY()){
+                                if(target.getOnPos().getY() == SansO.this.getOnPos().getY()){
                                     showFlag0 |= 16;  // 激活地面移动骨头
                                     availableList.addAll(stateSequences.get(2));
                                 }
                             }
-                            if(inAir || Sans.this.physicalStrength <= maxPhysicalStrength / 2 ) {
+                            if(inAir || SansO.this.physicalStrength <= maxPhysicalStrength / 2 ) {
                                 showFlag0 |= 32; // 激活重力控制
                                 availableList.addAll(stateSequences.get(3));
                             }
                             if(showFlag < showFlag0){
                                 // 找到第一个不同的位（第一个可用的未展示攻击）
                                 int diff = showFlag ^ showFlag0;
-                                Sans.this.mainAttack = Integer.numberOfTrailingZeros(diff);
-                                showFlag |= (1 << Sans.this.mainAttack);
+                                SansO.this.mainAttack = Integer.numberOfTrailingZeros(diff);
+                                showFlag |= (1 << SansO.this.mainAttack);
                             }else{
                                 // 没有教学序列就用标记数组来随机选
-                                Sans.this.mainAttack = availableList.get(Sans.this.random.nextInt(availableList.size()));
+                                SansO.this.mainAttack = availableList.get(SansO.this.random.nextInt(availableList.size()));
                             }
-                            Sans.this.mainAttack = 5;
+                            SansO.this.mainAttack = 5;
                         }
                     }
                 }else if(seeTime == 0){
                     Vec3 pos = target.position();
                     if(disSqr <= pursuitRadiusSqr){
-                        Sans.this.getNavigation().moveTo(pos.x,pos.y,pos.z,this.speedModifier);
+                        SansO.this.getNavigation().moveTo(pos.x,pos.y,pos.z,this.speedModifier);
                     }else{
                         teleportTowards(target);
                     }
@@ -586,7 +606,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             animTick = 0;
             step = 0;
             cd = -1;
-            round = attackTypes[Sans.this.mainAttack].getRound();
+            round = attackTypes[SansO.this.mainAttack].getRound();
         }
 
         @Override
@@ -596,16 +616,16 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
         @Override
         public boolean canUse() {
-            return Sans.this.mainAttack != -1;
+            return SansO.this.mainAttack != -1;
         }
 
         @Override
         public void tick() {
-            LivingEntity target = Sans.this.getTarget();
+            LivingEntity target = SansO.this.getTarget();
             if (target == null) {
                 return;
             }
-            AttackComboType attackType = Sans.this.attackTypes[Sans.this.mainAttack];
+            AttackComboType attackType = SansO.this.attackTypes[SansO.this.mainAttack];
             AttackUnit[] steps = attackType.getSteps();
             if(step < steps.length){
                 if(steps[step].isTriggerAnim()){
@@ -629,8 +649,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
             }else{
                 round--;
                 if(round == 0 ){
-                    Sans.this.globalCD = 120;
-                    Sans.this.mainAttack = -1;
+                    SansO.this.globalCD = 120;
+                    SansO.this.mainAttack = -1;
                 }
                 animTick = 0;
             }
@@ -642,7 +662,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
         @Override
         public void start() {
-            LivingEntity target = Sans.this.getTarget();
+            LivingEntity target = SansO.this.getTarget();
             if (target != null) {
                 this.lastOnGround = target.onGround();
             }else{
@@ -652,7 +672,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
         @Override
         public boolean canUse() {
-            LivingEntity target = Sans.this.getTarget();
+            LivingEntity target = SansO.this.getTarget();
             if (target != null) {
                 GravityData gravityData = target.getData(AttachmentTypeRegistry.GRAVITY);
                 return gravityData != null;
@@ -661,7 +681,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
         @Override
         public void tick() {
-            LivingEntity target = Sans.this.getTarget();
+            LivingEntity target = SansO.this.getTarget();
             boolean onGround = target.onGround();
             if(onGround && lastOnGround != onGround){
                 log.info("落地");
@@ -683,10 +703,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
         int difficulty = this.level().getDifficulty().getId();
         int[] params = unit.getParams();
         return switch (unit.getId()) {
-            case 0 -> Sans.this.continueFlyingBone(target, difficulty) + unit.getCd() ;
-            case 1 -> Sans.this.onceFlyingBone(target, difficulty, params[0]) + unit.getCd();
+            case 0 -> SansO.this.continueFlyingBone(target, difficulty) + unit.getCd() ;
+            case 1 -> SansO.this.onceFlyingBone(target, difficulty, params[0]) + unit.getCd();
             case 2 -> {
-                Sans.this.groundBoneProjectileAttack(target, difficulty, params[0], params[1], params[2]);
+                SansO.this.groundBoneProjectileAttack(target, difficulty, params[0], params[1], params[2]);
                 yield unit.getCd() - (params[0] == 0 ? difficulty * 5 : difficulty * 10);
             }
             case 3 -> {
@@ -694,24 +714,24 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
                 if(unit.getCd() == 0){
                     level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
                 }
-                yield Sans.this.groundBoneWaveSpineTargetAttack(target, difficulty, params[0], params[1], params[2]) + unit.getCd();
+                yield SansO.this.groundBoneWaveSpineTargetAttack(target, difficulty, params[0], params[1], params[2]) + unit.getCd();
             }
             case 4 -> {
                 // 需要播放音效的那次攻击
                 level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
-                yield Sans.this.selfSpikeAttack(target, difficulty) + unit.getCd();
+                yield SansO.this.selfSpikeAttack(target, difficulty) + unit.getCd();
             }
             case 5 -> {
                 level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
-                yield  unit.getCd() + Sans.this.targetSpineAttack(target, difficulty);
+                yield  unit.getCd() + SansO.this.targetSpineAttack(target, difficulty);
             }
-            case 6 -> unit.getCd() + Sans.this.randomAreaSpineAttack(target, difficulty);
+            case 6 -> unit.getCd() + SansO.this.randomAreaSpineAttack(target, difficulty);
             case 7 -> {
-                Sans.this.gbAttack(target, difficulty, params[0]);
+                SansO.this.gbAttack(target, difficulty, params[0]);
                 yield  unit.getCd() ;
             }
             case 8 -> {
-                GravityData.applyRelativeGravity(Sans.this, target, GravityData.RelativeDirection.values()[params[0]]);
+                GravityData.applyRelativeGravity(SansO.this, target, GravityData.RelativeDirection.values()[params[0]]);
                 yield  unit.getCd();
             }
             default -> throw new IllegalStateException("Unexpected value: " + unit.getId());
@@ -1157,50 +1177,41 @@ public class Sans extends Monster implements NeutralMob, GeoEntity {
 
 
     private static final String ANIM_CHARGE_FRONT = "charge.front";
-    private static final String ANIM_GB_LIFT_SWING = "attack.gb.lift.swing";
-    private static final String ANIM_GB_LIFT_CIRCLE = "attack.gb.lift.circle";
     private static final String ANIM_LURKER_CROSS = "attack.spine.cross";
     private static final String ANIM_LURKER_FRONT = "attack.spine.front";
     private static final String ANIM_BONE_PROJECTILE = "attack.bone.projectile";
     private static final String ANIM_CAST = "attack.cast";
     private static final String ANIM_CAST_LEFT = "attack.cast.left";
-    private static final String ANIM_BONE_ROTATE = "attack.bone.rotate";
+    private static final String ANIM_CAST_ROUND = "attack.cast.round";
+    private static final String ANIM_CAST_ROUND_LEFT = "attack.cast.round.left";
 
-    private final static String[] THROW_ANIM_NAMES = new String[]{"throw.up","throw.down","throw.left","throw.right","throw.front","throw.back"};
+    private final static String[] THROW_ANIM_NAMES = new String[]{"attack.throw.up","attack.throw.down","attack.throw.left","attack.throw.right","attack.throw.front","attack.throw.back"};
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        AnimationController<Sans> triggerController = new AnimationController<>(this,"trigger", state -> {
-            AnimationController<Sans> controller = state.getController();
-            // 检查是否有触发的动画正在播放
-            if (state.getController().isPlayingTriggeredAnimation()) {
-                if (controller.getCurrentAnimation() != null) {
-                    log.info("触发的动画{},状态{}",controller.getCurrentAnimation().animation().name(), controller.getAnimationState());
-                }
-                return PlayState.CONTINUE;
-            }
-            return PlayState.STOP;
-        });
+        AnimationController<SansO> attackController = new AnimationController<>(this,"attack", state -> {
+            AnimationController<SansO> controller = state.getController();
 
-        triggerController.triggerableAnim(ANIM_CHARGE_FRONT, RawAnimation.begin().thenPlay(ANIM_CHARGE_FRONT));
-        triggerController.triggerableAnim(ANIM_GB_LIFT_SWING, RawAnimation.begin().thenPlay(ANIM_GB_LIFT_SWING));
-        triggerController.triggerableAnim(ANIM_GB_LIFT_CIRCLE, RawAnimation.begin().thenPlay(ANIM_GB_LIFT_CIRCLE));
-        triggerController.triggerableAnim(ANIM_LURKER_CROSS, RawAnimation.begin().thenPlay(ANIM_LURKER_CROSS));
-        triggerController.triggerableAnim(ANIM_LURKER_FRONT, RawAnimation.begin().thenPlay(ANIM_LURKER_FRONT));
-        triggerController.triggerableAnim(ANIM_BONE_PROJECTILE, RawAnimation.begin().thenPlay(ANIM_BONE_PROJECTILE));
-        triggerController.triggerableAnim(ANIM_BONE_ROTATE, RawAnimation.begin().thenPlay(ANIM_BONE_ROTATE));
-        // 注册可触发动画
-        for (String throwAnimName : THROW_ANIM_NAMES) {
-            triggerController.triggerableAnim(throwAnimName, RawAnimation.begin().thenPlay(throwAnimName));
-        }
-        // 接收触发动画
-        triggerController.receiveTriggeredAnimations();
-        // 根据难度设置动画速度
-        triggerController.setAnimationSpeedHandler(animate ->(animate.level().getDifficulty().getId()+2)/4.0);
+            SansO animatable = state.getAnimatable();
+            Difficulty difficulty = animatable.level().getDifficulty();
+            byte attackId = animatable.getAttackId();
+
+            if(attackId == -1 || controller.hasAnimationFinished()) {
+                return PlayState.STOP;
+            }
+
+            switch (attackId){
+                case 0,3,4,5,6,7 -> controller.setAnimation(RawAnimation.begin().thenPlay(difficulty == Difficulty.HARD? ANIM_CAST:ANIM_CAST_LEFT));
+                case 1 -> controller.setAnimation( RawAnimation.begin().thenPlay(ANIM_BONE_PROJECTILE));
+                case 2 -> controller.setAnimation(RawAnimation.begin().thenPlay(difficulty == Difficulty.HARD? ANIM_CAST_ROUND:ANIM_CAST_ROUND_LEFT));
+                case 8,9,10,11,12,13 -> controller.setAnimation( RawAnimation.begin().thenPlay(THROW_ANIM_NAMES[attackId - 8]));
+            }
+            return PlayState.CONTINUE;
+        });
 
         controllers.add(
                 DefaultAnimations.genericWalkIdleController(this),
                 DefaultAnimations.genericLivingController(this),
-                triggerController
+                attackController
         );
     }
 
