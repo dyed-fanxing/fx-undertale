@@ -6,13 +6,11 @@ package com.sakpeipei.mod.undertale.entity.common;
  */
 public class AttackComboType{
 
-    private String animName;
     private int round;
     private AttackUnit[] steps;
     private int duration;
 
-    public AttackComboType(String animName, int round, AttackUnit[] steps) {
-        this.animName = animName;
+    public AttackComboType(int round, AttackUnit[] steps) {
         this.round = round;
         this.steps = steps;
         for (AttackUnit step : steps) {
@@ -20,11 +18,11 @@ public class AttackComboType{
         }
     }
 
-    public AttackComboType(String animName,AttackUnit[] steps){
-        this(animName,1,steps);
+    public AttackComboType(AttackUnit[] steps){
+        this(1,steps);
     }
-    public AttackComboType(String animName,int round) {
-        this(animName,round,new AttackUnit[0]);
+    public AttackComboType(int round) {
+        this(round,new AttackUnit[0]);
     }
 
 
@@ -34,14 +32,6 @@ public class AttackComboType{
 
     public void setDuration(int duration) {
         this.duration = duration;
-    }
-
-    public String getAnimName() {
-        return animName;
-    }
-
-    public void setAnimName(String animName) {
-        this.animName = animName;
     }
 
     public int getRound() {

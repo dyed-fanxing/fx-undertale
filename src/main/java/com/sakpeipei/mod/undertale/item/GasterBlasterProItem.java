@@ -79,13 +79,13 @@ public class GasterBlasterProItem extends GasterBlasterFixedItem {
                     if(phase == GasterBlasterPro.PHASE_CHARGE) {
                         blaster.clearTarget();
                         blaster.stop();
-                        PacketDistributor.sendToPlayersTrackingEntity(blaster,new GasterBlasterProPacket((short) 0,blaster.getId()));
+                        PacketDistributor.sendToPlayersTrackingEntity(blaster,new GasterBlasterProPacket(blaster.getId(),(short) 0));
                     }
                     // 射击阶段，进入冷却
                     else if(phase == GasterBlasterPro.PHASE_GROW || phase == GasterBlasterPro.PHASE_SHOT) {
                         blaster.clearTarget();
                         blaster.cooldown();
-                        PacketDistributor.sendToPlayersTrackingEntity(blaster,new GasterBlasterProPacket((short) 0,blaster.getId()));
+                        PacketDistributor.sendToPlayersTrackingEntity(blaster,new GasterBlasterProPacket(blaster.getId(),(short) 0));
                     }
                     return InteractionResultHolder.pass(itemStack);
                 }

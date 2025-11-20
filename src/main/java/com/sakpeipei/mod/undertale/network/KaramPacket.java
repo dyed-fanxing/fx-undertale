@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Sakqiongzi
  * @since 2025-09-13 22:52
  */
-public record KaramPacket(int id,byte value,float absorptionAmount) implements CustomPacketPayload {
+public record KaramPacket(int entityId,byte value,float absorptionAmount) implements CustomPacketPayload {
     public static final CustomPacketPayload.Type<KaramPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "karam_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, KaramPacket> STREAM_CODEC = CustomPacketPayload.codec(KaramPacket::write, KaramPacket::new);
 
@@ -28,7 +28,7 @@ public record KaramPacket(int id,byte value,float absorptionAmount) implements C
     }
 
     public void write(FriendlyByteBuf buf) {
-        buf.writeVarInt(id);
+        buf.writeVarInt(entityId);
         buf.writeByte(value);
         buf.writeFloat(absorptionAmount);
     }
@@ -37,7 +37,7 @@ public record KaramPacket(int id,byte value,float absorptionAmount) implements C
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null) {
-                if (level.getEntity(packet.id) instanceof LivingEntity entity) {
+                if (level.getEntity(packet.entityId) instanceof LivingEntity entity) {
                     entity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).setValue(packet.value);
                     if(packet.absorptionAmount != -1){
                         entity.setAbsorptionAmount(packet.absorptionAmount);

@@ -4,6 +4,7 @@ import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.client.particle.BallGrowParticle;
 import com.sakpeipei.mod.undertale.client.particle.LightStreakParticle;
 import com.sakpeipei.mod.undertale.client.render.entity.*;
+import com.sakpeipei.mod.undertale.network.AnimIDPacket;
 import com.sakpeipei.mod.undertale.network.GasterBlasterProPacket;
 import com.sakpeipei.mod.undertale.network.KaramPacket;
 import com.sakpeipei.mod.undertale.network.WarningTipPacket;
@@ -60,6 +61,7 @@ public class Setup {
         registrar.playToClient(GasterBlasterProPacket.TYPE, GasterBlasterProPacket.STREAM_CODEC, GasterBlasterProPacket::handle);
         registrar.playToClient(KaramPacket.TYPE,KaramPacket.STREAM_CODEC, KaramPacket::handle);
         registrar.playToClient(WarningTipPacket.TYPE,WarningTipPacket.STREAM_CODEC, WarningTipPacket::handle);
+        registrar.playToClient(AnimIDPacket.TYPE,AnimIDPacket.STREAM_CODEC, AnimIDPacket::handle);
     }
 }
 
