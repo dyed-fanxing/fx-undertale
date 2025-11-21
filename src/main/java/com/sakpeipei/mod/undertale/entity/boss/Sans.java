@@ -3,8 +3,10 @@ package com.sakpeipei.mod.undertale.entity.boss;
 import com.sakpeipei.mod.undertale.entity.AnimID;
 import com.sakpeipei.mod.undertale.entity.attachment.GravityData;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
-import com.sakpeipei.mod.undertale.entity.common.AttackComboType;
 import com.sakpeipei.mod.undertale.entity.common.AttackUnit;
+import com.sakpeipei.mod.undertale.entity.common.ComboAttack;
+import com.sakpeipei.mod.undertale.entity.common.AttackUnit;
+import com.sakpeipei.mod.undertale.entity.common.OnceTimingAttack;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
@@ -22,10 +24,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -67,8 +65,6 @@ import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.constant.DefaultAnimations;
-import software.bernie.geckolib.constant.dataticket.DataTicket;
-import software.bernie.geckolib.constant.dataticket.SerializableDataTicket;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.awt.*;
@@ -93,6 +89,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, AnimID {
         super(type, level);
         physicalStrength = level.getDifficulty().getId() * 50;
         maxPhysicalStrength = physicalStrength;
+    }
+
+    @Override
+    public void handleEntityEvent(byte p_21375_) {
+        super.handleEntityEvent(p_21375_);
     }
 
     @Override
@@ -405,38 +406,38 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, AnimID {
         }
     }
 
-    private final AttackComboType[] attackTypes = {
-            new AttackComboType(new AttackUnit[]{ // 飞行骨持续攻击
-                    new AttackUnit(1, 30, new int[]{4} )
+    private final ComboAttack[] attackTypes = {
+            new ComboAttack(new AttackUnit[]{ // 飞行骨持续攻击
+                    new OnceTimingAttack(1, 30, 4 )
             }),
-            new AttackComboType(new AttackUnit[]{  // 飞行骨一次性攻击
-                    new AttackUnit(2, 30, new int[]{10},  0),
-                    new AttackUnit(2, 30, new int[]{10},  1),
-                    new AttackUnit(2, 30, new int[]{10}, 2)
+            new ComboAttack(new AttackUnit[]{  // 飞行骨一次性攻击
+                    new OnceTimingAttack(2, 30, 10,  0),
+                    new OnceTimingAttack(2, 30, 10,  1),
+                    new OnceTimingAttack(2, 30, 10, 2)
             }),
-            new AttackComboType(new AttackUnit[]{ // 地面骨运动
-                    new AttackUnit(3, 20, new int[]{10}, true,  0, 0, 0),
-                    new AttackUnit(3, 40, new int[]{10}, false, 1, 1, 0)
+            new ComboAttack(new AttackUnit[]{ // 地面骨运动
+                    new OnceTimingAttack(3, 20, 10,  0, 0, 0),
+                    new OnceTimingAttack(3, 40, 10, 1, 1, 0)
             }),
-            new AttackComboType(new AttackUnit[]{ // 骨刺波动，朝向目标
-                    new AttackUnit(4, 0, new int[]{10}, true, 0, 1, 1),
-                    new AttackUnit(4, 30, new int[]{10}, false,  0, 2, 1)
+            new ComboAttack(new AttackUnit[]{ // 骨刺波动，朝向目标
+                    new OnceTimingAttack(4, 0, 10, 0, 1, 1),
+                    new OnceTimingAttack(4, 30, 10,  0, 2, 1)
             }),
-            new AttackComboType(new AttackUnit[]{ // 骨刺波动，自身周围
-                    new AttackUnit(5, 30, new int[]{10}, true,  0, 1, 1)
+            new ComboAttack(new AttackUnit[]{ // 骨刺波动，自身周围
+                    new OnceTimingAttack(5, 30, 10,  0, 1, 1)
             }),
-            new AttackComboType(3, new AttackUnit[]{ // 目标骨刺
-                    new AttackUnit(6, 30, new int[]{10}, true),
-                    new AttackUnit(6, 30, new int[]{10}, false)
+            new ComboAttack(3, new AttackUnit[]{ // 目标骨刺
+                    new OnceTimingAttack(6, 30, 10),
+                    new OnceTimingAttack(6, 30, 10)
             }),
-            new AttackComboType(new AttackUnit[]{  // 目标周围随机骨刺
-                    new AttackUnit(7, 30, new int[]{10})
+            new ComboAttack(new AttackUnit[]{  // 目标周围随机骨刺
+                    new OnceTimingAttack(7, 30, 10)
             }),
-            new AttackComboType(new AttackUnit[]{ // GB炮阵列
-                    new AttackUnit(8, 30, new int[]{10})
+            new ComboAttack(new AttackUnit[]{ // GB炮阵列
+                    new OnceTimingAttack(8, 30, 10)
             }),
-            new AttackComboType(new AttackUnit[]{ // 重力控制
-                    new AttackUnit(9, 30, new int[]{10})
+            new ComboAttack(new AttackUnit[]{ // 重力控制
+                    new OnceTimingAttack(9, 30, 10)
             })
     };
     private final int[][][] sequences = {
@@ -600,40 +601,37 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, AnimID {
                 return;
             }
             log.info("animTick:{},mainAttack:{}",animTick,Sans.this.mainAttack);
-            AttackComboType attackType = Sans.this.attackTypes[Sans.this.mainAttack];
+            ComboAttack attackType = Sans.this.attackTypes[Sans.this.mainAttack];
             AttackUnit[] steps = attackType.getSteps();
             if(step < steps.length){
                 if(animTick == 0) {
-                    if(steps[step].isTriggerAnim()){
-                        if (steps[step].getId() == 8) {
-                            int direction = Sans.this.random.nextInt(6);
-                            steps[step].setParams(direction);
-                            Sans.this.sendAnimId((byte) (mainAttack + direction));
-                        } else {
-                            Sans.this.sendAnimId((byte) mainAttack);
-                        }
+                    if (steps[step].getId() == 8) {
+                        int direction = Sans.this.random.nextInt(6);
+                        steps[step].setParams(direction);
+                        Sans.this.sendAnimId((byte) (mainAttack + direction));
+                    } else {
+                        Sans.this.sendAnimId((byte) mainAttack);
                     }
                 }
                 animTick++;
-                int[] hitTick = steps[step].getHitTick();
-                for (int i : hitTick) {
-                    if(animTick == i) {
-                        do{
-                            cd = executeAttack(target, steps[step]);
-                            step++;
-                        }while( cd <=0 );
-                    }
+                if(steps[step].shouldHitAt(animTick)){
+                    while((cd = executeAttack(target,steps[step])) <= 0 && step < steps.length){
+                        step++;
+                    } 
                 }
                 if(cd-- == 0){
                     animTick = 0;
+                    step++;
+                    if(step >= steps.length){
+                        step = 0;
+                        round--;
+                        if(round == 0 ){
+                            Sans.this.sendAnimId((byte) 0);
+                            Sans.this.globalCD = 120;
+                            Sans.this.mainAttack = 0;
+                        }
+                    }
                 }
-            }else{
-                round--;
-                if(round == 0 ){
-                    Sans.this.globalCD = 120;
-                    Sans.this.mainAttack = 0;
-                }
-                animTick = 0;
             }
         }
     }
@@ -672,7 +670,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, AnimID {
         }
     }
 
-    private int executeAttack(LivingEntity target,AttackUnit unit){
+    private int executeAttack(LivingEntity target, AttackUnit unit){
         int difficulty = this.level().getDifficulty().getId();
         int[] params = unit.getParams();
         return switch (unit.getId()) {
