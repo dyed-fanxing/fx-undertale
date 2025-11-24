@@ -8,7 +8,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * @author Sakqiongzi
  * @since 2025-11-20 20:58
  */
-public interface AnimID {
+public interface IAnimatable {
     byte getAnimID();
     void setAnimID(byte id);
 

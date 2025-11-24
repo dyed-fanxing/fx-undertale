@@ -39,7 +39,7 @@ public class KarmaMobEffect extends MobEffect {
             }else if(entity.tickCount % DAMAGE_INTERVAL_FRAMES[value/10] == 0){
                 float last = entity.getAbsorptionAmount();
                 if (entity.getHealth() > 1) {
-                    if(entity instanceof Player)                LogUtils.getLogger().info("KR之前{}", karamData.getValue());
+//                    if(entity instanceof Player)                LogUtils.getLogger().info("KR之前{}", karamData.getValue());
                     if(entity.hurt(entity.damageSources().source(DamageTypes.KARMA), 1.0f)){
                         karamData.subValue(entity);
                     }

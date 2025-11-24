@@ -1,8 +1,7 @@
 package com.sakpeipei.mod.undertale.network;
 
 import com.sakpeipei.mod.undertale.Undertale;
-import com.sakpeipei.mod.undertale.entity.AnimID;
-import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterPro;
+import com.sakpeipei.mod.undertale.entity.IAnimatable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.FriendlyByteBuf;
@@ -37,7 +36,7 @@ public record AnimIDPacket(int entityId, byte id) implements CustomPacketPayload
             if (level != null) {
                 Entity entity = level.getEntity(packet.entityId);
 
-                if (entity instanceof AnimID entity1) {
+                if (entity instanceof IAnimatable entity1) {
                     entity1.setAnimID(packet.id);
                 }
             }
