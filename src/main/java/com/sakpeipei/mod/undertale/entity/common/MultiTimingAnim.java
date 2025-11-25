@@ -5,7 +5,7 @@ package com.sakpeipei.mod.undertale.entity.common;
  * @since 2025-11-15 15:39
  * 多次判定攻击
  */
-public class MultiTimingAnim<T> extends AnimType<T> {
+public class MultiTimingAnim<T> extends AbstractAnimType<T> {
     protected final int[] hitTicks;
 
     public MultiTimingAnim(byte id,int duration, boolean triggerAnim,  int[] hitTicks, int cd, T actions) {

@@ -1,15 +1,12 @@
 package com.sakpeipei.mod.undertale.entity.boss;
 
 import com.sakpeipei.mod.undertale.entity.IAnimatable;
-import com.sakpeipei.mod.undertale.entity.ai.goal.SequenceAnimExecuteGoal;
+import com.sakpeipei.mod.undertale.entity.ai.goal.AbstractBaseAnimExecuteGoal;
 import com.sakpeipei.mod.undertale.entity.ai.goal.SingleAnimExecuteGoal;
 import com.sakpeipei.mod.undertale.entity.ai.goal.NeutralMobAngerTargetGoal;
 import com.sakpeipei.mod.undertale.entity.attachment.GravityData;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
-import com.sakpeipei.mod.undertale.entity.common.ActionData;
-import com.sakpeipei.mod.undertale.entity.common.AnimType;
-import com.sakpeipei.mod.undertale.entity.common.SequenceAnim;
-import com.sakpeipei.mod.undertale.entity.common.OnceTimingAnim;
+import com.sakpeipei.mod.undertale.entity.common.*;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
@@ -529,7 +526,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
 
         @Override
-        protected @NotNull AnimType<List<ToIntFunction<LivingEntity>>> select(LivingEntity target) {
+        protected @NotNull AbstractAnimType<List<ToIntFunction<LivingEntity>>> select(LivingEntity target) {
             boolean onGround =  target.onGround();
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
 //            boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
@@ -557,38 +554,19 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
     // 连击Goal - 处理所有连击
-    class SequenceAttackGoal extends SequenceAnimExecuteGoal<List<ToIntFunction<LivingEntity>>> {
-        int initialCooldown;
-        boolean initialCooldownApplied;
-        public SequenceAttackGoal(int initialCooldown) {
+    class SequenceAttackGoal extends AbstractBaseAnimExecuteGoal<List<ToIntFunction<LivingEntity>>> {
+        public SequenceAttackGoal() {
             super(Sans.this);
-            this.initialCooldown = initialCooldown;
-        }
-
-        @Override
-        public boolean canUse() {
-            return super.canUse();
         }
 
 
         @Override
-        public void start() {
-            if (!initialCooldownApplied) {
-                cooldownEndTick = Sans.this.tickCount + initialCooldown;
-                initialCooldownApplied = true;
-                return; // 第一次只设置CD，不执行攻击
-            }
-            super.start();
-        }
-
-
-        @Override
-        protected @NotNull SequenceAnim<List<ToIntFunction<LivingEntity>>> select(LivingEntity target) {
-            return null;
+        protected @NotNull AnimType<List<ToIntFunction<LivingEntity>>> select(LivingEntity target) {
+            return new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2))));
         }
 
         @Override
-        protected int execute(LivingEntity target, AnimType<List<ToIntFunction<LivingEntity>>> anim) {
+        protected int execute(LivingEntity target, int animTick) {
             return 0;
         }
     }

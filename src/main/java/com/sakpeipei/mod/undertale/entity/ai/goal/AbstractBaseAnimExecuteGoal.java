@@ -1,6 +1,7 @@
 package com.sakpeipei.mod.undertale.entity.ai.goal;
 
-import com.sakpeipei.mod.undertale.entity.common.IAnimType;
+import com.sakpeipei.mod.undertale.entity.common.AbstractAnimType;
+import com.sakpeipei.mod.undertale.entity.common.AnimType;
 import com.sakpeipei.mod.undertale.network.AnimIDPacket;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -8,17 +9,20 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.function.ToIntFunction;
+
 /**
  * @author Sakqiongzi
  * @since 2025-11-23 21:21
  */
-public abstract class BaseAnimExecuteGoal<T> extends Goal {
+public abstract class AbstractBaseAnimExecuteGoal<T> extends Goal {
     protected final Mob mob;
     protected int animStartTick;
     protected int cooldownEndTick;
-    protected IAnimType<T> anim; // 动画对象，可以是AnimType或SequenceAnim
+    protected AnimType<T> anim;
 
-    public BaseAnimExecuteGoal(Mob mob) {
+    public AbstractBaseAnimExecuteGoal(Mob mob) {
         this.mob = mob;
     }
 
@@ -34,7 +38,7 @@ public abstract class BaseAnimExecuteGoal<T> extends Goal {
         LivingEntity target = mob.getTarget();
         if (target != null) {
             anim = select(target);
-            if (shouldTriggerAnim()) {
+            if (anim.isTriggerAnim()) {
                 PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimIDPacket(mob.getId(), anim.getId()));
             }
         }
@@ -57,6 +61,16 @@ public abstract class BaseAnimExecuteGoal<T> extends Goal {
         }
     }
 
+
+    /**
+     * 执行完一个动画该做的收尾工作
+     */
+    @Override
+    public void stop() {
+        cooldownEndTick += anim.getCd();
+
+    }
+
     @Override
     public boolean requiresUpdateEveryTick() {
         return true;
@@ -64,13 +78,9 @@ public abstract class BaseAnimExecuteGoal<T> extends Goal {
 
     // 抽象方法
     @NotNull
-    protected abstract IAnimType<T> select(LivingEntity target);
+    protected abstract AnimType<T> select(LivingEntity target);
     protected abstract int execute(LivingEntity target, int animTick);
 
-    // 可重写的方法
-    protected boolean shouldTriggerAnim() {
-        return true;
-    }
-
     protected void onComplete() {}
+
 }

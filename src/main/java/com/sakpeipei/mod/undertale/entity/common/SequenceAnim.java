@@ -7,26 +7,12 @@ import net.minecraft.sounds.SoundEvent;
  * @since 2025/11/21 15:27
  * 序列动画，由多个动画类型组成
  */
-public class SequenceAnim<T> implements IAnimType<T> {
-    private int round;
+public class SequenceAnim<T> implements AnimType<T> {
     private AnimType<T>[] steps;
     private int step = 0;
 
-    public SequenceAnim(int round, AnimType<T>[] steps) {
-        this.round = round;
-        this.steps = steps;
-    }
-
     public SequenceAnim(AnimType<T>[] steps) {
-        this(0, steps);
-    }
-
-    public int getRound() {
-        return round;
-    }
-
-    public void setRound(int round) {
-        this.round = round;
+        this.steps = steps;
     }
 
     public AnimType<T>[] getSteps() {
@@ -43,18 +29,18 @@ public class SequenceAnim<T> implements IAnimType<T> {
     }
 
     public boolean isSequenceFinished() {
-        return step == steps.length - 1 && round <= 0;
+        return step == steps.length - 1;
     }
 
     public void resetSequence() {
         step = 0;
     }
 
-    public AnimType<T> getCurrentStep() {
+    public AnimType<T> getCurrentAnim() {
         return steps[step];
     }
 
-    public int getCurrentStepIndex() {
+    public int getIndex() {
         return step;
     }
 
@@ -86,7 +72,9 @@ public class SequenceAnim<T> implements IAnimType<T> {
 
     @Override
     public int getCd() {
-        return steps[step].getCd();
+        int cd = steps[step].getCd();
+        step = step + 1;
+        return cd;
     }
 
     @Override
@@ -98,4 +86,5 @@ public class SequenceAnim<T> implements IAnimType<T> {
     public boolean shouldPlaySoundAt(int currentTick) {
         return steps[step].shouldPlaySoundAt(currentTick);
     }
+
 }

@@ -1,7 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.ai.goal;
 
 import com.sakpeipei.mod.undertale.entity.common.AnimType;
-import com.sakpeipei.mod.undertale.entity.common.SequenceAnim;
 import com.sakpeipei.mod.undertale.network.AnimIDPacket;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -18,9 +17,7 @@ public abstract class SequenceAnimExecuteGoal<T> extends Goal {
     protected final Mob mob;
     protected int animStartTick;  // 动画开始Tick点
     protected int cooldownEndTick; // 冷却结束Tick点
-    protected int step;
-    protected AnimType<T>[] steps;
-    protected int round;
+    protected AnimType<T> anim;
 
     public SequenceAnimExecuteGoal(Mob mob) {
         this.mob = mob;
@@ -37,13 +34,9 @@ public abstract class SequenceAnimExecuteGoal<T> extends Goal {
         animStartTick = mob.tickCount;
         LivingEntity target = mob.getTarget();
         if(target != null){
-            if(step == 0 ){
-                SequenceAnim<T> sequenceAnim = select(target);
-                steps = sequenceAnim.getSteps();
-                round = sequenceAnim.getRound();
-            }
-            if(steps[step].isTriggerAnim()){
-                PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimIDPacket(mob.getId(), steps[step].getId()));
+            anim = select(target);
+            if(anim.isTriggerAnim()){
+                PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimIDPacket(mob.getId(), anim.getId()));
             }
         }
     }
@@ -55,7 +48,7 @@ public abstract class SequenceAnimExecuteGoal<T> extends Goal {
      */
     @Override
     public boolean canContinueToUse() {
-        return mob.tickCount - animStartTick < steps[step].getDuration();
+        return mob.tickCount - animStartTick < anim.getDuration();
     }
 
     @Override
@@ -63,8 +56,8 @@ public abstract class SequenceAnimExecuteGoal<T> extends Goal {
         LivingEntity target = mob.getTarget();
         if(target != null){
             int animTick = mob.tickCount - animStartTick;
-            if(steps[step].shouldHitAt(animTick)){
-                cooldownEndTick += Math.max(execute(target,steps[step]) - (steps[step].getDuration() - animTick),0) ;
+            if(anim.shouldHitAt(animTick)){
+                cooldownEndTick += Math.max(execute(target,anim) - (anim.getDuration() - animTick),0) ;
             }
         }
     }
@@ -72,7 +65,7 @@ public abstract class SequenceAnimExecuteGoal<T> extends Goal {
      * 选择动画anim
      */
     @NotNull
-    protected abstract SequenceAnim<T> select(LivingEntity target);
+    protected abstract AnimType<T> select(LivingEntity target);
 
     /**
      * @param target 目标
@@ -83,14 +76,7 @@ public abstract class SequenceAnimExecuteGoal<T> extends Goal {
 
     @Override
     public void stop() {
-        cooldownEndTick += steps[step].getCd();
-        step++;
-        if(step == steps.length){
-            round--;
-            if(round == 0){
-                onComplete();
-            }
-        }
+        cooldownEndTick += anim.getCd();
     }
 
     protected void onComplete(){}
