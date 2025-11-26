@@ -508,9 +508,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
 
         private final List<AnimType<ToIntFunction<LivingEntity>>> attacks = List.of(
                 new OnceTimingAnim<>((byte) 1, 20, 4, 30, BARRAGE_BONE),
-                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, Sans.this::targetSpineAttack),
-                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, Sans.this::targetSpineAttack),
-        )));
+                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, Sans.this::targetSpineAttack))),
+                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, target -> Sans.this.selfGBAttack(target,1))))
+        );
 
         private int cooldown;
 
@@ -548,20 +548,13 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         private final ToIntFunction<LivingEntity> BONE_WALL_AQUA = target -> groundBoneProjectileAttack(target,1,1,0);
 
 
-            private final List<AnimType<List<ToIntFunction<LivingEntity>>>> attacks = {
-                    new RoundSequenceAnim<>(3, List.of( new OnceTimingAnim<>((byte) 3, 30, 4, 20, List.of(BONE_WALL_WHITE,BONE_WALL_AQUA)))), // 骨墙
-
+            private final List<AnimType<List<ToIntFunction<LivingEntity>>>> attacks = List.of(
+                    new RoundSequenceAnim<>(3, List.of( new OnceTimingAnim<>((byte) 3, 30, 4, 20, BONE_WALL_WHITE),new OnceTimingAnim<>((byte)3,30,4,30,BONE_WALL_AQUA ))), // 骨墙
                     new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
                     new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
                     new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
-                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
-            new RoundAttack(3,new AnimType[]{ // GB炮阵列
-                    new OnceTimingAnim(8, 20,10, 30)
-            }),
-            new RoundAttack(3,new AnimType[]{ // 重力控制
-                    new OnceTimingAnim(9, 20,10, 30)
-            })
-    };
+                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2))))
+            );
 
         public SequenceAttackGoal() {
             super(Sans.this);
@@ -1125,39 +1118,40 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      * 指定起始角度的版本
      * @param target 目标实体
      * @param count GB数量
-     * @param offsetAngle 偏移角度（度）
+     * @param offsetAngle 初始偏移角度（度）
      * @param angleStep 角度步长（度）
      */
     private int targetGBAttack(LivingEntity target, int count, double offsetAngle, double angleStep) {
         int difficulty = this.level().getDifficulty().getId();
-        double baseRadius = this.distanceTo(target) + 2.0; // 以距离为基准半径
-        double currentAngle = startAngle; // 从指定角度开始
+        double baseRadius = this.distanceTo(target) * 0.75f; // 以距离为基准半径
+        double currentAngle = offsetAngle; // 从指定角度开始
 
         for(int i = 0; i < count; i++) {
             // 固定半径保持对称性
             double radius = baseRadius + (this.random.nextDouble() * 2.0 - 1.0);
             double height = this.random.nextDouble() * 3 + 1;
-
             GasterBlasterFixed gb = createGBFixed();
             Vec3 targetEyePos = target.getEyePosition();
-
             // 计算圆形上的位置
             double xOffset = Math.sin(currentAngle * Mth.DEG_TO_RAD) * radius;
             double zOffset = Math.cos(currentAngle * Mth.DEG_TO_RAD) * radius;
-
-            gb.setPos(targetEyePos.add(xOffset, height, zOffset));
-            gb.lookAt(EntityAnchorArgument.Anchor.FEET, targetEyePos);
-            this.level().addFreshEntity(gb);
-
+            EntityUtils.addFreshEntityByPosAndRot(this.level(),gb,targetEyePos.add(xOffset, height, zOffset),targetEyePos);
             // 按照固定角度步长递增
             currentAngle += angleStep;
         }
         return 0;
     }
+
+    private boolean spawnEntityByPosAndRot(Entity entity,Vec3 spawnPos,Vec3 lookAtPos){
+        entity.setPos(spawnPos);
+        entity.lookAt(EntityAnchorArgument.Anchor.FEET, lookAtPos);
+        return this.level().addFreshEntity(entity);
+    }
+
     private GasterBlasterFixed spawnGBFixed(Vec3 spawnPos,Vec3 lookAtPos){
         GasterBlasterFixed gb = createGBFixed();
-        gb.setPos(lookAtPos);
-        gb.lookAt(EntityAnchorArgument.Anchor.FEET, spawnPos);
+        gb.setPos(spawnPos);
+        gb.lookAt(EntityAnchorArgument.Anchor.FEET, lookAtPos);
         this.level().addFreshEntity(gb);
         return gb;
     }
