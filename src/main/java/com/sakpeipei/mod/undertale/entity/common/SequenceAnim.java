@@ -72,9 +72,17 @@ public class SequenceAnim<T> implements AnimType<T> {
 
     @Override
     public int getCd() {
-        int cd = steps[step].getCd();
+        return steps[step].getCd();
+    }
+
+    @Override
+    public boolean isCompeted() {
         step = step + 1;
-        return cd;
+        if(step == steps.length) {
+            step = 0;
+            return true;
+        }
+        return false;
     }
 
     @Override

@@ -80,4 +80,10 @@ public abstract class AbstractAnimType<T> implements AnimType<T> {
     public int getCd() {
         return cd;
     }
+
+    @Override
+    public boolean isCompeted() {
+        return true;
+    }
+
 }

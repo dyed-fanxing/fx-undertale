@@ -1,6 +1,5 @@
 package com.sakpeipei.mod.undertale.entity.ai.goal;
 
-import com.sakpeipei.mod.undertale.entity.common.AbstractAnimType;
 import com.sakpeipei.mod.undertale.entity.common.AnimType;
 import com.sakpeipei.mod.undertale.network.AnimIDPacket;
 import net.minecraft.world.entity.LivingEntity;
@@ -9,20 +8,18 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.function.ToIntFunction;
 
 /**
  * @author Sakqiongzi
  * @since 2025-11-23 21:21
  */
-public abstract class AbstractBaseAnimExecuteGoal<T> extends Goal {
+public abstract class AbstractAnimExecuteGoal<T> extends Goal {
     protected final Mob mob;
     protected int animStartTick;
     protected int cooldownEndTick;
     protected AnimType<T> anim;
 
-    public AbstractBaseAnimExecuteGoal(Mob mob) {
+    public AbstractAnimExecuteGoal(Mob mob) {
         this.mob = mob;
     }
 
@@ -37,9 +34,11 @@ public abstract class AbstractBaseAnimExecuteGoal<T> extends Goal {
         animStartTick = mob.tickCount;
         LivingEntity target = mob.getTarget();
         if (target != null) {
-            anim = select(target);
-            if (anim.isTriggerAnim()) {
-                PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimIDPacket(mob.getId(), anim.getId()));
+            if(anim == null){
+                anim = select(target);
+                if (anim.isTriggerAnim()) {
+                    PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimIDPacket(mob.getId(), anim.getId()));
+                }
             }
         }
     }
@@ -55,8 +54,7 @@ public abstract class AbstractBaseAnimExecuteGoal<T> extends Goal {
         if (target != null) {
             int animTick = mob.tickCount - animStartTick;
             if (anim.shouldHitAt(animTick)) {
-                int extraCooldown = execute(target, animTick);
-                cooldownEndTick += Math.max(extraCooldown - (anim.getDuration() - animTick), 0);
+                cooldownEndTick += Math.max(execute(target, anim) - (anim.getDuration() - animTick), 0);
             }
         }
     }
@@ -68,7 +66,10 @@ public abstract class AbstractBaseAnimExecuteGoal<T> extends Goal {
     @Override
     public void stop() {
         cooldownEndTick += anim.getCd();
-
+        if(anim.isCompeted()){
+            onCompleted();
+            anim = null;
+        }
     }
 
     @Override
@@ -79,8 +80,9 @@ public abstract class AbstractBaseAnimExecuteGoal<T> extends Goal {
     // 抽象方法
     @NotNull
     protected abstract AnimType<T> select(LivingEntity target);
-    protected abstract int execute(LivingEntity target, int animTick);
+    protected abstract int execute(LivingEntity target, AnimType<T> anim);
 
-    protected void onComplete() {}
+
+    protected abstract void onCompleted();
 
 }

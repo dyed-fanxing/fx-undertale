@@ -1,7 +1,7 @@
 package com.sakpeipei.mod.undertale.entity.boss;
 
 import com.sakpeipei.mod.undertale.entity.IAnimatable;
-import com.sakpeipei.mod.undertale.entity.ai.goal.AbstractBaseAnimExecuteGoal;
+import com.sakpeipei.mod.undertale.entity.ai.goal.AbstractAnimExecuteGoal;
 import com.sakpeipei.mod.undertale.entity.ai.goal.SingleAnimExecuteGoal;
 import com.sakpeipei.mod.undertale.entity.ai.goal.NeutralMobAngerTargetGoal;
 import com.sakpeipei.mod.undertale.entity.attachment.GravityData;
@@ -388,21 +388,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
 
-//    private final RoundAttack[] roundAttacks = {
-//            new RoundAttack(3,new AnimType[]{ // 地面骨运动
-//                    new OnceTimingAnim(3, 20, 10,20,  0, 0, 0),
-//                    new OnceTimingAnim(3, 20, 10, 40,1, 1, 0)
-//            }),
-//            new RoundAttack(3,new AnimType[]{  // 目标周围随机骨刺
-//                    new OnceTimingAnim(7, 20,10, 30)
-//            }),
-//            new RoundAttack(3,new AnimType[]{ // GB炮阵列
-//                    new OnceTimingAnim(8, 20,10, 30)
-//            }),
-//            new RoundAttack(3,new AnimType[]{ // 重力控制
-//                    new OnceTimingAnim(9, 20,10, 30)
-//            })
-//    };
+
     private final int[][][] sequences = {
             {{3,30,1,1,0},{3,30,2,2,0},{3,30,2,1,0}},                       // 骨刺波动进阶
             {{3,0,2,1,0},{3,40,1,1,1}, {3,0,3,1,0},{3,40,2,1,1}, {3,0,4,1,1},{3,40,3,1,0}},                       // 骨刺波动进阶
@@ -483,6 +469,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                             teleportTowards(target);
                         }
                     }
+
+
+
                 }else if(seeTime > -60){ // 丢失视线3秒内
                     if(disSqr <= pursuitRadiusSqr){
                         Sans.this.getNavigation().moveTo(target,this.speedModifier);
@@ -494,7 +483,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
     }
 
-    private final ToIntFunction<LivingEntity> BARRAGE_BONE = this::continueFlyingBone;
     private final ToIntFunction<LivingEntity> CONE_SPIKE_PULSE_BONE  = target -> onceFlyingBone(target,0);
     private final ToIntFunction<LivingEntity> CURVED_SPIKE_PULSE_BONE  = target -> onceFlyingBone(target,1);
     private final ToIntFunction<LivingEntity> TRIANGULAR_ASSAULT_PULSE_BONE  = target -> onceFlyingBone(target,2);
@@ -504,7 +492,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
 
     // 单次攻击Goal - 处理所有简单攻击
     private final List<OnceTimingAnim<List<ToIntFunction<LivingEntity>>>> singleAttacks = List.of(
-            new OnceTimingAnim<>((byte) 1, 20, 4, 30, List.of(BARRAGE_BONE)), // 飞行骨持续攻击
             new OnceTimingAnim<>((byte) 2, 20, 10, 30, List.of(CONE_SPIKE_PULSE_BONE)),
             new OnceTimingAnim<>((byte) 2, 20, 10, 30, List.of(CURVED_SPIKE_PULSE_BONE)),
             new OnceTimingAnim<>((byte) 2, 20, 10, 30, List.of(TRIANGULAR_ASSAULT_PULSE_BONE)),
@@ -512,7 +499,90 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             new OnceTimingAnim<>((byte) 5, 20, 10, 30, List.of(SELF_WAVE_SPIKE)) // 自身骨刺
     );
 
-    private class CloseRangeGoal extends SingleAnimExecuteGoal<List<ToIntFunction>>
+    private boolean existPersistentAttack;
+
+    private final ToIntFunction<LivingEntity> BARRAGE_BONE = this::continueFlyingBone;
+    private final ToIntFunction<LivingEntity> SPINE_ATTACK = this::targetSpineAttack;
+
+    private class PersistentAttackGoal extends AbstractAnimExecuteGoal<ToIntFunction<LivingEntity>> {
+
+        private final List<AnimType<ToIntFunction<LivingEntity>>> attacks = List.of(
+                new OnceTimingAnim<>((byte) 1, 20, 4, 30, BARRAGE_BONE),
+                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, Sans.this::targetSpineAttack),
+                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, Sans.this::targetSpineAttack),
+        )));
+
+        private int cooldown;
+
+        public PersistentAttackGoal(int cooldown) {
+            super(Sans.this);
+            this.cooldown = cooldown;
+        }
+
+        @Override
+        public boolean canUse() {
+            cooldown--;
+            return cooldown <=0  && super.canUse();
+        }
+
+        @Override
+        protected @NotNull AnimType<ToIntFunction<LivingEntity>> select(LivingEntity target) {
+            existPersistentAttack = true;
+            return attacks.get(Sans.this.random.nextInt(attacks.size()));
+        }
+
+        @Override
+        protected int execute(LivingEntity target, AnimType<ToIntFunction<LivingEntity>> anim) {
+            return anim.getAction().applyAsInt(target);
+        }
+
+        @Override
+        protected void onCompleted() {
+            existPersistentAttack = false;
+        }
+    }
+
+    // 连击Goal - 处理所有连击
+    class SequenceAttackGoal extends AbstractAnimExecuteGoal<List<ToIntFunction<LivingEntity>>> {
+        private final ToIntFunction<LivingEntity> BONE_WALL_WHITE = target -> groundBoneProjectileAttack(target,0,0,0);
+        private final ToIntFunction<LivingEntity> BONE_WALL_AQUA = target -> groundBoneProjectileAttack(target,1,1,0);
+
+
+            private final List<AnimType<List<ToIntFunction<LivingEntity>>>> attacks = {
+                    new RoundSequenceAnim<>(3, List.of( new OnceTimingAnim<>((byte) 3, 30, 4, 20, List.of(BONE_WALL_WHITE,BONE_WALL_AQUA)))), // 骨墙
+
+                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
+                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
+                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
+                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
+            new RoundAttack(3,new AnimType[]{ // GB炮阵列
+                    new OnceTimingAnim(8, 20,10, 30)
+            }),
+            new RoundAttack(3,new AnimType[]{ // 重力控制
+                    new OnceTimingAnim(9, 20,10, 30)
+            })
+    };
+
+        public SequenceAttackGoal() {
+            super(Sans.this);
+        }
+
+
+        @Override
+        protected @NotNull AnimType<List<ToIntFunction<LivingEntity>>> select(LivingEntity target) {
+            return new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2))));
+        }
+
+        @Override
+        protected int execute(LivingEntity target, AnimType<List<ToIntFunction<LivingEntity>>> anim) {
+            return 0;
+        }
+
+        @Override
+        protected void onCompleted() {
+
+        }
+    }
 
 
     //动画执行
@@ -553,23 +623,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
     }
 
-    // 连击Goal - 处理所有连击
-    class SequenceAttackGoal extends AbstractBaseAnimExecuteGoal<List<ToIntFunction<LivingEntity>>> {
-        public SequenceAttackGoal() {
-            super(Sans.this);
-        }
-
-
-        @Override
-        protected @NotNull AnimType<List<ToIntFunction<LivingEntity>>> select(LivingEntity target) {
-            return new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2))));
-        }
-
-        @Override
-        protected int execute(LivingEntity target, int animTick) {
-            return 0;
-        }
-    }
 
     private class GravityControlCollisionDetectionGoal extends Goal {
         private boolean lastOnGround;
@@ -1034,46 +1087,52 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
     }
 
-    private int gbAttack(LivingEntity target,int count,int type){
+    /**
+     * 自身位置周围召唤GB攻击
+     */
+    private int selfGBAttack(LivingEntity target,int count){
         int difficulty = this.level().getDifficulty().getId();
-        String attackTypeUUID = UUID.randomUUID().toString();
+        for(int i = 0; i < count; i++) {
+            GasterBlasterFixed gb = createGBFixed();
+            Vec3 targetEyePos = target.getEyePosition();
+            // 召唤在自身周围攻击目标
+            // 先创建单位方向向量
+            Vec3 direction = new Vec3(0, 1, 0).zRot((this.random.nextFloat() * 180 - 90) * Mth.DEG_TO_RAD);
+            gb.setPos(this.getEyePosition().add(
+            // 偏移可能的位置
+            new Vec3(direction.x * (this.random.nextDouble() - 0.5) * 12,  // 左右
+                    direction.y * (this.random.nextDouble() * 3 + 3),    // 高度
+                    this.random.nextDouble() * 5
+            )
+                        // 旋转至视线方向，形成视锥
+                .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+            ));
+            gb.lookAt(EntityAnchorArgument.Anchor.FEET, targetEyePos);
+            this.level().addFreshEntity(gb);
+        }
+        return 0;
+    }
+
+    /**
+     * 目标位置周围召唤GB攻击
+     */
+    private int targetGBAttack(LivingEntity target,int count){
+        int difficulty = this.level().getDifficulty().getId();
         int angle = 0;
         int avg = 0;
         if(count == 1) {
-            angle= this.random.nextInt() * 360;
+            angle = this.random.nextInt() * 360;
         }else{
             avg = 180 / (count - 1);
         }
         for(int i = 0; i < count; i++) {
-            GasterBlasterFixed gb = new GasterBlasterFixed(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), this.level(), this);
-            gb.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 10));
+            GasterBlasterFixed gb = createGBFixed();
             Vec3 targetEyePos = target.getEyePosition();
-            switch (type) {
-                // 召唤在自身周围攻击目标
-                case 0 -> {
-                    // 先创建单位方向向量
-                    Vec3 direction = new Vec3(0, 1, 0)
-                            .zRot((this.random.nextFloat() * 180 - 90) * Mth.DEG_TO_RAD);
-                    gb.setPos(this.getEyePosition().add(
-//                             偏移可能的位置
-                            new Vec3(direction.x * (this.random.nextDouble() - 0.5) * 12,  // 左右
-                                    direction.y * (this.random.nextDouble() * 3 + 3),    // 高度
-                                    this.random.nextDouble() * 5
-                            )
-                                    // 旋转至视线方向，形成视锥
-                                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
-                                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-                    ));
-                    angle += avg;
-                }
-                // 召唤在目标周围攻击目标
-                case 1 -> {
-                    double radius = this.random.nextDouble() * 4.0 + (double) ATTACK_RANGE / 2; // 半径
-                    double height = this.random.nextDouble() * 4; // 0 - 4格随机高度
-                    gb.setPos(targetEyePos.add(Math.sin(angle * Mth.DEG_TO_RAD) * radius, height, Math.cos(angle * Mth.DEG_TO_RAD) * radius));
-                    angle += avg;
-                }
-            }
+            double radius = this.random.nextDouble() * 4.0 + (double) ATTACK_RANGE / 2; // 半径
+            double height = this.random.nextDouble() * 4; // 0 - 4格随机高度
+            gb.setPos(targetEyePos.add(Math.sin(angle * Mth.DEG_TO_RAD) * radius, height, Math.cos(angle * Mth.DEG_TO_RAD) * radius));
+            angle += avg;
             gb.lookAt(EntityAnchorArgument.Anchor.FEET, targetEyePos);
             this.level().addFreshEntity(gb);
         }
@@ -1081,6 +1140,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
 
+
+    private GasterBlasterFixed createGBFixed(){
+        GasterBlasterFixed gb = new GasterBlasterFixed(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), this.level(), this);
+        gb.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(UUID.randomUUID().toString(), (byte) 10));
+        return gb;
+    }
 
     private byte animId;
     @Override

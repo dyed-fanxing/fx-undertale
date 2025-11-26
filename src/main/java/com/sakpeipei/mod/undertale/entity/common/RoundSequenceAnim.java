@@ -10,19 +10,19 @@ import java.util.List;
  * 序列动画，由多个动画类型组成
  */
 public class RoundSequenceAnim<T> implements AnimType<T> {
-    private int round;
-    private List<AnimType<T>> steps;
     private int step = 0;
+    private List<AnimType<T>> steps;
+    private int round = 0;
+    private final int rounds;
 
 
-
-    public RoundSequenceAnim(int round, List<AnimType<T>> steps) {
-        this.round = round;
+    public RoundSequenceAnim(int rounds, List<AnimType<T>> steps) {
+        this.rounds = rounds;
         this.steps = steps;
     }
 
     public RoundSequenceAnim(List<AnimType<T>> steps) {
-        this(0, steps);
+        this(1, steps);
     }
 
 
@@ -67,6 +67,17 @@ public class RoundSequenceAnim<T> implements AnimType<T> {
     }
 
 
+    @Override
+    public boolean isCompeted() {
+        if(++step == steps.size()){
+            step = 0;
+            if(++round == rounds){
+                round = 0;
+                return true;
+            }
+        }
+        return false;
+    }
 
     public int getRound() {
         return round;
