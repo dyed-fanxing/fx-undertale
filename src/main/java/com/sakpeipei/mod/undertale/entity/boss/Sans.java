@@ -977,7 +977,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         return delay;
     }
     /**
-     * 在目标脚下直接生成地面骨刺 - 圆形生成
+     * 在目标脚下直接生成地面骨刺
      */
     private int targetSpineAttack(@NotNull LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
@@ -1088,7 +1088,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
     /**
-     * 自身位置周围召唤GB攻击
+     * 自身周围随机位置召唤GB攻击
      */
     private int selfGBAttack(LivingEntity target,int count){
         int difficulty = this.level().getDifficulty().getId();
@@ -1103,10 +1103,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             new Vec3(direction.x * (this.random.nextDouble() - 0.5) * 12,  // 左右
                     direction.y * (this.random.nextDouble() * 3 + 3),    // 高度
                     this.random.nextDouble() * 5
-            )
-                        // 旋转至视线方向，形成视锥
-                .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
-                .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+            )  // 旋转至视线方向，形成视锥
+                    .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
+                    .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
             ));
             gb.lookAt(EntityAnchorArgument.Anchor.FEET, targetEyePos);
             this.level().addFreshEntity(gb);
@@ -1115,31 +1114,53 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
     /**
-     * 目标位置周围召唤GB攻击
+     * 目标周围圆形固定位置召唤GB组合攻击
+     * 自动计算等角度分布
      */
-    private int targetGBAttack(LivingEntity target,int count){
+    private int targetGBAttack(LivingEntity target,double offsetAngle,int count) {
+        return targetGBAttack(target, count, offsetAngle, 360.0 / count);
+    }
+
+    /**
+     * 指定起始角度的版本
+     * @param target 目标实体
+     * @param count GB数量
+     * @param offsetAngle 偏移角度（度）
+     * @param angleStep 角度步长（度）
+     */
+    private int targetGBAttack(LivingEntity target, int count, double offsetAngle, double angleStep) {
         int difficulty = this.level().getDifficulty().getId();
-        int angle = 0;
-        int avg = 0;
-        if(count == 1) {
-            angle = this.random.nextInt() * 360;
-        }else{
-            avg = 180 / (count - 1);
-        }
+        double baseRadius = this.distanceTo(target) + 2.0; // 以距离为基准半径
+        double currentAngle = startAngle; // 从指定角度开始
+
         for(int i = 0; i < count; i++) {
+            // 固定半径保持对称性
+            double radius = baseRadius + (this.random.nextDouble() * 2.0 - 1.0);
+            double height = this.random.nextDouble() * 3 + 1;
+
             GasterBlasterFixed gb = createGBFixed();
             Vec3 targetEyePos = target.getEyePosition();
-            double radius = this.random.nextDouble() * 4.0 + (double) ATTACK_RANGE / 2; // 半径
-            double height = this.random.nextDouble() * 4; // 0 - 4格随机高度
-            gb.setPos(targetEyePos.add(Math.sin(angle * Mth.DEG_TO_RAD) * radius, height, Math.cos(angle * Mth.DEG_TO_RAD) * radius));
-            angle += avg;
+
+            // 计算圆形上的位置
+            double xOffset = Math.sin(currentAngle * Mth.DEG_TO_RAD) * radius;
+            double zOffset = Math.cos(currentAngle * Mth.DEG_TO_RAD) * radius;
+
+            gb.setPos(targetEyePos.add(xOffset, height, zOffset));
             gb.lookAt(EntityAnchorArgument.Anchor.FEET, targetEyePos);
             this.level().addFreshEntity(gb);
+
+            // 按照固定角度步长递增
+            currentAngle += angleStep;
         }
         return 0;
     }
-
-
+    private GasterBlasterFixed spawnGBFixed(Vec3 spawnPos,Vec3 lookAtPos){
+        GasterBlasterFixed gb = createGBFixed();
+        gb.setPos(lookAtPos);
+        gb.lookAt(EntityAnchorArgument.Anchor.FEET, spawnPos);
+        this.level().addFreshEntity(gb);
+        return gb;
+    }
 
     private GasterBlasterFixed createGBFixed(){
         GasterBlasterFixed gb = new GasterBlasterFixed(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), this.level(), this);
