@@ -700,7 +700,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
     /**
-     * 骨环齐射，径向方向
+     * 骨环齐射，向目标发射
      * @return 需要执行完攻击的动画CD
      */
     private int boneRingVolley(LivingEntity target) {
@@ -794,8 +794,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                             .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
                             .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
             );
-            bone.aimShot();
-            LevelUtils.addFreshProjectileByPosAndRot(this.level(),bone,pos,target);
+            bone.aimShoot();
+            LevelUtils.addFreshProjectile(this.level(),bone,pos,target);
         }
         return delay;
     }

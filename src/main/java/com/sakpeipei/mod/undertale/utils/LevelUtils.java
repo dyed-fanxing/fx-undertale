@@ -11,7 +11,7 @@ import net.minecraft.world.phys.Vec3;
  * @since 2025-11-27 20:01
  */
 public class LevelUtils {
-    public static boolean addFreshEntityByPosAndRot(Level level, Entity entity, Vec3 spawnPos, Vec3 targetPos){
+    public static boolean addFreshEntity(Level level, Entity entity, Vec3 spawnPos, Vec3 targetPos){
         entity.setPos(spawnPos);
         entity.lookAt(EntityAnchorArgument.Anchor.FEET,targetPos);
         return level.addFreshEntity(entity);
