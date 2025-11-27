@@ -1,0 +1,43 @@
+package com.sakpeipei.mod.undertale.utils;
+
+import net.minecraft.commands.arguments.EntityAnchorArgument;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+
+/**
+ * @author Sakqiongzi
+ * @since 2025-11-27 20:01
+ */
+public class LevelUtils {
+    public static boolean addFreshEntityByPosAndRot(Level level, Entity entity, Vec3 spawnPos, Vec3 targetPos){
+        entity.setPos(spawnPos);
+        entity.lookAt(EntityAnchorArgument.Anchor.FEET,targetPos);
+        return level.addFreshEntity(entity);
+    }
+    /**
+     * 添加弹射物到当前世界中
+     * @param level 世界
+     * @param projectile 弹射物
+     * @param spawnPos 出生点
+     * @param target 目标实体
+     */
+    public static boolean addFreshProjectile(Level level, Projectile projectile, Vec3 spawnPos, Entity target){
+        projectile.setPos(spawnPos);
+        RotUtils.lookAtShoot(projectile, target);
+        return level.addFreshEntity(projectile);
+    }
+    /**
+     * 添加弹射物到当前世界中
+     * @param level 世界
+     * @param projectile 弹射物
+     * @param spawnPos 出生点
+     * @param moveVector 移动向量
+     */
+    public static boolean addFreshProjectile(Level level, Projectile projectile, Vec3 spawnPos, Vec3 moveVector){
+        projectile.setPos(spawnPos);
+        RotUtils.lookAtShoot(projectile, moveVector);
+        return level.addFreshEntity(projectile);
+    }
+}

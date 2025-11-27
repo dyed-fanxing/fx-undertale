@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -54,10 +55,4 @@ public class EntityUtils {
         return level.getMinBuildHeight();
     }
 
-
-    public static boolean addFreshEntityByPosAndRot(Level level,Entity entity, Vec3 spawnPos,Vec3 targetPos){
-        entity.setPos(spawnPos);
-        entity.lookAt(EntityAnchorArgument.Anchor.FEET,targetPos);
-        return level.addFreshEntity(entity);
-    }
 }
