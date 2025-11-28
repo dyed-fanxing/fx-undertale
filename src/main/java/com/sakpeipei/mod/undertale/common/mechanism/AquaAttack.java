@@ -1,11 +1,9 @@
-package com.sakpeipei.mod.undertale.mechanism;
+package com.sakpeipei.mod.undertale.common.mechanism;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import software.bernie.geckolib.util.Color;
 
 /**

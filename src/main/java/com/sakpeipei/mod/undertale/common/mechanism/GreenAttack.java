@@ -1,4 +1,4 @@
-package com.sakpeipei.mod.undertale.mechanism;
+package com.sakpeipei.mod.undertale.common.mechanism;
 
 import net.minecraft.world.entity.Entity;
 import software.bernie.geckolib.util.Color;

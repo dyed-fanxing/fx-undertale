@@ -3,7 +3,7 @@ package com.sakpeipei.mod.undertale.entity.projectile;
 import com.sakpeipei.mod.undertale.common.DamageTypes;
 import com.sakpeipei.mod.undertale.entity.AttackColored;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
-import com.sakpeipei.mod.undertale.mechanism.ColorAttack;
+import com.sakpeipei.mod.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -196,4 +196,3 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
         return cache;
     }
 }
-

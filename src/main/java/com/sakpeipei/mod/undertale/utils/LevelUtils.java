@@ -33,6 +33,18 @@ public class LevelUtils {
      * @param level 世界
      * @param projectile 弹射物
      * @param spawnPos 出生点
+     * @param x,y,z 目标位置
+     */
+    public static boolean addFreshProjectile(Level level, Projectile projectile, Vec3 spawnPos, double x,double y,double z){
+        projectile.setPos(spawnPos);
+        RotUtils.lookAtShoot(projectile,x,y,z);
+        return level.addFreshEntity(projectile);
+    }
+    /**
+     * 添加弹射物到当前世界中
+     * @param level 世界
+     * @param projectile 弹射物
+     * @param spawnPos 出生点
      * @param moveVector 移动向量
      */
     public static boolean addFreshProjectile(Level level, Projectile projectile, Vec3 spawnPos, Vec3 moveVector){

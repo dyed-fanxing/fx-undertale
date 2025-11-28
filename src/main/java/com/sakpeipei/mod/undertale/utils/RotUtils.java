@@ -105,6 +105,9 @@ public class RotUtils {
     public static void lookAtShoot(Entity entity, Vec3 targetPos){
         lookAtShootVector(entity,new Vec3(targetPos.x - entity.getX(),targetPos.y - entity.getEyeY(),targetPos.z - entity.getZ()));
     }
+    public static void lookAtShoot(Entity entity, double x,double y,double z){
+        lookAtShootVector(entity,new Vec3(x - entity.getX(),y - entity.getEyeY(),z - entity.getZ()));
+    }
     /**
      * 看向射击方向
      * @param entity 弹射物，也可用于实体
