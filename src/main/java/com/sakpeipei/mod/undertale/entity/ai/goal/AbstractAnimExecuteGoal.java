@@ -83,6 +83,8 @@ public abstract class AbstractAnimExecuteGoal<T> extends Goal {
     protected abstract int execute(LivingEntity target, AnimType<T> anim);
 
 
-    protected abstract void onCompleted();
+    protected void onCompleted(){
+        PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimIDPacket(mob.getId(), (byte) 0));
+    }
 
 }
