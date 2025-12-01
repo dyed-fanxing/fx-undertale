@@ -389,20 +389,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
     }
 
-
-
-    private final int[][][] sequences = {
-            {{3,30,1,1,0},{3,30,2,2,0},{3,30,2,1,0}},                       // 骨刺波动进阶
-            {{3,0,2,1,0},{3,40,1,1,1}, {3,0,3,1,0},{3,40,2,1,1}, {3,0,4,1,1},{3,40,3,1,0}},                       // 骨刺波动进阶
-            {{3,0,3,1,0},{3,40,1,2,1}, {3,0,3,1,0},{3,40,2,1,1}, {3,0,4,1,1},{3,40,3,1,0}},                       // 骨刺波动进阶
-    };
-    private final List<List<Integer>> stateSequences = Arrays.asList(
-            Arrays.asList(1,2,8),
-            Arrays.asList(4,5,6,7),
-            Arrays.asList(3),
-            Arrays.asList(9)
-    );
-
     private int seeTime;
     private int phase;
     class SansMovementGoal extends Goal {
@@ -485,33 +471,16 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
     }
 
-    private final ToIntFunction<LivingEntity> CONE_SPIKE_PULSE_BONE  = target -> onceFlyingBone(target,0);
-    private final ToIntFunction<LivingEntity> CURVED_SPIKE_PULSE_BONE  = target -> onceFlyingBone(target,1);
-    private final ToIntFunction<LivingEntity> TRIANGULAR_ASSAULT_PULSE_BONE  = target -> onceFlyingBone(target,2);
-    private final ToIntFunction<LivingEntity> GROUND_WAVE_SPIKE_1   = target -> waveSpineTargetAttack(target,1,1,0);
-    private final ToIntFunction<LivingEntity> GROUND_WAVE_SPIKE_2   = target -> waveSpineTargetAttack(target,1,2,0);
-    private final ToIntFunction<LivingEntity> SELF_WAVE_SPIKE  = this::selfSpikeAttack;
-
-    // 单次攻击Goal - 处理所有简单攻击
-    private final List<OnceTimingAnim<List<ToIntFunction<LivingEntity>>>> singleAttacks = List.of(
-            new OnceTimingAnim<>((byte) 2, 20, 10, 30, List.of(CONE_SPIKE_PULSE_BONE)),
-            new OnceTimingAnim<>((byte) 2, 20, 10, 30, List.of(CURVED_SPIKE_PULSE_BONE)),
-            new OnceTimingAnim<>((byte) 2, 20, 10, 30, List.of(TRIANGULAR_ASSAULT_PULSE_BONE)),
-            new OnceTimingAnim<>((byte) 2, 20, 10, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)), // 波动骨刺
-            new OnceTimingAnim<>((byte) 5, 20, 10, 30, List.of(SELF_WAVE_SPIKE)) // 自身骨刺
-    );
-
     private boolean existPersistentAttack;
 
-    private final ToIntFunction<LivingEntity> SPINE_ATTACK = this::targetSpineAttack;
 
     private class PersistentAttackGoal extends AbstractAnimExecuteGoal<ToIntFunction<LivingEntity>> {
 
         private final List<AnimType<ToIntFunction<LivingEntity>>> attacks = List.of(
-                new OnceTimingAnim<>((byte) 1, 20, 4, 30, Sans.this::aimTargetRandomBarrage),
-                new OnceTimingAnim<>((byte) 1, 20, 4, 30, Sans.this::shootForwardRandomBarrage),
-                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, Sans.this::summonBoneSpineAroundTarget))),
-                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, target -> Sans.this.selfGBAttack(target,1))))
+                new OnceTimingAnim<>((byte) 1, 20, 4, 30, Sans.this::shootAimedBarrage),
+                new OnceTimingAnim<>((byte) 1, 20, 4, 30, Sans.this::shootForwardBarrage),
+                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, Sans.this::summonGroundBoneSpineAroundTarget))),
+                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, target -> Sans.this.summonAimedGBAroundSelf(target,1))))
         );
 
         private int cooldown;
@@ -544,44 +513,16 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
     }
 
-    // 连击Goal - 处理所有连击
-    class SequenceAttackGoal extends AbstractAnimExecuteGoal<List<ToIntFunction<LivingEntity>>> {
-        private final ToIntFunction<LivingEntity> BONE_WALL_WHITE = target -> groundBoneProjectileAttack(target,0,0,0);
-        private final ToIntFunction<LivingEntity> BONE_WALL_AQUA = target -> groundBoneProjectileAttack(target,1,1,0);
-
-
-            private final List<AnimType<List<ToIntFunction<LivingEntity>>>> attacks = List.of(
-                    new RoundSequenceAnim<>(3, List.of( new OnceTimingAnim<>((byte) 3, 30, 4, 20, BONE_WALL_WHITE),new OnceTimingAnim<>((byte)3,30,4,30,BONE_WALL_AQUA ))), // 骨墙
-                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
-                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
-                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
-                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2))))
-            );
-
-        public SequenceAttackGoal() {
-            super(Sans.this);
-        }
-
-
-        @Override
-        protected @NotNull AnimType<List<ToIntFunction<LivingEntity>>> select(LivingEntity target) {
-            return new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2))));
-        }
-
-        @Override
-        protected int execute(LivingEntity target, AnimType<List<ToIntFunction<LivingEntity>>> anim) {
-            return 0;
-        }
-
-        @Override
-        protected void onCompleted() {
-
-        }
-    }
-
-
-    //动画执行
+    // 单次攻击
     private class SingleAttackGoalSingle extends SingleAnimExecuteGoal<List<ToIntFunction<LivingEntity>>> {
+        // 单次攻击Goal - 处理所有简单攻击
+        private final List<OnceTimingAnim<List<ToIntFunction<LivingEntity>>>> singleAttacks = List.of(
+                new OnceTimingAnim<>((byte) 2, 20, 10, 30, Sans.this::shootArcSweepVolley),
+                new OnceTimingAnim<>((byte) 2, 20, 10, 30, Sans.this::shootBoneRingVolley),
+                new OnceTimingAnim<>((byte) 2, 20, 10, 30, Sans.this::summonGroundBoneSpineAtSelf),
+                new OnceTimingAnim<>((byte) 2, 20, 10, 30, Sans.this::summon List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)), // 波动骨刺
+                new OnceTimingAnim<>((byte) 5, 20, 10, 30, List.of(SELF_WAVE_SPIKE)) // 自身骨刺
+        );
         public SingleAttackGoalSingle() {
             super(Sans.this);
         }
@@ -619,57 +560,94 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
 
-    private class GravityControlCollisionDetectionGoal extends Goal {
-        private boolean lastOnGround;
+    // 连击Goal - 处理所有连击
+    class SequenceAttackGoal extends AbstractAnimExecuteGoal<List<ToIntFunction<LivingEntity>>> {
+        private final ToIntFunction<LivingEntity> BONE_WALL_WHITE = target -> groundBoneProjectileAttack(target,0,0,0);
+        private final ToIntFunction<LivingEntity> BONE_WALL_AQUA = target -> groundBoneProjectileAttack(target,1,1,0);
+
+
+            private final List<AnimType<List<ToIntFunction<LivingEntity>>>> attacks = List.of(
+                    new RoundSequenceAnim<>(3, List.of( new OnceTimingAnim<>((byte) 3, 30, 4, 20, BONE_WALL_WHITE),new OnceTimingAnim<>((byte)3,30,4,30,BONE_WALL_AQUA ))), // 骨墙
+                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
+                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
+                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2)))),
+                    new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2))))
+            );
+
+        public SequenceAttackGoal() {
+            super(Sans.this);
+        }
+
 
         @Override
-        public void start() {
-            LivingEntity target = Sans.this.getTarget();
-            if (target != null) {
-                this.lastOnGround = target.onGround();
-            }else{
-                this.lastOnGround = false;
-            }
+        protected @NotNull AnimType<List<ToIntFunction<LivingEntity>>> select(LivingEntity target) {
+            return new RoundSequenceAnim<>(3, List.of(new OnceTimingAnim<>((byte) 1, 30, 4, 30, List.of(GROUND_WAVE_SPIKE_1, GROUND_WAVE_SPIKE_2))));
         }
 
         @Override
-        public boolean canUse() {
-            LivingEntity target = Sans.this.getTarget();
-            if (target != null) {
-                GravityData gravityData = target.getData(AttachmentTypeRegistry.GRAVITY);
-                return gravityData != null;
-    /        }else return false;
+        protected int execute(LivingEntity target, AnimType<List<ToIntFunction<LivingEntity>>> anim) {
+            return 0;
         }
 
         @Override
-        public void tick() {
-            LivingEntity target = Sans.this.getTarget();
-            boolean onGround = target.onGround();
-            if(onGround && lastOnGround != onGround){
-                log.info("落地");
-//                Sans.this.targetSpineAttack(target,Sans.this.level().getDifficulty().getId());
-            }
+        protected void onCompleted() {
+
         }
     }
 
-    private int executeAttack(LivingEntity target, ActionData data){
-        int[] params = data.getParams();
-        return switch (data.getId()) {
-            case 1 -> Sans.this.continueFlyingBone(target)  ;
-            case 2 -> Sans.this.onceFlyingBone(target, params[0]);
-            case 3 -> Sans.this.groundBoneProjectileAttack(target, params[0], params[1], params[2]);
-            case 4 -> Sans.this.waveSpineTargetAttack(target, params[0], params[1], params[2]);
-            case 5 -> Sans.this.selfSpikeAttack(target);
-            case 6 -> Sans.this.targetSpineAttack(target);
-            case 7 -> Sans.this.randomAreaSpineAttack(target);
-            case 8 -> Sans.this.gbAttack(target,0,params[0]);
-            case 9 -> {
-                GravityData.applyRelativeGravity(Sans.this, target, GravityData.RelativeDirection.values()[params[0]]);
-                yield  0;
-            }
-            default -> throw new IllegalStateException("Unexpected value: " + data.getId());
-        };
-    }
+
+
+//    private class GravityControlCollisionDetectionGoal extends Goal {
+//        private boolean lastOnGround;
+//
+//        @Override
+//        public void start() {
+//            LivingEntity target = Sans.this.getTarget();
+//            if (target != null) {
+//                this.lastOnGround = target.onGround();
+//            }else{
+//                this.lastOnGround = false;
+//            }
+//        }
+//
+//        @Override
+//        public boolean canUse() {
+//            LivingEntity target = Sans.this.getTarget();
+//            if (target != null) {
+//                GravityData gravityData = target.getData(AttachmentTypeRegistry.GRAVITY);
+//                return gravityData != null;
+//    /        }else return false;
+//        }
+//
+//        @Override
+//        public void tick() {
+//            LivingEntity target = Sans.this.getTarget();
+//            boolean onGround = target.onGround();
+//            if(onGround && lastOnGround != onGround){
+//                log.info("落地");
+////                Sans.this.targetSpineAttack(target,Sans.this.level().getDifficulty().getId());
+//            }
+//        }
+//    }
+
+//    private int executeAttack(LivingEntity target, ActionData data){
+//        int[] params = data.getParams();
+//        return switch (data.getId()) {
+//            case 1 -> Sans.this.continueFlyingBone(target)  ;
+//            case 2 -> Sans.this.onceFlyingBone(target, params[0]);
+//            case 3 -> Sans.this.groundBoneProjectileAttack(target, params[0], params[1], params[2]);
+//            case 4 -> Sans.this.waveSpineTargetAttack(target, params[0], params[1], params[2]);
+//            case 5 -> Sans.this.selfSpikeAttack(target);
+//            case 6 -> Sans.this.targetSpineAttack(target);
+//            case 7 -> Sans.this.randomAreaSpineAttack(target);
+//            case 8 -> Sans.this.gbAttack(target,0,params[0]);
+//            case 9 -> {
+//                GravityData.applyRelativeGravity(Sans.this, target, GravityData.RelativeDirection.values()[params[0]]);
+//                yield  0;
+//            }
+//            default -> throw new IllegalStateException("Unexpected value: " + data.getId());
+//        };
+//    }
     // 持续射击
     /**
      * 瞄准目标随机骨头弹幕 - 持续射击目标
@@ -859,22 +837,41 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
 
 
     /**
-     * 直线骨刺波动
+     * 召唤平行骨刺波动 - 等间距平行直线波动
      */
-    private int summonStraightBoneSpineWave(@NotNull LivingEntity target, int count, ColorAttack color) {
+    private int summonParallelBoneSpineWave(@NotNull LivingEntity target, int waveCount, ColorAttack color) {
         int difficulty = this.level().getDifficulty().getId();
-        int delay = 25 - difficulty * 5;
+        int baseDelay = 25 - difficulty * 5;
         float yawRad = (this.getYHeadRot() + 90f) * Mth.DEG_TO_RAD;
         Vec3 direction = new Vec3(Mth.cos(yawRad), 0, Mth.sin(yawRad));
+        Vec3 perpendicular = new Vec3(-direction.z, 0, direction.x); // 垂直方向
         int rows = ATTACK_RANGE * 2 + difficulty/3 * 5;
         int cols = 5;
-        return summonGroundBoneSpineWaveMatrix(target, rows, cols, this.position(), direction, color, delay);
-    }
+        float waveSpacing = 2.0f; // 波动之间距离2格
 
+        // 计算总宽度和起始偏移
+        float totalWidth = (waveCount - 1) * waveSpacing;
+        float startOffset = -totalWidth / 2; // 从中间开始向两边分布
+
+        int finalDelay = baseDelay;
+        for (int i = 0; i < waveCount; i++) {
+            float offset = startOffset + i * waveSpacing;
+            Vec3 waveStartPos = this.position().add(perpendicular.scale(offset));
+            int waveDelay = summonGroundBoneSpineWaveMatrix(target, rows, cols, waveStartPos, direction, color, baseDelay + i * 2);
+            finalDelay = Math.max(finalDelay, waveDelay);
+        }
+        return finalDelay;
+    }
     /**
-     * 扇形骨刺波动 - 以自身为中心，扇形发射
+     * 骨刺波动 - 以自身为中心发射
      */
-    private int summonFanBoneSpineWave(@NotNull LivingEntity target, int waveCount, float spreadAngle, ColorAttack color) {
+    private int summonBoneSpineWaveAroundSelf(@NotNull LivingEntity target, int waveCount,ColorAttack color) {
+        return summonBoneSpineWaveAroundSelf(target,waveCount,360f,color);
+    }
+    /**
+     * 骨刺波动 - 以自身为中心发射
+     */
+    private int summonBoneSpineWaveAroundSelf(@NotNull LivingEntity target, int waveCount, float spreadAngle, ColorAttack color) {
         int difficulty = this.level().getDifficulty().getId();
         int baseDelay = 25 - difficulty * 5;
         Vec3 toTarget = target.position().subtract(this.position()).normalize();
@@ -888,33 +885,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             int waveDelay = summonGroundBoneSpineWaveMatrix(target, rows, cols, this.position(), direction, color, baseDelay + i * 5);
             finalDelay = Math.max(finalDelay, waveDelay);
         }
-
-        return finalDelay;
-    }
-    /**
-     * 环形骨刺波动 - 以目标为圆心，从圆环上向目标发射
-     */
-    private int summonRingBoneSpineWave(@NotNull LivingEntity target, int waveCount, float spreadAngle, ColorAttack color) {
-        int difficulty = this.level().getDifficulty().getId();
-        int baseDelay = 25 - difficulty * 5;
-        double radius = this.distanceTo(target);
-        int rows = (int)(radius * 2); // 根据距离调整行数
-        int cols = 5;
-        int finalDelay = baseDelay;
-        for (int i = 0; i < waveCount; i++) {
-            // 计算圆环上的起始位置
-            float angle = (i / (float)waveCount) * 360f + (this.tickCount * 2); // 可以加旋转
-            Vec3 circlePos = target.position().add(
-                    Math.cos(angle * Mth.DEG_TO_RAD) * radius,
-                    0,
-                    Math.sin(angle * Mth.DEG_TO_RAD) * radius
-            );
-            // 从圆环位置朝向目标
-            Vec3 direction = target.position().subtract(circlePos).normalize();
-            int waveDelay = summonGroundBoneSpineWaveMatrix(target, rows, cols, circlePos, direction, color, baseDelay + i * 3);
-            finalDelay = Math.max(finalDelay, waveDelay);
-        }
-
         return finalDelay;
     }
     /**
@@ -942,16 +912,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
         return delay;
     }
-    /**
-     * 骨刺波动组合
-     */
-    private int summonGroundBoneSpineWaveCombo(@NotNull LivingEntity target,int[] ...params) {
-        int cd = 0;
-        for (int[] param : params) {
-            cd = Math.max(cd,summonGroundBoneSpineWave(target,param[0],param[1],param[2]));
-        }
-        return cd;
-    }
+
 
     /**
      * 在自身位置召唤地面骨刺扩张
