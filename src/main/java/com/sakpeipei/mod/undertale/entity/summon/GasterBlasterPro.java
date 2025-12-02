@@ -65,8 +65,8 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
     private short cd = 0;                           // CD
     private short shot = DEFAULT_SHOT;                             // 默认射击时间 100Tick
     public short timer=0;                            // 计时器
-    private final EntityDataAccessor<Float> LENGTH = SynchedEntityData.defineId(GasterBlasterPro.class, EntityDataSerializers.FLOAT);
-    private final EntityDataAccessor<Byte> PHASE = SynchedEntityData.defineId(GasterBlasterPro.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Float> LENGTH = SynchedEntityData.defineId(GasterBlasterPro.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Byte> PHASE = SynchedEntityData.defineId(GasterBlasterPro.class, EntityDataSerializers.BYTE);
 
     private static final float width = 5.0f;
     protected Vec3 end;                 // 攻击终点

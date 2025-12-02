@@ -100,20 +100,20 @@ public class RotUtils {
         entity.absRotateTo(shootXRot(dir.y,dir.horizontalDistance()),shootYRot(dir.x,dir.z));
     }
     public static void lookAtShoot(Entity entity, Entity target){
-        lookAtShootVector(entity,new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getEyeY(),target.getZ() - entity.getZ()));
+        lookVecShoot(entity,new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getEyeY(),target.getZ() - entity.getZ()));
     }
     public static void lookAtShoot(Entity entity, Vec3 targetPos){
-        lookAtShootVector(entity,new Vec3(targetPos.x - entity.getX(),targetPos.y - entity.getEyeY(),targetPos.z - entity.getZ()));
+        lookVecShoot(entity,new Vec3(targetPos.x - entity.getX(),targetPos.y - entity.getEyeY(),targetPos.z - entity.getZ()));
     }
     public static void lookAtShoot(Entity entity, double x,double y,double z){
-        lookAtShootVector(entity,new Vec3(x - entity.getX(),y - entity.getEyeY(),z - entity.getZ()));
+        lookVecShoot(entity,new Vec3(x - entity.getX(),y - entity.getEyeY(),z - entity.getZ()));
     }
     /**
-     * 看向射击方向
+     * 看向矢量方向
      * @param entity 弹射物，也可用于实体
-     * @param vec3 射击方向，即即将要运动的方向
+     * @param vec3 矢量，常用于射击方向，即将要运动的方向
      */
-    public static void lookAtShootVector(Entity entity,Vec3 vec3){
+    public static void lookVecShoot(Entity entity,Vec3 vec3){
         entity.setXRot(shootXRot(vec3.y,vec3.horizontalDistance()));
         entity.setYRot(shootYRot(vec3.x,vec3.z));
     }

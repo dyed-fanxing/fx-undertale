@@ -46,7 +46,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
     public static final byte CHARGE_TICK = 18;
     public static final float DEFAULT_LENGTH = 16f;    // 默认长度
     // 射线当前长度
-    protected final EntityDataAccessor<Float> LENGTH = SynchedEntityData.defineId(GasterBlasterFixed.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> LENGTH = SynchedEntityData.defineId(GasterBlasterFixed.class, EntityDataSerializers.FLOAT);
 
     protected float width = 1.0f;          // 宽度
     protected Vec3 end;             // 攻击终点

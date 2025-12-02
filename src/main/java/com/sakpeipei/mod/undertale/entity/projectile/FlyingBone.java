@@ -70,22 +70,25 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
             this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
             this.lerpSteps--;
         }
-        if (!this.level().isClientSide) {
+        if(delay > 0){
             delay--;
-            if(isAim){
-                if(this.getOwner() instanceof Targeting targeting){
-                    LivingEntity target = targeting.getTarget();
-                    if (target != null) {
-                        this.targetPos = target.getEyePosition();
+            if (!this.level().isClientSide) {
+                if(isAim){
+                    if(this.getOwner() instanceof Targeting targeting){
+                        LivingEntity target = targeting.getTarget();
+                        if (target != null) {
+                            this.targetPos = target.getEyePosition();
+                        }
                     }
-                }
-                if(delay > 0){
                     RotUtils.lookAtShoot(this,targetPos);
-                }else if(delay == 0) {
-                    this.shoot(targetPos.x - this.getX(),targetPos.y - this.getEyeY(),targetPos.z - this.getZ(), speed,0);
                 }
-            }else if(delay == 0){
+            }
+        }
+        if(delay == 0){
+            if(isAim){
                 this.shoot(targetPos.x - this.getX(),targetPos.y - this.getEyeY(),targetPos.z - this.getZ(), speed,0);
+            }else{
+                this.shoot(targetPos.x,targetPos.y,targetPos.z, speed,0);
             }
         }
     }
@@ -124,8 +127,8 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     public void aimShoot(){
         this.isAim = true;
     }
-    public void vectorShoot(Vec3 targetPos){
-        this.targetPos = targetPos;
+    public void vectorShoot(Vec3 motionVector){
+        this.targetPos = motionVector;
     }
 
     @Override

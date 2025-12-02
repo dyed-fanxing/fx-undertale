@@ -9,7 +9,6 @@ import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.mod.undertale.entity.common.AnimType;
 import com.sakpeipei.mod.undertale.entity.common.OnceTimingAnim;
 import com.sakpeipei.mod.undertale.entity.common.RoundAnim;
-import com.sakpeipei.mod.undertale.entity.common.RoundSequenceAnim;
 import com.sakpeipei.mod.undertale.entity.common.SequenceAnim;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
@@ -27,6 +26,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
@@ -70,9 +72,10 @@ import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
-import java.util.function.ToIntFunction;
+import java.util.UUID;
 
 public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -82,6 +85,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
 
     private int physicalStrength;     // 当前体力
     private int maxPhysicalStrength;  // 最大体力
+
+    // 0-开场杀 1-第一阶段 2-饶恕阶段 3-二阶段 4-特殊攻击阶段
+    private static final EntityDataAccessor<Byte> PHASE_ID = SynchedEntityData.defineId(Sans.class, EntityDataSerializers.BYTE);
 
     private static final UniformInt PERSISTENT_ANGER_TIME = TimeUtil.rangeOfSeconds(30, 60);
     private int remainingPersistentAngerTime;
@@ -138,12 +144,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         if(this.globalCD > 0) {
             this.globalCD--;
         }
-        if(physicalStrength > maxPhysicalStrength / 2 && !isSpecial) {
+        if(physicalStrength > maxPhysicalStrength / 2) {
             if(this.tickCount % 20 == 0){
                 physicalStrength = Math.min(physicalStrength + 1 ,maxPhysicalStrength);
             }
-        }else{
-            isSpecial = true;
         }
         super.customServerAiStep();
     }
@@ -171,9 +175,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 }else if(sourceEntity instanceof Player player){
                     this.setLastHurtByPlayer(player);
                 }
-            }
-            if(physicalStrength <= maxPhysicalStrength / 2 && isSpecial){
-                isSpecial = false;
             }
             if(sourceEntity != null){
                 if(this.distanceToSqr(sourceEntity) <= 25){
@@ -341,6 +342,15 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
     @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(PHASE_ID,(byte) 1);
+    }
+    private byte getPhaseID(){
+        return this.entityData.get(PHASE_ID);
+    }
+
+    @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("PhysicalStrength",this.physicalStrength);
@@ -374,10 +384,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
 
-
-    private int canAttack; //可攻击
     private int globalCD = 0;           //全局CD
-    private boolean isSpecial = false;  //标识需要特殊处理的阶段，即初见杀，饶恕阶段，特殊攻击
 
     class TransitionPhaseGoal extends Goal{
         public TransitionPhaseGoal() {
@@ -391,7 +398,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
     private int seeTime;
-    private int phase;
+
     class SansMovementGoal extends Goal {
         private final double speedModifier;
         private final float attackRadiusSqr;
@@ -441,7 +448,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 double disSqr = Sans.this.distanceToSqr(target.getX(), target.getY(), target.getZ());
                 boolean hasSeeSight = Sans.this.getSensing().hasLineOfSight(target);
                 if(hasSeeSight){ seeTime++; }
-                else{ seeTime = Math.min(0,seeTime - 1); }
+                else{ seeTime = Math.max(-60, seeTime - 1); }
 
                 Sans.this.getLookControl().setLookAt(target, Sans.this.getHeadRotSpeed(), Sans.this.getMaxHeadXRot());
                 if(seeTime > 0){
@@ -523,21 +530,22 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     // 单次攻击
     private class SingleAttackGoalSingle extends AbstractAnimExecuteGoal<Integer> {
         private final List<AnimType<Integer>> attacks = List.of(
-                new OnceTimingAnim<>((byte) 2, 20, 4, 30, 1),
-                new OnceTimingAnim<>((byte) 2, 20, 10, 30, 2),
-                new OnceTimingAnim<>((byte) 2, 20, 10, 30, 3)
+                new OnceTimingAnim<>((byte) 3, 20, 4, 30, 1),
+                new OnceTimingAnim<>((byte) 4, 20, 10, 30, 2),
+                new OnceTimingAnim<>((byte) 5, 20, 10, 30, 3)
         );
         private final List<AnimType<Integer>> groundAttacks = List.of(
-                new OnceTimingAnim<>((byte) 2, 20, 4, 30, 4),
-                new OnceTimingAnim<>((byte) 2, 20, 10, 30, 5)
+                new OnceTimingAnim<>((byte) 1, 20, 4, 30, 4),
+                new OnceTimingAnim<>((byte) 1, 20, 10, 30, 5),
+                new OnceTimingAnim<>((byte) 1, 20, 10, 30, 6)
         );
         public SingleAttackGoalSingle() {
             super(Sans.this);
         }
         @Override
         public boolean canUse() {
-
-            return seeTime > 20 && (phase == 1 && !existPersistentAttack) || (phase == 2 && existPersistentAttack) && super.canUse();
+            byte phaseID = getPhaseID();
+            return seeTime > -60 && ((phaseID == 1 && !existPersistentAttack) || (phaseID == 3 && existPersistentAttack)) && super.canUse();
         }
 
         @Override
@@ -549,18 +557,19 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 availableAttacks.addAll(groundAttacks);
             }
             boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
-//            return availableAttacks.get(random.nextInt(availableAttacks.size()));
-            return availableAttacks.get(0);
+            return availableAttacks.get(random.nextInt(availableAttacks.size()));
+//            return availableAttacks.get(1);
         }
 
         @Override
         protected int execute(LivingEntity target, AnimType<Integer> anim) {
             return switch(anim.getAction()){
                 case 1 -> Sans.this.shootBoneRingVolley(target);
-                case 2 -> Sans.this.shootArcSweepVolley(target);
+                case 2 -> Sans.this.shootArcSweepVolley();
                 case 3 -> Sans.this.summonAimedGBAroundSelf(target,1);
                 case 4 -> Sans.this.summonGroundBoneSpineAtSelf(target);
-                case 5 -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target,ColorAttack.WHITE);
+                case 5 -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, 30f,ColorAttack.WHITE);
+                case 6 -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target,ColorAttack.WHITE);
                 default -> throw new IllegalStateException("Unexpected value: " + anim.getAction());
             };
         }
@@ -617,7 +626,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             return switch((Integer) action[0]){
                 case 1 -> Sans.this.summonAdvancingGroundBoneWall(target, (ColorAttack) action[1], (Float) action[2], (RelativeDirection) action[3]);
                 case 2 -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target,(Integer) action[1],(ColorAttack) action[2]);
-                case 3 -> Sans.this.summonGBAroundTarget(target)
+//                case 3 -> Sans.this.summonGBAroundTarget(target)
                 default -> throw new IllegalStateException("Unexpected value: " + anim.getAction());
             };
         }
@@ -726,24 +735,24 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      */
     private int shootBoneRingVolley(LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
-        double[] offsetX = phase == 2? new double[]{1.0, -1.0} :new double[]{1.0};
+        double[] offsetXs = getPhaseID() == 1? new double[]{1.0}: new double[]{1.0, -1.0};
         float speed = difficulty * 0.6f + 1.0f;
         String attackTypeUUID = UUID.randomUUID().toString();
         int delay = 7;
         int count = 3 + 2 * difficulty;
         float radius = 0.3f + difficulty * 0.1f;
         float interval = 360f / count;
-        for (double x : offsetX) {
-            Vec3 centerPos = new Vec3(this.getX(),this.getY(0.5f),this.getZ());
+        for (double x : offsetXs) {
             for (int i = 0; i < count; i++) {
                 FlyingBone bone = createFlyingBone(attackTypeUUID,speed,delay);
-                float angle = i * interval;
+                float radian = i * interval * Mth.DEG_TO_RAD;
                 // 基础相对偏移（实体的右上方）
-                Vec3 pos = centerPos.add(new Vec3(
-                        x + radius * Mth.cos(angle * Mth.DEG_TO_RAD),
-                        1.5f + radius * Mth.sin(angle * Mth.DEG_TO_RAD),
+                Vec3 pos = new Vec3(
+                        x + radius * Mth.cos(radian),
+                        1.5f + radius * Mth.sin(radian),
                         0
-                ).xRot(-this.getXRot() * Mth.DEG_TO_RAD).yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD));
+                ).xRot(-this.getXRot() * Mth.DEG_TO_RAD).yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
+                        .add(this.getX(),this.getY(0.5f),this.getZ());
                 bone.aimShoot();
                 LevelUtils.addFreshProjectile(this.level(),bone,pos,target);
             }
@@ -754,38 +763,32 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      * 弧形横扫齐射 - 骨头在圆弧上朝外径向发射
      * @return 需要执行完攻击的动画CD
      */
-    private int shootArcSweepVolley(LivingEntity target) {
+    private int shootArcSweepVolley() {
         int difficulty = this.level().getDifficulty().getId();
         float speed = this.random.nextFloat() * 0.2f + difficulty * 0.5f + 1.0f;
         String attackTypeUUID = UUID.randomUUID().toString();
-        double[] offsetX = (difficulty == Difficulty.HARD.getId() || phase == 2) ? new double[]{3.0, -3.0} : new double[]{3.0};
         int count = 5 + difficulty * 2;
-        float interval = 180f / (count - 1);
+        float angleScope = 60f + 30f * difficulty;
+        float[] offsetAngles = getPhaseID() == 1? new float[]{ -1 }: new float[]{-1, 1};
+        float interval = angleScope / (count - 1);
         float rX = 0.8f + difficulty * 0.1f;
         float rZ = 1f + difficulty * 0.1f;
-        for (double x : offsetX) {
-            Vec3 centerPos = new Vec3(this.getX() + x, this.getY(0.5f), this.getZ());
-            float startAngle = -90f; // 从-90度开始（左侧）
+        // 圆心位置（实体位置）
+        Vec3 center = new Vec3(this.getX(), this.getY(0.5f), this.getZ());
+        for (float offsetAngle : offsetAngles) {
+            float startAngle = offsetAngle * (angleScope / 2);
             for (int i = 0; i < count; i++) {
                 FlyingBone bone = createFlyingBone(attackTypeUUID, speed, 0);
-                float angle = startAngle + (i * interval);
-                // 计算骨头在圆弧上的位置
-                Vec3 pos = centerPos.add(new Vec3(
-                                rX * Mth.cos(angle * Mth.DEG_TO_RAD),
-                                0,
-                                rZ * Mth.sin(angle * Mth.DEG_TO_RAD)
-                        )
-                                .xRot(-this.getXRot() * Mth.DEG_TO_RAD)
-                                .yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-                );
-                // 使用角度直接计算径向方向（更准确）
-                Vec3 radialVec3 = new Vec3(
-                        Mth.cos(angle * Mth.DEG_TO_RAD),
+                float radian = ( startAngle + (i * interval)) * Mth.DEG_TO_RAD;
+                // 计算圆弧上的相对位置（相对于圆心的偏移）
+                Vec3 relativeOffset  = new Vec3(
+                        rX * Mth.sin(radian),
                         0,
-                        Mth.sin(angle * Mth.DEG_TO_RAD)
-                );
-                bone.vectorShoot(radialVec3);
-                LevelUtils.addFreshProjectile(this.level(),bone,pos,radialVec3);
+                        rZ * Mth.cos(radian) + 1
+                ).xRot(-this.getXRot() * Mth.DEG_TO_RAD).yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD);
+                // 径向向量：从圆心指向圆弧上的点（就是relativeOffset的方向）
+                bone.vectorShoot(relativeOffset);
+                LevelUtils.addFreshProjectileByVec3(this.level(), bone, center.add(relativeOffset), relativeOffset);
             }
         }
         return 0;
@@ -874,32 +877,33 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      * 骨刺波动 - 以自身为中心发射，根据难度自动设置波动数量，用于单击
      */
     private int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target,ColorAttack color) {
-        return summonGroundBoneSpineWaveAroundSelf(target,1 + this.level().getDifficulty().getId(),360f,color);
+        int count = 6 + this.level().getDifficulty().getId();
+        return summonGroundBoneSpineWaveAroundSelf(target,count,360f / count,color);
+    }
+    /**
+     * 骨刺波动 - 以自身为中心发射，根据难度自动设置波动数量，用于单击
+     */
+    private int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, float angleStep,ColorAttack color) {
+        return summonGroundBoneSpineWaveAroundSelf(target,1 + this.level().getDifficulty().getId(),angleStep,color);
     }
     /**
      * 骨刺波动 - 以自身为中心发射
      */
-    private int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, int waveCount,ColorAttack color) {
-        return summonGroundBoneSpineWaveAroundSelf(target,waveCount,360f,color);
-    }
-    /**
-     * 骨刺波动 - 以自身为中心发射
-     */
-    private int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, int waveCount, float spreadAngle, ColorAttack color) {
+    private int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, int count, float angleStep, ColorAttack color) {
         int difficulty = this.level().getDifficulty().getId();
-        int baseDelay = 25 - difficulty * 5;
         Vec3 toTarget = target.position().subtract(this.position()).normalize();
         int rows = ATTACK_RANGE * 2 + difficulty/3 * 5;
         int cols = 5;
-        int finalDelay = baseDelay;
-        for (int i = 0; i < waveCount; i++) {
+        int delay = 10;
+        // 计算起始角度（让波动对称分布）
+        float startAngle = -angleStep * (count - 1) / 2f;
+        for (int i = 0; i < count; i++) {
             // 计算当前波的角度偏移
-            float angleOffset = (i / (float)(waveCount - 1) - 0.5f) * spreadAngle;
+            float angleOffset = startAngle + i * angleStep;
             Vec3 direction = toTarget.yRot(angleOffset * Mth.DEG_TO_RAD);
-            int waveDelay = summonGroundBoneSpineWaveMatrix(target, rows, cols, this.position(), direction, color, baseDelay + i * 5);
-            finalDelay = Math.max(finalDelay, waveDelay);
+            delay = summonGroundBoneSpineWaveMatrix(target, rows, cols, this.position(), direction, color,10);
         }
-        return finalDelay;
+        return delay;
     }
     /**
      * 公用方法：召唤定向骨刺矩阵
@@ -920,9 +924,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 double zOffset = row * rowSpacing;
                 Vec3 bonePos = startPos.add(perpendicular.scale(xOffset)).add(direction.scale(zOffset));
                 createGroundBone(attackTypeUUID, bonePos.x, bonePos.z, minY, maxY,
-                        delay, 20, 0f, color, false);
+                        delay, 20, 0f, color,false);
             }
-            delay += rows/3; // 多少行1延迟影响波浪长度
+            // 每3行增加1tick延迟，行越少，波浪越窄
+            delay += ( row % 3 == 0?1:0 );
         }
         return delay;
     }
@@ -1141,14 +1146,14 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     public void setAnimID(byte id) {
         this.animId = id;
     }
-    private static final String ANIM_CHARGE_FRONT = "charge.front";
-    private static final String ANIM_LURKER_CROSS = "attack.spine.cross";
-    private static final String ANIM_LURKER_FRONT = "attack.spine.front";
-    private static final String ANIM_BONE_PROJECTILE = "attack.bone.projectile";
     private static final String ANIM_CAST = "attack.cast";
     private static final String ANIM_CAST_LEFT = "attack.cast.left";
     private static final String ANIM_CAST_ROUND = "attack.cast.round";
     private static final String ANIM_CAST_ROUND_LEFT = "attack.cast.round.left";
+    private static final String ANIM_BONE_PROJECTILE = "attack.bone.projectile";
+    private static final String ANIM_BONE_PROJECTILE_LEFT = "attack.bone.projectile.left";
+    private static final String ANIM_BONE_SWEEP = "attack.bone.sweep";
+    private static final String ANIM_BONE_SWEEP_LEFT = "attack.bone.sweep.left";
 
     private final static String[] THROW_ANIM_NAMES = new String[]{"attack.throw.up","attack.throw.down","attack.throw.left","attack.throw.right","attack.throw.front","attack.throw.back"};
 
@@ -1158,16 +1163,17 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             AnimationController<Sans> controller = state.getController();
 
             Sans animatable = state.getAnimatable();
-            Difficulty difficulty = animatable.level().getDifficulty();
             byte animID = animatable.getAnimID();
             if(animID == 0) {
                 controller.forceAnimationReset();
                 return PlayState.STOP;
             }
+            byte phaseID = getPhaseID();
             switch (animID){
-                case 1,4,5,6,7,8 -> controller.setAnimation(RawAnimation.begin().thenPlay(difficulty == Difficulty.HARD? ANIM_CAST:ANIM_CAST_LEFT));
-                case 2 -> controller.setAnimation( RawAnimation.begin().thenPlay(ANIM_BONE_PROJECTILE));
-                case 3 -> controller.setAnimation(RawAnimation.begin().thenPlay(difficulty == Difficulty.HARD? ANIM_CAST_ROUND:ANIM_CAST_ROUND_LEFT));
+                case 1 -> controller.setAnimation(RawAnimation.begin().thenPlay(phaseID == 1? ANIM_CAST_LEFT:ANIM_CAST));
+                case 2 -> controller.setAnimation(RawAnimation.begin().thenPlay(phaseID == 1? ANIM_CAST_ROUND_LEFT:ANIM_CAST_ROUND));
+                case 3 -> controller.setAnimation( RawAnimation.begin().thenPlay(phaseID == 1 ? ANIM_BONE_PROJECTILE_LEFT:ANIM_BONE_PROJECTILE));
+                case 4 -> controller.setAnimation( RawAnimation.begin().thenPlay(phaseID == 1 ? ANIM_BONE_SWEEP_LEFT:ANIM_BONE_SWEEP));
                 case 9,10,11,12,13,14 -> controller.setAnimation( RawAnimation.begin().thenPlay(THROW_ANIM_NAMES[animID - 8]));
             }
             return PlayState.CONTINUE;
