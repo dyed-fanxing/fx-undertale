@@ -8,7 +8,9 @@ import com.sakpeipei.mod.undertale.entity.ai.goal.NeutralMobAngerTargetGoal;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.mod.undertale.entity.common.AnimType;
 import com.sakpeipei.mod.undertale.entity.common.OnceTimingAnim;
+import com.sakpeipei.mod.undertale.entity.common.RoundAnim;
 import com.sakpeipei.mod.undertale.entity.common.RoundSequenceAnim;
+import com.sakpeipei.mod.undertale.entity.common.SequenceAnim;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
@@ -471,39 +473,45 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
     private boolean existPersistentAttack;
+    private boolean isAttacking;
 
     //持续攻击，可脱手
-    private class PersistentAttackGoal extends AbstractAnimExecuteGoal<ToIntFunction<LivingEntity>> {
-
-        private final List<AnimType<ToIntFunction<LivingEntity>>> attacks = List.of(
-                new OnceTimingAnim<>((byte) 1, 20, 4, 30, Sans.this::shootAimedBarrage),
-                new OnceTimingAnim<>((byte) 1, 20, 4, 30, Sans.this::shootForwardBarrage),
-                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, Sans.this::summonGroundBoneSpineAroundTarget))),
-                new RoundSequenceAnim<>(10,List.of(new OnceTimingAnim<>((byte)7,20,4,30, target -> Sans.this.summonAimedGBAroundSelf(target,1))))
-        );
-
-        private int cooldown;
-
-        public PersistentAttackGoal(int cooldown) {
+    private class PersistentAttackGoal extends AbstractAnimExecuteGoal<int[]> {
+        List<AnimType<int[]>> attacks = new ArrayList<>(List.of(
+                new OnceTimingAnim<>((byte) 1, 20, 4, 30,new int[]{1}),
+                new OnceTimingAnim<>((byte) 1, 20, 4, 30,new int[]{2})
+        ));
+        public PersistentAttackGoal() {
             super(Sans.this);
-            this.cooldown = cooldown;
         }
 
         @Override
         public boolean canUse() {
-            cooldown--;
-            return cooldown <=0  && super.canUse();
+            return !isAttacking&&super.canUse();
         }
 
         @Override
-        protected @NotNull AnimType<ToIntFunction<LivingEntity>> select(LivingEntity target) {
+        protected @NotNull AnimType<int[]> select(LivingEntity target) {
+            int difficulty = Sans.this.level().getDifficulty().getId();
+            List<AnimType<int[]>> availableAttacks = new ArrayList<>(attacks);
+            availableAttacks.add(new RoundAnim<>(3 + 4 * difficulty, new OnceTimingAnim<>((byte) 7, 20, 4, 30,new int[]{3,1 + difficulty/3})));
+            if(target.onGround()){
+                availableAttacks.add(new RoundAnim<>(2 + 3*difficulty,new OnceTimingAnim<>((byte)7,20,4,30, new int[]{4})));
+            }
             existPersistentAttack = true;
-            return attacks.get(Sans.this.random.nextInt(attacks.size()));
+            return availableAttacks.get(Sans.this.random.nextInt(availableAttacks.size()));
         }
 
         @Override
-        protected int execute(LivingEntity target, AnimType<ToIntFunction<LivingEntity>> anim) {
-            return anim.getAction().applyAsInt(target);
+        protected int execute(LivingEntity target, AnimType<int[]> anim) {
+            int[] action = anim.getAction();
+            return switch(action[0]){
+                case 1 -> Sans.this.shootAimedBarrage(target);
+                case 2 -> Sans.this.shootForwardBarrage(target);
+                case 3 -> Sans.this.summonAimedGBAroundSelf(target,action[1]);
+                case 4 -> Sans.this.summonGroundBoneSpineAroundTarget(target);
+                default -> throw new IllegalStateException("Unexpected value: " + action[0]);
+            };
         }
 
         @Override
@@ -513,91 +521,105 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
     // 单次攻击
-    private class SingleAttackGoalSingle extends AbstractAnimExecuteGoal<ToIntFunction<LivingEntity>> {
-        private final List<AnimType<ToIntFunction<LivingEntity>>> attacks = List.of(
-                new OnceTimingAnim<>((byte) 2, 20, 4, 30, Sans.this::shootBoneRingVolley),
-                new OnceTimingAnim<>((byte) 2, 20, 10, 30, Sans.this::shootArcSweepVolley),
-                new OnceTimingAnim<>((byte) 2, 20, 10, 30, Sans.this::summonGroundBoneSpineAtSelf),
-                new OnceTimingAnim<>((byte) 2, 20, 10, 30, (target) -> {
-                    int id = Sans.this.level().getDifficulty().getId() ;
-                    return Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target,1,ColorAttack.WHITE);
-                }),
-                new OnceTimingAnim<>((byte) 2, 20, 10, 30, (target) -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target,1,ColorAttack.WHITE))
+    private class SingleAttackGoalSingle extends AbstractAnimExecuteGoal<Integer> {
+        private final List<AnimType<Integer>> attacks = List.of(
+                new OnceTimingAnim<>((byte) 2, 20, 4, 30, 1),
+                new OnceTimingAnim<>((byte) 2, 20, 10, 30, 2),
+                new OnceTimingAnim<>((byte) 2, 20, 10, 30, 3)
+        );
+        private final List<AnimType<Integer>> groundAttacks = List.of(
+                new OnceTimingAnim<>((byte) 2, 20, 4, 30, 4),
+                new OnceTimingAnim<>((byte) 2, 20, 10, 30, 5)
         );
         public SingleAttackGoalSingle() {
             super(Sans.this);
         }
         @Override
         public boolean canUse() {
-            return seeTime > 20 && super.canUse();
+
+            return seeTime > 20 && (phase == 1 && !existPersistentAttack) || (phase == 2 && existPersistentAttack) && super.canUse();
         }
 
         @Override
-        protected @NotNull AnimType<ToIntFunction<LivingEntity>> select(LivingEntity target) {
+        protected @NotNull AnimType<Integer> select(LivingEntity target) {
             boolean onGround =  target.onGround();
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
-//            boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
-            List<Integer> availableList = new ArrayList<>(List.of(0, 1, 2, 3));
-            if(onGround){
-                Collections.addAll(availableList, 4, 5);
+            List<AnimType<Integer>> availableAttacks = new ArrayList<>(attacks);
+            if(target.onGround()){
+                availableAttacks.addAll(groundAttacks);
             }
-//            if(inAir || Sans.this.physicalStrength <= maxPhysicalStrength / 2 ) {
-//                availableList.addAll(stateSequences.get(3));
-//            }
-//            return attacks.get(availableList.get(random.nextInt(availableList.size())));
-            return attacks.get(0);
+            boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
+//            return availableAttacks.get(random.nextInt(availableAttacks.size()));
+            return availableAttacks.get(0);
         }
 
         @Override
-        protected int execute(LivingEntity target, AnimType<ToIntFunction<LivingEntity>> anim) {
-            return anim.getAction().applyAsInt(target);
+        protected int execute(LivingEntity target, AnimType<Integer> anim) {
+            return switch(anim.getAction()){
+                case 1 -> Sans.this.shootBoneRingVolley(target);
+                case 2 -> Sans.this.shootArcSweepVolley(target);
+                case 3 -> Sans.this.summonAimedGBAroundSelf(target,1);
+                case 4 -> Sans.this.summonGroundBoneSpineAtSelf(target);
+                case 5 -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target,ColorAttack.WHITE);
+                default -> throw new IllegalStateException("Unexpected value: " + anim.getAction());
+            };
         }
-
     }
 
     // 序列连击
-    class SequenceAttackGoal extends AbstractAnimExecuteGoal<ToIntFunction<LivingEntity>> {
-        // 单次攻击Goal - 处理所有简单攻击
-        private final List<AnimType<ToIntFunction<LivingEntity>>> attacks = List.of(
-                new RoundSequenceAnim<>(3,List.of(
-                        new OnceTimingAnim<>((byte) 3, 30, 4, 20, (target) -> Sans.this.summonAdvancingGroundBoneWall(target,ColorAttack.WHITE,0f,RelativeDirection.FRONT)),
-                        new OnceTimingAnim<>((byte)3,30,4,30,(target) -> Sans.this.summonAdvancingGroundBoneWall(target,ColorAttack.AQUA,0f,RelativeDirection.FRONT))
-                )),
-                new RoundSequenceAnim<>(1, List.of(
-                        new OnceTimingAnim<>((byte) 3, 30, 4, 0, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target,3,ColorAttack.WHITE)),
-                        new OnceTimingAnim<>((byte) 3, 30, false,4, 20, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target,2,ColorAttack.AQUA)),
-                        new OnceTimingAnim<>((byte) 3, 30, false,4, 0, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target,4,ColorAttack.WHITE)),
-                        new OnceTimingAnim<>((byte) 3, 30, false,4, 20, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target,3,ColorAttack.AQUA)),
-                        new OnceTimingAnim<>((byte) 3, 30, false,4, 0, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target,5,ColorAttack.WHITE)),
-                        new OnceTimingAnim<>((byte) 3, 30, false,4, 20, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target,4,ColorAttack.AQUA))
-                ))
+    class SequenceAttackGoal extends AbstractAnimExecuteGoal<Object[]> {
+        private final List<AnimType<Object[]>> attacks = List.of(
+                new SequenceAnim<>(
+                        new OnceTimingAnim<>((byte) 3, 30,true , 4, 0 , new Object[]{2,3, ColorAttack.WHITE}),
+                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,2, ColorAttack.AQUA }),
+                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 0 , new Object[]{2,4, ColorAttack.WHITE}),
+                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,3, ColorAttack.AQUA }),
+                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 0 , new Object[]{2,5, ColorAttack.WHITE }),
+                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,4, ColorAttack.AQUA })
+                )
+        );
+        List<AnimType<Object[]>> groundAttacks = List.of(
+                new SequenceAnim<>(
+                        new OnceTimingAnim<>((byte) 3, 30,true , 4, 0 , new Object[]{2,3, ColorAttack.WHITE}),
+                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,2, ColorAttack.AQUA }),
+                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 0 , new Object[]{2,4, ColorAttack.WHITE}),
+                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,3, ColorAttack.AQUA }),
+                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 0 , new Object[]{2,5, ColorAttack.WHITE }),
+                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,4, ColorAttack.AQUA })
+                )
         );
         public SequenceAttackGoal() {
             super(Sans.this);
         }
         @Override
-        protected @NotNull AnimType<ToIntFunction<LivingEntity>> select(LivingEntity target) {
-            boolean onGround =  target.onGround();
+        protected @NotNull AnimType<Object[]> select(LivingEntity target) {
+            int difficulty = Sans.this.level().getDifficulty().getId();
+            List<AnimType<Object[]>> availableAttacks = new ArrayList<>(attacks);
+            if(target.onGround()){
+                availableAttacks.addAll(groundAttacks);
+                availableAttacks.add(
+                    new RoundAnim<>(3 + 2 * difficulty , new SequenceAnim<>(
+                            new OnceTimingAnim<>((byte) 3, 30, 4, 20, new Object[]{1, ColorAttack.WHITE, 0f, RelativeDirection.FRONT}),
+                            new OnceTimingAnim<>((byte) 3, 30, 4, 30, new Object[]{1, ColorAttack.AQUA, 0f, RelativeDirection.FRONT})
+                )));
+            }
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
 //            boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
-            List<Integer> availableList = new ArrayList<>(List.of(0, 1, 2, 3));
-            if(onGround){
-                Collections.addAll(availableList, 4, 5);
-            }
 //            if(inAir || Sans.this.physicalStrength <= maxPhysicalStrength / 2 ) {
 //                availableList.addAll(stateSequences.get(3));
 //            }
-            return attacks.get(availableList.get(random.nextInt(availableList.size())));
+            return availableAttacks.get(random.nextInt(availableAttacks.size()));
         }
 
         @Override
-        protected int execute(LivingEntity target, AnimType<ToIntFunction<LivingEntity>> anim) {
-            return anim.getAction().applyAsInt(target);
-        }
-
-        @Override
-        protected void onCompleted() {
-
+        protected int execute(LivingEntity target, AnimType<Object[]> anim) {
+            Object[] action = anim.getAction();
+            return switch((Integer) action[0]){
+                case 1 -> Sans.this.summonAdvancingGroundBoneWall(target, (ColorAttack) action[1], (Float) action[2], (RelativeDirection) action[3]);
+                case 2 -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target,(Integer) action[1],(ColorAttack) action[2]);
+                case 3 -> Sans.this.summonGBAroundTarget(target)
+                default -> throw new IllegalStateException("Unexpected value: " + anim.getAction());
+            };
         }
     }
 
@@ -636,24 +658,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
 //        }
 //    }
 
-//    private int executeAttack(LivingEntity target, ActionData data){
-//        int[] params = data.getParams();
-//        return switch (data.getId()) {
-//            case 1 -> Sans.this.continueFlyingBone(target)  ;
-//            case 2 -> Sans.this.onceFlyingBone(target, params[0]);
-//            case 3 -> Sans.this.groundBoneProjectileAttack(target, params[0], params[1], params[2]);
-//            case 4 -> Sans.this.waveSpineTargetAttack(target, params[0], params[1], params[2]);
-//            case 5 -> Sans.this.selfSpikeAttack(target);
-//            case 6 -> Sans.this.targetSpineAttack(target);
-//            case 7 -> Sans.this.randomAreaSpineAttack(target);
-//            case 8 -> Sans.this.gbAttack(target,0,params[0]);
-//            case 9 -> {
-//                GravityData.applyRelativeGravity(Sans.this, target, GravityData.RelativeDirection.values()[params[0]]);
-//                yield  0;
-//            }
-//            default -> throw new IllegalStateException("Unexpected value: " + data.getId());
-//        };
-//    }
     // 持续射击
     /**
      * 瞄准目标随机骨头弹幕 - 持续射击目标
@@ -840,8 +844,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
         return 10;
     }
-
-
     /**
      * 召唤平行骨刺波动 - 等间距平行直线波动
      */
@@ -867,6 +869,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             finalDelay = Math.max(finalDelay, waveDelay);
         }
         return finalDelay;
+    }
+    /**
+     * 骨刺波动 - 以自身为中心发射，根据难度自动设置波动数量，用于单击
+     */
+    private int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target,ColorAttack color) {
+        return summonGroundBoneSpineWaveAroundSelf(target,1 + this.level().getDifficulty().getId(),360f,color);
     }
     /**
      * 骨刺波动 - 以自身为中心发射

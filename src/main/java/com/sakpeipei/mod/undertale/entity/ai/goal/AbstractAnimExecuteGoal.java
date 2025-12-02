@@ -12,12 +12,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Sakqiongzi
  * @since 2025-11-23 21:21
+ * 带有服务端触发客户端动画的GOAL执行器
  */
 public abstract class AbstractAnimExecuteGoal<T> extends Goal {
     protected final Mob mob;
     protected int animStartTick;
     protected int cooldownEndTick;
-    protected AnimType<T> anim;
+    protected AnimType<T> anim; // 动画类型
 
     public AbstractAnimExecuteGoal(Mob mob) {
         this.mob = mob;
@@ -37,7 +38,7 @@ public abstract class AbstractAnimExecuteGoal<T> extends Goal {
             if(anim == null){
                 anim = select(target);
                 if (anim.isTriggerAnim()) {
-                    PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimIDPacket(mob.getId(), anim.getId()));
+                    triggerAnim(anim);
                 }
             }
         }
@@ -54,7 +55,7 @@ public abstract class AbstractAnimExecuteGoal<T> extends Goal {
         if (target != null) {
             int animTick = mob.tickCount - animStartTick;
             if (anim.shouldHitAt(animTick)) {
-                cooldownEndTick += Math.max(execute(target, anim) - (anim.getDuration() - animTick), 0);
+                onHit(target,animTick);
             }
         }
     }
@@ -65,7 +66,7 @@ public abstract class AbstractAnimExecuteGoal<T> extends Goal {
      */
     @Override
     public void stop() {
-        cooldownEndTick += anim.getCd();
+        cooldownEndTick += anim.getCd() + mob.tickCount;
         if(anim.isCompeted()){
             onCompleted();
             anim = null;
@@ -77,14 +78,31 @@ public abstract class AbstractAnimExecuteGoal<T> extends Goal {
         return true;
     }
 
-    // 抽象方法
-    @NotNull
-    protected abstract AnimType<T> select(LivingEntity target);
-    protected abstract int execute(LivingEntity target, AnimType<T> anim);
-
+    /**
+     * 触发动画
+     * @param anim
+     */
+    protected void triggerAnim(AnimType<T> anim){
+        PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimIDPacket(mob.getId(), anim.getId()));
+    }
+    /**
+     * 当判定时
+     * @param target 目标
+     * @param animTick 动画Tick
+     */
+    protected void onHit(LivingEntity target, int animTick) {
+        cooldownEndTick = Math.max(execute(target, anim) - (anim.getDuration() - animTick), 0);
+    }
 
     protected void onCompleted(){
         PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimIDPacket(mob.getId(), (byte) 0));
     }
+
+
+    @NotNull
+    protected abstract AnimType<T> select(LivingEntity target);
+
+    protected abstract int execute(LivingEntity target, AnimType<T> anim);
+
 
 }

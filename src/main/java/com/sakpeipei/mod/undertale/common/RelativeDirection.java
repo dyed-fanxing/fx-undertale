@@ -6,4 +6,5 @@ package com.sakpeipei.mod.undertale.common;
  */
 public enum RelativeDirection {
     UP,DOWN,LEFT,RIGHT,FRONT,BACK;
+
 }

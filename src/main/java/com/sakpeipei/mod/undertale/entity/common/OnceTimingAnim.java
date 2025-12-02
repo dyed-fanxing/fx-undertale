@@ -8,13 +8,13 @@ package com.sakpeipei.mod.undertale.entity.common;
 public class OnceTimingAnim<T> extends AbstractAnimType<T> {
     protected final int hitTick;
 
-    public OnceTimingAnim(byte id,int duration, boolean triggerAnim, int hitTick, int cd, T actions) {
-        super(id,duration,triggerAnim,cd, actions);
+    public OnceTimingAnim(byte id,int duration, boolean triggerAnim, int hitTick, int cd, T action) {
+        super(id,duration,triggerAnim,cd, action);
         this.hitTick = hitTick;
     }
 
-    public OnceTimingAnim(byte id, int duration, int hitTick, int cd,T actions) {
-        this(id,duration,true,hitTick,cd,actions);
+    public OnceTimingAnim(byte id, int duration, int hitTick, int cd,T action) {
+        this(id,duration,true,hitTick,cd,action);
     }
 
     @Override
