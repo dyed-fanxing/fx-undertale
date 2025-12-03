@@ -1,5 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.ai.goal;
 
+import com.sakpeipei.mod.undertale.entity.IAnimatable;
 import com.sakpeipei.mod.undertale.entity.common.AnimType;
 import com.sakpeipei.mod.undertale.network.AnimIDPacket;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,15 +13,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Sakqiongzi
  * @since 2025-11-23 21:21
- * 带有服务端触发客户端动画的GOAL执行器
+ * 带有服务端触发客户端AnimType接口的任意动画类型的GOAL执行器
  */
-public abstract class AbstractAnimExecuteGoal<T> extends Goal {
-    protected final Mob mob;
+public abstract class AbstractAnimExecuteGoal<T,R extends Mob & IAnimatable> extends Goal {
+    protected final R mob;
     protected int animStartTick;
     protected int cooldownEndTick;
     protected AnimType<T> anim; // 动画类型
 
-    public AbstractAnimExecuteGoal(Mob mob) {
+    public AbstractAnimExecuteGoal(R mob) {
         this.mob = mob;
     }
 
@@ -37,9 +38,9 @@ public abstract class AbstractAnimExecuteGoal<T> extends Goal {
         if (target != null) {
             if(anim == null){
                 anim = select(target);
-                if (anim.isTriggerAnim()) {
-                    triggerAnim(anim);
-                }
+            }
+            if (anim.isTriggerAnim()) {
+                triggerAnim(anim);
             }
         }
     }
@@ -62,7 +63,7 @@ public abstract class AbstractAnimExecuteGoal<T> extends Goal {
 
 
     /**
-     * 执行完一个动画该做的收尾工作
+     * 内部动画单元执行完
      */
     @Override
     public void stop() {
@@ -71,6 +72,7 @@ public abstract class AbstractAnimExecuteGoal<T> extends Goal {
             onCompleted();
             anim = null;
         }
+        mob.setAnimID((byte)0);
     }
 
     @Override
@@ -83,7 +85,7 @@ public abstract class AbstractAnimExecuteGoal<T> extends Goal {
      * @param anim
      */
     protected void triggerAnim(AnimType<T> anim){
-        PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimIDPacket(mob.getId(), anim.getId()));
+        mob.setAnimID(anim.getId());
     }
     /**
      * 当判定时
@@ -94,8 +96,10 @@ public abstract class AbstractAnimExecuteGoal<T> extends Goal {
         cooldownEndTick = Math.max(execute(target, anim) - (anim.getDuration() - animTick), 0);
     }
 
+    /**
+     * 整个动画执行结束
+     */
     protected void onCompleted(){
-        PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimIDPacket(mob.getId(), (byte) 0));
     }
 
 

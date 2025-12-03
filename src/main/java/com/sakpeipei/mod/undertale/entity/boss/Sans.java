@@ -72,10 +72,8 @@ import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.*;
 import java.util.List;
-import java.util.UUID;
 
 public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -88,6 +86,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
 
     // 0-开场杀 1-第一阶段 2-饶恕阶段 3-二阶段 4-特殊攻击阶段
     private static final EntityDataAccessor<Byte> PHASE_ID = SynchedEntityData.defineId(Sans.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Byte> ANIM_ID = SynchedEntityData.defineId(Sans.class, EntityDataSerializers.BYTE);
 
     private static final UniformInt PERSISTENT_ANGER_TIME = TimeUtil.rangeOfSeconds(30, 60);
     private int remainingPersistentAngerTime;
@@ -98,11 +97,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         super(type, level);
         physicalStrength = level.getDifficulty().getId() * 50;
         maxPhysicalStrength = physicalStrength;
-    }
-
-    @Override
-    public void handleEntityEvent(byte p_21375_) {
-        super.handleEntityEvent(p_21375_);
     }
 
     @Override
@@ -342,13 +336,23 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
         super.defineSynchedData(builder);
         builder.define(PHASE_ID,(byte) 1);
+        builder.define(ANIM_ID,(byte) 0);
     }
     private byte getPhaseID(){
         return this.entityData.get(PHASE_ID);
     }
+    @Override
+    public byte getAnimID() {
+        return entityData.get(ANIM_ID);
+    }
+    @Override
+    public void setAnimID(byte id) {
+        entityData.set(ANIM_ID, id);
+    }
+
 
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
@@ -383,8 +387,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         return cache;
     }
 
-
+    private int seeTime;
     private int globalCD = 0;           //全局CD
+    private boolean existPersistentAttack;
+    private boolean isAttacking;
 
     class TransitionPhaseGoal extends Goal{
         public TransitionPhaseGoal() {
@@ -396,9 +402,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             return physicalStrength == maxPhysicalStrength / 2;
         }
     }
-
-    private int seeTime;
-
     class SansMovementGoal extends Goal {
         private final double speedModifier;
         private final float attackRadiusSqr;
@@ -478,12 +481,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             }
         }
     }
-
-    private boolean existPersistentAttack;
-    private boolean isAttacking;
-
     //持续攻击，可脱手
-    private class PersistentAttackGoal extends AbstractAnimExecuteGoal<int[]> {
+    private class PersistentAttackGoal extends AbstractAnimExecuteGoal<int[],Sans> {
         List<AnimType<int[]>> attacks = new ArrayList<>(List.of(
                 new OnceTimingAnim<>((byte) 1, 20, 4, 30,new int[]{1}),
                 new OnceTimingAnim<>((byte) 1, 20, 4, 30,new int[]{2})
@@ -494,7 +493,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
 
         @Override
         public boolean canUse() {
-            return !isAttacking&&super.canUse();
+            return super.canUse() && seeTime > -60 && !isAttacking;
         }
 
         @Override
@@ -506,9 +505,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 availableAttacks.add(new RoundAnim<>(2 + 3*difficulty,new OnceTimingAnim<>((byte)7,20,4,30, new int[]{4})));
             }
             existPersistentAttack = true;
+            isAttacking = true;
             return availableAttacks.get(Sans.this.random.nextInt(availableAttacks.size()));
         }
-
         @Override
         protected int execute(LivingEntity target, AnimType<int[]> anim) {
             int[] action = anim.getAction();
@@ -520,15 +519,18 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 default -> throw new IllegalStateException("Unexpected value: " + action[0]);
             };
         }
-
         @Override
         protected void onCompleted() {
             existPersistentAttack = false;
         }
+        @Override
+        public void stop() {
+            super.stop();
+            isAttacking = false;
+        }
     }
-
     // 单次攻击
-    private class SingleAttackGoalSingle extends AbstractAnimExecuteGoal<Integer> {
+    private class SingleAttackGoalSingle extends AbstractAnimExecuteGoal<Integer,Sans> {
         private final List<AnimType<Integer>> attacks = List.of(
                 new OnceTimingAnim<>((byte) 3, 20, 4, 30, 1),
                 new OnceTimingAnim<>((byte) 4, 20, 10, 30, 2),
@@ -545,7 +547,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         @Override
         public boolean canUse() {
             byte phaseID = getPhaseID();
-            return seeTime > -60 && ((phaseID == 1 && !existPersistentAttack) || (phaseID == 3 && existPersistentAttack)) && super.canUse();
+            boolean flag = !isAttacking && (phaseID == 1 && !existPersistentAttack) || (phaseID == 3 && existPersistentAttack);
+            return super.canUse() && seeTime > -60 && flag;
         }
 
         @Override
@@ -557,6 +560,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 availableAttacks.addAll(groundAttacks);
             }
             boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
+            isAttacking = true;
             return availableAttacks.get(random.nextInt(availableAttacks.size()));
 //            return availableAttacks.get(1);
         }
@@ -573,10 +577,15 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 default -> throw new IllegalStateException("Unexpected value: " + anim.getAction());
             };
         }
-    }
 
+        @Override
+        public void stop() {
+            super.stop();
+            isAttacking = false;
+        }
+    }
     // 序列连击
-    class SequenceAttackGoal extends AbstractAnimExecuteGoal<Object[]> {
+    class SequenceAttackGoal extends AbstractAnimExecuteGoal<Object[],Sans> {
         private final List<AnimType<Object[]>> attacks = List.of(
                 new SequenceAnim<>(
                         new OnceTimingAnim<>((byte) 3, 30,true , 4, 0 , new Object[]{2,3, ColorAttack.WHITE}),
@@ -601,6 +610,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             super(Sans.this);
         }
         @Override
+        public boolean canUse() {
+            return super.canUse() && seeTime > -60 && !existPersistentAttack;
+        }
+        @Override
         protected @NotNull AnimType<Object[]> select(LivingEntity target) {
             int difficulty = Sans.this.level().getDifficulty().getId();
             List<AnimType<Object[]>> availableAttacks = new ArrayList<>(attacks);
@@ -617,9 +630,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
 //            if(inAir || Sans.this.physicalStrength <= maxPhysicalStrength / 2 ) {
 //                availableList.addAll(stateSequences.get(3));
 //            }
+            isAttacking = true;
             return availableAttacks.get(random.nextInt(availableAttacks.size()));
         }
-
         @Override
         protected int execute(LivingEntity target, AnimType<Object[]> anim) {
             Object[] action = anim.getAction();
@@ -627,10 +640,17 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 case 1 -> Sans.this.summonAdvancingGroundBoneWall(target, (ColorAttack) action[1], (Float) action[2], (RelativeDirection) action[3]);
                 case 2 -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target,(Integer) action[1],(ColorAttack) action[2]);
 //                case 3 -> Sans.this.summonGBAroundTarget(target)
-                default -> throw new IllegalStateException("Unexpected value: " + anim.getAction());
+                default -> throw new IllegalStateException("Unexpected value: " + Arrays.toString(anim.getAction()));
             };
         }
+
+        @Override
+        protected void onCompleted() {
+            isAttacking = false;
+        }
     }
+
+
 
 
 
@@ -1136,16 +1156,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         return gb;
     }
 
-    private byte animId;
-    @Override
-    public byte getAnimID() {
-        return animId;
-    }
-
-    @Override
-    public void setAnimID(byte id) {
-        this.animId = id;
-    }
     private static final String ANIM_CAST = "attack.cast";
     private static final String ANIM_CAST_LEFT = "attack.cast.left";
     private static final String ANIM_CAST_ROUND = "attack.cast.round";
