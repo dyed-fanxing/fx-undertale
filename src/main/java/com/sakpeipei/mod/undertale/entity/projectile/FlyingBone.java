@@ -70,8 +70,8 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
             this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
             this.lerpSteps--;
         }
-        if(delay > 0){
-            if (!this.level().isClientSide) {
+        if (!this.level().isClientSide) {
+            if(delay > 0){
                 if(isAim){
                     if(this.getOwner() instanceof Targeting targeting){
                         LivingEntity target = targeting.getTarget();
@@ -81,13 +81,13 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
                     }
                     RotUtils.lookAtShoot(this,targetPos);
                 }
-            }
-        }else if(delay == 0){
-            if(isAim){
-                this.shoot(targetPos.x - this.getX(),targetPos.y - this.getEyeY(),targetPos.z - this.getZ(), speed,0);
-            }else{
-                // 这里的targetPos代表 motionVector
-                this.shoot(targetPos.x,targetPos.y,targetPos.z, speed,0);
+            }else if(delay == 0){
+                if(isAim){
+                    this.shoot(targetPos.x - this.getX(),targetPos.y - this.getEyeY(),targetPos.z - this.getZ(), speed,0);
+                }else{
+                    // 这里的targetPos代表 motionVector
+                    this.shoot(targetPos.x,targetPos.y,targetPos.z, speed,0);
+                }
             }
         }
         delay--;
