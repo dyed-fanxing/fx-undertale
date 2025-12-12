@@ -15,14 +15,12 @@ public interface AnimType<T> {
     boolean isTriggerAnim();
     int getCd();
 
-    /**
-     * 当前动画在执行完后是否结束
-     */
-    boolean isCompeted();
+    void addDuration(int increment);
 
     // 在该tick是否判定
     boolean shouldHitAt(int currentTick);
     // 在该tick是否播放音效
     boolean shouldPlaySoundAt(int currentTick);
+
 
 }

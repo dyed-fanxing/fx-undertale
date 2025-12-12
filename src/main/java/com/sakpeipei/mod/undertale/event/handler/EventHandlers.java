@@ -2,6 +2,7 @@ package com.sakpeipei.mod.undertale.event.handler;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.mod.undertale.Undertale;
+import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.mod.undertale.entity.boss.Sans;
 import com.sakpeipei.mod.undertale.entity.summon.GroundBone;
@@ -35,8 +36,8 @@ public class EventHandlers {
 
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
-//        Entity entity = event.getEntity();
-//        if(entity instanceof GroundBone){
+        Entity entity = event.getEntity();
+//        if(entity instanceof FlyingBone){
 //            entity.discard();
 //            event.setCanceled(true);
 //        }

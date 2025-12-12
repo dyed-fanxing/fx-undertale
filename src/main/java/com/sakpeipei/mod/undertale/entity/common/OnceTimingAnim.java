@@ -28,5 +28,8 @@ public class OnceTimingAnim<T> extends AbstractAnimType<T> {
 
     }
 
-
+    @Override
+    public void addDuration(int increment) {
+        this.duration += increment;
+    }
 }

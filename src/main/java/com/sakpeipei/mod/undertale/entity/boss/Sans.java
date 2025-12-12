@@ -520,13 +520,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             };
         }
         @Override
-        protected void onCompleted() {
-            existPersistentAttack = false;
-        }
-        @Override
         public void stop() {
             super.stop();
             isAttacking = false;
+            existPersistentAttack = false;
         }
     }
     // 单次攻击
@@ -645,9 +642,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
 
         @Override
-        protected void onCompleted() {
+        public void stop() {
+            super.stop();
             isAttacking = false;
         }
+
     }
 
 

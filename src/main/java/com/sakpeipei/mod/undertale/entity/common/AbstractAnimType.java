@@ -9,7 +9,7 @@ import net.minecraft.sounds.SoundEvent;
 public abstract class AbstractAnimType<T> implements AnimType<T> {
 
     protected final byte id; // 动画ID
-    protected final int duration; // 施法/动画/动作 持续Tick
+    protected int duration; // 施法/动画/动作 持续Tick
     protected boolean triggerAnim; // 是否触发动画
     protected final int cd; // 攻击后摇CD
     protected T action; // 行动
@@ -81,9 +81,5 @@ public abstract class AbstractAnimType<T> implements AnimType<T> {
         return cd;
     }
 
-    @Override
-    public boolean isCompeted() {
-        return true;
-    }
 
 }

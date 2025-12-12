@@ -1390,7 +1390,21 @@
 		"attack.bone.sweep": {
 			"animation_length": 0.7917,
 			"bones": {
-				"body": {
+				"head": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.2083": {
+							"vector": [0, -7.5, 0]
+						},
+						"0.5": {
+							"vector": [0, 0, 0],
+							"easing": "easeInExpo"
+						}
+					}
+				},
+				"waist": {
 					"rotation": {
 						"0.0": {
 							"vector": [0, 0, 0]
@@ -1402,25 +1416,6 @@
 							"vector": [0, 0, 0],
 							"easing": "easeInExpo"
 						}
-					}
-				},
-				"head": {
-					"rotation": {
-						"0.0": {
-							"vector": [0, 0, 0]
-						},
-						"0.1667": {
-							"vector": [0, 2.5, 0]
-						},
-						"0.5": {
-							"vector": [0, 0, 0],
-							"easing": "easeInExpo"
-						}
-					}
-				},
-				"waist": {
-					"position": {
-						"vector": [0.25, 0.25, 0]
 					}
 				},
 				"right_arm": {
