@@ -6,10 +6,10 @@ import com.sakpeipei.mod.undertale.entity.IAnimatable;
 import com.sakpeipei.mod.undertale.entity.ai.goal.AbstractAnimExecuteGoal;
 import com.sakpeipei.mod.undertale.entity.ai.goal.NeutralMobAngerTargetGoal;
 import com.sakpeipei.mod.undertale.entity.attachment.KaramAttackData;
-import com.sakpeipei.mod.undertale.entity.common.AnimType;
-import com.sakpeipei.mod.undertale.entity.common.OnceTimingAnim;
-import com.sakpeipei.mod.undertale.entity.common.RoundAnim;
-import com.sakpeipei.mod.undertale.entity.common.SequenceAnim;
+import com.sakpeipei.mod.undertale.entity.common.anim.AnimType;
+import com.sakpeipei.mod.undertale.entity.common.anim.OnceTimingAnim;
+import com.sakpeipei.mod.undertale.entity.common.anim.SequenceAnim;
+import com.sakpeipei.mod.undertale.entity.common.anim.Step;
 import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
@@ -36,7 +36,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.TimeUtil;
 import net.minecraft.util.valueproviders.UniformInt;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffects;
@@ -500,9 +499,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         protected @NotNull AnimType<int[]> select(LivingEntity target) {
             int difficulty = Sans.this.level().getDifficulty().getId();
             List<AnimType<int[]>> availableAttacks = new ArrayList<>(attacks);
-            availableAttacks.add(new RoundAnim<>(3 + 4 * difficulty, new OnceTimingAnim<>((byte) 7, 20, 4, 30,new int[]{3,1 + difficulty/3})));
+            availableAttacks.add(new SequenceAnim<>(3 + 4 * difficulty,50, new Step<>((byte) 7, 4,new int[]{3,1 + difficulty/3})));
             if(target.onGround()){
-                availableAttacks.add(new RoundAnim<>(2 + 3*difficulty,new OnceTimingAnim<>((byte)7,20,4,30, new int[]{4})));
+                availableAttacks.add(new SequenceAnim<>(2 + 3*difficulty,50, new Step<>((byte)7,4,new int[]{4})));
             }
             existPersistentAttack = true;
             isAttacking = true;
@@ -529,12 +528,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     // 单次攻击
     private class SingleAttackGoalSingle extends AbstractAnimExecuteGoal<Integer,Sans> {
         private final List<AnimType<Integer>> attacks = List.of(
-                new OnceTimingAnim<>((byte) 3, 20, 4, 30, 1),
+                new OnceTimingAnim<>((byte) 3, 20, 4 , 30, 1),
                 new OnceTimingAnim<>((byte) 4, 20, 10, 30, 2),
                 new OnceTimingAnim<>((byte) 5, 20, 10, 30, 3)
         );
         private final List<AnimType<Integer>> groundAttacks = List.of(
-                new OnceTimingAnim<>((byte) 1, 20, 4, 30, 4),
+                new OnceTimingAnim<>((byte) 1, 20, 4 , 30, 4),
                 new OnceTimingAnim<>((byte) 1, 20, 10, 30, 5),
                 new OnceTimingAnim<>((byte) 1, 20, 10, 30, 6)
         );
@@ -558,8 +557,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             }
             boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
             isAttacking = true;
-            return availableAttacks.get(random.nextInt(availableAttacks.size()));
-//            return availableAttacks.get(1);
+//            return availableAttacks.get(random.nextInt(availableAttacks.size()));
+            return availableAttacks.get(1);
         }
 
         @Override
@@ -584,23 +583,16 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     // 序列连击
     class SequenceAttackGoal extends AbstractAnimExecuteGoal<Object[],Sans> {
         private final List<AnimType<Object[]>> attacks = List.of(
-                new SequenceAnim<>(
-                        new OnceTimingAnim<>((byte) 3, 30,true , 4, 0 , new Object[]{2,3, ColorAttack.WHITE}),
-                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,2, ColorAttack.AQUA }),
-                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 0 , new Object[]{2,4, ColorAttack.WHITE}),
-                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,3, ColorAttack.AQUA }),
-                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 0 , new Object[]{2,5, ColorAttack.WHITE }),
-                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,4, ColorAttack.AQUA })
-                )
+
         );
         List<AnimType<Object[]>> groundAttacks = List.of(
-                new SequenceAnim<>(
-                        new OnceTimingAnim<>((byte) 3, 30,true , 4, 0 , new Object[]{2,3, ColorAttack.WHITE}),
-                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,2, ColorAttack.AQUA }),
-                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 0 , new Object[]{2,4, ColorAttack.WHITE}),
-                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,3, ColorAttack.AQUA }),
-                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 0 , new Object[]{2,5, ColorAttack.WHITE }),
-                        new OnceTimingAnim<>((byte) 3, 30,false, 4, 30, new Object[]{2,4, ColorAttack.AQUA })
+                new SequenceAnim<>( 240,160,
+                        new Step<>((byte) 3,4,new Object[]{2,3, ColorAttack.WHITE}),
+                        new Step<>((byte) 0,34,new Object[]{2,2, ColorAttack.AQUA}),
+                        new Step<>((byte) 0,94,new Object[]{2,4, ColorAttack.WHITE}),
+                        new Step<>((byte) 0,124,new Object[]{2,3, ColorAttack.AQUA}),
+                        new Step<>((byte) 0,184,new Object[]{2,5, ColorAttack.WHITE}),
+                        new Step<>((byte) 0,214,new Object[]{2,4, ColorAttack.AQUA})
                 )
         );
         public SequenceAttackGoal() {
@@ -617,10 +609,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             if(target.onGround()){
                 availableAttacks.addAll(groundAttacks);
                 availableAttacks.add(
-                    new RoundAnim<>(3 + 2 * difficulty , new SequenceAnim<>(
-                            new OnceTimingAnim<>((byte) 3, 30, 4, 20, new Object[]{1, ColorAttack.WHITE, 0f, RelativeDirection.FRONT}),
-                            new OnceTimingAnim<>((byte) 3, 30, 4, 30, new Object[]{1, ColorAttack.AQUA, 0f, RelativeDirection.FRONT})
-                )));
+                    new SequenceAnim<>(3 + 2 * difficulty,80,100,
+                            new Step<>((byte) 3, 4 , new Object[]{1, ColorAttack.WHITE, 0f, RelativeDirection.FRONT}),
+                            new Step<>((byte) 3, 54, new Object[]{1, ColorAttack.AQUA, 0f, RelativeDirection.FRONT})
+                    ));
             }
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
 //            boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));

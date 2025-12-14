@@ -1,7 +1,7 @@
 package com.sakpeipei.mod.undertale.entity.ai.goal;
 
 import com.sakpeipei.mod.undertale.entity.IAnimatable;
-import com.sakpeipei.mod.undertale.entity.common.AnimType;
+import com.sakpeipei.mod.undertale.entity.common.anim.AnimType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -35,9 +35,7 @@ public abstract class AbstractAnimExecuteGoal<T,R extends Mob & IAnimatable> ext
         LivingEntity target = mob.getTarget();
         if (target != null) {
             anim = select(target);
-            if (anim.isTriggerAnim()) {
-                mob.setAnimID(anim.getId());
-            }
+            mob.setAnimID(anim.getId());
         }
     }
 
@@ -67,7 +65,7 @@ public abstract class AbstractAnimExecuteGoal<T,R extends Mob & IAnimatable> ext
      */
     @Override
     public void stop() {
-        cooldownEndTick += anim.getCd() + mob.tickCount;
+        cooldownEndTick = anim.getCd() + mob.tickCount;
         anim = null;
         mob.setAnimID((byte)0);
     }

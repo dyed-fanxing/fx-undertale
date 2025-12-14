@@ -1,6 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.ai.goal;
 
-import com.sakpeipei.mod.undertale.entity.common.AbstractAnimType;
+import com.sakpeipei.mod.undertale.entity.common.anim.AnimType;
 import com.sakpeipei.mod.undertale.network.AnimIDPacket;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -17,7 +17,7 @@ public abstract class SingleAnimExecuteGoal<T> extends Goal {
     protected final Mob mob;
     protected int animStartTick;  // 动画开始Tick点
     protected int cooldownEndTick; // 冷却结束Tick点
-    protected AbstractAnimType<T> anim;
+    protected AnimType<T> anim;
 
     public SingleAnimExecuteGoal(Mob mob) {
         this.mob = mob;
@@ -63,7 +63,7 @@ public abstract class SingleAnimExecuteGoal<T> extends Goal {
      * 选择动画anim
      */
     @NotNull
-    protected abstract AbstractAnimType<T> select(LivingEntity target);
+    protected abstract AnimType<T> select(LivingEntity target);
 
     /**
      * @param target 目标

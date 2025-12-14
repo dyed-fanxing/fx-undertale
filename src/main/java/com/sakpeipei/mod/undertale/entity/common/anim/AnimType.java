@@ -1,4 +1,4 @@
-package com.sakpeipei.mod.undertale.entity.common;
+package com.sakpeipei.mod.undertale.entity.common.anim;
 
 import net.minecraft.sounds.SoundEvent;
 
@@ -12,7 +12,6 @@ public interface AnimType<T> {
     T getAction();
     SoundEvent getSoundEvent();
     int getDuration();
-    boolean isTriggerAnim();
     int getCd();
 
     void addDuration(int increment);
@@ -21,6 +20,5 @@ public interface AnimType<T> {
     boolean shouldHitAt(int currentTick);
     // 在该tick是否播放音效
     boolean shouldPlaySoundAt(int currentTick);
-
 
 }

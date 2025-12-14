@@ -1,6 +1,6 @@
 package com.sakpeipei.mod.undertale.entity.ai.goal;
 
-import com.sakpeipei.mod.undertale.entity.common.AnimType;
+import com.sakpeipei.mod.undertale.entity.common.anim.AnimType;
 import com.sakpeipei.mod.undertale.network.AnimIDPacket;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -35,9 +35,7 @@ public abstract class SequenceAnimExecuteGoal<T> extends Goal {
         LivingEntity target = mob.getTarget();
         if(target != null){
             anim = select(target);
-            if(anim.isTriggerAnim()){
-                PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimIDPacket(mob.getId(), anim.getId()));
-            }
+            PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimIDPacket(mob.getId(), anim.getId()));
         }
     }
 

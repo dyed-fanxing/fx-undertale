@@ -1,4 +1,4 @@
-package com.sakpeipei.mod.undertale.entity.common;
+package com.sakpeipei.mod.undertale.entity.common.anim;
 
 import net.minecraft.sounds.SoundEvent;
 
@@ -65,11 +65,6 @@ public class SequenceAnim<T> implements AnimType<T> {
     }
 
     @Override
-    public boolean isTriggerAnim() {
-        return false;
-    }
-
-    @Override
     public int getCd() {
         return cd;
     }
@@ -101,34 +96,5 @@ public class SequenceAnim<T> implements AnimType<T> {
     @Override
     public boolean shouldPlaySoundAt(int animTick) {
         return animTick == steps.get(step).hitTick - 4;
-    }
-
-    // 步骤数据：在哪个tick执行哪个action
-    private static class Step<T> {
-        final byte id;   // 动画ID
-        int hitTick;  // 判定tick
-        final T action;      // 执行什么动作
-
-        Step(byte id, int hitTick, T action) {
-            this.hitTick = hitTick;
-            this.id = id;
-            this.action = action;
-        }
-
-        public byte getId() {
-            return id;
-        }
-
-        public int getHitTick() {
-            return hitTick;
-        }
-
-        public T getAction() {
-            return action;
-        }
-
-        public void addHitTick(int increment) {
-            this.hitTick += increment;
-        }
     }
 }
