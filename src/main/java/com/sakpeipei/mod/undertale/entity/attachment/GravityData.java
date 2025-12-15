@@ -3,6 +3,7 @@ package com.sakpeipei.mod.undertale.entity.attachment;
 import com.mojang.math.Axis;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.sakpeipei.mod.undertale.common.RelativeDirection;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -18,18 +19,6 @@ public class GravityData {
     private Vec3 previousGravityDirection = new Vec3(0, -1, 0);
     private int transitionTicks = 0;
     private static final int TRANSITION_DURATION = 10;
-
-    /**
-     * 相对重力方向枚举
-     */
-    public enum RelativeDirection {
-        FRONT,   // 前方
-        BACK,    // 后方
-        LEFT,    // 左侧
-        RIGHT,   // 右侧
-        UP,      // 上方
-        DOWN     // 下方
-    }
 
     // Codec用于序列化，支持网络同步
     public static final Codec<GravityData> CODEC = RecordCodecBuilder.create(instance ->
@@ -95,11 +84,8 @@ public class GravityData {
     /**
      * 对目标实体应用攻击者的相对重力
      */
-    public static void applyRelativeGravity(Entity attacker, Entity target, RelativeDirection relativeDirection) {
-        GravityData targetData = target.getData(AttachmentTypeRegistry.GRAVITY);
-        if (targetData != null) {
-            targetData.setRelativeGravity(attacker, relativeDirection);
-        }
+    public static void applyRelativeGravity(Entity attacker, Entity target, RelativeDirection direction) {
+        target.getData(AttachmentTypeRegistry.GRAVITY).setRelativeGravity(attacker, direction);
     }
 
     /**
