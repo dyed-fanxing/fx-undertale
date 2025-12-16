@@ -10,6 +10,7 @@
         "SimpleEntityGroundMixin"
     ],
     "client": [
+        "BlackScreenTeleportMixin",
         "EntityRenderDispatcherMixin",
         "KarmaHeartMixin"
     ],

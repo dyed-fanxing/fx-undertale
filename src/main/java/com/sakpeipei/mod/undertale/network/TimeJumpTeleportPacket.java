@@ -1,7 +1,6 @@
 package com.sakpeipei.mod.undertale.network;
 
 import com.sakpeipei.mod.undertale.Undertale;
-import com.sakpeipei.mod.undertale.entity.IAnimatable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.FriendlyByteBuf;
@@ -14,36 +13,38 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Sakqiongzi
- * @since 2025-11-19 20:02
+ * @author yujinbao
+ * @since 2025/12/16 15:45
  */
-public record AnimIDPacket(int entityId, byte id) implements CustomPacketPayload{
-    public static final CustomPacketPayload.Type<AnimIDPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "anim_id_packet"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, AnimIDPacket> STREAM_CODEC = CustomPacketPayload.codec(AnimIDPacket::write, AnimIDPacket::new);
+public record TimeJumpTeleportPacket(int entityId, int endTick) implements CustomPacketPayload {
+    public static final String END_TICK = Undertale.MODID + ":teleport_time_jump_end_tick";
 
+    public static final CustomPacketPayload.Type<TimeJumpTeleportPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "black_screen_packet"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, TimeJumpTeleportPacket> STREAM_CODEC = CustomPacketPayload.codec(TimeJumpTeleportPacket::write, TimeJumpTeleportPacket::new);
 
-    public AnimIDPacket(FriendlyByteBuf buf) {
+    public TimeJumpTeleportPacket(FriendlyByteBuf buf) {
         this(buf.readVarInt(),buf.readByte());
     }
     public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(this.entityId);
-        buf.writeByte(this.id);
+        buf.writeByte(this.endTick);
     }
 
-    public static void handle(AnimIDPacket packet, IPayloadContext context) {
+    public static void handle(TimeJumpTeleportPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null) {
                 Entity entity = level.getEntity(packet.entityId);
-
-                if (entity instanceof IAnimatable entity1) {
-                    entity1.setAnimID(packet.id);
+                if (entity != null) {
+                    entity.getPersistentData().putInt(END_TICK,packet.endTick);
                 }
             }
         });
     }
+
+
     @Override
-    public @NotNull Type<AnimIDPacket> type() {
+    public @NotNull Type<? extends CustomPacketPayload> type() {
         return TYPE;
     }
 }
