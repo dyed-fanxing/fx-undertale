@@ -15,9 +15,11 @@ import com.sakpeipei.mod.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import com.sakpeipei.mod.undertale.entity.summon.GroundBone;
+import com.sakpeipei.mod.undertale.network.TimeJumpTeleportPacket;
 import com.sakpeipei.mod.undertale.network.WarningTipPacket;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
+import com.sakpeipei.mod.undertale.registry.SoundRegistry;
 import com.sakpeipei.mod.undertale.utils.EntityUtils;
 import com.sakpeipei.mod.undertale.utils.LevelUtils;
 import com.sakpeipei.mod.undertale.utils.RotUtils;
@@ -32,6 +34,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -649,7 +652,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 case 3 -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target,(Integer) action[1],(ColorAttack) action[2]);
                 case 4 -> Sans.this.summonGBAroundTarget(target,(Integer) action[1],(Float) action[2],(Float)action[3]);
                 case 9 -> Sans.this.gravityControl(target,RelativeDirection.values()[anim.getId() - 8]);
-                case 10 -> Sans.this.flashScreenTeleport(target); //黑屏传送
+                case 10 -> Sans.this.timeJumpTeleport(target);
                 default -> throw new IllegalStateException("Unexpected value: " + Arrays.toString(anim.getAction()));
             };
         }
@@ -1170,9 +1173,14 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         GravityData.applyRelativeGravity(this, target, direction);
         return 0;
     }
-    private int flashScreenTeleport(LivingEntity target) {
+
+    /**
+     * 时间跳跃传送
+     */
+    private int timeJumpTeleport(LivingEntity target) {
         //todo 玩家黑屏 + 音效
-        target.teleportRelative();
+        PacketDistributor.sendToServer(new TimeJumpTeleportPacket(target.getId(),target.tickCount + 20));
+        this.level().playSound(null,target.getX(),target.getY(),target.getZ(), SoundRegistry.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
         return 0;
     }
 

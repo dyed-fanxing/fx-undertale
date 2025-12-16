@@ -17,8 +17,6 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static software.bernie.geckolib.GeckoLibConstants.LOGGER;
-
 /**
  * @author yujinbao
  * @since 2025/11/17 16:13
