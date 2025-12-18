@@ -114,8 +114,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
 //        this.goalSelector.addGoal(0,new GravityControlCollisionDetectionGoal());
         this.goalSelector.addGoal(1, new TransitionPhaseGoal());
         // 远程攻击，需要实现performRangedAttack，然后通过goal去调用
-        this.goalSelector.addGoal(1, new PersistentAttackGoal());
-        this.goalSelector.addGoal(2, new SequenceAttackGoal());
+//        this.goalSelector.addGoal(1, new PersistentAttackGoal());
+//        this.goalSelector.addGoal(2, new SequenceAttackGoal());
         this.goalSelector.addGoal(3, new SingleAttackGoalSingle());
         this.goalSelector.addGoal(4, new SansMovementGoal(1.0,16.0f));
 
@@ -469,6 +469,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                         Sans.this.setYRot(Mth.rotateIfNecessary(Sans.this.getYRot(), Sans.this.yHeadRot, 0.0F));
                     }else if(disSqr > backRadiusSqr && disSqr <= attackRadiusSqr){
                         Sans.this.getNavigation().stop();
+                        Sans.this.setYRot(Sans.this.yHeadRot);
+                        log.info("Sans头部角度{},身体角度{}",Sans.this.yHeadRot,Sans.this.getYRot());
                     }else{
                         Sans.this.getNavigation().moveTo(target, speedModifier);
                         if(disSqr > pursuitRadiusSqr){
@@ -568,7 +570,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
             isAttacking = true;
 //            return availableAttacks.get(random.nextInt(availableAttacks.size()));
-            return availableAttacks.get(1);
+            return availableAttacks.get(0);
         }
 
         @Override
@@ -769,7 +771,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     private int shootBoneRingVolley(LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
         double[] offsetXs = getPhaseID() == 1? new double[]{1.0}: new double[]{1.0, -1.0};
-        float speed = difficulty * 0.6f + 1.0f;
+        float speed = difficulty * 0.6f + 1.5f;
         String attackTypeUUID = UUID.randomUUID().toString();
         int delay = 7;
         int count = 3 + 2 * difficulty;

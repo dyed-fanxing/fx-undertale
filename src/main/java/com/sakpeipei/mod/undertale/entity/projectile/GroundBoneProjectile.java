@@ -73,11 +73,11 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
     public void tick() {
         super.tick();
         AABB currentBb = this.getBoundingBox();
-        log.info("Tick {} , 碰撞箱 {}" ,this.tickCount,currentBb);
+//        log.info("Tick {} , 碰撞箱 {}" ,this.tickCount,currentBb);
 
         // 检查是否与方块碰撞
         boolean colliding = !this.level().noCollision(this, currentBb);
-        log.info("是否碰撞 {}" ,colliding);
+//        log.info("是否碰撞 {}" ,colliding);
 
         if(!this.level().isClientSide) {
             delay--;

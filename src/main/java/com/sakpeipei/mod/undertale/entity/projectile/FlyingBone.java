@@ -86,6 +86,9 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
                     this.shoot(targetPos.x - this.getX(),targetPos.y - this.getEyeY(),targetPos.z - this.getZ(), speed,0);
                 }else{
                     // 这里的targetPos代表 motionVector
+                    if(targetPos == null){
+                        log.info("TargetPos是null");
+                    }
                     this.shoot(targetPos.x,targetPos.y,targetPos.z, speed,0);
                 }
             }
