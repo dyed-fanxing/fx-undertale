@@ -82,7 +82,7 @@ public class GasterBlasterProItem extends GasterBlasterFixedItem {
                         PacketDistributor.sendToPlayersTrackingEntity(blaster,new GasterBlasterProPacket(blaster.getId(),(short) 0));
                     }
                     // 射击阶段，进入冷却
-                    else if(phase == GasterBlasterPro.PHASE_GROW || phase == GasterBlasterPro.PHASE_SHOT) {
+                    else if(phase == GasterBlasterPro.PHASE_ANTICIPATION || phase == GasterBlasterPro.PHASE_FIRE) {
                         blaster.clearTarget();
                         blaster.cooldown();
                         PacketDistributor.sendToPlayersTrackingEntity(blaster,new GasterBlasterProPacket(blaster.getId(),(short) 0));

@@ -53,13 +53,13 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
     private static final RawAnimation GROW_ANIM = RawAnimation.begin().thenPlayAndHold("grow");
     private static final RawAnimation DECAY_ANIM = RawAnimation.begin().thenPlay("decay");
 
-    public static final byte PHASE_IDLE = 0;        // 闲置阶段
-    public static final byte PHASE_CHARGE = 1;      // 蓄力阶段（可被中断提前发射）
-    public static final byte PHASE_GROW = 2;        // 成长阶段（张嘴）
-    public static final byte PHASE_SHOT = 3;        // 发射阶段
-    public static final byte PHASE_DECAY = 4;       // 消退阶段
+    public static final byte PHASE_IDLE = 0;         // 闲置阶段
+    public static final byte PHASE_CHARGE = 1;       // 蓄力阶段（可被中断提前发射）
+    public static final byte PHASE_ANTICIPATION = 2; // 预备动作（动效动画：瞬间收缩并扩大）
+    public static final byte PHASE_FIRE = 3;         // 发射阶段
+    public static final byte PHASE_DECAY = 4;        // 消退阶段
 
-    public static final short DEFAULT_CD = 20;    // 默认CDTick
+    public static final short DEFAULT_CD = 20;     // 默认CDTick
     public static final byte MAX_CHARGE = 100;     // 最大蓄力Tick
     public static final short DEFAULT_SHOT = 50;   // 默认射击Tick
     private short cd = 0;                           // CD
@@ -170,7 +170,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
             case PHASE_CHARGE ->  {
                 if(timer >= MAX_CHARGE) chargeEnd();
             }
-            case PHASE_SHOT -> {
+            case PHASE_FIRE -> {
                 if(timer >= shot) setPhase(PHASE_DECAY);
                 if(!level().isClientSide){
                     // 每2tick应用一次伤害
@@ -180,7 +180,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
             case PHASE_DECAY -> {
                 if(timer >= 2) cooldown();
             }
-            case PHASE_GROW -> this.entityData.set(PHASE,PHASE_SHOT);
+            case PHASE_ANTICIPATION -> this.entityData.set(PHASE,PHASE_FIRE);
         }
     }
     /**
@@ -189,7 +189,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
     void chargeEnd(){
         shot = (short) (shot + timer);              // 每多蓄1s延长1s射击时间，最高5s
         damage += (float) (timer * 0.001);    // 每多蓄1s提升 0.5伤害，最高2.5
-        setPhase(PHASE_GROW);
+        setPhase(PHASE_ANTICIPATION);
     }
     /**
      *  开火
@@ -302,7 +302,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
                     // 生成向中心移动的粒子
                     if(state.animationTick % 2 < 0.1) ParticleMoveUtils.ballIn(level(), 20, getWidth() + 1, ParticleRegistry.LIGHT_STREAK.get(), this.getX(), this.getY() + 1.5, this.getZ());
                 }
-                case PHASE_GROW -> {
+                case PHASE_ANTICIPATION -> {
                     controller.setAnimation(GROW_ANIM);
                     controller.setAnimationSpeed(20.0);
                     controller.setSoundKeyframeHandler(event -> {

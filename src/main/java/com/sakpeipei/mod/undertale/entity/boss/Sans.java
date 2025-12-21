@@ -459,27 +459,22 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 boolean hasSeeSight = Sans.this.getSensing().hasLineOfSight(target);
                 if(hasSeeSight){ seeTime++; }
                 else{ seeTime = Math.max(-60, seeTime - 1); }
-
                 Sans.this.getLookControl().setLookAt(target, Sans.this.getHeadRotSpeed(), Sans.this.getMaxHeadXRot());
+
                 if(seeTime > 0){
                     //                    ++this.strafingTime;
                     if (disSqr <= backRadiusSqr){
                         Sans.this.getNavigation().stop();
                         Sans.this.getMoveControl().strafe(-0.75f,0.0f);
-                        Sans.this.setYRot(Mth.rotateIfNecessary(Sans.this.getYRot(), Sans.this.yHeadRot, 0.0F));
+                        Sans.this.setYRot(Sans.this.yHeadRot);
                     }else if(disSqr > backRadiusSqr && disSqr <= attackRadiusSqr){
                         Sans.this.getNavigation().stop();
-                        Sans.this.setYRot(Sans.this.yHeadRot);
-                        log.info("Sans头部角度{},身体角度{}",Sans.this.yHeadRot,Sans.this.getYRot());
                     }else{
                         Sans.this.getNavigation().moveTo(target, speedModifier);
                         if(disSqr > pursuitRadiusSqr){
                             teleportTowards(target);
                         }
                     }
-
-
-
                 }else if(seeTime > -60){ // 丢失视线3秒内
                     if(disSqr <= pursuitRadiusSqr){
                         Sans.this.getNavigation().moveTo(target,this.speedModifier);

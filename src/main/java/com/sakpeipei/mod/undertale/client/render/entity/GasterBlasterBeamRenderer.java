@@ -67,8 +67,8 @@ public class GasterBlasterBeamRenderer{
                 poseStack.popPose();
                 return;
             }
-            case GasterBlasterPro.PHASE_GROW -> partialWidth = Mth.lerp(partialTicks,halfWidth,width);
-            case GasterBlasterPro.PHASE_SHOT -> partialWidth = width + (float) Math.sin((entity.tickCount + partialTicks) * 0.6f) * 0.1f;
+            case GasterBlasterPro.PHASE_ANTICIPATION -> partialWidth = Mth.lerp(partialTicks,halfWidth,width);
+            case GasterBlasterPro.PHASE_FIRE -> partialWidth = width + (float) Math.sin((entity.tickCount + partialTicks) * 0.6f) * 0.1f;
             case GasterBlasterPro.PHASE_DECAY -> partialWidth = Mth.lerp((entity.timer + partialTicks) / 2, width, 0);
         }
         LogUtils.getLogger().info("宽度{}",partialWidth);
