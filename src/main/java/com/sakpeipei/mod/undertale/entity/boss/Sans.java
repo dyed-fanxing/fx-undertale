@@ -877,7 +877,83 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
         return 10;
     }
+
     /**
+     * 带相对前方计算的正弦波缺口骨墙
+     */
+    private int summonSimpleSineWall(LivingEntity target, ColorAttack color, int waveType) {
+        int difficulty = this.level().getDifficulty().getId();
+        Level level = this.level();
+        String attackTypeUUID = UUID.randomUUID().toString();
+
+        // 矩阵参数 - 就是骨头的行列数量
+        int rows = 15 + 3 * difficulty;      // 行数（横向数量）
+        int cols = 10 + 3 * difficulty;      // 列数（纵向/前后数量）
+        double gapWidth = 2.1 - 0.3 * difficulty; // 缺口宽度（以列为单位）
+
+        // 获取方向
+        Vec3 lookDir = this.getLookAngle().normalize();
+        Vec3 normalDir = new Vec3(-lookDir.z, 0, lookDir.x).normalize();
+
+        // 起始位置（目标前方一段距离）
+        double startDistance = 8.0;
+        Vec3 startPos = target.position().add(lookDir.scale(startDistance));
+
+        // 确定矩阵覆盖的实际空间范围
+        // 我们可以让骨头之间的间距固定，比如每个骨头间隔1.5格
+        double spacing = 0.8; // 骨头之间的间距
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                // 计算标准化横向位置（0到1）
+                double t = row / (double) (rows - 1);
+
+                // 计算正弦波缺口位置
+                double sineValue = 0;
+                switch (waveType) {
+                    case 0 -> sineValue = Math.sin(t * Math.PI / 2);            // 上升1/4
+                    case 1 -> sineValue = Math.sin(t * Math.PI / 2 + Math.PI / 2); // 下降1/4
+                    case 2 -> sineValue = Math.sin(t * Math.PI);                // 先升后降
+                    case 3 -> sineValue = -Math.sin(t * Math.PI);               // 先降后升
+                }
+
+                // 将正弦值[-1,1]映射到列索引[0, cols-1]
+                double curveCol = (sineValue + 1) / 2 * (cols - 1);
+
+                // 如果当前列在缺口附近，跳过生成
+                if (Math.abs(col - curveCol) < gapWidth) {
+                    continue;
+                }
+
+                // 直接计算位置：起始位置 + 右偏移 + 前偏移
+                // 行索引转换为左右偏移：从-(rows-1)/2到+(rows-1)/2
+                double xOffset = (row - (rows - 1) / 2.0) * spacing;
+                // 列索引转换为前后偏移：0到负方向（向前）
+                double zOffset = -col * spacing;
+
+                Vec3 pos = startPos
+                        .add(normalDir.scale(xOffset))     // 左右偏移
+                        .add(lookDir.scale(zOffset));     // 前后偏移（负值表示向前）
+
+                // 生成骨头
+                GroundBoneProjectile bone = new GroundBoneProjectile(
+                        level, this,
+                        pos.x, this.getY(), pos.z,
+                        0.5f, 1f, 0.6f, color
+                );
+
+                bone.setData(AttachmentTypeRegistry.KARMA_ATTACK,
+                        new KaramAttackData(attackTypeUUID, (byte) 6));
+
+                bone.delayShoot(0, lookDir);
+                bone.setYRot(RotUtils.shootYRot(lookDir));
+
+                level.addFreshEntity(bone);
+            }
+        }
+
+        return 0;
+    }    /**
      * 召唤平行骨刺波动 - 等间距平行直线波动
      */
     private int summonParallelGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, int waveCount, ColorAttack color) {
