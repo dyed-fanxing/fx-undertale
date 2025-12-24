@@ -54,6 +54,8 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
     protected UUID ownerUUID;       // 召唤者UUID
     protected LivingEntity owner;   // 召唤者缓存，用于追踪伤害来源仇恨
 
+//    public byte chager;
+
     // 射线当前长度
     public GasterBlasterFixed(EntityType<? extends Entity> type, Level level) {
         super(type, level);
