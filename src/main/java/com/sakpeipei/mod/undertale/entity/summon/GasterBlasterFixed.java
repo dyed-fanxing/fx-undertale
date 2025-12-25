@@ -43,7 +43,9 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final RawAnimation WHOLE_ANIM = RawAnimation.begin().thenPlay("whole");
 
-    public static final byte CHARGE_TICK = 18;
+    private byte charge;    // 蓄力转发射tick点
+    private short discard;   // 发射完毕Tick点
+
     public static final float DEFAULT_LENGTH = 16f;    // 默认长度
     // 射线当前长度
     private static final EntityDataAccessor<Float> LENGTH = SynchedEntityData.defineId(GasterBlasterFixed.class, EntityDataSerializers.FLOAT);
@@ -54,20 +56,21 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
     protected UUID ownerUUID;       // 召唤者UUID
     protected LivingEntity owner;   // 召唤者缓存，用于追踪伤害来源仇恨
 
-//    public byte chager;
 
     // 射线当前长度
     public GasterBlasterFixed(EntityType<? extends Entity> type, Level level) {
         super(type, level);
     }
     public GasterBlasterFixed(EntityType<? extends Entity> type, Level level, LivingEntity owner) {
-        this(type, level,owner,1.0f);
+        this(type, level,owner,1.0f,(byte) 18,(short) 46);
     }
-    public GasterBlasterFixed(EntityType<? extends Entity> type, Level level, LivingEntity owner, float width) {
+    public GasterBlasterFixed(EntityType<? extends Entity> type, Level level, LivingEntity owner, float width,byte charge,short discard) {
         this(type,level);
         super.setNoGravity(true);
         setOwner(owner);
         this.width = width;
+        this.charge = charge;
+        this.discard = discard;
     }
 
     @Override
@@ -76,10 +79,10 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
         //只在服务端执行攻击逻辑
         if(!this.level().isClientSide){
             //蓄力，0.88秒 = 17.6T = 18T
-            if(super.tickCount <= CHARGE_TICK) {
+            if(super.tickCount <= charge) {
                 return;
             }
-            if(super.tickCount > 46) {
+            if(super.tickCount > discard) {
                 this.discard();
                 return;
             }
@@ -184,6 +187,13 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
     public float getLength() {return super.entityData.get(LENGTH);}
     @Override
     public float getWidth(){return width;}
+    public byte getCharge() {
+        return charge;
+    }
+    public short getDiscard() {
+        return discard;
+    }
+
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
         builder.define(LENGTH, 16f);
@@ -191,20 +201,30 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         ownerUUID = tag.hasUUID("OwnerUUID")?tag.getUUID("OwnerUUID"):null;
+        width = tag.getFloat("Width");
+        charge = tag.getByte("Charge");
+        discard = tag.getShort("Discard");
     }
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putUUID("OwnerUUID", ownerUUID);
+        tag.putFloat("Width", width);
+        tag.putByte("Charge", charge);
+        tag.putShort("Discard", discard);
     }
 
     @Override
     public void writeSpawnData(RegistryFriendlyByteBuf buffer) {
         buffer.writeFloat(width);
+        buffer.writeByte(charge);
+        buffer.writeShort(discard);
     }
 
     @Override
     public void readSpawnData(RegistryFriendlyByteBuf additionalData) {
         this.width = additionalData.readFloat();
+        this.charge = additionalData.readByte();
+        this.discard = additionalData.readShort();
     }
 
     @Override
