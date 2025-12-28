@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import java.util.UUID;
 
 public interface IGasterBlaster extends TraceableEntity{
+
     Level level();
     @Nullable
     UUID getOwnerUUID();
@@ -22,5 +23,10 @@ public interface IGasterBlaster extends TraceableEntity{
     default boolean canHitTarget(Entity target) {
         return target.isAlive() && target != getOwner();
     }
+
+    /**
+     * 是否正在开火
+     */
+    boolean isFire();
 }
 

@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.client.model.entity.GasterBlasterFixedModel;
-import com.sakpeipei.mod.undertale.client.render.layer.AnimatedGlowingLayer;
+import com.sakpeipei.mod.undertale.client.render.layer.GasterBlasterEyesLayer;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -13,14 +13,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import software.bernie.geckolib.cache.texture.AnimatableTexture;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
-import software.bernie.geckolib.renderer.layer.AutoGlowingGeoLayer;
 
 public class GasterBlasterFixedRender extends GeoEntityRenderer<GasterBlasterFixed> {
     public GasterBlasterFixedRender(EntityRendererProvider.Context renderManager) {
         super(renderManager, new GasterBlasterFixedModel());
-        this.addRenderLayer(new AnimatedGlowingLayer<>(this, ResourceLocation.fromNamespaceAndPath(Undertale.MODID,"textures/entity/gaster_blaster_eyes.png")));
+        this.addRenderLayer(new GasterBlasterEyesLayer<>(this, ResourceLocation.fromNamespaceAndPath(Undertale.MODID,"textures/entity/gaster_blaster_eyes.png")));
     }
 
     @Override

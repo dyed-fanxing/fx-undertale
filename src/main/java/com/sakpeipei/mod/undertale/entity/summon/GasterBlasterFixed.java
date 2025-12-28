@@ -50,7 +50,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
     // 射线当前长度
     private static final EntityDataAccessor<Float> LENGTH = SynchedEntityData.defineId(GasterBlasterFixed.class, EntityDataSerializers.FLOAT);
 
-    protected float width = 1.0f;          // 宽度
+    protected float width;          // 宽度
     protected Vec3 end;             // 攻击终点
     protected float damage  = 2f;   // 攻击伤害
     protected UUID ownerUUID;       // 召唤者UUID
@@ -61,8 +61,8 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
     public GasterBlasterFixed(EntityType<? extends Entity> type, Level level) {
         super(type, level);
     }
-    public GasterBlasterFixed(EntityType<? extends Entity> type, Level level, LivingEntity owner) {
-        this(type, level,owner,1.0f,(byte) 18,(short) 46);
+    public GasterBlasterFixed(EntityType<? extends Entity> type, Level level, LivingEntity owner,float width) {
+        this(type, level,owner,width,(byte) 18,(short) 3000);
     }
     public GasterBlasterFixed(EntityType<? extends Entity> type, Level level, LivingEntity owner, float width,byte charge,short discard) {
         this(type,level);
@@ -154,6 +154,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
         controllers.add(new AnimationController<>(this, "controller",  state -> {
             if(state.getController().getAnimationState() == AnimationController.State.STOPPED){
                 state.getController().setAnimation(WHOLE_ANIM);
+                state.getController().setAnimationSpeed(20d /( discard - charge ));
                 level().playLocalSound(this, SoundRegistry.GASTER_BLASTER_WHOLE.get(), SoundSource.NEUTRAL,1,1);
             }
             return PlayState.CONTINUE;
@@ -192,6 +193,11 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
     }
     public short getDiscard() {
         return discard;
+    }
+
+    @Override
+    public boolean isFire() {
+        return this.tickCount > charge;
     }
 
     @Override
