@@ -7,10 +7,9 @@ import com.sakpeipei.mod.undertale.client.render.entity.*;
 import com.sakpeipei.mod.undertale.network.AnimIDPacket;
 import com.sakpeipei.mod.undertale.network.GasterBlasterProPacket;
 import com.sakpeipei.mod.undertale.network.KaramPacket;
-import com.sakpeipei.mod.undertale.network.WarningTipPacket;
+import com.sakpeipei.mod.undertale.network.WarningTipAABBPacket;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.ParticleRegistry;
-import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -60,7 +59,7 @@ public class Setup {
         // 仅客户端接收的Payload
         registrar.playToClient(GasterBlasterProPacket.TYPE, GasterBlasterProPacket.STREAM_CODEC, GasterBlasterProPacket::handle);
         registrar.playToClient(KaramPacket.TYPE,KaramPacket.STREAM_CODEC, KaramPacket::handle);
-        registrar.playToClient(WarningTipPacket.TYPE,WarningTipPacket.STREAM_CODEC, WarningTipPacket::handle);
+        registrar.playToClient(WarningTipAABBPacket.TYPE, WarningTipAABBPacket.STREAM_CODEC, WarningTipAABBPacket::handle);
         registrar.playToClient(AnimIDPacket.TYPE,AnimIDPacket.STREAM_CODEC, AnimIDPacket::handle);
     }
 }

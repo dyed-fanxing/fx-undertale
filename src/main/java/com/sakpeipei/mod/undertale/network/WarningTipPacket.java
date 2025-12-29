@@ -3,6 +3,7 @@ package com.sakpeipei.mod.undertale.network;
 import com.sakpeipei.mod.undertale.Undertale;
 import com.sakpeipei.mod.undertale.client.event.handler.DecorationRendererHandler;
 import com.sakpeipei.mod.undertale.client.render.decoration.WarningTip;
+import com.sakpeipei.mod.undertale.client.render.decoration.WarningTipAABB;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -18,32 +19,27 @@ import org.jetbrains.annotations.NotNull;
  * @author yujinbao
  * @since 2025/11/18 14:10
  */
-public record WarningTipPacket(double minX,double minY,double minZ,double maxX,double maxY,double maxZ,int lifetime,int color) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<WarningTipPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "warning_tip_packet"));
+public record WarningTipPacket(float x,float y,float z,float r, float h,int lifetime, int color) implements CustomPacketPayload {
+    public static final Type<WarningTipPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "warning_tip_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, WarningTipPacket> STREAM_CODEC = CustomPacketPayload.codec(WarningTipPacket::write, WarningTipPacket::new);
     private static final Logger log = LogManager.getLogger(WarningTipPacket.class);
 
-    public WarningTipPacket(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int lifetime,int color) {
-        this.minX = minX;
-        this.minY = minY;
-        this.minZ = minZ;
-        this.maxX = maxX;
-        this.maxY = maxY;
-        this.maxZ = maxZ;
+    public WarningTipPacket(float x,float y,float z,float r, float h,int lifetime, int color) {
+        this.x = x;this.y = y;this.z = z;
+        this.r = r;this.h = h;
         this.lifetime = lifetime;
         this.color = color;
     }
     public WarningTipPacket(FriendlyByteBuf buf) {
-        this(buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readVarInt(),buf.readInt());
+        this(buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readVarInt(),buf.readInt());
     }
 
     public void write(FriendlyByteBuf buf) {
-        buf.writeDouble(this.minX);
-        buf.writeDouble(this.minY);
-        buf.writeDouble(this.minZ);
-        buf.writeDouble(this.maxX);
-        buf.writeDouble(this.maxY);
-        buf.writeDouble(this.maxZ);
+        buf.writeFloat(x);
+        buf.writeFloat(y);
+        buf.writeFloat(z);
+        buf.writeFloat(this.r);
+        buf.writeFloat(this.h);
         buf.writeVarInt(this.lifetime);
         buf.writeInt(this.color);
     }
@@ -53,10 +49,7 @@ public record WarningTipPacket(double minX,double minY,double minZ,double maxX,d
     }
     public static void handle(WarningTipPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
-            DecorationRendererHandler.addDecoration(new WarningTip(
-                    new AABB(packet.minX, packet.minY,packet.minZ, packet.maxX, packet.maxY, packet.maxZ),
-                    packet.lifetime,packet.color
-            ));
+            DecorationRendererHandler.addDecoration(new WarningTip(packet.r,packet.h, packet.lifetime,packet.color));
         });
     }
 }

@@ -16,6 +16,7 @@ import com.sakpeipei.mod.undertale.entity.projectile.GroundBoneProjectile;
 import com.sakpeipei.mod.undertale.entity.summon.GasterBlasterFixed;
 import com.sakpeipei.mod.undertale.entity.summon.GroundBone;
 import com.sakpeipei.mod.undertale.network.TimeJumpTeleportPacket;
+import com.sakpeipei.mod.undertale.network.WarningTipAABBPacket;
 import com.sakpeipei.mod.undertale.network.WarningTipPacket;
 import com.sakpeipei.mod.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.mod.undertale.registry.EntityTypeRegistry;
@@ -1082,10 +1083,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             PacketDistributor.sendToPlayersTrackingEntity(this,
                     new WarningTipPacket(pos.x - radiusSize,groundY,pos.z - radiusSize,pos.x + radiusSize,groundY + offsetY,pos.z + radiusSize,
                             10, Color.RED.getRGB()));
-            return summonSquareGroundBoneSpine(target,radiusCount,pos.x,pos.z,13 - difficulty,10,offsetY);
+            return summonCircleGroundBoneSpine(target,radiusCount,pos.x,pos.z,13 - difficulty,10,offsetY);
         }
         return 0;
     }
+
     /**
      * 在目标周围随机区域召唤地面骨刺
      */
