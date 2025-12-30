@@ -1,0 +1,13 @@
+{
+    "entries": [
+        {
+            "enum": "net/minecraft/world/damagesource/DamageEffects",
+            "name": "UNDERTALE_SILENT",
+            "constructor": "(Ljava/lang/String;Ljava/util/function/Supplier;)V",
+            "parameters": {
+                "class": "com/sakpeipei/undertale/common/EnumParameters",
+                "field": "SILENT"
+            }
+        }
+    ]
+}

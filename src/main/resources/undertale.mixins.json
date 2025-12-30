@@ -4,15 +4,15 @@
     "package": "com.sakpeipei.mod.undertale.mixin",
     "compatibilityLevel": "JAVA_21",
     "mixins": [
-        "AbstractArrowMixin",
-        "LivingEntityGravityMixin",
-        "ServerGamePacketListenerImplMixin",
-        "SimpleEntityGroundMixin"
+        "com.sakpeipei.undertale.mixin.AbstractArrowMixin",
+        "com.sakpeipei.undertale.mixin.LivingEntityGravityMixin",
+        "com.sakpeipei.undertale.mixin.ServerGamePacketListenerImplMixin",
+        "com.sakpeipei.undertale.mixin.SimpleEntityGroundMixin"
     ],
     "client": [
-        "TimeJumpTeleportMixin",
-        "EntityRenderDispatcherMixin",
-        "KarmaHeartMixin"
+        "com.sakpeipei.undertale.mixin.TimeJumpTeleportMixin",
+        "com.sakpeipei.undertale.mixin.EntityRenderDispatcherMixin",
+        "com.sakpeipei.undertale.mixin.KarmaHeartMixin"
     ],
     "injectors": {
         "defaultRequire": 1
