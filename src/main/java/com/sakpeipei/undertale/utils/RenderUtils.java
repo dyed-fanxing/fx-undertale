@@ -193,7 +193,7 @@ public class RenderUtils {
      * 修正的圆柱体渲染（正确的逆时针顺序）
      */
     public static void renderCylinder(PoseStack.Pose pose, VertexConsumer consumer, float radius, float height, int segments,
-                                      int r, int g, int b, int overlay, int light) {
+                                      int r, int g, int b,int a, int overlay, int light) {
         float halfHeight = height * 0.5f;
         System.out.println("\n=== CYLINDER CCW RENDER ===");
         float step = Mth.TWO_PI / segments;
@@ -211,19 +211,19 @@ public class RenderUtils {
             drawQuad(pose, consumer, frontEdge1, backEdge1, backEdge2, frontEdge2,
                     (float) normal.x, (float) normal.y, (float) normal.z,
                     0, 0, 1, 1,  // 对应的UV
-                    r, g, b, 255, overlay, light);
+                    r, g, b, a, overlay, light);
         }
 
         // 前面端面 （确保逆时针顶点顺序）
         drawCircle(pose, consumer,
                 new Vec3(0, 0, -halfHeight), radius, segments,
                 new Vec3(0, 0, -1),
-                255, 255, 0, 255, overlay, light);
+                255, 255, 0, a, overlay, light);
         // 后面端面 （确保逆时针顶点顺序）
         drawCircle(pose, consumer,
                 new Vec3(0, 0, halfHeight), radius, segments,
                 new Vec3(0, 0, 1),
-                0, 255, 255, 255, overlay, light);
+                0, 255, 255, a, overlay, light);
     }
 
     /**

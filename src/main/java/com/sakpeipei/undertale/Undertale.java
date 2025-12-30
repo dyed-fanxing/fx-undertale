@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale;
 
 import com.mojang.logging.LogUtils;
-import com.sakpeipei.mod.undertale.registry.*;
+import com.sakpeipei.undertale.registry.*;
 import com.sakpeipei.undertale.registry.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;

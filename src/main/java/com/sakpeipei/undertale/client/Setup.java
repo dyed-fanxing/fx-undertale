@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.client;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.particle.BallGrowParticle;
 import com.sakpeipei.undertale.client.particle.LightStreakParticle;
-import com.sakpeipei.mod.undertale.client.render.entity.*;
+import com.sakpeipei.undertale.client.render.entity.*;
 import com.sakpeipei.undertale.client.render.entity.*;
 import com.sakpeipei.undertale.network.AnimIDPacket;
 import com.sakpeipei.undertale.network.GasterBlasterProPacket;

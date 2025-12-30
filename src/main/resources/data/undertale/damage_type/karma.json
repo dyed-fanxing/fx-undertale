@@ -1,6 +1,6 @@
 {
-    "message_id": "undertale.karma",
-    "scaling": "when_caused_by_living_non_player",
+    "effects": "silent",
     "exhaustion": 0.0,
-    "effects": ""
+    "message_id": "undertale.karma",
+    "scaling": "when_caused_by_living_non_player"
 }

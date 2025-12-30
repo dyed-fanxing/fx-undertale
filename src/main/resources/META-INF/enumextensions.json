@@ -1,12 +1,13 @@
 {
     "entries": [
         {
-            "enum": "net/minecraft/client/gui/Gui$HeartType",
-            "name": "UNDERTALE_KARMA",
-            "constructor": "(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;)V",
+            "enum": "net/minecraft/world/damagesource/DamageEffects",
+            "name": "UNDERTALE_SILENT",
+            "constructor": "(Ljava/lang/String;Ljava/util/function/Supplier;)V",
             "parameters": {
-                "class": "com/sakpeipei/mod/undertale/client/gui/EnumParameters",
-                "field": "KARMA_HEART_PROXY"
+                "class": "com/sakpeipei/undertale/common/EnumParameters",
+                "field": "SILENT",
+                "method": "getTestDamageEffectsParameter"
             }
         }
     ]

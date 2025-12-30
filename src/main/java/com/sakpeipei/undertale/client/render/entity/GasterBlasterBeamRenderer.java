@@ -42,8 +42,8 @@ public class GasterBlasterBeamRenderer{
         if(entity.tickCount < entity.getCharge()){
             partialWidth = Mth.lerp((entity.tickCount + partialTicks) / entity.getCharge(), 0, halfWidth);
             // 替换成立方体为球体
-            RenderUtils.renderSphere(buffer.getBuffer(BEAM_FRONT_TYPE), partialWidth, SEGMENTS,
-                    poseStack.last(), r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
+            RenderUtils.renderSphere(poseStack.last(),buffer.getBuffer(BEAM_FRONT_TYPE), partialWidth, SEGMENTS,
+                     r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
         }else{
             if(entity.tickCount == 46 ) partialWidth = Mth.lerp(partialTicks,width,0);
             else {
@@ -69,8 +69,8 @@ public class GasterBlasterBeamRenderer{
             case GasterBlasterPro.PHASE_CHARGE -> {
                 partialWidth = Mth.lerp((entity.timer + partialTicks) / GasterBlasterPro.MAX_CHARGE, 0, halfWidth );
                 // 替换成立方体为球体
-                RenderUtils.renderSphere(buffer.getBuffer(BEAM_FRONT_TYPE), partialWidth, SEGMENTS,
-                        poseStack.last(), r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
+                RenderUtils.renderSphere(poseStack.last(),buffer.getBuffer(BEAM_FRONT_TYPE), partialWidth, SEGMENTS,
+                        r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
                 LogUtils.getLogger().info("宽度{}",partialWidth);
                 poseStack.popPose();
                 return;
@@ -112,8 +112,8 @@ public class GasterBlasterBeamRenderer{
 
 //        // 渲染圆柱体
         VertexConsumer sideVertexBuilder = buffer.getBuffer(BEAM_FRONT_TYPE);
-        RenderUtils.renderCylinder(sideVertexBuilder, radius, length, SEGMENTS,
-                pose, OverlayTexture.NO_OVERLAY, packedLight);
+        RenderUtils.renderCylinder(pose,sideVertexBuilder, radius, length, SEGMENTS,
+                r,g,b,a,OverlayTexture.NO_OVERLAY, packedLight);
 //
 //        // 渲染前后面（圆形端面）
 //        VertexConsumer frontVertexBuilder = buffer.getBuffer(BEAM_FRONT_TYPE);
