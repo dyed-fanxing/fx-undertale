@@ -13,13 +13,13 @@ import org.jetbrains.annotations.NotNull;
  * @since 2025-11-23 21:21
  * 带有服务端触发客户端AnimType接口的任意动画类型的GOAL执行器
  */
-public abstract class AbstractAnimExecuteGoal<T,R extends Mob & IAnimatable> extends Goal {
+public abstract class AbstractAnimTypeGoal<T,R extends Mob & IAnimatable> extends Goal {
     protected final R mob;
     protected int animTick;
     protected int cooldownEndTick;
     protected AnimType<T> anim; // 动画类型
 
-    public AbstractAnimExecuteGoal(R mob) {
+    public AbstractAnimTypeGoal(R mob) {
         this.mob = mob;
     }
 
@@ -67,7 +67,7 @@ public abstract class AbstractAnimExecuteGoal<T,R extends Mob & IAnimatable> ext
     public void stop() {
         cooldownEndTick = anim.getCd() + mob.tickCount;
         anim = null;
-        mob.setAnimID((byte)0);
+        mob.setAnimID((byte)-1);
     }
 
     @Override

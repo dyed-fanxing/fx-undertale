@@ -1,5 +1,5 @@
 {
-    "effects": "silent",
+    "effects": "undertale:silent",
     "exhaustion": 0.0,
     "message_id": "undertale.karma",
     "scaling": "when_caused_by_living_non_player"

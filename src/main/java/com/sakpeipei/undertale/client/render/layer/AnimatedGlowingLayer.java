@@ -19,7 +19,7 @@ import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
  * @author Sakqiongzi
  * @since 2025-12-24 21:18
  */
-public class AnimatedGlowingLayer<T extends GeoAnimatable> extends GeoRenderLayer<T> {
+public abstract class AnimatedGlowingLayer<T extends GeoAnimatable> extends GeoRenderLayer<T> {
 
     private final ResourceLocation texture;
     public AnimatedGlowingLayer(GeoRenderer<T> entityRendererIn, ResourceLocation texture) {

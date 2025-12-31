@@ -2,7 +2,6 @@ package com.sakpeipei.undertale.common;
 
 
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageEffects;
 import net.neoforged.fml.common.asm.enumextension.EnumProxy;
 
@@ -19,11 +18,4 @@ public class EnumParameters {
             "undertale:silent",             // 命名空间格式的名称
             (Supplier<SoundEvent>) () -> null  // 返回 null，表示无音效
     );
-    public static Object getTestDamageEffectsParameter(int idx, Class<?> type) {
-        return type.cast(switch (idx) {
-            case 0 -> "examplemod:test";
-            case 1 -> (Supplier<SoundEvent>) () -> SoundEvents.DONKEY_ANGRY;
-            default -> throw new IllegalArgumentException("Unexpected parameter index: " + idx);
-        });
-    }
 }

@@ -27,11 +27,6 @@ public class SequenceAnim<T> implements AnimType<T> {
         this.cd = cd;
         this.steps = steps;
     }
-    public SequenceAnim(int duration, int cd,Step<T> ...steps) {
-        this.duration = duration;
-        this.cd = cd;
-        this.steps = List.of(steps);
-    }
 
     /**
      * 通过指定的回合数，构造重复的序列
@@ -40,16 +35,17 @@ public class SequenceAnim<T> implements AnimType<T> {
      * @param cd 冷却时间
      * @param steps 要重复的步骤模板（每个步骤的hitTick是相对于该次重复的起始时间）
      */
-    public SequenceAnim(int round,int interval, int cd, Step<T> ...steps) {
+    public SequenceAnim(int round,int interval, int cd, List<Step<T>> steps) {
         this.cd = cd;
         this.duration = interval * round;
-        this.steps = new ArrayList<>(List.of(steps));
+        this.steps = steps;
         for (int i = 1; i < round; i++) {
             for (Step<T> step : steps) {
                 this.steps.add(new Step<>(step.getId(), step.getHitTick() + i * interval, step.getAction()));
             }
         }
     }
+
 
     @Override
     public byte getId() {

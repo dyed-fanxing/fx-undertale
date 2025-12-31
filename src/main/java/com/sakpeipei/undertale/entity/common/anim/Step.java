@@ -6,17 +6,26 @@ package com.sakpeipei.undertale.entity.common.anim;
  */
 public class Step<T> {
     final byte id;   // 动画id
-    int hitTick;  // 判定tick
+    int animTick;  // 触发动画Tick
+    int hitTick;   // 判定Tick
     final T action;      // 执行什么动作
 
-    public Step(byte id, int hitTick, T action) {
+    public Step(byte id,int animTick,int hitTick, T action) {
+        this.animTick = animTick;
         this.hitTick = hitTick;
         this.id = id;
         this.action = action;
     }
+    public Step(byte id, int hitTick, T action) {
+        this(id, -1, hitTick, action);
+    }
 
     public byte getId() {
         return id;
+    }
+
+    public int getAnimTick() {
+        return animTick;
     }
 
     public int getHitTick() {
