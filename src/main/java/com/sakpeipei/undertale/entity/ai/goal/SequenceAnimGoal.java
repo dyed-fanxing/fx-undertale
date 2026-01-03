@@ -1,11 +1,14 @@
 package com.sakpeipei.undertale.entity.ai.goal;
 
+import com.sakpeipei.undertale.common.anim.AnimStep;
+import com.sakpeipei.undertale.common.anim.SequenceAnim;
 import com.sakpeipei.undertale.entity.IAnimatable;
-import com.sakpeipei.undertale.entity.common.anim.AnimType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 
 /**
@@ -13,13 +16,14 @@ import org.jetbrains.annotations.NotNull;
  * @since 2025-11-23 21:21
  * 带有服务端触发客户端AnimType接口的任意动画类型的GOAL执行器
  */
-public abstract class AbstractAnimTypeGoal<T,R extends Mob & IAnimatable> extends Goal {
+public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Goal {
     protected final R mob;
-    protected int animTick;
+    protected int tick; // 动画tick
     protected int cooldownEndTick;
-    protected AnimType<T> anim; // 动画类型
+    protected int step;
+    protected SequenceAnim<T> anim;
 
-    public AbstractAnimTypeGoal(R mob) {
+    public SequenceAnimGoal(R mob) {
         this.mob = mob;
     }
 
@@ -31,32 +35,38 @@ public abstract class AbstractAnimTypeGoal<T,R extends Mob & IAnimatable> extend
 
     @Override
     public void start() {
-        animTick = 0;
+        tick = 0;
+        step = 0;
         LivingEntity target = mob.getTarget();
         if (target != null) {
             anim = select(target);
-            mob.setAnimID(anim.getId());
         }
     }
 
     @Override
     public boolean canContinueToUse() {
-        return animTick < anim.getDuration();
+        return tick < anim.getDuration();
     }
 
     @Override
     public void tick() {
-        if (anim.shouldHitAt(animTick)) {
+        List<AnimStep<T>> steps = anim.getSteps();
+        AnimStep<T> curr = steps.get(step);
+        if(curr.shouldTriggerAnim(tick)){
+            mob.setAnimID(curr.getId());
+        }
+        if(curr.shouldHitAt(tick)) {
             LivingEntity target = mob.getTarget();
             if (target != null) {
                 // 执行攻击时返回的额外动画时间 - 判定生效时剩余的动画时间，如果大于0，则代表这次攻击动画的时间比预设的多，需要增加动画持续时间
-                int remaining = execute(target, anim) - (anim.getDuration() - animTick);
+                int remaining = execute(target, curr) - (anim.getDuration() - tick);
                 if(remaining > 0){
-                    anim.addDuration(remaining);
+                    anim.addDuration(step, remaining);
                 }
             }
+            step++;
         }
-        animTick++;
+        tick++;
     }
 
 
@@ -66,7 +76,6 @@ public abstract class AbstractAnimTypeGoal<T,R extends Mob & IAnimatable> extend
     @Override
     public void stop() {
         cooldownEndTick = anim.getCd() + mob.tickCount;
-        anim = null;
         mob.setAnimID((byte)-1);
     }
 
@@ -76,9 +85,9 @@ public abstract class AbstractAnimTypeGoal<T,R extends Mob & IAnimatable> extend
     }
 
     @NotNull
-    protected abstract AnimType<T> select(LivingEntity target);
+    protected abstract SequenceAnim<T> select(LivingEntity target);
 
-    protected abstract int execute(LivingEntity target, AnimType<T> anim);
+    protected abstract int execute(LivingEntity target, AnimStep<T> anim);
 
 
 }

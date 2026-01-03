@@ -1,6 +1,7 @@
 package com.sakpeipei.undertale.entity.ai.goal;
 
-import com.sakpeipei.undertale.entity.common.anim.AnimType;
+import com.sakpeipei.undertale.common.anim.SingleAnim;
+import com.sakpeipei.undertale.entity.IAnimatable;
 import com.sakpeipei.undertale.network.AnimIDPacket;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -13,13 +14,13 @@ import org.jetbrains.annotations.NotNull;
  * @since 2025-11-22 21:46
  * 单个动画执行GOAL，需要维护服务端动画Tick
  */
-public abstract class SingleAnimExecuteGoal<T> extends Goal {
-    protected final Mob mob;
-    protected int animStartTick;  // 动画开始Tick点
-    protected int cooldownEndTick; // 冷却结束Tick点
-    protected AnimType<T> anim;
+public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal {
+    protected final R mob;
+    protected int tick;             // 动画Tick
+    protected int cooldownEndTick;  // 冷却结束Tick点
+    protected SingleAnim<T> anim;
 
-    public SingleAnimExecuteGoal(Mob mob) {
+    public SingleAnimGoal(R mob) {
         this.mob = mob;
     }
 
@@ -31,11 +32,11 @@ public abstract class SingleAnimExecuteGoal<T> extends Goal {
 
     @Override
     public void start() {
-        animStartTick = mob.tickCount;
+        tick = 0;
         LivingEntity target = mob.getTarget();
         if(target != null){
             anim = select(target);
-            PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimIDPacket(mob.getId(), anim.getId()));
+            mob.setAnimID(anim.getId());
         }
     }
 
@@ -46,24 +47,29 @@ public abstract class SingleAnimExecuteGoal<T> extends Goal {
      */
     @Override
     public boolean canContinueToUse() {
-        return mob.tickCount - animStartTick < anim.getDuration();
+        return tick < anim.getDuration();
     }
 
     @Override
     public void tick() {
         LivingEntity target = mob.getTarget();
         if(target != null){
-            int animTick = mob.tickCount - animStartTick;
-            if(anim.shouldHitAt(animTick)){
-                cooldownEndTick += Math.max(execute(target) - (anim.getDuration() - animTick),0) ;
+            if(anim.shouldHitAt(tick)){
+                // 执行攻击时返回的额外动画时间 - 判定生效时剩余的动画时间，如果大于0，则代表这次攻击动画的时间比预设的多，需要增加动画持续时间
+                int cd = anim.getDuration();
+                int remaining = execute(target) - (cd - tick);
+                if(remaining > 0){
+                    anim.addDuration(remaining);
+                }
             }
         }
+        tick++;
     }
     /**
      * 选择动画anim
      */
     @NotNull
-    protected abstract AnimType<T> select(LivingEntity target);
+    protected abstract SingleAnim<T> select(LivingEntity target);
 
     /**
      * @param target 目标
@@ -73,11 +79,9 @@ public abstract class SingleAnimExecuteGoal<T> extends Goal {
 
     @Override
     public void stop() {
-        cooldownEndTick += anim.getCd();
-        onComplete();
+        cooldownEndTick = anim.getCd() + mob.tickCount;
+        mob.setAnimID((byte) -1);
     }
-    protected void onComplete(){}
-
 
     @Override
     public boolean requiresUpdateEveryTick() {

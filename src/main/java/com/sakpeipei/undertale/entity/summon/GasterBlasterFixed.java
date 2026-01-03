@@ -25,10 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.*;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Comparator;
@@ -39,9 +36,11 @@ import java.util.UUID;
  * 固定动画时间GB
  */
 public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntityWithComplexSpawn,GeoEntity {
-    private static final Logger log = LoggerFactory.getLogger(GasterBlasterFixed.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private final RawAnimation WHOLE_ANIM = RawAnimation.begin().thenPlay("whole");
+    private final RawAnimation CHARGE_ANIM = RawAnimation.begin().thenPlay("charge");
+    private final RawAnimation ANTICIPATION_ANIM = RawAnimation.begin().thenPlayAndHold("anticipation");
+    private final RawAnimation FIRE_ANIM = RawAnimation.begin().thenPlayAndHold("fire");
+    private final RawAnimation DECAY_ANIM = RawAnimation.begin().thenPlay("decay");
 
     private byte charge;    // 蓄力转发射tick点
     private short discard;   // 发射完毕Tick点
@@ -52,7 +51,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
 
     protected float width;          // 宽度
     protected Vec3 end;             // 攻击终点
-    protected float damage  = 2f;   // 攻击伤害
+    protected float damage = 2f;   // 攻击伤害
     protected UUID ownerUUID;       // 召唤者UUID
     protected LivingEntity owner;   // 召唤者缓存，用于追踪伤害来源仇恨
 
@@ -62,7 +61,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
         super(type, level);
     }
     public GasterBlasterFixed(EntityType<? extends Entity> type, Level level, LivingEntity owner,float width) {
-        this(type, level,owner,width,(byte) 18,(short) 3000);
+        this(type, level,owner,width,(byte) 18,(short) 46);
     }
     public GasterBlasterFixed(EntityType<? extends Entity> type, Level level, LivingEntity owner, float width,byte charge,short discard) {
         this(type,level);
@@ -82,6 +81,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
             if(super.tickCount <= charge) {
                 return;
             }
+            // 46
             if(super.tickCount > discard) {
                 this.discard();
                 return;
@@ -92,7 +92,7 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
     }
     @Override
     public void checkHit(){
-        Vec3 start = this.position();
+        Vec3 start = this.position().add(0,0.4f * width,0);
         // 新的攻击终点
         Vec3 newEnd = start.add(this.getLookAngle().scale(DEFAULT_LENGTH));
         // 光束的射线检测，如果路径上被方块阻挡，则最终位置替换成该方块位置
@@ -103,12 +103,17 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
             this.entityData.set(LENGTH, (float) start.distanceTo(end));
         }
         // 获取攻击方向向量（从目标指向炮台）
-        Vec3 attackDirection = start.subtract(end).normalize();
+        Vec3 attackDirection = end.subtract(start).normalize();
         // 检测光束路径上的所有活体
+        for (int i = 0; i < 16; i++) {
+            Vec3 scale = attackDirection.scale(i).add(start);
+            if(this.level() instanceof  ServerLevel level){
+                level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, scale.x,scale.y,scale.z,1,0.0,0.0,0.0,0.0);
+            }
+        }
         List<LivingEntity> livingEntities = level().getEntitiesOfClass(LivingEntity.class, new AABB(start, end).inflate(getWidth() * 0.5), this::canHitTarget)
                 .stream().filter(target -> target.getBoundingBox().inflate(getWidth() * 0.5).clip(start, end).isPresent())
                 .sorted(Comparator.comparingDouble(e -> e.distanceToSqr(start))).toList();
-
         for (LivingEntity target : livingEntities) {
             if ( isBlockingWithShield(target, attackDirection)) {
                 end = target.position();
@@ -151,11 +156,23 @@ public class GasterBlasterFixed extends Entity implements IGasterBlaster,IEntity
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "controller",  state -> {
-            if(state.getController().getAnimationState() == AnimationController.State.STOPPED){
-                state.getController().setAnimation(WHOLE_ANIM);
-                state.getController().setAnimationSpeed(20d /( discard - charge ));
-                level().playLocalSound(this, SoundRegistry.GASTER_BLASTER_WHOLE.get(), SoundSource.NEUTRAL,1,1);
+        controllers.add(new AnimationController<>(this, "attack",  state -> {
+            AnimationController<GasterBlasterFixed> controller = state.getController();
+            if(controller.getAnimationState() == AnimationController.State.STOPPED){
+                GasterBlasterFixed animatable = state.getAnimatable();
+                byte charge = this.getCharge();
+                short discard = this.getDiscard();
+                if(animatable.tickCount < charge){
+                    controller.setAnimation(CHARGE_ANIM);
+                    controller.setAnimationSpeed(20.0/charge);
+                }else if(animatable.tickCount == charge){
+                    controller.setAnimation(ANTICIPATION_ANIM);
+                }else if (animatable.tickCount <= getDiscard()){
+                    controller.setAnimation(FIRE_ANIM);
+                    controller.setAnimationSpeed(20.0/discard);
+                }else{
+                    controller.setAnimation(DECAY_ANIM);
+                }
             }
             return PlayState.CONTINUE;
         }));

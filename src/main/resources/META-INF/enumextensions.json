@@ -6,7 +6,7 @@
             "constructor": "(Ljava/lang/String;Ljava/util/function/Supplier;)V",
             "parameters": {
                 "class": "com/sakpeipei/undertale/common/EnumParameters",
-                "method": "getTestDamageEffectsParameter"
+                "field": "SILENT"
             }
         }
     ]

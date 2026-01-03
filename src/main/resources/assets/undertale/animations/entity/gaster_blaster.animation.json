@@ -122,7 +122,7 @@
 							"vector": [0, 0, 0]
 						},
 						"1.0": {
-							"vector": [0, 0, -22.5]
+							"vector": [0, 0, -30]
 						}
 					}
 				},
@@ -189,7 +189,7 @@
 				},
 				"head": {
 					"rotation": {
-						"vector": [0, 0, -22.5]
+						"vector": [0, 0, -30]
 					}
 				},
 				"down": {
@@ -233,7 +233,6 @@
 			}
 		},
 		"fire": {
-			"loop": "hold_on_last_frame",
 			"animation_length": 1,
 			"bones": {
 				"root": {
@@ -243,7 +242,7 @@
 				},
 				"head": {
 					"rotation": {
-						"vector": [0, 0, -22.5]
+						"vector": [0, 0, -30]
 					}
 				},
 				"down": {
@@ -277,7 +276,6 @@
 			}
 		},
 		"decay": {
-			"loop": "hold_on_last_frame",
 			"animation_length": 0.5,
 			"bones": {
 				"root": {

@@ -1,4 +1,4 @@
-package com.sakpeipei.undertale.entity.common.anim;
+package com.sakpeipei.undertale.common.anim;
 
 /**
  * @author Sakqiongzi

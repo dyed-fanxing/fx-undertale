@@ -7,6 +7,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
+import java.awt.*;
+
 public class RenderUtils {
     /**
      * 简易正方体
@@ -193,37 +195,32 @@ public class RenderUtils {
      * 修正的圆柱体渲染（正确的逆时针顺序）
      */
     public static void renderCylinder(PoseStack.Pose pose, VertexConsumer consumer, float radius, float height, int segments,
-                                      int r, int g, int b,int a, int overlay, int light) {
-        float halfHeight = height * 0.5f;
-        System.out.println("\n=== CYLINDER CCW RENDER ===");
+                                      int r, int g, int b, int a, int overlay, int light) {
         float step = Mth.TWO_PI / segments;
         float radian1 = 0, radian2 = step;
         for (int i = 0; i < segments; i++, radian1 += step, radian2 += step) {
-            Vec3 frontEdge1 = new Vec3(radius * (float) Math.cos(radian1), radius * (float) Math.sin(radian1), -halfHeight);
-            Vec3 frontEdge2 = new Vec3(radius * (float) Math.cos(radian2), radius * (float) Math.sin(radian2), -halfHeight);
-            Vec3 backEdge1 = new Vec3(radius * (float) Math.cos(radian1), radius * (float) Math.sin(radian1), -halfHeight);
-            Vec3 backEdge2 = new Vec3(radius * (float) Math.cos(radian2), radius * (float) Math.sin(radian2), halfHeight);
-
+            Vec3 frontPoint1 = new Vec3(radius * (float) Math.cos(radian1), radius * (float) Math.sin(radian1), 0);
+            Vec3 frontPoint2 = new Vec3(radius * (float) Math.cos(radian2), radius * (float) Math.sin(radian2), 0);
+            Vec3 backPoint1 = new Vec3(radius * (float) Math.cos(radian1), radius * (float) Math.sin(radian1), height);
+            Vec3 backPoint2 = new Vec3(radius * (float) Math.cos(radian2), radius * (float) Math.sin(radian2), height);
             // 法线（从圆柱中心向外）
-            Vec3 normal = frontEdge1.normalize();
-
+            Vec3 normal = frontPoint1.normalize();
             // 关键修正：正确的逆时针顺序
-            drawQuad(pose, consumer, frontEdge1, backEdge1, backEdge2, frontEdge2,
+            drawQuad(pose, consumer, frontPoint1, backPoint1, backPoint2, frontPoint2,
                     (float) normal.x, (float) normal.y, (float) normal.z,
                     0, 0, 1, 1,  // 对应的UV
                     r, g, b, a, overlay, light);
         }
-
         // 前面端面 （确保逆时针顶点顺序）
         drawCircle(pose, consumer,
-                new Vec3(0, 0, -halfHeight), radius, segments,
+                new Vec3(0, 0, 0), radius, segments,
                 new Vec3(0, 0, -1),
-                255, 255, 0, a, overlay, light);
+                r, g, b, a, overlay, light);
         // 后面端面 （确保逆时针顶点顺序）
         drawCircle(pose, consumer,
-                new Vec3(0, 0, halfHeight), radius, segments,
+                new Vec3(0, 0, height), radius, segments,
                 new Vec3(0, 0, 1),
-                0, 255, 255, a, overlay, light);
+                r, g, b, a, overlay, light);
     }
 
     /**
@@ -334,21 +331,7 @@ public class RenderUtils {
                         .setColor(r, g, b, a)
                         .setOverlay(overlay)
                         .setLight(light);
-
-
-                // 三角形2: p1(左上) → p3(右下) → p4(右上)
-                consumer.addVertex(matrix, x1, y1, z1)
-                        .setNormal(pose, nx1, sinPhi1, nz1)
-                        .setUv(u1, v1)
-                        .setColor(r, g, b, a)
-                        .setOverlay(overlay)
-                        .setLight(light);
-                consumer.addVertex(matrix, x3, y3, z3)
-                        .setNormal(pose, nx3, sinPhi2, nz3)
-                        .setUv(u2, v2)
-                        .setColor(r, g, b, a)
-                        .setOverlay(overlay)
-                        .setLight(light);
+                // 这里必须用四边形，不知道为啥两个三角形，会缺失第二个三角形
                 consumer.addVertex(matrix, x4, y4, z4)
                         .setNormal(pose, nx4, sinPhi1, nz4)
                         .setUv(u2, v1)
@@ -395,7 +378,6 @@ public class RenderUtils {
                 .setColor(r, g, b, a)
                 .setOverlay(overlay)
                 .setLight(light);
-
         // 顶点2
         consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z)
                 .setNormal(pose, normalX, normalY, normalZ)
@@ -403,8 +385,14 @@ public class RenderUtils {
                 .setColor(r, g, b, a)
                 .setOverlay(overlay)
                 .setLight(light);
-
         // 顶点3
+        consumer.addVertex(matrix, (float) p3.x, (float) p3.y, (float) p3.z)
+                .setNormal(pose, normalX, normalY, normalZ)
+                .setUv(u3, v3)
+                .setColor(r, g, b, a)
+                .setOverlay(overlay)
+                .setLight(light);
+        // 由于MC的渲染引擎只支持四边形，所以需要再给一个点 顶点3
         consumer.addVertex(matrix, (float) p3.x, (float) p3.y, (float) p3.z)
                 .setNormal(pose, normalX, normalY, normalZ)
                 .setUv(u3, v3)

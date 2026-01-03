@@ -1,11 +1,8 @@
 package com.sakpeipei.undertale.entity.ai.goal;
 
-import com.sakpeipei.undertale.entity.IAnimatable;
-import com.sakpeipei.undertale.entity.common.anim.AnimType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
-import org.jetbrains.annotations.NotNull;
 
 
 /**
@@ -13,12 +10,12 @@ import org.jetbrains.annotations.NotNull;
  * @since 2025-11-23 21:21
  * 带有服务端触发客户端AnimType接口的任意动画类型的GOAL执行器
  */
-public abstract class AbstractAnimGoal extends Goal {
+public abstract class AnimGoal extends Goal {
     protected final Mob mob;
     protected int animTick;
     protected int cooldownEndTick;
 
-    public AbstractAnimGoal(Mob mob) {
+    public AnimGoal(Mob mob) {
         this.mob = mob;
     }
 
@@ -43,7 +40,15 @@ public abstract class AbstractAnimGoal extends Goal {
         animTick++;
     }
 
+    @Override
+    public void stop() {
+        this.cooldownEndTick = getCooldown() + mob.tickCount;
+    }
+
     protected abstract int getDuration();
+    protected abstract int getCooldown();
+
+
 
     @Override
     public boolean requiresUpdateEveryTick() {
