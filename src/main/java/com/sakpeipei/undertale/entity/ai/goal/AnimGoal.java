@@ -12,7 +12,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
  */
 public abstract class AnimGoal extends Goal {
     protected final Mob mob;
-    protected int animTick;
+    protected int tick;
     protected int cooldownEndTick;
 
     public AnimGoal(Mob mob) {
@@ -27,17 +27,22 @@ public abstract class AnimGoal extends Goal {
 
     @Override
     public void start() {
-        animTick = 0;
+        tick = 0;
     }
 
+    /**
+     *  goal系统的分成两步执行，偶数tickCount才会执行canUse和canContinueToUse进判断
+     *  奇数不会，奇数在开启了requiresUpdateEveryTick的情况下，会直接执行tick
+     *  所以建议动画时长设置成偶数，不要奇数，否则会多执行一tick
+     */
     @Override
     public boolean canContinueToUse() {
-        return animTick < getDuration();
+        return tick < getDuration();
     }
 
     @Override
     public void tick() {
-        animTick++;
+        tick++;
     }
 
     @Override
@@ -47,8 +52,6 @@ public abstract class AnimGoal extends Goal {
 
     protected abstract int getDuration();
     protected abstract int getCooldown();
-
-
 
     @Override
     public boolean requiresUpdateEveryTick() {

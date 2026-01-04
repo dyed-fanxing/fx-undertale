@@ -5,7 +5,7 @@ import com.mojang.math.Axis;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.model.entity.GasterBlasterFixedModel;
 import com.sakpeipei.undertale.client.render.layer.GasterBlasterEyesLayer;
-import com.sakpeipei.undertale.entity.summon.GasterBlasterFixed;
+import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -15,14 +15,14 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
-public class GasterBlasterFixedRender extends GeoEntityRenderer<GasterBlasterFixed> {
-    public GasterBlasterFixedRender(EntityRendererProvider.Context renderManager) {
+public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
+    public GasterBlasterRender(EntityRendererProvider.Context renderManager) {
         super(renderManager, new GasterBlasterFixedModel());
         this.addRenderLayer(new GasterBlasterEyesLayer<>(this, ResourceLocation.fromNamespaceAndPath(Undertale.MODID,"textures/entity/gaster_blaster_eyes.png")));
     }
 
     @Override
-    protected void applyRotations(GasterBlasterFixed animatable, PoseStack poseStack,
+    protected void applyRotations(GasterBlaster animatable, PoseStack poseStack,
                                   float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
         poseStack.mulPose(Axis.YP.rotationDegrees(-animatable.getYRot()));
         poseStack.mulPose(Axis.XP.rotationDegrees(animatable.getXRot()));
@@ -30,13 +30,13 @@ public class GasterBlasterFixedRender extends GeoEntityRenderer<GasterBlasterFix
     }
 
     @Override
-    public void render(@NotNull GasterBlasterFixed entity, float entityYaw, float partialTick, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+    public void render(@NotNull GasterBlaster entity, float entityYaw, float partialTick, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
         GasterBlasterBeamRenderer.render(entity, partialTick, poseStack, bufferSource, packedLight);
     }
 
     @Override
-    public boolean shouldRender(@NotNull GasterBlasterFixed entity, @NotNull Frustum frustum, double cameraX, double cameraY, double cameraZ) {
+    public boolean shouldRender(@NotNull GasterBlaster entity, @NotNull Frustum frustum, double cameraX, double cameraY, double cameraZ) {
         // 如果实体本身在视锥内，直接渲染
         if (super.shouldRender(entity, frustum, cameraX, cameraY, cameraZ)) {
             return true;

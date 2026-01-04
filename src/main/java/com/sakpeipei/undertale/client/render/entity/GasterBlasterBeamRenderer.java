@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.logging.LogUtils;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.entity.summon.GasterBlasterFixed;
+import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.undertale.utils.RenderUtils;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -14,7 +14,6 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.Vec3;
 
 public class GasterBlasterBeamRenderer{
     // 侧面材质：四周面
@@ -34,7 +33,7 @@ public class GasterBlasterBeamRenderer{
      * 渲染固定 GB
      * @param partialTicks 部分刻时间（用于平滑动画）
      */
-    public static void render(GasterBlasterFixed entity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight){
+    public static void render(GasterBlaster entity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight){
         poseStack.pushPose(); // 在这里压栈
         float width = entity.getWidth();
         float halfWidth = width * 0.5f;

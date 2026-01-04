@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.registry;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.undertale.entity.projectile.GroundBoneProjectile;
-import com.sakpeipei.undertale.entity.summon.GasterBlasterFixed;
+import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.undertale.entity.boss.Sans;
 import com.sakpeipei.undertale.entity.summon.GroundBone;
@@ -27,9 +27,9 @@ public class EntityTypeRegistry {
     }
 
 
-    public static final DeferredHolder<EntityType<?>,EntityType<GasterBlasterFixed>> GASTER_BLASTER_FIXED =
+    public static final DeferredHolder<EntityType<?>,EntityType<GasterBlaster>> GASTER_BLASTER_FIXED =
             ENTITY_TYPES.register("gaster_blaster_fixed",
-                    () -> EntityType.Builder.<GasterBlasterFixed>of(GasterBlasterFixed::new, MobCategory.MISC)
+                    () -> EntityType.Builder.<GasterBlaster>of(GasterBlaster::new, MobCategory.MISC)
                             .sized(1.5f, 1f)  // 碰撞箱
                             .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
                             .build(ResourceLocation.fromNamespaceAndPath(Undertale.MODID,"gaster_blaster").toString())

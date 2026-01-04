@@ -1,4 +1,4 @@
-package com.sakpeipei.undertale.effect;
+package com.sakpeipei.undertale.mobEffect;
 
 import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.entity.attachment.KaramAttackData;

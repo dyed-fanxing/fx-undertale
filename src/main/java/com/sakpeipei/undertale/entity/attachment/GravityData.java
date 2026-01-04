@@ -15,15 +15,21 @@ import org.joml.Quaternionf;
  * 重力方向数据 - 存储实体的重力状态
  */
 public class GravityData {
-    private Vec3 gravityDirection = new Vec3(0, -1, 0);
+    // 控制方向
+    private Vec3 vec3 = new Vec3(0, -1, 0);
     private Vec3 previousGravityDirection = new Vec3(0, -1, 0);
     private int transitionTicks = 0;
     private static final int TRANSITION_DURATION = 10;
-
+    /**
+     * 是否激活重力，标记控制是否为重力控制
+     * 若为true，则会改变目标姿态和局部重力
+     * 若为false，则只是给予目标冲量
+     */
+    private boolean active;
     // Codec用于序列化，支持网络同步
     public static final Codec<GravityData> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
-                    Vec3.CODEC.fieldOf("gravityDirection").forGetter(data -> data.gravityDirection),
+                    Vec3.CODEC.fieldOf("vec3").forGetter(data -> data.vec3),
                     Vec3.CODEC.fieldOf("previousGravityDirection").forGetter(data -> data.previousGravityDirection),
                     Codec.INT.fieldOf("transitionTicks").forGetter(data -> data.transitionTicks)
             ).apply(instance, GravityData::new)
@@ -32,33 +38,28 @@ public class GravityData {
     // 构造方法
     public GravityData() {}
 
-    public GravityData(Vec3 gravityDirection, Vec3 previousGravityDirection, int transitionTicks) {
-        this.gravityDirection = gravityDirection;
+    public GravityData(Vec3 vec3, Vec3 previousGravityDirection, int transitionTicks) {
+        this.vec3 = vec3;
         this.previousGravityDirection = previousGravityDirection;
         this.transitionTicks = transitionTicks;
     }
 
     // Getter 和 Setter 方法
-    public Vec3 getGravityDirection() {
-        return gravityDirection;
+    public Vec3 getVec3() {
+        return vec3;
+    }
+    public boolean isActive() {
+        return active;
     }
 
     public void setGravityDirection(Vec3 direction) {
-        this.previousGravityDirection = this.gravityDirection;
-        this.gravityDirection = direction.normalize();
+        this.previousGravityDirection = this.vec3;
+        this.vec3 = direction.normalize();
         this.transitionTicks = TRANSITION_DURATION;
     }
 
     public Vec3 getPreviousGravityDirection() {
         return previousGravityDirection;
-    }
-
-    public Vec3 getUpDirection() {
-        return gravityDirection.reverse();
-    }
-
-    public Vec3 getDownDirection() {
-        return gravityDirection;
     }
 
     /**
@@ -94,10 +95,10 @@ public class GravityData {
     public Quaternionf getRotationQuaternion() {
         if (transitionTicks > 0) {
             float progress = 1.0f - (transitionTicks / (float) TRANSITION_DURATION);
-            Vec3 interpolated = lerp(previousGravityDirection, gravityDirection, progress);
+            Vec3 interpolated = lerp(previousGravityDirection, vec3, progress);
             return getRotationFromTo(new Vec3(0, -1, 0), interpolated);
         }
-        return getRotationFromTo(new Vec3(0, -1, 0), gravityDirection);
+        return getRotationFromTo(new Vec3(0, -1, 0), vec3);
     }
 
     public void tick() {

@@ -4,7 +4,6 @@ import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.particle.BallGrowParticle;
 import com.sakpeipei.undertale.client.particle.LightStreakParticle;
 import com.sakpeipei.undertale.client.render.entity.*;
-import com.sakpeipei.undertale.client.render.entity.*;
 import com.sakpeipei.undertale.network.AnimIDPacket;
 import com.sakpeipei.undertale.network.GasterBlasterProPacket;
 import com.sakpeipei.undertale.network.KaramPacket;
@@ -31,7 +30,7 @@ public class Setup {
      */
     @SubscribeEvent
     public static void registerRendererHandler(final EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), GasterBlasterFixedRender::new);
+        event.registerEntityRenderer(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), GasterBlasterRender::new);
         event.registerEntityRenderer(EntityTypeRegistry.GASTER_BLASTER_PRO.get(), GasterBlasterProRender::new);
         event.registerEntityRenderer(EntityTypeRegistry.SANS.get(), SansRender::new);
         event.registerEntityRenderer(EntityTypeRegistry.FLYING_BONE.get(), FlyingBoneRender::new);

@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.registry;
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.effect.KarmaMobEffect;
+import com.sakpeipei.undertale.mobEffect.KarmaMobEffect;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;

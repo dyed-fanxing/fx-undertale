@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.item;
 
 import com.sakpeipei.undertale.client.render.item.GasterBlasterFixedItemRender;
-import com.sakpeipei.undertale.entity.summon.GasterBlasterFixed;
+import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import com.sakpeipei.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.undertale.registry.ItemRegistry;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -54,10 +54,10 @@ public class GasterBlasterFixedItem extends Item implements GeoItem {
 
         if (!level.isClientSide()) {
             // 1. 射线检测，获取终点射击位置
-            HitResult hitResult = player.pick(GasterBlasterFixed.DEFAULT_LENGTH, 1.0f, false);
+            HitResult hitResult = player.pick(GasterBlaster.DEFAULT_LENGTH, 1.0f, false);
             Vec3 targetPos = hitResult.getLocation();;
             // 2. 创建炮台实体
-            GasterBlasterFixed blaster = new GasterBlasterFixed(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), level, player,1.0f);
+            GasterBlaster blaster = new GasterBlaster(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), level, player,1.0f);
             // 2. 计算炮台生成位置（圆形分布） //向上安全距离的向量
             double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
             blaster.setPos(player.position().add(new Vec3(0,safeDistance,0)
