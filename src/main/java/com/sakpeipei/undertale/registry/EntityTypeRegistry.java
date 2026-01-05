@@ -27,8 +27,8 @@ public class EntityTypeRegistry {
     }
 
 
-    public static final DeferredHolder<EntityType<?>,EntityType<GasterBlaster>> GASTER_BLASTER_FIXED =
-            ENTITY_TYPES.register("gaster_blaster_fixed",
+    public static final DeferredHolder<EntityType<?>,EntityType<GasterBlaster>> GASTER_BLASTER =
+            ENTITY_TYPES.register("gaster_blaster",
                     () -> EntityType.Builder.<GasterBlaster>of(GasterBlaster::new, MobCategory.MISC)
                             .sized(1.5f, 1f)  // 碰撞箱
                             .clientTrackingRange(4)  // 客户端同步范围，以区块为单位

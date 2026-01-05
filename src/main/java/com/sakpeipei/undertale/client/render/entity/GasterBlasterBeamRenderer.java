@@ -1,7 +1,9 @@
 package com.sakpeipei.undertale.client.render.entity;
 
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.logging.LogUtils;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.Undertale;
@@ -9,20 +11,37 @@ import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.undertale.utils.RenderUtils;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 
-public class GasterBlasterBeamRenderer{
+import static net.minecraft.client.renderer.RenderStateShard.*;
+
+public class GasterBlasterBeamRenderer {
     // 侧面材质：四周面
     private static final ResourceLocation SIDE = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/beam/side.png");
     // 正面材质：前后面
     private static final ResourceLocation FRONT = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/beam/front.png");
 
     private static final RenderType BEAM_SIDE_TYPE = RenderType.entityTranslucentEmissive(SIDE);
-    private static final RenderType BEAM_FRONT_TYPE = RenderType.entityTranslucentEmissive(FRONT);
+    private static final RenderType BEAM_FRONT_TYPE = RenderType.create(
+            "gb_beam",
+            DefaultVertexFormat.BLOCK,
+            VertexFormat.Mode.QUADS,
+            1536,
+            false,
+            false,
+            RenderType.CompositeState.builder()
+                    .setShaderState(RENDERTYPE_BEACON_BEAM_SHADER)
+                    .setTextureState(new RenderStateShard.TextureStateShard(FRONT, false, false))
+                    .setTransparencyState(NO_TRANSPARENCY)
+                    .setWriteMaskState(COLOR_DEPTH_WRITE)
+                    .setCullState(NO_CULL)
+                    .createCompositeState(false)
+    );
     // 浅灰白色（220,220,220,255）
     static int r=220, g=220, b=220,a = 255;
 

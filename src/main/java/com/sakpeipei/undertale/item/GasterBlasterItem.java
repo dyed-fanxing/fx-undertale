@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.item;
 
-import com.sakpeipei.undertale.client.render.item.GasterBlasterFixedItemRender;
+import com.sakpeipei.undertale.client.render.item.GasterBlasterItemRender;
 import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import com.sakpeipei.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.undertale.registry.ItemRegistry;
@@ -25,12 +25,12 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.function.Consumer;
 
-public class GasterBlasterFixedItem extends Item implements GeoItem {
+public class GasterBlasterItem extends Item implements GeoItem {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     private static final int CD_TICK = 20; // 1秒
 
-    public GasterBlasterFixedItem(Properties properties) {
+    public GasterBlasterItem(Properties properties) {
         super(properties.stacksTo(1));
     }
 
@@ -57,7 +57,7 @@ public class GasterBlasterFixedItem extends Item implements GeoItem {
             HitResult hitResult = player.pick(GasterBlaster.DEFAULT_LENGTH, 1.0f, false);
             Vec3 targetPos = hitResult.getLocation();;
             // 2. 创建炮台实体
-            GasterBlaster blaster = new GasterBlaster(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), level, player,1.0f);
+            GasterBlaster blaster = new GasterBlaster(EntityTypeRegistry.GASTER_BLASTER.get(), level, player,1.0f,(short) 2000);
             // 2. 计算炮台生成位置（圆形分布） //向上安全距离的向量
             double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
             blaster.setPos(player.position().add(new Vec3(0,safeDistance,0)
@@ -89,11 +89,11 @@ public class GasterBlasterFixedItem extends Item implements GeoItem {
     @Override
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         consumer.accept(new GeoRenderProvider() {
-            private GasterBlasterFixedItemRender render;
+            private GasterBlasterItemRender render;
             @Override
             public @NotNull BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
                 if (render == null) {
-                    render = new GasterBlasterFixedItemRender();
+                    render = new GasterBlasterItemRender();
                 }
                 return render;
             }

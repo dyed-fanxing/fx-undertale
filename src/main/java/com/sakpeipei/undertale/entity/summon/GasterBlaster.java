@@ -60,6 +60,9 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
     public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner, float width) {
         this(type, level,owner,width,(byte) 18,(short) 46);
     }
+    public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner, float width,short discard) {
+        this(type, level,owner,width,(byte) 18,discard);
+    }
     public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner, float width, byte charge, short discard) {
         this(type,level);
         super.setNoGravity(true);
@@ -102,14 +105,14 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
         // 获取攻击方向向量（从目标指向炮台）
         Vec3 attackDirection = end.subtract(start).normalize();
         // 检测光束路径上的所有活体
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i <= 16; i++) {
             Vec3 scale = attackDirection.scale(i).add(start);
             if(this.level() instanceof  ServerLevel level){
                 level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, scale.x,scale.y,scale.z,1,0.0,0.0,0.0,0.0);
             }
         }
         List<LivingEntity> livingEntities = level().getEntitiesOfClass(LivingEntity.class, new AABB(start, end).inflate(getWidth() * 0.5), this::canHitTarget)
-                .stream().filter(target -> target.getBoundingBox().inflate(getWidth() * 0.5).clip(start, end).isPresent())
+                .stream().filter(target -> target.getBoundingBox().clip(start, end).isPresent())
                 .sorted(Comparator.comparingDouble(e -> e.distanceToSqr(start))).toList();
         for (LivingEntity target : livingEntities) {
             applyDamage(target);
@@ -136,37 +139,22 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "attack",  state -> {
             AnimationController<GasterBlaster> controller = state.getController();
-//            if(controller.getAnimationState() == AnimationController.State.STOPPED){
-//                GasterBlaster animatable = state.getAnimatable();
-//                byte charge = this.getCharge();
-//                short discard = this.getDiscard();
-//                if(animatable.tickCount < charge){
-//                    controller.setAnimation(CHARGE_ANIM);
-//                    controller.setAnimationSpeed(20.0/charge);
-//                }else if(animatable.tickCount == charge){
-//                    controller.setAnimation(ANTICIPATION_ANIM);
-//                }else if (animatable.tickCount <= discard){
-//                    controller.setAnimation(FIRE_ANIM);
-//                    controller.setAnimationSpeed(20.0/(discard - charge));
-//                }else{
-//                    controller.setAnimation(DECAY_ANIM);
-//                }
-//            }
             if(controller.getAnimationState() == AnimationController.State.STOPPED){
-                state.setAndContinue(WHOLE_ANIM);
-            }
-            controller.setAnimationSpeedHandler(animatable -> {
+                GasterBlaster animatable = state.getAnimatable();
                 byte charge = this.getCharge();
                 short discard = this.getDiscard();
                 if(animatable.tickCount < charge){
-                    return 20.0/charge;
+                    controller.setAnimation(CHARGE_ANIM);
+                    controller.setAnimationSpeed(20.0/charge);
                 }else if(animatable.tickCount == charge){
-                    return 20.0;
+                    controller.setAnimation(ANTICIPATION_ANIM);
                 }else if (animatable.tickCount <= discard){
+                    controller.setAnimation(FIRE_ANIM);
                     controller.setAnimationSpeed(20.0/(discard - charge));
+                }else{
+                    controller.setAnimation(DECAY_ANIM);
                 }
-                return 1.0;
-            });
+            }
             return PlayState.CONTINUE;
         }));
     }

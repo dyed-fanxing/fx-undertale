@@ -1,5 +1,6 @@
 package com.sakpeipei.undertale.client.render.entity;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.Undertale;
@@ -32,6 +33,7 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     @Override
     public void render(@NotNull GasterBlaster entity, float entityYaw, float partialTick, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        RenderSystem.depthMask(true);
         GasterBlasterBeamRenderer.render(entity, partialTick, poseStack, bufferSource, packedLight);
     }
 

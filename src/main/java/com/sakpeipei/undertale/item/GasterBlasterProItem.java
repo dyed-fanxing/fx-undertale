@@ -33,7 +33,7 @@ import software.bernie.geckolib.animation.AnimatableManager;
 
 import java.util.function.Consumer;
 
-public class GasterBlasterProItem extends GasterBlasterFixedItem {
+public class GasterBlasterProItem extends GasterBlasterItem {
 
 
     public static final String GASTER_BLASTER_PRO_KEY = Undertale.MODID + ":gaster_blaster_pro";

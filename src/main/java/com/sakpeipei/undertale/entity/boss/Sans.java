@@ -1360,7 +1360,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     }
 
     private GasterBlaster createGBFixed(float width) {
-        GasterBlaster gb = new GasterBlaster(EntityTypeRegistry.GASTER_BLASTER_FIXED.get(), this.level(), this, width);
+        GasterBlaster gb = new GasterBlaster(EntityTypeRegistry.GASTER_BLASTER.get(), this.level(), this, width);
         gb.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(UUID.randomUUID().toString(), (byte) 10));
         return gb;
     }

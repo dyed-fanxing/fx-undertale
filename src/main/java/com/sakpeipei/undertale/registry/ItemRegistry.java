@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.registry;
 
-import com.sakpeipei.undertale.item.GasterBlasterFixedItem;
+import com.sakpeipei.undertale.item.GasterBlasterItem;
 import com.sakpeipei.undertale.item.GasterBlasterProItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -25,7 +25,7 @@ public class ItemRegistry {
         CREATIVE_MODE_TABS.register(bus);
     }
 
-    public static final DeferredItem<Item> GASTER_BLASTER = ITEMS.registerItem("gaster_blaster", GasterBlasterFixedItem::new);//使用注册器注册物品，并返回注册的物品
+    public static final DeferredItem<Item> GASTER_BLASTER = ITEMS.registerItem("gaster_blaster", GasterBlasterItem::new);//使用注册器注册物品，并返回注册的物品
     public static final DeferredItem<Item> GASTER_BLASTER_PRO = ITEMS.registerItem("gaster_blaster_pro", GasterBlasterProItem::new);//使用注册器注册物品，并返回注册的物品
 
     // 创建创造标签页，并添加物品，放置在战斗标签页之后
