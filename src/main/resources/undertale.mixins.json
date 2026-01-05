@@ -7,7 +7,7 @@
         "AbstractArrowMixin",
         "LivingEntityGravityMixin",
         "ServerGamePacketListenerImplMixin",
-        "SimpleEntityGroundMixin"
+        "EntityGroundMixin"
     ],
     "client": [
         "BlackScreenTeleportMixin",

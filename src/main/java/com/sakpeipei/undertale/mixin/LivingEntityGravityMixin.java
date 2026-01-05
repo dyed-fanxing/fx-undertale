@@ -33,19 +33,25 @@ public abstract class LivingEntityGravityMixin {
 
             if (gravityData.isActive()) {
                 // 获取重力数据
-                Vec3 gravityVec = gravityData.getVec3().normalize();
-                double gravityStrength = entity.getGravity();
+                Vec3 g = gravityData.getVec3().normalize();
+                double g0 = entity.getGravity();
+
+                double dy = entity.getDeltaMovement().dot(g);
+
+                if (dy < 0 && entity.hasEffect(MobEffects.SLOW_FALLING)) {
+                    g0 = Math.min(g0, 0.01);
+                }
 
                 // === 1. 检测局部"地面" ===
                 AABB groundBox = entity.getBoundingBox()
-                        .expandTowards(gravityVec.scale(0.1))
+                        .expandTowards(g.scale(0.1))
                         .inflate(-0.05, -0.05, -0.05);
                 boolean onLocalGround = !entity.level().noCollision(entity, groundBox);
 
                 // === 2. 计算局部摩擦 ===
                 float friction = 0.91F;
                 if (onLocalGround) {
-                    Vec3 checkPos = entity.position().add(gravityVec.scale(0.1));
+                    Vec3 checkPos = entity.position().add(g.scale(0.1));
                     BlockPos blockPos = BlockPos.containing(checkPos);
                     friction = entity.level().getBlockState(blockPos)
                             .getFriction(entity.level(), blockPos, entity) * 0.91F;
@@ -56,12 +62,12 @@ public abstract class LivingEntityGravityMixin {
                 Vec3 input = new Vec3(xxa, yya, zza);
                 if (input.lengthSqr() > 0.0001) {
                     // 计算局部坐标系
-                    Vec3 up = gravityVec.reverse();
+                    Vec3 up = g.reverse();
                     Vec3 lookVec = entity.getLookAngle();
-                    double dot = lookVec.dot(gravityVec);
-                    Vec3 forward = lookVec.subtract(gravityVec.scale(dot));
+                    double dot = lookVec.dot(g);
+                    Vec3 forward = lookVec.subtract(g.scale(dot));
                     if (forward.lengthSqr() < 0.001) {
-                        forward = new Vec3(0, 0, 1).subtract(gravityVec.scale(gravityVec.z));
+                        forward = new Vec3(0, 0, 1).subtract(g.scale(g.z));
                     }
                     forward = forward.normalize();
                     Vec3 right = new Vec3(
@@ -84,25 +90,25 @@ public abstract class LivingEntityGravityMixin {
 
                 if (entity.isInWater() || entity.isInLava()) {
                     // 流体中：减弱重力
-                    double fluidGravity = gravityStrength * 0.02;
-                    velocity = velocity.add(gravityVec.scale(fluidGravity)).add(movement).scale(0.8);
+                    double fluidGravity = g0 * 0.02;
+                    velocity = velocity.add(g.scale(fluidGravity)).add(movement).scale(0.8);
                 } else if (entity.isFallFlying()) {
                     // 鞘翅飞行：修改重力方向
-                    velocity = velocity.add(gravityVec.scale(gravityStrength * 0.5));
+                    velocity = velocity.add(g.scale(g0 * 0.5));
                     Vec3 lookVec = entity.getLookAngle();
                     float pitch = entity.getXRot() * Mth.DEG_TO_RAD;
                     double cosPitch = Math.cos(pitch);
                     double lift = cosPitch * cosPitch * Math.min(1.0, lookVec.length() / 0.4);
-                    velocity = velocity.add(gravityVec.scale(-1.0 + lift * 0.75));
+                    velocity = velocity.add(g.scale(-1.0 + lift * 0.75));
                 } else if (entity.onClimbable()) {
                     // 爬梯子：忽略局部重力
                     if (velocity.y > 0) {
-                        velocity = velocity.add(0, -gravityStrength * 0.5, 0);
+                        velocity = velocity.add(0, -g0 * 0.5, 0);
                     }
                 } else {
                     // === 5. 正常移动（核心逻辑） ===
                     // 应用重力和移动
-                    velocity = velocity.add(gravityVec.scale(gravityStrength)).add(movement);
+                    velocity = velocity.add(g.scale(g0)).add(movement);
 
                     // 应用摩擦
                     if (onLocalGround) {
@@ -112,9 +118,9 @@ public abstract class LivingEntityGravityMixin {
                                 velocity.z * friction
                         );
                         // 抵消向下的速度
-                        double gravityDot = velocity.dot(gravityVec);
+                        double gravityDot = velocity.dot(g);
                         if (gravityDot < 0) {
-                            velocity = velocity.add(gravityVec.scale(-gravityDot * 0.5));
+                            velocity = velocity.add(g.scale(-gravityDot * 0.5));
                         }
                     } else {
                         velocity = velocity.multiply(1.0, 0.98, 1.0);
@@ -126,10 +132,10 @@ public abstract class LivingEntityGravityMixin {
                     // 防止卡地
                     if (onLocalGround) {
                         AABB pushBox = entity.getBoundingBox()
-                                .expandTowards(gravityVec.scale(0.05))
+                                .expandTowards(g.scale(0.05))
                                 .inflate(-0.01, -0.01, -0.01);
                         if (!entity.level().noCollision(entity, pushBox)) {
-                            entity.setDeltaMovement(entity.getDeltaMovement().add(gravityVec.reverse().scale(0.05)));
+                            entity.setDeltaMovement(entity.getDeltaMovement().add(g.reverse().scale(0.05)));
                             entity.hurtMarked = true;
                         }
                     }
