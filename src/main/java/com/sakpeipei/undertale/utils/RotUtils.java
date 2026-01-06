@@ -8,7 +8,7 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * 单位向量旋转工具
+ * 向量旋转工具
  */
 public class RotUtils {
     // 航偏角度，同MC默认lookAt方法计算方式，对齐MC世界坐标Z轴
@@ -27,6 +27,7 @@ public class RotUtils {
     public static float xRotD(double y,double hd) {
         return Mth.wrapDegrees((float)(-(Mth.atan2(y, hd) * Mth.RAD_TO_DEG)));
     }
+
 
     // 航偏弧度，同MC默认lookAt方法计算方式，对齐MC世界坐标Z轴
     public static float yRotR(Vec3 vec3) {

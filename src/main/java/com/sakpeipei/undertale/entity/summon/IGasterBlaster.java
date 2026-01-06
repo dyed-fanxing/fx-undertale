@@ -2,6 +2,7 @@ package com.sakpeipei.undertale.entity.summon;
 
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -14,9 +15,21 @@ public interface IGasterBlaster extends TraceableEntity{
     @Override
     LivingEntity getOwner();
     void setOwner(LivingEntity owner) ;
-    float getLength() ;
-    float getWidth() ;
+
+    float getSize();
+    float getMonthHeight();
     void checkHit();
+
+    /**
+     * 光束攻击起点，即嘴（炮口位置）
+     */
+    // 光束攻击起点
+    default Vec3 getStart(){
+        return ((Entity) this).position().add(0,getMonthHeight(),0);
+    }
+    // 光束攻击终点
+    Vec3 getEnd();
+    void setEnd(Vec3 end);
     /**
      * 能否攻击目标
      */

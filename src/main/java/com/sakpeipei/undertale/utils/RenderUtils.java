@@ -3,6 +3,7 @@ package com.sakpeipei.undertale.utils;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.logging.LogUtils;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -190,9 +191,23 @@ public class RenderUtils {
                 .setOverlay(overlay)
                 .setLight(light);
     }
-
     /**
-     * 修正的圆柱体渲染（正确的逆时针顺序）
+     * 胶囊体
+     */
+    public static void renderCapsule(PoseStack poseStack, VertexConsumer consumer, float radius, float length, byte segments,
+                                      int r, int g, int b, int a, int overlay, int light) {
+        // 首端球
+        RenderUtils.renderSphere(poseStack.last(),consumer, radius, segments,r, g, b, a, overlay, light);
+        // 圆柱
+        RenderUtils.renderCylinder(poseStack.last(), consumer, radius, length, segments,r,g,b,a,overlay, light);
+        // 尾端球
+        poseStack.pushPose();
+        poseStack.translate(0,0,length);
+        RenderUtils.renderSphere(poseStack.last(),consumer, radius, segments,r, g, b, a,overlay, light);
+        poseStack.popPose();
+    }
+    /**
+     * 圆柱体
      */
     public static void renderCylinder(PoseStack.Pose pose, VertexConsumer consumer, float radius, float height, int segments,
                                       int r, int g, int b, int a, int overlay, int light) {
@@ -224,13 +239,12 @@ public class RenderUtils {
     }
 
     /**
-     * 球体渲染
+     * 球体
      *
      * @param segments 水平段数，即经线，经度，Theta，θ
      */
-    public static void renderSphere(PoseStack.Pose pose, VertexConsumer consumer, float radius, int segments,
+    public static void renderSphere(PoseStack.Pose pose, VertexConsumer consumer, float radius, byte segments,
                                     int r, int g, int b, int a, int overlay, int light) {
-        segments = Math.max(segments, 32);
         int latSegments = segments / 2; // 垂直段数，纬线，维度，Phi，Φ
         // 预计算角度增量
         float deltaTheta = Mth.TWO_PI / segments;

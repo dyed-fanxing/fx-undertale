@@ -4,10 +4,7 @@ import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.particle.BallGrowParticle;
 import com.sakpeipei.undertale.client.particle.LightStreakParticle;
 import com.sakpeipei.undertale.client.render.entity.*;
-import com.sakpeipei.undertale.network.AnimIDPacket;
-import com.sakpeipei.undertale.network.GasterBlasterProPacket;
-import com.sakpeipei.undertale.network.KaramPacket;
-import com.sakpeipei.undertale.network.WarningTipAABBPacket;
+import com.sakpeipei.undertale.network.*;
 import com.sakpeipei.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.undertale.registry.ParticleRegistry;
 import net.neoforged.api.distmarker.Dist;
@@ -61,6 +58,7 @@ public class Setup {
         registrar.playToClient(KaramPacket.TYPE,KaramPacket.STREAM_CODEC, KaramPacket::handle);
         registrar.playToClient(WarningTipAABBPacket.TYPE, WarningTipAABBPacket.STREAM_CODEC, WarningTipAABBPacket::handle);
         registrar.playToClient(AnimIDPacket.TYPE,AnimIDPacket.STREAM_CODEC, AnimIDPacket::handle);
+        registrar.playToClient(GasterBlasterBeamEndPacket.TYPE,GasterBlasterBeamEndPacket.STREAM_CODEC, GasterBlasterBeamEndPacket::handle);
     }
 }
 

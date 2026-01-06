@@ -1,6 +1,5 @@
 package com.sakpeipei.undertale.client.render.entity;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.Undertale;
@@ -12,7 +11,6 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
@@ -31,22 +29,17 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     }
 
     @Override
-    public void render(@NotNull GasterBlaster entity, float entityYaw, float partialTick, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
-        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-        RenderSystem.depthMask(true);
-        GasterBlasterBeamRenderer.render(entity, partialTick, poseStack, bufferSource, packedLight);
+    public void render(@NotNull GasterBlaster animatable, float entityYaw, float partialTick, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+        super.render(animatable, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+        GasterBlasterBeamRenderer.render(animatable, partialTick, poseStack, bufferSource, packedLight);
     }
 
     @Override
-    public boolean shouldRender(@NotNull GasterBlaster entity, @NotNull Frustum frustum, double cameraX, double cameraY, double cameraZ) {
+    public boolean shouldRender(@NotNull GasterBlaster animatable, @NotNull Frustum frustum, double cameraX, double cameraY, double cameraZ) {
         // 如果实体本身在视锥内，直接渲染
-        if (super.shouldRender(entity, frustum, cameraX, cameraY, cameraZ)) {
+        if (super.shouldRender(animatable, frustum, cameraX, cameraY, cameraZ)) {
             return true;
         }
-        // 检查激光束路径是否在视锥内
-        Vec3 start = entity.position();
-        Vec3 end = start.add(entity.getLookAngle().scale(entity.getLength()));
-        AABB beamAABB = new AABB(start, end).inflate(entity.getWidth() * 0.5);
-        return frustum.isVisible(beamAABB);
+        return frustum.isVisible( new AABB(animatable.getStart(), animatable.getEnd()));
     }
 }

@@ -1,6 +1,7 @@
 package com.sakpeipei.undertale.network;
 
 import com.sakpeipei.undertale.Undertale;
+import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -34,12 +35,10 @@ public record KaramPacket(int entityId,byte value,float absorptionAmount) implem
     public static void handle(KaramPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
-            if (level != null) {
-                if (level.getEntity(packet.entityId) instanceof LivingEntity entity) {
-                    entity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).setValue(packet.value);
-                    if(packet.absorptionAmount != -1){
-                        entity.setAbsorptionAmount(packet.absorptionAmount);
-                    }
+            if (level != null && level.getEntity(packet.entityId) instanceof LivingEntity entity) {
+                entity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).setValue(packet.value);
+                if(packet.absorptionAmount != -1){
+                    entity.setAbsorptionAmount(packet.absorptionAmount);
                 }
             }
         });

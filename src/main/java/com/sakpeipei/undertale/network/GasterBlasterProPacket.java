@@ -1,6 +1,7 @@
 package com.sakpeipei.undertale.network;
 
 import com.sakpeipei.undertale.Undertale;
+import com.sakpeipei.undertale.entity.IAnimatable;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -29,11 +30,8 @@ public record GasterBlasterProPacket(int entityId,short timer) implements Custom
     public static void handle(GasterBlasterProPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
-            if (level != null) {
-                Entity entity = level.getEntity(packet.entityId);
-                if (entity instanceof GasterBlasterPro entity1) {
-                    entity1.timer = packet.timer;
-                }
+            if (level != null && level.getEntity(packet.entityId) instanceof GasterBlasterPro entity) {
+                entity.timer = packet.timer;
             }
         });
     }

@@ -7,9 +7,11 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.logging.LogUtils;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.Undertale;
+import com.sakpeipei.undertale.common.RenderTypes;
 import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.undertale.utils.RenderUtils;
+import com.sakpeipei.undertale.utils.RotUtils;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
@@ -17,6 +19,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 
 import static net.minecraft.client.renderer.RenderStateShard.*;
 
@@ -27,50 +30,38 @@ public class GasterBlasterBeamRenderer {
     private static final ResourceLocation FRONT = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/beam/front.png");
 
     private static final RenderType BEAM_SIDE_TYPE = RenderType.entityTranslucentEmissive(SIDE);
-    private static final RenderType BEAM_FRONT_TYPE = RenderType.create(
-            "gb_beam",
-            DefaultVertexFormat.BLOCK,
-            VertexFormat.Mode.QUADS,
-            1536,
-            false,
-            false,
-            RenderType.CompositeState.builder()
-                    .setShaderState(RENDERTYPE_BEACON_BEAM_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(FRONT, false, false))
-                    .setTransparencyState(NO_TRANSPARENCY)
-                    .setWriteMaskState(COLOR_DEPTH_WRITE)
-                    .setCullState(NO_CULL)
-                    .createCompositeState(false)
-    );
+    private static final RenderType BEAM_FRONT_TYPE = RenderTypes.GB_BEAM.apply(FRONT);
+
     // 浅灰白色（220,220,220,255）
     static int r=220, g=220, b=220,a = 255;
 
     // 圆柱和球体的分段数
-    private static final int SEGMENTS = 32;
+    private static final byte SEGMENTS = 32;
 
     /**
-     * 渲染固定 GB
+     * 渲染 GB
      * @param partialTicks 部分刻时间（用于平滑动画）
      */
-    public static void render(GasterBlaster entity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight){
+    public static  void render(GasterBlaster entity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight){
         poseStack.pushPose(); // 在这里压栈
-        float width = entity.getWidth();
-        float halfWidth = width * 0.5f;
-        translate(entity,entity.getWidth(),poseStack);
-        float partialWidth;
-        byte charge = entity.getCharge();
-        if(entity.tickCount < charge){
-            partialWidth = Mth.lerp((entity.tickCount + partialTicks) / charge, 0, halfWidth);
-            // 替换成立方体为球体
-            RenderUtils.renderSphere(poseStack.last(),buffer.getBuffer(BEAM_FRONT_TYPE), partialWidth, SEGMENTS,
+        float size = entity.getSize();
+        float halfSize = size * 0.5f;
+        byte segments = (byte) Mth.clamp(8 + (Math.round(size) - 1) * 2, 8, 127);
+        Vec3 dir = entity.getEnd().subtract(entity.getStart());
+
+        translate(entity.getMonthHeight(),dir,poseStack);
+        float partialSize;
+        short fireTick = entity.getFireTick();
+        if(entity.tickCount < fireTick){
+            partialSize = Mth.lerp((entity.tickCount + partialTicks) / fireTick, 0, halfSize);
+            RenderUtils.renderSphere(poseStack.last(),buffer.getBuffer(BEAM_FRONT_TYPE), partialSize, segments,
                      r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
+            // 半径
         }else{
-            if(entity.tickCount == entity.getDiscard() ) partialWidth = Mth.lerp(partialTicks,width,0);
-            else {
-                if(entity.tickCount == charge) partialWidth = Mth.lerp(partialTicks,halfWidth,width);
-                else partialWidth = entity.getWidth() + (float) Math.sin((entity.tickCount + partialTicks) * 0.5f) * 0.1f  ;
-            }
-            render(entity.getLength(),partialWidth * 0.5f,poseStack,buffer,packedLight);
+            if(entity.tickCount == fireTick) partialSize = Mth.lerp(partialTicks,halfSize,size);
+            else if(entity.tickCount <= entity.getDecayTick()) partialSize = entity.getSize() + (float) Math.sin((entity.tickCount + partialTicks) * 0.5f) * 0.1f  ;
+            else partialSize = Mth.lerp(partialTicks,size,0);
+            render((float) dir.length(),partialSize * 0.5f,poseStack,buffer.getBuffer(BEAM_FRONT_TYPE),packedLight);
         }
         poseStack.popPose();
     }
@@ -80,53 +71,55 @@ public class GasterBlasterBeamRenderer {
      * @param partialTicks 部分刻时间（用于平滑动画）
      */
     public static void render(GasterBlasterPro entity, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        poseStack.pushPose(); // 在这里压栈
-        translate(entity,entity.getWidth(),poseStack);
-        float width = entity.getWidth();
-        float halfWidth = width * 0.5f;
-        float partialWidth = 0;
-        byte phase = entity.getPhase();
-        switch (phase){
-            case GasterBlasterPro.PHASE_CHARGE -> {
-                partialWidth = Mth.lerp((entity.timer + partialTicks) / GasterBlasterPro.MAX_CHARGE, 0, halfWidth );
-                // 替换成立方体为球体
-                RenderUtils.renderSphere(poseStack.last(),buffer.getBuffer(BEAM_FRONT_TYPE), partialWidth, SEGMENTS,
-                        r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
-                LogUtils.getLogger().info("宽度{}",partialWidth);
-                poseStack.popPose();
-                return;
-            }
-            case GasterBlasterPro.PHASE_ANTICIPATION -> partialWidth = Mth.lerp(partialTicks,halfWidth,width);
-            case GasterBlasterPro.PHASE_FIRE -> partialWidth = width + (float) Math.sin((entity.tickCount + partialTicks) * 0.6f) * 0.1f;
-            case GasterBlasterPro.PHASE_DECAY -> partialWidth = Mth.lerp((entity.timer + partialTicks) / 2, width, 0);
-        }
-        LogUtils.getLogger().info("宽度{}",partialWidth);
-        render(entity.getLength(),partialWidth,poseStack,buffer,packedLight);
-        poseStack.popPose();
+//        poseStack.pushPose(); // 在这里压栈
+//        translate(entity,entity.getSize(),poseStack);
+//        float size = entity.getSize();
+//        float halfSize = size * 0.5f;
+//        float partialSize = 0;
+//        byte phase = entity.getPhase();
+//        switch (phase){
+//            case GasterBlasterPro.PHASE_CHARGE -> {
+//                partialSize = Mth.lerp((entity.timer + partialTicks) / GasterBlasterPro.MAX_CHARGE, 0, halfSize );
+//                // 替换成立方体为球体
+//                RenderUtils.renderSphere(poseStack.last(),buffer.getBuffer(BEAM_FRONT_TYPE), partialSize, SEGMENTS,
+//                        r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
+//                LogUtils.getLogger().info("宽度{}",partialSize);
+//                poseStack.popPose();
+//                return;
+//            }
+//            case GasterBlasterPro.PHASE_ANTICIPATION -> partialSize = Mth.lerp(partialTicks,halfSize,size);
+//            case GasterBlasterPro.PHASE_FIRE -> partialSize = size + (float) Math.sin((entity.tickCount + partialTicks) * 0.6f) * 0.1f;
+//            case GasterBlasterPro.PHASE_DECAY -> partialSize = Mth.lerp((entity.timer + partialTicks) / 2, size, 0);
+//        }
+//        LogUtils.getLogger().info("宽度{}",partialSize);
+//        render(entity.getLength(),partialSize,poseStack,buffer,packedLight);
+//        poseStack.popPose();
     }
 
     /**
      * 统一变换
-     * @param entity 要渲染光束的实体
      * @param poseStack 位姿栈（存储渲染变换矩阵）
+     * @param monthHeight 嘴部高度（炮口高度）
+     * @param dir 射击向量
      */
-    public static void translate(Entity entity,float width,PoseStack poseStack){
-        // 当前栈压入的是entity实体的变换矩阵，是实体局部坐标向量
-        poseStack.translate(0,0.4 * width,0);
-        // 旋转矩阵
-        poseStack.mulPose(Axis.YP.rotationDegrees(-entity.getYRot()));
-        poseStack.mulPose(Axis.XP.rotationDegrees(entity.getXRot()));
+    public static void translate(float monthHeight,Vec3 dir, PoseStack poseStack){
+        poseStack.translate(0,monthHeight,0);
+        poseStack.mulPose(Axis.YP.rotationDegrees(RotUtils.yRotD(dir)));
+        poseStack.mulPose(Axis.XP.rotationDegrees(RotUtils.xRotD(dir)));
     }
 
-    public static void render(float length,float halfPartialWidth,PoseStack poseStack, MultiBufferSource buffer, int packedLight){
-        poseStack.pushPose(); // 在这里压栈
-        length = length + halfPartialWidth;
-        poseStack.translate(0,0,-halfPartialWidth);
-        VertexConsumer sideVertexBuilder = buffer.getBuffer(BEAM_FRONT_TYPE);
-        RenderUtils.renderCylinder(poseStack.last(), sideVertexBuilder, halfPartialWidth, length, SEGMENTS,
+
+    public static void render(float length,float radius,PoseStack poseStack, VertexConsumer consumer, int packedLight){
+        RenderUtils.renderSphere(poseStack.last(),consumer, radius, SEGMENTS,
+                r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
+
+        RenderUtils.renderCylinder(poseStack.last(), consumer, radius, length, SEGMENTS,
                 r,g,b,a,OverlayTexture.NO_OVERLAY, packedLight);
-        poseStack.popPose(); // 在这里弹栈
+        poseStack.pushPose();
+        poseStack.translate(0,0,length);
+        RenderUtils.renderSphere(poseStack.last(),consumer, radius, SEGMENTS,
+                r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
+        poseStack.popPose();
     }
-
 
 }
