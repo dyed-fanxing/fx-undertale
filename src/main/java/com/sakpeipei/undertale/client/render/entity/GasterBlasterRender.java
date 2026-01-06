@@ -40,6 +40,9 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
         if (super.shouldRender(animatable, frustum, cameraX, cameraY, cameraZ)) {
             return true;
         }
-        return frustum.isVisible( new AABB(animatable.getStart(), animatable.getEnd()));
+        if(animatable.getEnd() != null){
+            return frustum.isVisible( new AABB(animatable.getStart(), animatable.getEnd()));
+        }
+        return false;
     }
 }

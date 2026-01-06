@@ -191,10 +191,16 @@ public class RenderUtils {
                 .setOverlay(overlay)
                 .setLight(light);
     }
+
     /**
      * 胶囊体
+     * @param poseStack 栈姿
+     * @param consumer 顶点消费者
+     * @param length 中间圆柱的轴线长度
+     * @param radius 两端半球和圆柱的半径
+     * @param segments 分段数量
      */
-    public static void renderCapsule(PoseStack poseStack, VertexConsumer consumer, float radius, float length, byte segments,
+    public static void renderCapsule(PoseStack poseStack, VertexConsumer consumer,float length, float radius, byte segments,
                                       int r, int g, int b, int a, int overlay, int light) {
         // 首端球
         RenderUtils.renderSphere(poseStack.last(),consumer, radius, segments,r, g, b, a, overlay, light);
@@ -240,7 +246,6 @@ public class RenderUtils {
 
     /**
      * 球体
-     *
      * @param segments 水平段数，即经线，经度，Theta，θ
      */
     public static void renderSphere(PoseStack.Pose pose, VertexConsumer consumer, float radius, byte segments,

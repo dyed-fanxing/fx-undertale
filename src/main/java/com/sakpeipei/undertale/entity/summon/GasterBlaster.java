@@ -5,8 +5,12 @@ import com.sakpeipei.undertale.network.GasterBlasterBeamEndPacket;
 import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
@@ -18,8 +22,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.NeoForgeRenderTypes;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -37,11 +43,13 @@ import java.util.UUID;
  */
 public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithComplexSpawn,GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private final RawAnimation CHARGE_ANIM = RawAnimation.begin().thenPlay("fireTick");
+    private final RawAnimation CHARGE_ANIM = RawAnimation.begin().thenPlay("charge");
     private final RawAnimation ANTICIPATION_ANIM = RawAnimation.begin().thenPlayAndHold("anticipation");
     private final RawAnimation FIRE_ANIM = RawAnimation.begin().thenPlayAndHold("fire");
     private final RawAnimation DECAY_ANIM = RawAnimation.begin().thenPlay("decay");
     public static final float DEFAULT_LENGTH = 16f;    // 默认长度
+
+    private static final EntityDataAccessor<Vector3f> END = SynchedEntityData.defineId(GasterBlaster.class, EntityDataSerializers.VECTOR3);
 
     // 光束宽度
     protected float size;           // 大小
@@ -51,24 +59,27 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
     protected LivingEntity owner;   // 召唤者缓存，用于追踪伤害来源仇恨
     protected Vec3 end;             // 攻击终点
 
-
     protected short fireTick;        // 蓄力转发射Tick点
     protected short decayTick;      // 开始衰退Tick点
-    protected short discardTick;    // 完毕Tick点
 
     public GasterBlaster(EntityType<? extends Entity> type, Level level) {
-        super(type, level);
+        this(type, level,null,1.0f);
+    }
+    public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner) {
+        this(type, level,owner,1.0f,(short) 50);
     }
     public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner, float size) {
-        this(type, level,owner,size,(short) 46);
+        this(type, level,owner,size,(short) 50);
     }
     public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner, float size,short decayTick) {
-        this(type, level,owner,0.4f,size,(short) 18,decayTick);
+        this(type, level,owner,size,0.4f,(short) 18,decayTick);
     }
     public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner, float size,float mouthHeightRatio,short fireTick,short decayTick) {
-        this(type,level);
+        super(type,level);
         super.setNoGravity(true);
-        setOwner(owner);
+        if(owner != null) {
+            setOwner(owner);
+        }
         this.size = size;
         this.mouthHeight = mouthHeightRatio * size;
         this.fireTick = fireTick;
@@ -81,14 +92,31 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
         //只在服务端执行攻击逻辑
         if(!this.level().isClientSide){
             //蓄力，0.88秒 = 17.6T = 18T
-            if(super.tickCount <= fireTick) {
+            // 提前5Tick算出END，同步至客户端，防止到了发射时候才算，同步客户端会有延迟导致开火的一瞬间丢失几帧光束
+            if(tickCount < fireTick - 5 || tickCount > decayTick){
+                if(tickCount > decayTick + 2){
+                    this.discard();
+                }
                 return;
             }
-            if(super.tickCount > discardTick + 2) {
-                this.discard();
-                return;
+            Vec3 start = this.getStart();
+            // 新的攻击终点
+            Vec3 newEnd = start.add(this.getLookAngle().scale(DEFAULT_LENGTH));
+            // 光束的射线检测，如果路径上被方块阻挡，则最终位置替换成该方块位置
+            BlockHitResult clip = level().clip(new ClipContext(start, newEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+            // 攻击终点若为null 或 碰撞的攻击终点位置和上一次的攻击终点位置发生变化，则进行更新
+            if(end == null || end.distanceToSqr(clip.getLocation()) > 0.001 ){
+                end = clip.getLocation();
+                this.entityData.set(END,end.toVector3f());
             }
-            checkHit();
+            if(tickCount > fireTick){
+                List<LivingEntity> livingEntities = level().getEntitiesOfClass(LivingEntity.class, new AABB(start, end).inflate(mouthHeight), this::canHitTarget)
+                        .stream().filter(target -> CollisionDetectionUtils.capsuleIntersectsAABB( start, end, size * 0.5f, target.getBoundingBox()))
+                        .sorted(Comparator.comparingDouble(e -> e.distanceToSqr(start))).toList();
+                for (LivingEntity target : livingEntities) {
+                    applyDamage(target);
+                }
+            }
         }
     }
 
@@ -100,21 +128,12 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
         // 光束的射线检测，如果路径上被方块阻挡，则最终位置替换成该方块位置
         BlockHitResult clip = level().clip(new ClipContext(start, newEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
         // 攻击终点若为null 或 碰撞的攻击终点位置和上一次的攻击终点位置发生变化，则进行更新
-        if(end == null || end.distanceToSqr(clip.getLocation()) > 0.01 ){
+        if(end == null || end.distanceToSqr(clip.getLocation()) > 0.001 ){
             end = clip.getLocation();
-            PacketDistributor.sendToPlayersTrackingEntity(this,new GasterBlasterBeamEndPacket(this.getId(),end));
-        }
-        // 获取攻击方向向量（从目标指向炮台）
-        Vec3 attackDirection = end.subtract(start).normalize();
-        // 检测光束路径上的所有活体
-        for (int i = 0; i <= 16; i++) {
-            Vec3 scale = attackDirection.scale(i).add(start);
-            if(this.level() instanceof  ServerLevel level){
-                level.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, scale.x,scale.y,scale.z,1,0.0,0.0,0.0,0.0);
-            }
+            this.entityData.set(END,end.toVector3f());
         }
         List<LivingEntity> livingEntities = level().getEntitiesOfClass(LivingEntity.class, new AABB(start, end).inflate(mouthHeight), this::canHitTarget)
-                .stream().filter(target -> CollisionDetectionUtils.capsuleIntersectsAABB( start, end, size*0.5f,target.getBoundingBox()))
+                .stream().filter(target -> CollisionDetectionUtils.capsuleIntersectsAABB( start, end, size * 0.5f, target.getBoundingBox()))
                 .sorted(Comparator.comparingDouble(e -> e.distanceToSqr(start))).toList();
         for (LivingEntity target : livingEntities) {
             applyDamage(target);
@@ -122,9 +141,7 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
     }
 
     void applyDamage(LivingEntity target) {
-        Vec3 deltaMovement = target.getDeltaMovement();
-        DamageSource source = damageSources().source( DamageTypes.FRAME, this, getOwner() == null ? this : owner);
-        if(target.hurt(source, damage)){
+        if(target.hurt(damageSources().source( DamageTypes.FRAME, this, getOwner() == null ? this : owner), damage)){
             if (this.level() instanceof ServerLevel serverLevel) {
                 serverLevel.sendParticles(
                         ParticleTypes.SOUL_FIRE_FLAME,
@@ -132,7 +149,6 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
                         10, 0.2, 0.2, 0.2, 0.1
                 );
             }
-            target.setDeltaMovement(deltaMovement); //不击退
         }
     }
 
@@ -169,12 +185,16 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
     }
     @Override
     public Vec3 getEnd() {
-        return end;
+        Vector3f vector3f = this.entityData.get(END);
+        if(end == null || !this.end.toVector3f().equals(vector3f)){
+            this.end = new Vec3(vector3f);
+        }
+        return this.end;
     }
 
     @Override
-    public void setEnd(Vec3 end) {
-        this.end = end;
+    public void setEnd(Vector3f end) {
+        this.end = new Vec3(end);
     }
 
     public short getFireTick() {
@@ -190,19 +210,33 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326003_) {}
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(END,new Vector3f());
+    }
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        ownerUUID = tag.hasUUID("OwnerUUID")?tag.getUUID("OwnerUUID"):null;
-        size = tag.getFloat("Size");
-        mouthHeight = tag.getFloat("MouthHeight");
-        fireTick = tag.getShort("FireTick");
-        decayTick = tag.getShort("DecayTick");
+        if (tag.hasUUID("OwnerUUID")) {
+            ownerUUID = tag.getUUID("OwnerUUID");
+        }
+        if (tag.contains("Size")) {
+            size = tag.getFloat("Size");
+        }
+        if (tag.contains("MouthHeight")) {
+            mouthHeight = tag.getFloat("MouthHeight");
+        }
+        if (tag.contains("FireTick")) {
+            fireTick = tag.getShort("FireTick");
+        }
+        if (tag.contains("DecayTick")) {
+            decayTick = tag.getShort("DecayTick");
+        }
     }
     @Override
-    protected void addAdditionalSaveData(CompoundTag tag) {
-        tag.putUUID("OwnerUUID", ownerUUID);
+    protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
+        if(ownerUUID != null){
+            tag.putUUID("OwnerUUID", ownerUUID);
+        }
         tag.putFloat("Size", size);
         tag.putFloat("MouthHeight",mouthHeight);
         tag.putShort("FireTick", fireTick);
@@ -214,15 +248,16 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
         buffer.writeFloat(size);
         buffer.writeFloat(mouthHeight);
         buffer.writeShort(fireTick);
-        buffer.writeShort(discardTick);
+        buffer.writeShort(decayTick);
     }
 
     @Override
     public void readSpawnData(RegistryFriendlyByteBuf buffer) {
         this.size = buffer.readFloat();
         this.mouthHeight = buffer.readFloat();
-        this.fireTick = buffer.readByte();
-        this.discardTick = buffer.readShort();
+        this.fireTick = buffer.readShort();
+        this.decayTick = buffer.readShort();
+
     }
 
     @Override
@@ -230,26 +265,25 @@ public class GasterBlaster extends Entity implements IGasterBlaster,IEntityWithC
         return cache;
     }
 
-
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "attack",  state -> {
             AnimationController<GasterBlaster> controller = state.getController();
-            if(controller.getAnimationState() == AnimationController.State.STOPPED){
-                GasterBlaster animatable = state.getAnimatable();
-                short fireTick = this.getFireTick();
-                short decayTick = this.getDecayTick();
-                if(animatable.tickCount < fireTick){
-                    controller.setAnimation(CHARGE_ANIM);
-                    controller.setAnimationSpeed(20.0/fireTick);
-                }else if(animatable.tickCount == fireTick){
-                    controller.setAnimation(ANTICIPATION_ANIM);
-                }else if (animatable.tickCount < decayTick){
-                    controller.setAnimation(FIRE_ANIM);
-                    controller.setAnimationSpeed(20.0/(decayTick - fireTick));
-                }else{
-                    controller.setAnimation(DECAY_ANIM);
-                }
+            GasterBlaster animatable = state.getAnimatable();
+            short fireTick = this.getFireTick();
+            short decayTick = this.getDecayTick();
+            if(animatable.tickCount < fireTick){
+                controller.setAnimation(CHARGE_ANIM);
+                controller.setAnimationSpeed(20.0/fireTick);
+            }else if(animatable.tickCount < fireTick + 1){
+                controller.setAnimation(ANTICIPATION_ANIM);
+                controller.setAnimationSpeed(20.0);
+            }else if(animatable.tickCount < decayTick){
+                controller.setAnimation(FIRE_ANIM);
+                controller.setAnimationSpeed(20.0/(decayTick - fireTick));
+            }else{
+                controller.setAnimation(DECAY_ANIM);
+                controller.setAnimationSpeed(10.0);
             }
             return PlayState.CONTINUE;
         }));

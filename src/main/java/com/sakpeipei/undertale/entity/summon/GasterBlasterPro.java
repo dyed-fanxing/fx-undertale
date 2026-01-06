@@ -33,6 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
@@ -161,6 +162,27 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
             }
         }
     }
+
+    @Override
+    public float getSize() {
+        return 0;
+    }
+
+    @Override
+    public float getMonthHeight() {
+        return 0;
+    }
+
+    @Override
+    public Vec3 getEnd() {
+        return null;
+    }
+
+    @Override
+    public void setEnd(Vector3f end) {
+
+    }
+
 
     /**
      * 阶段处理
@@ -394,7 +416,6 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
         this.entityData.set(PHASE,phase);
         timer = 0;
     }
-    @Override
     public float getLength() {
         return super.entityData.get(LENGTH);
     }

@@ -3,6 +3,7 @@ package com.sakpeipei.undertale.entity.summon;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -29,7 +30,7 @@ public interface IGasterBlaster extends TraceableEntity{
     }
     // 光束攻击终点
     Vec3 getEnd();
-    void setEnd(Vec3 end);
+    void setEnd(Vector3f end);
     /**
      * 能否攻击目标
      */
