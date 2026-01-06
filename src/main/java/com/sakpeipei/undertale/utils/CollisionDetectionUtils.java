@@ -1,5 +1,6 @@
 package com.sakpeipei.undertale.utils;
 
+import com.sakpeipei.undertale.Undertale;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
@@ -71,7 +72,8 @@ public class CollisionDetectionUtils {
 
 
     /**
-     * 检测胶囊体与AABB是否碰撞
+     * 检测胶囊体与AABB是否碰撞（胶囊体的定义是圆柱的轴线和两个半球R）
+     * 检测的范围是start到end的圆柱范围，以及两端两个半球的范围
      * @param start 胶囊体起点
      * @param end 胶囊体终点
      * @param r 胶囊体半径
@@ -80,9 +82,10 @@ public class CollisionDetectionUtils {
      */
     public static boolean capsuleIntersectsAABB(Vec3 start, Vec3 end, float r, AABB aabb) {
         // 1. 找到胶囊体线段上离AABB最近的点
-        Vec3 closestOnSegment = getClosestPointOnLine(aabb.getCenter(), start, end);
+        Vec3 closestOnSegment = getClosestPointOnLineSegment(aabb.getCenter(), start, end);
         // 2. 找到AABB上离这个点最近的点
         // 3. 计算两点之间的距离平方 <= 距离平方小于等于半径平方则碰撞为ture，否则 false
+        Undertale.LOGGER.debug("射线检测是否相交：{}，胶囊体检测是否相交：{}",aabb.clip(start,end),aabb.distanceToSqr(closestOnSegment) <= r * r);
         return aabb.distanceToSqr(closestOnSegment) <= r * r;
     }
 
@@ -93,7 +96,7 @@ public class CollisionDetectionUtils {
      * @param end 线段终点
      * @return 线段上最近的点
      */
-    public static Vec3 getClosestPointOnLine(Vec3 point, Vec3 start, Vec3 end) {
+    public static Vec3 getClosestPointOnLineSegment(Vec3 point, Vec3 start, Vec3 end) {
         Vec3 line = end.subtract(start);
         double lineSqr = line.lengthSqr();
         // 线段退化为点
