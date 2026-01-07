@@ -1,11 +1,11 @@
 package com.sakpeipei.undertale.entity.boss;
 
-import com.sakpeipei.undertale.common.RelativeDirection;
+import com.sakpeipei.undertale.common.LocalDirection;
+import com.sakpeipei.undertale.common.LocalVec3;
 import com.sakpeipei.undertale.common.anim.AnimStep;
 import com.sakpeipei.undertale.common.anim.SingleAnim;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.IAnimatable;
-import com.sakpeipei.undertale.entity.ai.goal.AnimGoal;
 import com.sakpeipei.undertale.entity.ai.goal.NeutralMobAngerTargetGoal;
 import com.sakpeipei.undertale.entity.ai.goal.SequenceAnimGoal;
 import com.sakpeipei.undertale.entity.ai.goal.SingleAnimGoal;
@@ -21,6 +21,7 @@ import com.sakpeipei.undertale.network.WarningTipPacket;
 import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.undertale.registry.SoundRegistry;
+import com.sakpeipei.undertale.utils.CoordsUtils;
 import com.sakpeipei.undertale.utils.EntityUtils;
 import com.sakpeipei.undertale.utils.LevelUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
@@ -727,8 +728,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 availableAttacks.addAll(groundAttacks);
                 availableAttacks.add(
                     new SequenceAnim<>(3 + 2 * difficulty, 80, 100, List.of(
-                            new AnimStep<>((byte)  6,0 , 4 , new Object[]{6, ColorAttack.WHITE, 0f, RelativeDirection.FRONT}),
-                            new AnimStep<>((byte) -1,50, 54, new Object[]{6, ColorAttack.AQUA , 0f, RelativeDirection.FRONT})
+                            new AnimStep<>((byte)  6,0 , 4 , new Object[]{6, ColorAttack.WHITE, 0f, LocalDirection.FRONT}),
+                            new AnimStep<>((byte) -1,50, 54, new Object[]{6, ColorAttack.AQUA , 0f, LocalDirection.FRONT})
                     )));
             }
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
@@ -744,8 +745,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         protected int execute(LivingEntity target, AnimStep<Object[]> anim) {
             Object[] action = anim.getAction();
             return switch ((Integer) action[0]) {
-                case 0, 1, 2, 3, 4, 5 -> Sans.this.gravityControl(target, RelativeDirection.values()[anim.getId()]);
-                case 6  -> Sans.this.summonGroundBoneWall(target, (ColorAttack) action[1], (Float) action[2], (RelativeDirection) action[3]);
+                case 0, 1, 2, 3, 4, 5 -> Sans.this.gravityControl(target, LocalDirection.values()[anim.getId()]);
+                case 6  -> Sans.this.summonGroundBoneWall(target, (ColorAttack) action[1], (Float) action[2], (LocalDirection) action[3]);
                 case 7  -> Sans.this.summonGroundBoneMatrix(target, (Integer) action[1]);
                 case 8  -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, (Integer) action[1], (ColorAttack) action[2]);
                 case 9  -> Sans.this.summonGBAroundTarget(target, (Integer) action[1], (Float) action[2], (Float) action[3]);
@@ -939,7 +940,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 在指定方向召唤前进骨墙
      */
-    private int summonGroundBoneWall(LivingEntity target, ColorAttack color, float addHeight, RelativeDirection direction) {
+    private int summonGroundBoneWall(LivingEntity target, ColorAttack color, float addHeight, LocalDirection direction) {
         Level level = this.level();
         int difficulty = level.getDifficulty().getId();
         String attackTypeUUID = UUID.randomUUID().toString();
@@ -1365,8 +1366,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         return gb;
     }
 
-    private int gravityControl(LivingEntity target, RelativeDirection direction) {
-        GravityData.applyRelativeGravity(this, target, direction);
+    private int gravityControl(LivingEntity target, LocalDirection direction) {
+//        GravityData.applyRelativeGravity(this, target, direction);
+        target.setDeltaMovement(LocalVec3.fromLocal(direction, target.getLookAngle(), target.getDeltaMovement()));
         return 0;
     }
 

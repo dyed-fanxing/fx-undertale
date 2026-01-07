@@ -1,182 +1,219 @@
 package com.sakpeipei.undertale.common;
 
-import net.minecraft.world.phys.Vec3;
+import com.sakpeipei.undertale.utils.CoordsUtils;
 import net.minecraft.core.Direction;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
+import net.minecraft.core.Position;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+
+import java.util.EnumSet;
 
 /**
- * @author yujinbao
- * @since 2026/1/5 16:40
  * 局部向量类：输入为局部坐标，存储为转换后的全局坐标
  */
 public class LocalVec3 extends Vec3 {
 
-    // 全局坐标系基准方向
-    public static final Vec3 GLOBAL_DOWN = new Vec3(0, -1, 0);   // 全局重力向下
-    public static final Vec3 GLOBAL_NORTH = new Vec3(0, 0, -1);  // 全局正北
-    public static final Vec3 GLOBAL_SOUTH = new Vec3(0, 0, 1);   // 全局正南
-    public static final Vec3 GLOBAL_EAST = new Vec3(1, 0, 0);    // 全局正东
-    public static final Vec3 GLOBAL_WEST = new Vec3(-1, 0, 0);   // 全局正西
+    // 预设矩阵（局部→全局）
+    public static final Matrix4f MATRIX_DOWN = new Matrix4f();
+    public static final Matrix4f MATRIX_UP = new Matrix4f().rotateZ(Mth.PI);
+    public static final Matrix4f MATRIX_NORTH = new Matrix4f().rotateX(-Mth.PI/2);
+    public static final Matrix4f MATRIX_SOUTH = new Matrix4f().rotateX(Mth.PI/2);
+    public static final Matrix4f MATRIX_EAST = new Matrix4f().rotateZ( Mth.PI/2);
+    public static final Matrix4f MATRIX_WEST = new Matrix4f().rotateZ(-Mth.PI/2);
 
-    // 局部坐标系定义
-    private final LocalDirection localDirection;
+    // 预设渲染矩阵
+    public static final Matrix3f RENDER_DOWN = CoordsUtils.get3x3(MATRIX_DOWN);
+    public static final Matrix3f RENDER_UP = CoordsUtils.get3x3(MATRIX_UP);
+    public static final Matrix3f RENDER_NORTH = CoordsUtils.get3x3(MATRIX_NORTH);
+    public static final Matrix3f RENDER_SOUTH = CoordsUtils.get3x3(MATRIX_SOUTH);
+    public static final Matrix3f RENDER_EAST = CoordsUtils.get3x3(MATRIX_EAST);
+    public static final Matrix3f RENDER_WEST = CoordsUtils.get3x3(MATRIX_WEST);
+
+    private final Vec3 gravity;
+    private final Matrix4f matrix4f;
+    private final Matrix3f matrix3f;
 
     /**
-     * 构造函数：传入局部坐标，根据局部重力方向转换为全局坐标存储
-     * @param localDirection 局部重力方向（定义局部坐标系）
-     * @param localCoords 局部坐标系中的坐标
+     * 私有构造函数
      */
-    public LocalVec3(LocalDirection localDirection, Vec3 localCoords) {
-        // 将局部坐标转换为全局坐标，然后调用父类构造函数
-        super(convertLocalToGlobal(localDirection, localCoords).toVector3f());
-        this.localDirection = localDirection;
+    private LocalVec3(double x, double y, double z, Vec3 gravity, Matrix4f matrix) {
+        super(x, y, z);
+        this.gravity = gravity;
+        this.matrix4f = matrix;
+        this.matrix3f = CoordsUtils.get3x3(matrix);
+    }
+    private LocalVec3(Vec3 gravity, Matrix4f matrix,Vec3 vec3) {
+        super(vec3.x, vec3.y, vec3.z);
+        this.gravity = gravity;
+        this.matrix4f = matrix;
+        this.matrix3f = CoordsUtils.get3x3(matrix);
+    }
+    /**
+     * 工厂方法：从局部坐标创建
+     */
+    public static LocalVec3 fromLocal(LocalDirection direction, Vec3 lookAngle, Vec3 localCoords) {
+        Vec3 gravity = CoordsUtils.getGravity(direction, lookAngle);
+        Matrix4f matrix = CoordsUtils.buildMatrix4f(gravity);
+        Vec3 worldCoords = CoordsUtils.transform(localCoords, matrix);
+        return new LocalVec3(gravity, matrix,worldCoords);
+    }
+
+
+    /**
+     * 获取重力方向
+     */
+    public Vec3 getGravity() {
+        return gravity;
     }
 
     /**
-     * 将局部坐标转换为全局坐标
+     * 获取渲染矩阵
      */
-    private static Vec3 convertLocalToGlobal(LocalDirection localDir, Vec3 localVec) {
-        // 获取局部坐标系的旋转矩阵（从局部到全局）
-        Quaternionf rotation = getLocalToGlobalRotation(localDir);
+    public Matrix3f getRenderMatrix() {
+        return matrix3f;
+    }
 
-        // 旋转局部坐标到全局坐标系
-        Vector3f global = new Vector3f(
-                (float)localVec.x,
-                (float)localVec.y,
-                (float)localVec.z
+    /**
+     * 获取转换矩阵
+     */
+    public Matrix4f getMatrix() {
+        return matrix4f;
+    }
+
+    /**
+     * 将当前向量转回局部坐标
+     */
+    public Vec3 toLocal() {
+        Matrix4f invMatrix = new Matrix4f(this.matrix4f);
+        invMatrix.invert();
+        return CoordsUtils.transform(this, invMatrix);
+    }
+
+
+
+    @Override
+    public @NotNull Vec3 vectorTo(@NotNull Vec3 p_82506_) {
+        return super.vectorTo(CoordsUtils.transform(p_82506_, matrix4f));
+    }
+
+    @Override
+    public double dot(@NotNull Vec3 p_82527_) {
+        return super.dot(CoordsUtils.transform(p_82527_, matrix4f));
+    }
+
+    @Override
+    public @NotNull Vec3 cross(@NotNull Vec3 p_82538_) {
+        return super.cross(CoordsUtils.transform(p_82538_, matrix4f));
+    }
+
+    @Override
+    public @NotNull Vec3 subtract(@NotNull Vec3 p_82547_) {
+        return super.subtract(CoordsUtils.transform(p_82547_, matrix4f));
+    }
+
+    @Override
+    public @NotNull Vec3 add(@NotNull Vec3 p_82550_) {
+        return super.add(CoordsUtils.transform(p_82550_, matrix4f));
+    }
+
+    @Override
+    public boolean closerThan(@NotNull Position p_82510_, double p_82511_) {
+        if (p_82510_ instanceof Vec3 vec) {
+            return super.closerThan(CoordsUtils.transform(vec, matrix4f), p_82511_);
+        }
+        return super.closerThan(p_82510_, p_82511_);
+    }
+
+    @Override
+    public double distanceTo(@NotNull Vec3 p_82555_) {
+        return super.distanceTo(CoordsUtils.transform(p_82555_, matrix4f));
+    }
+
+    @Override
+    public double distanceToSqr(@NotNull Vec3 p_82558_) {
+        return super.distanceToSqr(CoordsUtils.transform(p_82558_, matrix4f));
+    }
+
+    @Override
+    public boolean closerThan(@NotNull Vec3 p_312866_, double p_312928_, double p_312788_) {
+        return super.closerThan(CoordsUtils.transform(p_312866_, matrix4f), p_312928_, p_312788_);
+    }
+
+    @Override
+    public @NotNull Vec3 multiply(@NotNull Vec3 p_82560_) {
+        return super.multiply(CoordsUtils.transform(p_82560_, matrix4f));
+    }
+
+    @Override
+    public @NotNull Vec3 lerp(@NotNull Vec3 p_165922_, double p_165923_) {
+        return super.lerp(CoordsUtils.transform(p_165922_, matrix4f), p_165923_);
+    }
+
+    @Override
+    public @NotNull Vec3 align(@NotNull EnumSet<Direction.Axis> p_82518_) {
+        return super.align(p_82518_);
+    }
+
+    @Override
+    public @NotNull Vec3 relative(@NotNull Direction p_231076_, double p_231077_) {
+        // 将世界坐标系的方向向量转换到当前重力坐标系
+        Vec3 worldDir = new Vec3(
+                p_231076_.getNormal().getX(),
+                p_231076_.getNormal().getY(),
+                p_231076_.getNormal().getZ()
         );
-        rotation.transform(global);
+        Vec3 localDir = CoordsUtils.transform(worldDir, matrix4f);
 
-        return new Vec3(global.x, global.y, global.z);
-    }
-
-    /**
-     * 获取从局部坐标系到全局坐标系的旋转
-     */
-    private static Quaternionf getLocalToGlobalRotation(LocalDirection localDir) {
-        // 如果局部重力与全局重力一致，不需要旋转
-        if (localDir.gravityVector.equals(GLOBAL_DOWN)) {
-            return new Quaternionf(); // 单位四元数，不旋转
-        }
-
-        // 计算旋转轴：全局重力与局部重力的叉积
-        Vec3 globalGravity = GLOBAL_DOWN;
-        Vec3 localGravity = localDir.gravityVector;
-        Vec3 axis = globalGravity.cross(localGravity);
-
-        // 如果方向完全相反，需要特殊处理
-        if (axis.lengthSqr() < 1e-9) {
-            // 重力方向完全相反（上/下），绕Z轴旋转180度
-            if (localGravity.equals(new Vec3(0, 1, 0))) {
-                // 局部重力向上，全局重力向下
-                // 局部Y轴与全局Y轴相反，需要旋转180度
-                // 选择绕全局北方向旋转180度
-                return new Quaternionf().rotationY((float)Math.PI);
-            }
-            return new Quaternionf(); // 不应该到达这里
-        }
-
-        // 计算旋转角度
-        double cosAngle = globalGravity.dot(localGravity);
-        float angle = (float)Math.acos(cosAngle);
-
-        // 创建旋转四元数
-        return new Quaternionf().fromAxisAngleRad(
-                new Vector3f((float)axis.x, (float)axis.y, (float)axis.z),
-                angle
+        return new Vec3(
+                this.x + p_231077_ * localDir.x,
+                this.y + p_231077_ * localDir.y,
+                this.z + p_231077_ * localDir.z
         );
     }
 
-    /**
-     * 将存储的全局坐标转换回局部坐标
-     */
-    public Vec3 toLocalCoordinates() {
-        return convertGlobalToLocal(this.localDirection, this);
+
+    @Override
+    public @NotNull Vec3 xRot(float angle) {
+        return rotateAroundAxis(matrix4f.m00(), matrix4f.m10(), matrix4f.m20(), angle);
     }
 
-    /**
-     * 静态方法：将全局坐标转换为局部坐标
-     */
-    public static Vec3 convertGlobalToLocal(LocalDirection localDir, Vec3 globalVec) {
-        // 获取从全局到局部的旋转（局部到全局的逆旋转）
-        Quaternionf rotation = getLocalToGlobalRotation(localDir);
-        Quaternionf inverse = new Quaternionf(rotation).conjugate();
+    @Override
+    public @NotNull Vec3 yRot(float angle) {
+        return rotateAroundAxis(matrix4f.m01(), matrix4f.m11(), matrix4f.m21(), angle);
+    }
 
-        // 旋转全局坐标到局部坐标系
-        Vector3f local = new Vector3f(
-                (float)globalVec.x,
-                (float)globalVec.y,
-                (float)globalVec.z
+    @Override
+    public @NotNull Vec3 zRot(float angle) {
+        return rotateAroundAxis(matrix4f.m02(), matrix4f.m12(), matrix4f.m22(), angle);
+    }
+    /**
+     * 绕任意轴旋转（罗德里格斯公式）
+     */
+    private Vec3 rotateAroundAxis(float ax, float ay, float az, float angle) {
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        double oneMinusCos = 1 - cos;
+
+        // 旋转矩阵
+        double m00 = cos + ax * ax * oneMinusCos;
+        double m01 = ax * ay * oneMinusCos - az * sin;
+        double m02 = ax * az * oneMinusCos + ay * sin;
+
+        double m10 = ay * ax * oneMinusCos + az * sin;
+        double m11 = cos + ay * ay * oneMinusCos;
+        double m12 = ay * az * oneMinusCos - ax * sin;
+
+        double m20 = az * ax * oneMinusCos - ay * sin;
+        double m21 = az * ay * oneMinusCos + ax * sin;
+        double m22 = cos + az * az * oneMinusCos;
+
+        return new Vec3(
+                this.x * m00 + this.y * m01 + this.z * m02,
+                this.x * m10 + this.y * m11 + this.z * m12,
+                this.x * m20 + this.y * m21 + this.z * m22
         );
-        inverse.transform(local);
-
-        return new Vec3(local.x, local.y, local.z);
-    }
-
-    /**
-     * 获取局部重力方向（在全局坐标系中）
-     */
-    public Vec3 getLocalGravityDirection() {
-        return this.localDirection.gravityVector;
-    }
-
-    /**
-     * 获取局部坐标系的"上"方向（在局部坐标系中总是(0,1,0)，但这里返回全局表示）
-     */
-    public Vec3 getLocalUpDirection() {
-        // 局部坐标系的上方向在全局中的表示
-        return convertLocalToGlobal(this.localDirection, new Vec3(0, 1, 0));
-    }
-
-    /**
-     * 获取局部坐标系的"北"方向（在局部坐标系中总是(0,0,-1)，但这里返回全局表示）
-     */
-    public Vec3 getLocalNorthDirection() {
-        return convertLocalToGlobal(this.localDirection, new Vec3(0, 0, -1));
-    }
-
-    /**
-     * 获取局部坐标系的"东"方向（在局部坐标系中总是(1,0,0)，但这里返回全局表示）
-     */
-    public Vec3 getLocalEastDirection() {
-        return convertLocalToGlobal(this.localDirection, new Vec3(1, 0, 0));
-    }
-
-    /**
-     * 局部方向枚举
-     */
-    public enum LocalDirection {
-        // 重力方向定义（在全局坐标系中）
-        DOWN(GLOBAL_DOWN),      // 重力向下（默认）
-        UP(new Vec3(0, 1, 0)),  // 重力向上
-        NORTH(GLOBAL_NORTH),    // 重力向北
-        SOUTH(GLOBAL_SOUTH),    // 重力向南
-        EAST(GLOBAL_EAST),      // 重力向东
-        WEST(GLOBAL_WEST);      // 重力向西
-
-        public final Vec3 gravityVector;
-
-        LocalDirection(Vec3 gravity) {
-            this.gravityVector = gravity;
-        }
-
-        public static LocalDirection fromMinecraftDirection(Direction dir) {
-            return switch (dir) {
-                case DOWN -> DOWN;
-                case UP -> UP;
-                case NORTH -> NORTH;
-                case SOUTH -> SOUTH;
-                case EAST -> EAST;
-                case WEST -> WEST;
-            };
-        }
-    }
-
-    /**
-     * 便捷构造方法：使用double参数
-     */
-    public LocalVec3(LocalDirection localDirection, double localX, double localY, double localZ) {
-        this(localDirection, new Vec3(localX, localY, localZ));
     }
 }

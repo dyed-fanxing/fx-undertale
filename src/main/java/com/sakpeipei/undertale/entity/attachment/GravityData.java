@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.entity.attachment;
 import com.mojang.math.Axis;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.sakpeipei.undertale.common.RelativeDirection;
+import com.sakpeipei.undertale.common.LocalDirection;
 import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -65,8 +65,8 @@ public class GravityData {
     /**
      * 基于攻击者朝向设置相对重力方向
      */
-    public void setRelativeGravity(Entity attacker, RelativeDirection relativeDirection) {
-        switch (relativeDirection) {
+    public void setRelativeGravity(Entity attacker, LocalDirection localDirection) {
+        switch (localDirection) {
             case FRONT -> setGravityDirection(attacker.getLookAngle().normalize());
             case BACK -> setGravityDirection(attacker.getLookAngle().reverse().normalize());
             case LEFT -> {
@@ -85,7 +85,7 @@ public class GravityData {
     /**
      * 对目标实体应用攻击者的相对重力
      */
-    public static void applyRelativeGravity(Entity attacker, Entity target, RelativeDirection direction) {
+    public static void applyRelativeGravity(Entity attacker, Entity target, LocalDirection direction) {
         target.getData(AttachmentTypeRegistry.GRAVITY).setRelativeGravity(attacker, direction);
     }
 
