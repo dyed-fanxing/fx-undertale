@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * GB炮光束终点位置
  */
 public record GasterBlasterBeamEndPacket(int entityId, double x, double y, double z) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<GasterBlasterBeamEndPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "gaster_blaster_pro"));
+    public static final CustomPacketPayload.Type<GasterBlasterBeamEndPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "gaster_blaster_beam"));
     public static final StreamCodec<RegistryFriendlyByteBuf, GasterBlasterBeamEndPacket> STREAM_CODEC = CustomPacketPayload.codec(GasterBlasterBeamEndPacket::write, GasterBlasterBeamEndPacket::new);
 
     public GasterBlasterBeamEndPacket(int entityId, Vec3 vec3) {
@@ -39,7 +39,7 @@ public record GasterBlasterBeamEndPacket(int entityId, double x, double y, doubl
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null && level.getEntity(packet.entityId) instanceof IGasterBlaster entity) {
-                entity.setEnd(new Vec3(packet.x, packet.y, packet.z));
+//                entity.setEnd(new Vec3(packet.x, packet.y, packet.z));
             }
         });
     }

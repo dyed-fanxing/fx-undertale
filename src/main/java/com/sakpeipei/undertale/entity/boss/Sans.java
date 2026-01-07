@@ -356,14 +356,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         this.remainingPersistentAngerTime = PERSISTENT_ANGER_TIME.sample(this.random);
     }
 
-    @Override
-    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
-        super.defineSynchedData(builder);
-        builder.define(PHASE_ID, (byte) 1);
-        builder.define(ANIM_ID, (byte) -1);
-        builder.define(IS_EYE_BLINK, false);
-    }
-
     private byte getPhaseID() {
         return this.entityData.get(PHASE_ID);
     }
@@ -384,6 +376,14 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
 
     public void setIsEyeBlink(boolean blink) {
         entityData.set(IS_EYE_BLINK, blink);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(PHASE_ID, (byte) 1);
+        builder.define(ANIM_ID, (byte) -1);
+        builder.define(IS_EYE_BLINK, false);
     }
 
 

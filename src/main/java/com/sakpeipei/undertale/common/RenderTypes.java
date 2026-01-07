@@ -25,6 +25,7 @@ public interface RenderTypes {
             texture -> RenderType.create("gb_beam", DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS, 1536, false, false,
                     RenderType.CompositeState.builder()
                     .setShaderState(RENDERTYPE_BEACON_BEAM_SHADER)
+                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
                     .setTransparencyState(NO_TRANSPARENCY)
                     .setWriteMaskState(COLOR_DEPTH_WRITE)
                     .setCullState(NO_CULL)

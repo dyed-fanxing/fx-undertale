@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
@@ -40,6 +41,9 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
         if (super.shouldRender(animatable, frustum, cameraX, cameraY, cameraZ)) {
             return true;
         }
-        return frustum.isVisible( new AABB(animatable.getStart(), animatable.getEnd()));
+        if( Vec3.ZERO.equals(animatable.getEnd())){
+            return frustum.isVisible( new AABB(animatable.getStart(), animatable.getEnd()));
+        }
+        return false;
     }
 }

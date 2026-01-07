@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 public class Undertale {
     // 在公共位置定义mod id供所有内容引用
     public static final String MODID = "undertale";
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
 
 
 
