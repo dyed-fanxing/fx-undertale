@@ -29,9 +29,9 @@
             "undertale:gaster_blaster/charge"
         ]
     },
-    "entity.gaster_blaster.shot": {
+    "entity.gaster_blaster.fire": {
         "sounds": [
-            "undertale:gaster_blaster/shot"
+            "undertale:gaster_blaster/fire"
         ]
     }
 }

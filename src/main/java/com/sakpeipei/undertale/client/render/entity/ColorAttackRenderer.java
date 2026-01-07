@@ -22,7 +22,7 @@ public abstract class ColorAttackRenderer<T extends Entity & GeoAnimatable & Att
 
     @Override
     public Color getRenderColor(T animatable, float partialTick, int packedLight) {
-        Color color = animatable.getColor();
+        Color color = new Color(animatable.getColor().getRGB());
         if (animatable.isInvisible() && !animatable.isInvisibleTo(ClientUtil.getClientPlayer()))
             color = Color.ofARGB(Mth.ceil(color.getAlpha() * 38 / 255f), color.getRed(), color.getGreen(), color.getBlue());
         return color;

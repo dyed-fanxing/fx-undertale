@@ -328,7 +328,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
                     controller.setAnimation(GROW_ANIM);
                     controller.setAnimationSpeed(20.0);
                     controller.setSoundKeyframeHandler(event -> {
-                        level().playLocalSound(this, SoundRegistry.GASTER_BLASTER_SHOT.get(),
+                        level().playLocalSound(this, SoundRegistry.GASTER_BLASTER_FIRE.get(),
                                 SoundSource.NEUTRAL,1,1);
                         ParticleMoveUtils.circularOut(level(), 100, getWidth() * 2, ParticleTypes.SOUL_FIRE_FLAME,
                                 getX(), getY(), getZ(), getYRot(), getXRot(), 3.0f);

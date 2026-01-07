@@ -3,6 +3,8 @@ package com.sakpeipei.undertale.utils;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.logging.LogUtils;
+import com.mojang.math.Axis;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -193,57 +195,74 @@ public class RenderUtils {
     }
 
     /**
-     * 胶囊体
+     * 胶囊体 竖向
      * @param poseStack 栈姿
      * @param consumer 顶点消费者
      * @param length 中间圆柱的轴线长度
      * @param radius 两端半球和圆柱的半径
      * @param segments 分段数量
      */
-    public static void renderCapsule(PoseStack poseStack, VertexConsumer consumer,float length, float radius, byte segments,
+    public static void renderCapsule(PoseStack poseStack, VertexConsumer consumer,float radius,float length,  byte segments,
                                       int r, int g, int b, int a, int overlay, int light) {
+        PoseStack.Pose pose = poseStack.last();
         // 首端球
-        RenderUtils.renderSphere(poseStack.last(),consumer, radius, segments,r, g, b, a, overlay, light);
+        RenderUtils.renderSphere(pose,consumer, radius, segments,r, g, b, a, overlay, light);
         // 圆柱
-        RenderUtils.renderCylinder(poseStack.last(), consumer, radius, length, segments,r,g,b,a,overlay, light);
+        RenderUtils.renderCylinder(pose, consumer, radius, length, segments,r,g,b,a,overlay, light);
         // 尾端球
-        poseStack.pushPose();
-        poseStack.translate(0,0,length);
-        RenderUtils.renderSphere(poseStack.last(),consumer, radius, segments,r, g, b, a,overlay, light);
-        poseStack.popPose();
+        poseStack.translate(0,length,0);
+        RenderUtils.renderSphere(pose,consumer, radius, segments,r, g, b, a,overlay, light);
     }
     /**
-     * 圆柱体
+     * 圆柱体 竖向 轮廓
+     */
+    public static void renderCylinderOutline(PoseStack.Pose pose, VertexConsumer consumer, float radius, float height, int segments,
+                                      int r, int g, int b, int a, int overlay, int light) {
+        float step = Mth.TWO_PI / segments;
+        float radian1 = 0, radian2 = step;
+        for (int i = 0; i < segments; i++, radian1 += step, radian2 += step) {
+            Vec3 upPoint1 = new Vec3(radius * (float) Math.cos(radian1), 0, radius * (float) Math.sin(radian1));
+            Vec3 upPoint2 = new Vec3(radius * (float) Math.cos(radian2), 0, radius * (float) Math.sin(radian2));
+            Vec3 downPoint1 = new Vec3(radius * (float) Math.cos(radian1), height, radius * (float) Math.sin(radian1));
+            Vec3 downPoint2 = new Vec3(radius * (float) Math.cos(radian2), height, radius * (float) Math.sin(radian2));
+            // 法线（从圆柱中心向外）
+            Vec3 normal = upPoint1.normalize();
+            drawLine(pose,consumer,upPoint1,upPoint2,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
+            drawLine(pose,consumer,upPoint1,downPoint1,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
+            drawLine(pose,consumer,downPoint1,downPoint2,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
+        }
+    }
+    /**
+     * 圆柱体 竖向
      */
     public static void renderCylinder(PoseStack.Pose pose, VertexConsumer consumer, float radius, float height, int segments,
                                       int r, int g, int b, int a, int overlay, int light) {
         float step = Mth.TWO_PI / segments;
         float radian1 = 0, radian2 = step;
         for (int i = 0; i < segments; i++, radian1 += step, radian2 += step) {
-            Vec3 frontPoint1 = new Vec3(radius * (float) Math.cos(radian1), radius * (float) Math.sin(radian1), 0);
-            Vec3 frontPoint2 = new Vec3(radius * (float) Math.cos(radian2), radius * (float) Math.sin(radian2), 0);
-            Vec3 backPoint1 = new Vec3(radius * (float) Math.cos(radian1), radius * (float) Math.sin(radian1), height);
-            Vec3 backPoint2 = new Vec3(radius * (float) Math.cos(radian2), radius * (float) Math.sin(radian2), height);
+            Vec3 upPoint1 = new Vec3(radius * (float) Math.cos(radian1), 0, radius * (float) Math.sin(radian1));
+            Vec3 upPoint2 = new Vec3(radius * (float) Math.cos(radian2), 0, radius * (float) Math.sin(radian2));
+            Vec3 downPoint1 = new Vec3(radius * (float) Math.cos(radian1), height, radius * (float) Math.sin(radian1));
+            Vec3 downPoint2 = new Vec3(radius * (float) Math.cos(radian2), height, radius * (float) Math.sin(radian2));
             // 法线（从圆柱中心向外）
-            Vec3 normal = frontPoint1.normalize();
+            Vec3 normal = upPoint1.normalize();
             // 关键修正：正确的逆时针顺序
-            drawQuad(pose, consumer, frontPoint1, backPoint1, backPoint2, frontPoint2,
+            drawQuad(pose, consumer, upPoint1, downPoint1, downPoint2, upPoint2,
                     (float) normal.x, (float) normal.y, (float) normal.z,
                     0, 0, 1, 1,  // 对应的UV
                     r, g, b, a, overlay, light);
         }
-        // 前面端面 （确保逆时针顶点顺序）
+        // 底面
         drawCircle(pose, consumer,
                 new Vec3(0, 0, 0), radius, segments,
-                new Vec3(0, 0, -1),
+                new Vec3(0, -1, 0),
                 r, g, b, a, overlay, light);
-        // 后面端面 （确保逆时针顶点顺序）
+        // 顶面
         drawCircle(pose, consumer,
-                new Vec3(0, 0, height), radius, segments,
-                new Vec3(0, 0, 1),
+                new Vec3(0, height, 0), radius, segments,
+                new Vec3(0, 1, 0),
                 r, g, b, a, overlay, light);
     }
-
     /**
      * 球体
      * @param segments 水平段数，即经线，经度，Theta，θ
@@ -329,9 +348,8 @@ public class RenderUtils {
                 float nx4 = cosPhi1 * cosTheta2;
                 float nz4 = cosPhi1 * sinTheta2;
 
-                // 直接绘制两个三角形
+                // 绘制四边形
                 Matrix4f matrix = pose.pose();
-                // 三角形1: p1(左上) → p2(左下) → p3(右下)
                 consumer.addVertex(matrix, x1, y1, z1)
                         .setNormal(pose, nx1, sinPhi1, nz1)
                         .setUv(u1, v1)
@@ -350,7 +368,6 @@ public class RenderUtils {
                         .setColor(r, g, b, a)
                         .setOverlay(overlay)
                         .setLight(light);
-                // 这里必须用四边形，不知道为啥两个三角形，会缺失第二个三角形
                 consumer.addVertex(matrix, x4, y4, z4)
                         .setNormal(pose, nx4, sinPhi1, nz4)
                         .setUv(u2, v1)
@@ -363,15 +380,15 @@ public class RenderUtils {
 
 
     /**
-     * 画圆形
+     * 画圆形 垂直Y轴，XZ平面
      */
     public static void drawCircle(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments, Vec3 normal,
                                   int r, int g, int b, int a, int overlay, int light) {
         float delta = Mth.TWO_PI / segments;
         float radian1 = 0, radian2 = delta;
         for (int i = 0; i < segments; i++, radian1 += delta, radian2 += delta) {
-            Vec3 edge1 = center.add(radius * (float) Math.cos(radian1), radius * (float) Math.sin(radian1), 0);
-            Vec3 edge2 = center.add(radius * (float) Math.cos(radian2), radius * (float) Math.sin(radian2), 0);
+            Vec3 edge1 = center.add(radius * (float) Math.cos(radian1),0 , radius * (float) Math.sin(radian1));
+            Vec3 edge2 = center.add(radius * (float) Math.cos(radian2),0 , radius * (float) Math.sin(radian2));
             // 关键：center -> edge2 -> edge1 必须是逆时针
             drawTriangle(pose, consumer, center, edge2, edge1,
                     (float) normal.x, (float) normal.y, (float) normal.z,
@@ -411,10 +428,31 @@ public class RenderUtils {
                 .setColor(r, g, b, a)
                 .setOverlay(overlay)
                 .setLight(light);
-        // 由于MC的渲染引擎只支持四边形，所以需要再给一个点 顶点3
-        consumer.addVertex(matrix, (float) p3.x, (float) p3.y, (float) p3.z)
+        // 由于MC的渲染引擎只支持四边形，所以需要再给一个点 顶点1
+        consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z)
                 .setNormal(pose, normalX, normalY, normalZ)
-                .setUv(u3, v3)
+                .setUv(u1, v1)
+                .setColor(r, g, b, a)
+                .setOverlay(overlay)
+                .setLight(light);
+    }
+    /**
+     * 线段，只需两个点，但是渲染的类型得是Line
+     */
+    public static void drawLine(PoseStack.Pose pose, VertexConsumer consumer, Vec3 p1, Vec3 p2,
+                                    float normalX, float normalY, float normalZ,
+                                    int r, int g, int b, int a,
+                                    int overlay, int light) {
+        Matrix4f matrix = pose.pose();
+        // 顶点1
+        consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z)
+                .setNormal(pose, normalX, normalY, normalZ)
+                .setColor(r, g, b, a)
+                .setOverlay(overlay)
+                .setLight(light);
+        // 顶点2
+        consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z)
+                .setNormal(pose, normalX, normalY, normalZ)
                 .setColor(r, g, b, a)
                 .setOverlay(overlay)
                 .setLight(light);

@@ -13,6 +13,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.awt.*;
+
 
 /**
  * @author yujinbao
@@ -30,14 +32,14 @@ public class WarningTipAABB extends Effect {
         this.area = area;
         this.r = r; this.g = g; this.b = b;this.a = a;
     }
-    public WarningTipAABB(AABB area, int lifetime, int color) {
-        this(area,lifetime,ColorUtils.getRed(color)/255.0f,ColorUtils.getGreen(color)/255.0f,ColorUtils.getBlue(color)/255.0f,ColorUtils.getAlpha(color)/255.0f);
+    public WarningTipAABB(AABB area, int lifetime, Color color) {
+        this(area,lifetime,color.getRed()/255.0f, color.getGreen()/255.0f, color.getBlue()/255.0f, color.getAlpha()/255.0f);
     }
     @Override
     protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {
         // 确保这个方法被正确重写
         VertexConsumer consumer = bufferSource.getBuffer(RenderType.LINES);
-        LevelRenderer.renderLineBox(poseStack, consumer, area, r, g, b, a);
+        LevelRenderer.renderLineBox(poseStack, consumer, area, r,g,b,a);
     }
 
     @Override

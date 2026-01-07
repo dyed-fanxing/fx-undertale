@@ -1,7 +1,8 @@
 package com.sakpeipei.undertale.common.mechanism;
 
 import net.minecraft.world.entity.Entity;
-import software.bernie.geckolib.util.Color;
+
+import java.awt.*;
 
 
 /**
@@ -16,6 +17,6 @@ public class GreenAttack implements ColorAttack{
 
     @Override
     public Color getColor() {
-        return new Color(0xFF00C000);
+        return Color.GREEN;
     }
 }

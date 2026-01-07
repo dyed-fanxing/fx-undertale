@@ -1,6 +1,7 @@
 package com.sakpeipei.undertale.entity;
 
-import software.bernie.geckolib.util.Color;
+
+import java.awt.*;
 
 /**
  * @author Sakqiongzi

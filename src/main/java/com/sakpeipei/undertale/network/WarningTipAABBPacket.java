@@ -14,16 +14,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 /**
  * @author yujinbao
  * @since 2025/11/18 14:10
  */
-public record WarningTipAABBPacket(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int lifetime, int color) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<WarningTipAABBPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "warning_tip_packet"));
+public record WarningTipAABBPacket(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int lifetime, Color color) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<WarningTipAABBPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "warning_tip_aabb_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, WarningTipAABBPacket> STREAM_CODEC = CustomPacketPayload.codec(WarningTipAABBPacket::write, WarningTipAABBPacket::new);
-    private static final Logger log = LogManager.getLogger(WarningTipAABBPacket.class);
 
-    public WarningTipAABBPacket(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int lifetime, int color) {
+    public WarningTipAABBPacket(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int lifetime, Color color) {
         this.minX = minX;
         this.minY = minY;
         this.minZ = minZ;
@@ -34,7 +35,7 @@ public record WarningTipAABBPacket(double minX, double minY, double minZ, double
         this.color = color;
     }
     public WarningTipAABBPacket(FriendlyByteBuf buf) {
-        this(buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readVarInt(),buf.readInt());
+        this(buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readDouble(),buf.readVarInt(),new Color(buf.readInt()));
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -45,7 +46,7 @@ public record WarningTipAABBPacket(double minX, double minY, double minZ, double
         buf.writeDouble(this.maxY);
         buf.writeDouble(this.maxZ);
         buf.writeVarInt(this.lifetime);
-        buf.writeInt(this.color);
+        buf.writeInt(this.color.getRGB());
     }
     @Override
     public @NotNull Type<? extends CustomPacketPayload> type() {

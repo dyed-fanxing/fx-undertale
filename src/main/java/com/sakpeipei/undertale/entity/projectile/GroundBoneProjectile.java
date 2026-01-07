@@ -17,15 +17,14 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.util.Color;
 import software.bernie.geckolib.util.GeckoLibUtil;
+
+import java.awt.*;
 
 
 /**
@@ -141,7 +140,7 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
 
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        tag.putInt("Color",this.colorAttack.getColor().getColor());
+        tag.putInt("Color",this.colorAttack.getColor().getRGB());
         tag.putInt("Delay",delay);
         tag.putFloat("Speed",speed);
         if(movement != null){
@@ -157,7 +156,7 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
     @Override
     public void writeSpawnData(RegistryFriendlyByteBuf buf) {
         buf.writeFloat(this.height);
-        buf.writeInt(this.colorAttack.getColor().getColor());
+        buf.writeInt(this.colorAttack.getColor().getRGB());
     }
 
     @Override

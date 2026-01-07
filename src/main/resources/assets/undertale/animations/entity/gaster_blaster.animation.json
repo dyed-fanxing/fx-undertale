@@ -167,7 +167,8 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "charge"
+					"effect": "charge",
+					"locator": "locator"
 				}
 			}
 		},
@@ -225,11 +226,6 @@
 						}
 					}
 				}
-			},
-			"sound_effects": {
-				"0.0": {
-					"effect": "charge"
-				}
 			}
 		},
 		"fire": {
@@ -271,7 +267,7 @@
 			},
 			"sound_effects": {
 				"0.0": {
-					"effect": "charge"
+					"effect": "fire"
 				}
 			}
 		},
@@ -340,11 +336,6 @@
 							"vector": [0, 0, 0]
 						}
 					}
-				}
-			},
-			"sound_effects": {
-				"0.0": {
-					"effect": "charge"
 				}
 			}
 		}

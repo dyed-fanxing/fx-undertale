@@ -4,7 +4,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import software.bernie.geckolib.util.Color;
+
+import java.awt.*;
 
 /**
  * 水色攻击
@@ -28,6 +29,6 @@ public class AquaAttack implements ColorAttack{
 
     @Override
     public Color getColor() {
-        return new Color(0xFF42FCFF);
+        return Color.CYAN;
     }
 }

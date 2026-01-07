@@ -1,8 +1,8 @@
 package com.sakpeipei.undertale.common.mechanism;
 
 import net.minecraft.world.entity.Entity;
-import software.bernie.geckolib.util.Color;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +14,7 @@ public interface ColorAttack {
     Map<Integer, ColorAttack> REGISTRY = new HashMap<>();
     // 注册方法
     static ColorAttack register(ColorAttack attack) {
-        REGISTRY.put(attack.getColor().getColor(), attack);
+        REGISTRY.put(attack.getColor().getRGB(), attack);
         return attack;
     }
     // 静态初始化块注册所有实例

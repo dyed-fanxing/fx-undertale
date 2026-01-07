@@ -13,23 +13,24 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
+
 /**
  * @author yujinbao
  * @since 2025/11/18 14:10
  */
-public record WarningTipPacket(float x,float y,float z,float r, float h,int lifetime, int color) implements CustomPacketPayload {
+public record WarningTipPacket(float x,float y,float z,float r, float h,int lifetime, Color color) implements CustomPacketPayload {
     public static final Type<WarningTipPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "warning_tip_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, WarningTipPacket> STREAM_CODEC = CustomPacketPayload.codec(WarningTipPacket::write, WarningTipPacket::new);
-    private static final Logger log = LogManager.getLogger(WarningTipPacket.class);
 
-    public WarningTipPacket(float x,float y,float z,float r, float h,int lifetime, int color) {
+    public WarningTipPacket(float x,float y,float z,float r, float h,int lifetime, Color color) {
         this.x = x;this.y = y;this.z = z;
         this.r = r;this.h = h;
         this.lifetime = lifetime;
         this.color = color;
     }
     public WarningTipPacket(FriendlyByteBuf buf) {
-        this(buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readVarInt(),buf.readInt());
+        this(buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readVarInt(),new Color(buf.readInt()));
     }
 
     public void write(FriendlyByteBuf buf) {
@@ -39,7 +40,7 @@ public record WarningTipPacket(float x,float y,float z,float r, float h,int life
         buf.writeFloat(this.r);
         buf.writeFloat(this.h);
         buf.writeVarInt(this.lifetime);
-        buf.writeInt(this.color);
+        buf.writeInt(this.color.getRGB());
     }
     @Override
     public @NotNull Type<? extends CustomPacketPayload> type() {
@@ -47,7 +48,7 @@ public record WarningTipPacket(float x,float y,float z,float r, float h,int life
     }
     public static void handle(WarningTipPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
-            DecorationRendererHandler.addDecoration(new WarningTip(packet.x, packet.y, packet.z, packet.r, packet.h, packet.lifetime,packet.color));
+            DecorationRendererHandler.addDecoration(new WarningTip(packet.x, packet.y, packet.z, packet.r, packet.h, packet.lifetime, packet.color));
         });
     }
 }

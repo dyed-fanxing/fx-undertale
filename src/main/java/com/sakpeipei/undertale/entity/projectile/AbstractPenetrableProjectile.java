@@ -1,5 +1,6 @@
 package com.sakpeipei.undertale.entity.projectile;
 
+import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -29,15 +30,14 @@ import java.util.List;
  *
  */
 public abstract class AbstractPenetrableProjectile extends Projectile {
-    private static final Logger log = LoggerFactory.getLogger(AbstractPenetrableProjectile.class);
-//    public double accelerationPower;
+    public double accelerationPower;
 
     public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level) {
         this(type, level,0.1);
     }
     public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level,double accelerationPower) {
         super(type, level);
-//        this.accelerationPower = accelerationPower;
+        this.accelerationPower = accelerationPower;
     }
 
 
@@ -47,7 +47,6 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
         if (this.level().isClientSide || (entity == null || !entity.isRemoved()) && this.level().isLoaded(this.blockPosition())) {
             super.tick();
             List<HitResult> hitResults = CollisionDetectionUtils.getHitResultsOnMoveVector(this,this::canHitEntity,getClipType(),isCollision());
-//            log.info("攻击检测结果{}",hitResults);
             for (HitResult hitResult : hitResults) {
                 if (hitResult.getType() != HitResult.Type.MISS && !EventHooks.onProjectileImpact(this, hitResult)) {
                     ProjectileDeflection projectileDeflection = this.hitTargetOrDeflectSelf(hitResult);
@@ -78,8 +77,8 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
             } else {
                 f = this.getInertia();
             }
-//            this.setDeltaMovement(vec3.add(vec3.normalize().scale(this.accelerationPower)).scale(f));
-            this.setDeltaMovement(vec3.scale(f));
+            this.setDeltaMovement(vec3.add(vec3.normalize().scale(this.accelerationPower)).scale(f));
+//            this.setDeltaMovement(vec3.scale(f));
             if(!this.isNoGravity()){
                 this.applyGravity();
             }
@@ -126,14 +125,14 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-//        if (tag.contains("acceleration_power", 6)) {
-//            this.accelerationPower = tag.getDouble("acceleration_power");
-//        }
+        if (tag.contains("acceleration_power")) {
+            this.accelerationPower = tag.getDouble("acceleration_power");
+        }
     }
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-//        tag.putDouble("acceleration_power", this.accelerationPower);
+        tag.putDouble("acceleration_power", this.accelerationPower);
     }
 
     @Override

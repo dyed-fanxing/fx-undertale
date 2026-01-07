@@ -18,7 +18,7 @@ public class SoundRegistry {
 
     public static final DeferredHolder<SoundEvent,SoundEvent> GASTER_BLASTER_WHOLE = register("entity.gaster_blaster.whole");
     public static final DeferredHolder<SoundEvent,SoundEvent> GASTER_BLASTER_CHARGE = register("entity.gaster_blaster.charge");
-    public static final DeferredHolder<SoundEvent,SoundEvent> GASTER_BLASTER_SHOT = register("entity.gaster_blaster.shot");
+    public static final DeferredHolder<SoundEvent,SoundEvent> GASTER_BLASTER_FIRE = register("entity.gaster_blaster.fire");
 
     public static final DeferredHolder<SoundEvent,SoundEvent> SANS_SLAM = register("entity.sans.slam");
     public static final DeferredHolder<SoundEvent,SoundEvent> SANS_BONE_SPINE = register("entity.sans.bone_spine");
