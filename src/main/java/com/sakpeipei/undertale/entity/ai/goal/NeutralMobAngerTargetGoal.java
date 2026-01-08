@@ -11,7 +11,7 @@ import java.util.UUID;
 /**
  * @author Sakqiongzi
  * @since 2025-11-22 20:59
- * 中立生物设置生气目标Goal
+ * 中立生物 设置 生气目标Goal
  */
 public class NeutralMobAngerTargetGoal extends Goal {
     NeutralMob mob;
