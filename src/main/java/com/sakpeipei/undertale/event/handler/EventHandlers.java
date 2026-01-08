@@ -2,6 +2,7 @@ package com.sakpeipei.undertale.event.handler;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.Undertale;
+import com.sakpeipei.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.undertale.entity.boss.Sans;
 import com.sakpeipei.undertale.registry.EntityTypeRegistry;

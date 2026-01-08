@@ -1,5 +1,8 @@
 package com.sakpeipei.undertale.entity.boss;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.common.LocalDirection;
 import com.sakpeipei.undertale.common.LocalVec3;
 import com.sakpeipei.undertale.common.anim.AnimStep;
@@ -23,7 +26,10 @@ import com.sakpeipei.undertale.registry.SoundRegistry;
 import com.sakpeipei.undertale.utils.EntityUtils;
 import com.sakpeipei.undertale.utils.LevelUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
+import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.ResourceArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -31,6 +37,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
@@ -55,8 +62,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.event.EventHooks;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
@@ -107,9 +116,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         super.registerGoals();
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new TransitionPhaseGoal());
-        this.goalSelector.addGoal(1, new PersistentAttackGoal());
+//        this.goalSelector.addGoal(1, new PersistentAttackGoal());
 //        this.goalSelector.addGoal(2, new SequenceAttackGoal());
-        this.goalSelector.addGoal(3, new SingleAttackGoalSingle());
+//        this.goalSelector.addGoal(3, new SingleAttackGoalSingle());
         this.goalSelector.addGoal(4, new SansMovementGoal(1.0, 16.0f));
 
 
@@ -155,24 +164,29 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
         Entity sourceEntity = source.getEntity();
         Entity directEntity = source.getDirectEntity();
-        if (sourceEntity != null) {
+        if (sourceEntity == null) {
+            if(directEntity == null){
+                if (source.is(Tags.DamageTypes.IS_TECHNICAL)) {
+                    stamina = Math.max(0, stamina - (int) power);
+                    return super.hurt(source, power);
+                }
+                rangedTeleport(null);
+                return false;
+            }
+            rangedTeleport(directEntity);
+        }else{
             if (sourceEntity instanceof LivingEntity livingEntity) {
                 this.setLastHurtByMob(livingEntity);
             } else if (sourceEntity instanceof Player player) {
                 this.setLastHurtByPlayer(player);
             }
+
             if (this.distanceToSqr(sourceEntity) <= 25) {
                 meleeTeleport(sourceEntity);
             } else {
-                rangedTeleport(source.getDirectEntity());
-            }
-        }else{
-            rangedTeleport(source.getDirectEntity());
-            if(directEntity == null){
-                return false;
+                rangedTeleport(directEntity);
             }
         }
-
         if (stamina > 0) {
             // 体力消耗逻辑
             if (source.is(DamageTypes.MOB_PROJECTILE) || source.is(DamageTypes.ARROW) || source.is(DamageTypes.MAGIC)) {
@@ -182,9 +196,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 return super.hurt(source, power);
             } else {
                 stamina = Math.max(1, stamina - 5);
-            }
-            if (getPhaseID() == 1 && stamina <= maxStamina / 2) {
-                entityData.set(PHASE_ID, (byte) 2);
             }
             return true;
         }
@@ -512,7 +523,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             }
         }
     }
-
     //持续攻击，可脱手
     class PersistentAttackGoal extends SequenceAnimGoal<int[], Sans> {
         List<SequenceAnim<int[]>> attacks = List.of(
@@ -712,7 +722,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      *
      * @return 需要执行完攻击的动画CD
      */
-    private int shootAimedBarrage(LivingEntity target) {
+    public int shootAimedBarrage(LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
         String attackTypeUUID = UUID.randomUUID().toString();
         float speed = 1.0f + 0.333f * difficulty;
@@ -746,24 +756,28 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 射向前方随机骨头弹幕 - 以目标碰撞高度为随机范围高度，向前方范围随机射击
      */
-    private int shootForwardBarrage(LivingEntity target) {
+    public int shootForwardBarrage(LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
         float speed = 1.5f + difficulty * 0.2f;
         String attackTypeUUID = UUID.randomUUID().toString();
         int delay = 10;
-        int count = 4 + difficulty * 3;
+        int count = 10 + difficulty * 15;
         // Sans的视线方向（固定射击方向）
-        Vec3 sansLookDirection = this.getLookAngle();
+        Vec3 eyeLookAngle = this.getViewVector(1.0f);
+        float yaw = this.getYRot() * Mth.DEG_TO_RAD;
         for (int i = 0; i < count; i++) {
             FlyingBone bone = createFlyingBone(attackTypeUUID, speed, delay);
-            // 随机XZ坐标，围绕目标周围
-            double randomX = target.getX() + (this.random.nextDouble() - 0.5) * (8 * difficulty);
-            double randomZ = target.getZ() + (this.random.nextDouble() - 0.5) * (4 * difficulty);
-            double randomY = target.getY() + this.random.nextDouble() * target.getBbHeight();
-            Vec3 spawnPos = new Vec3(randomX, randomY, randomZ);
-            // 固定向Sans的视线方向射击（封锁前方区域）
-            bone.vectorShoot(sansLookDirection);
-            LevelUtils.addFreshProjectile(this.level(), bone, spawnPos, sansLookDirection);
+            // 计算相对于视线方向的偏移（在局部坐标系）
+            double offsetX = this.random.nextGaussian() * (0.9 + difficulty*0.1);  // 左右
+            double offsetY = target.getBbHeight() * 0.5f + this.random.nextGaussian();     // 上下
+            double offsetZ = this.random.nextGaussian() ;  // 前后
+            bone.vectorShoot(eyeLookAngle);
+            LevelUtils.addFreshProjectileByVec3(this.level(), bone,
+                    getX() + Math.cos(yaw) * offsetX + (-Math.sin(yaw)) * offsetZ ,
+                    getY() + offsetY,
+                    getZ() + Math.sin(yaw) * offsetX + Math.cos(yaw) * offsetZ,
+                    eyeLookAngle
+            );
             delay += 2;
         }
         return delay;
@@ -776,7 +790,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      *
      * @return 需要执行完攻击的动画CD
      */
-    private int shootBoneRingVolley(LivingEntity target) {
+    public int shootBoneRingVolley(LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
         double[] offsetXs = getPhaseID() == 1 ? new double[]{1.0} : new double[]{1.0, -1.0};
         float speed = difficulty * 0.6f + 1.5f;
@@ -808,7 +822,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      *
      * @return 需要执行完攻击的动画CD
      */
-    private int shootArcSweepVolley() {
+    public int shootArcSweepVolley() {
         int difficulty = this.level().getDifficulty().getId();
         float speed = this.random.nextFloat() * 0.2f + difficulty * 0.5f + 1.0f;
         String attackTypeUUID = UUID.randomUUID().toString();
@@ -839,7 +853,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         return 0;
     }
 
-    private FlyingBone createFlyingBone(String attackTypeUUID, float speed, int delay) {
+    protected FlyingBone createFlyingBone(String attackTypeUUID, float speed, int delay) {
         FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f, speed, delay);
         bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
         return bone;
@@ -849,7 +863,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 在指定方向召唤前进骨墙
      */
-    private int summonGroundBoneWall(LivingEntity target, ColorAttack color, float addHeight, LocalDirection direction) {
+    public int summonGroundBoneWall(LivingEntity target, ColorAttack color, float addHeight, LocalDirection direction) {
         Level level = this.level();
         int difficulty = level.getDifficulty().getId();
         String attackTypeUUID = UUID.randomUUID().toString();
@@ -857,24 +871,24 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         float speed = 0.8f + difficulty * 0.5f;
         double interval = 0.375;
         double xOffset = -interval * (count - 1) / 2;
-        // 获取自身视线方向
-        Vec3 lookDirection = this.getLookAngle();
-        Vec3 perpendicular = new Vec3(-lookDirection.z, 0, lookDirection.x); // 垂直方向
+        // 获取自身水平视线方向
+        Vec3 horLookAngle = calculateViewVector(0, this.getYHeadRot());
+        Vec3 perpendicular = new Vec3(-horLookAngle.z, 0, horLookAngle.x); // 垂直方向
         // 计算目标到自身的距离减1
         double distance = this.distanceTo(target) - 1;
         // 根据directionType计算起始位置（都基于目标位置）
         Vec3 centerPos;
         switch (direction) {
             // 前方：目标位置 + 视线方向 * (距离-1)
-            case FRONT -> centerPos = target.position().add(lookDirection.scale(distance));
+            case FRONT -> centerPos = target.position().add(horLookAngle.scale(distance));
             // 后方：目标位置 - 视线方向 * (距离-1)
-            case BACK -> centerPos = target.position().add(lookDirection.scale(-distance));
+            case BACK -> centerPos = target.position().add(horLookAngle.scale(-distance));
             // 左侧：目标位置 - 垂直方向 * (距离-1)
             case LEFT -> centerPos = target.position().add(perpendicular.scale(-distance));
             // 右侧：目标位置 + 垂直方向 * (距离-1)
             case RIGHT -> centerPos = target.position().add(perpendicular.scale(distance));
             // 默认前方
-            default -> centerPos = target.position().add(lookDirection.scale(distance));
+            default -> centerPos = target.position().add(horLookAngle.scale(distance));
         }
         // 计算骨墙朝向（从起始位置朝向目标）
         Vec3 toTarget = target.position().subtract(centerPos).normalize();
@@ -897,7 +911,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      *
      * @param waveType 正弦波形式
      */
-    private int summonGroundBoneMatrix(LivingEntity target, int waveType) {
+    public int summonGroundBoneMatrix(LivingEntity target, int waveType) {
         int difficulty = this.level().getDifficulty().getId();
         Level level = this.level();
         String attackTypeUUID = UUID.randomUUID().toString();
@@ -974,11 +988,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 召唤平行骨刺波动 - 等间距平行直线波动
      */
-    private int summonParallelGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, int waveCount, ColorAttack color) {
+    public int summonParallelGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, int waveCount, ColorAttack color) {
         int difficulty = this.level().getDifficulty().getId();
         int baseDelay = 25 - difficulty * 5;
-        float yawRad = (this.getYHeadRot() + 90f) * Mth.DEG_TO_RAD;
-        Vec3 direction = new Vec3(Mth.cos(yawRad), 0, Mth.sin(yawRad));
+        Vec3 direction = calculateViewVector(0, this.getYHeadRot());
         Vec3 perpendicular = new Vec3(-direction.z, 0, direction.x); // 垂直方向
         int rows = ATTACK_RANGE * 2 + difficulty / 3 * 5;
         int cols = 5;
@@ -1002,40 +1015,39 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 骨刺波动 - 以自身为中心发射，特定角度步长发射
      */
-    private int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, float angleStep, ColorAttack color) {
+    public int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, float angleStep, ColorAttack color) {
         return summonGroundBoneSpineWaveAroundSelf(target, 1 + this.level().getDifficulty().getId(), angleStep, color);
     }
 
     /**
      * 骨刺波动 - 以自身为中心发射
      */
-    private int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, int count, float angleStep, ColorAttack color) {
+    public int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, int count, float angleStep, ColorAttack color) {
         int difficulty = this.level().getDifficulty().getId();
-        Vec3 lookAngle = this.getLookAngle().normalize();
+        Vec3 horLookAngle = calculateViewVector(0, getYHeadRot());
         int rows = ATTACK_RANGE * 2 + difficulty / 3 * 5;
         int cols = 5;
         int delay = 10;
         // 计算起始角度（让波动对称分布）
         float angle = -angleStep * (count - 1) / 2f;
         for (int i = 0; i < count; i++,angle += angleStep) {
-            delay = summonGroundBoneSpineWaveMatrix(target, rows, cols, this.position(), lookAngle.yRot(angle * Mth.DEG_TO_RAD), color, 10,10f);
+            delay = summonGroundBoneSpineWaveMatrix(target, rows, cols, this.position(), horLookAngle.yRot(angle * Mth.DEG_TO_RAD), color, 10,10f);
         }
         return delay;
     }
     /**
      * 骨刺波动 - 以自身为中心的圆径向发射，无初始偏移
      */
-    private int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, ColorAttack color) {
+    public int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, ColorAttack color) {
         int difficulty = this.level().getDifficulty().getId();
-        Vec3 lookAngle = this.getLookAngle().normalize();
+        Vec3 horLookAngle = calculateViewVector(0, getYHeadRot());
         int rows = ATTACK_RANGE * 2 + difficulty / 3 * 5;
         int cols = 3 + difficulty;
         int delay = 10;
         int count = 6 + difficulty;
         float angleStep = 360f/count, angle = 0;
-        // 计算起始角度（让波动对称分布）
-        for (int i = 0; i < count; i++,angle+=angleStep) {
-            delay = summonGroundBoneSpineWaveMatrix(target, rows, cols, this.position(), lookAngle.yRot(angle * Mth.DEG_TO_RAD), color, 10,10f);
+        for (int i = 0; i < count; i++,angle += angleStep) {
+            delay = summonGroundBoneSpineWaveMatrix(target, rows, cols, this.position(), horLookAngle.yRot(angle * Mth.DEG_TO_RAD), color, 10,10f);
         }
         return delay;
     }
@@ -1043,7 +1055,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 公用方法：召唤定向骨刺矩阵
      */
-    private int summonGroundBoneSpineWaveMatrix(LivingEntity target, int rows, int cols, Vec3 startPos, Vec3 direction, ColorAttack color, int delay,float gaussianDev) {
+    public int summonGroundBoneSpineWaveMatrix(LivingEntity target, int rows, int cols, Vec3 startPos, Vec3 direction, ColorAttack color, int delay,float gaussianDev) {
         String attackTypeUUID = UUID.randomUUID().toString();
         double minY = Math.min(target.getY(), this.getY());
         double maxY = Math.max(target.getY(), this.getY()) + 1.0;
@@ -1071,7 +1083,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 在自身位置召唤地面骨刺扩张（圆形）
      */
-    private int summonGroundBoneSpineAtSelf() {
+    public int summonGroundBoneSpineAtSelf() {
         int difficulty = this.level().getDifficulty().getId();
         Vec3 pos = this.position();
         return summonCircleGroundBoneSpine(this, 13 + difficulty, pos.x, pos.z, 13 - difficulty, 20, 1.0f);
@@ -1080,7 +1092,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 在目标脚下召唤地面骨刺
      */
-    private int summonGroundBoneSpineAtTarget(@NotNull LivingEntity target) {
+    public int summonGroundBoneSpineAtTarget(@NotNull LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
         Vec3 pos = target.position();
         return summonCircleGroundBoneSpine(target, 3 * (difficulty + 1), pos.x, pos.z, 13 - difficulty, 10, 1f - (float) difficulty / 3);
@@ -1089,7 +1101,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 在目标周围随机区域召唤地面骨刺
      */
-    private int summonGroundBoneSpineAroundTarget(@NotNull LivingEntity target) {
+    public int summonGroundBoneSpineAroundTarget(@NotNull LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
         Vec3 pos = target.position();
         return summonCircleGroundBoneSpine(target, 3 + difficulty, pos.x + this.random.nextDouble() * ATTACK_RANGE, pos.z + this.random.nextDouble() * ATTACK_RANGE
@@ -1108,7 +1120,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      * @param offset  骨刺刺出自身高度的比例
      * @return 执行CD
      */
-    private int summonCircleGroundBoneSpine(LivingEntity target, int layer, double x, double z, int delay, int lifetime, float offset) {
+    public int summonCircleGroundBoneSpine(LivingEntity target, int layer, double x, double z, int delay, int lifetime, float offset) {
         PacketDistributor.sendToPlayersTrackingEntity(this,new WarningTipPacket((float) x, (float) target.getY(), (float) z, layer * 0.6f, offset,lifetime, Color.RED));
         this.level().playSound(null,x,getY(),z,SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(),SoundSource.HOSTILE);
         String attackTypeUUID = UUID.randomUUID().toString();
@@ -1143,7 +1155,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      * @param offset  骨刺刺出自身高度的比例
      * @return 执行CD
      */
-    private int summonSquareGroundBoneSpine(LivingEntity target, int size, double x, double z, int delay, int lifetime, float offset) {
+    public int summonSquareGroundBoneSpine(LivingEntity target, int size, double x, double z, int delay, int lifetime, float offset) {
         String attackTypeUUID = UUID.randomUUID().toString();
         double minY = Math.min(target.getY(), this.getY());
         double maxY = Math.max(target.getY(), this.getY()) + 1.0;
@@ -1163,7 +1175,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      * @param offset 根据难度决定骨刺刺出自身高度的比例
      * @param gaussianDev xRot 高斯分布的标准差
      */
-    private void createGroundBone(String attackUUID, double targetX, double targetZ, double minY, double maxY, int delay, int lifetime, float offset, ColorAttack colorAttack, boolean isPlaySound,float gaussianDev) {
+    protected void createGroundBone(String attackUUID, double targetX, double targetZ, double minY, double maxY, int delay, int lifetime, float offset, ColorAttack colorAttack, boolean isPlaySound,float gaussianDev) {
         Level level = this.level();
         double spawnY = EntityUtils.findGroundY(level, targetX, targetZ, minY, maxY);
         // 如果找到有效地面，生成骨刺
@@ -1182,14 +1194,14 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 用于单击
      */
-    private int summonAimedGBAroundSelf(LivingEntity target) {
+    public int summonAimedGBAroundSelf(LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
         return summonAimedGBAroundSelf(target, difficulty, 1.0f);
     }
     /**
      * 在自身周围随机位置召唤GB
      */
-    private int summonAimedGBAroundSelf(LivingEntity target, int count, float width) {
+    public int summonAimedGBAroundSelf(LivingEntity target, int count, float width) {
         for (int i = 0; i < count; i++) {
             GasterBlaster gb = createGBFixed(width);
             Vec3 targetEyePos = target.getEyePosition();
@@ -1213,7 +1225,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 以目标和自身长度为半径的圆环上召唤GB，固定360度范围，根据数量自动计算角度步长
      */
-    private int summonGBAroundTarget(LivingEntity target, int count, double offsetAngle, float width) {
+    public int summonGBAroundTarget(LivingEntity target, int count, double offsetAngle, float width) {
         return summonGBAroundTarget(target, count, offsetAngle, 360.0 / count, width);
     }
 
@@ -1225,7 +1237,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
      * @param offsetAngle 初始偏移角度（度）
      * @param angleStep   角度步长（度）
      */
-    private int summonGBAroundTarget(LivingEntity target, int count, double offsetAngle, double angleStep, float width) {
+    public int summonGBAroundTarget(LivingEntity target, int count, double offsetAngle, double angleStep, float width) {
         double baseRadius = this.distanceTo(target) * 0.75f; // 以距离为基准半径
         double currentAngle = offsetAngle; // 从指定角度开始
 
@@ -1245,13 +1257,13 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         return 0;
     }
 
-    private GasterBlaster createGBFixed(float width) {
+    public GasterBlaster createGBFixed(float width) {
         GasterBlaster gb = new GasterBlaster(EntityTypeRegistry.GASTER_BLASTER.get(), this.level(), this, width);
         gb.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(UUID.randomUUID().toString(), (byte) 10));
         return gb;
     }
 
-    private int gravityControl(LivingEntity target, LocalDirection direction) {
+    public int gravityControl(LivingEntity target, LocalDirection direction) {
 //        GravityData.applyRelativeGravity(this, target, direction);
         target.setDeltaMovement(LocalVec3.fromLocal(direction, target.getLookAngle(), target.getDeltaMovement()));
         this.isAppendSpine = true;
@@ -1261,7 +1273,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
     /**
      * 时间跳跃传送
      */
-    private int timeJumpTeleport(LivingEntity target) {
+    public int timeJumpTeleport(LivingEntity target) {
         //todo 玩家黑屏 + 音效
         PacketDistributor.sendToServer(new TimeJumpTeleportPacket(target.getId(), target.tickCount + 20));
         this.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
@@ -1307,5 +1319,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 attackController
         );
     }
+
+
 }
 
