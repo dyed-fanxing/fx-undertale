@@ -2,11 +2,9 @@ package com.sakpeipei.undertale.entity.ai.goal;
 
 import com.sakpeipei.undertale.common.anim.SingleAnim;
 import com.sakpeipei.undertale.entity.IAnimatable;
-import com.sakpeipei.undertale.network.AnimIDPacket;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,7 +45,7 @@ public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal
      */
     @Override
     public boolean canContinueToUse() {
-        return tick < anim.getDuration();
+        return tick < anim.getLength();
     }
 
     @Override
@@ -56,10 +54,10 @@ public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal
         if(target != null){
             if(anim.shouldHitAt(tick)){
                 // 执行攻击时返回的额外动画时间 - 判定生效时剩余的动画时间，如果大于0，则代表这次攻击动画的时间比预设的多，需要增加动画持续时间
-                int cd = anim.getDuration();
+                int cd = anim.getLength();
                 int remaining = execute(target) - (cd - tick);
                 if(remaining > 0){
-                    anim.addDuration(remaining);
+                    anim.addLength(remaining);
                 }
             }
         }

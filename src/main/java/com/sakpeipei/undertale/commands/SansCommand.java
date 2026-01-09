@@ -15,6 +15,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -38,7 +39,9 @@ public class SansCommand {
                                     ServerPlayer player = cc.getSource().getPlayer();
                                     if (player != null) {
                                         int viewDis = player.requestedViewDistance() * 16;
-                                        Sans sans = player.level().getNearestEntity(Sans.class, TargetingConditions.forNonCombat(), player, player.getX(), player.getY(), player.getZ(), new AABB(-viewDis,-viewDis,-viewDis,viewDis,viewDis,viewDis));
+                                        Vec3 pos = player.position();
+                                        Sans sans = player.level().getNearestEntity(Sans.class, TargetingConditions.forNonCombat(), player, pos.x, pos.y, pos.z,
+                                                new AABB(pos.x-viewDis,pos.y-viewDis,pos.z-viewDis,pos.x+viewDis,pos.y+viewDis,pos.z+viewDis));
                                         if(sans != null) {
                                             sans.setPersistentAngerTarget(player.getUUID());
                                             switch (IntegerArgumentType.getInteger(cc, "function")) {

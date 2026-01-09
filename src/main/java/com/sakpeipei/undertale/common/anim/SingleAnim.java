@@ -1,8 +1,10 @@
 package com.sakpeipei.undertale.common.anim;
 
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.LivingEntity;
 
 import java.util.List;
+import java.util.function.*;
 
 /**
  * @author Sakqiongzi
@@ -13,33 +15,37 @@ public class SingleAnim<T>{
     final byte id;   // 动画id
     int animTick;  // 触发动画Tick
     int[] hitTicks;   // 判定Ticks
-    protected int duration; // 施法/动画/动作 持续Tick
+    protected int length; // 动画时长 施法/动画/动作
     protected final int cd; // 攻击后摇CD
     final List<T> actions;      // 执行什么动作
+    IntFunction<Integer> speedModifier; // 动画速度修改器：可修改动画时长，修改动画判定时机
 
-
-
-    public SingleAnim(byte id, int hitTick, int duration, int cd, T action) {
-        this(id,new int[]{hitTick},duration,cd,List.of(action));
+    public SingleAnim(byte id, int hitTick, int length, int cd, T action) {
+        this(id,new int[]{hitTick},length,cd,List.of(action),null);
+    }
+    public SingleAnim(byte id, int hitTick, int length, int cd, T action,IntFunction<Integer> speedModifier) {
+        this(id,new int[]{hitTick},length,cd,List.of(action),speedModifier);
     }
 
-    public SingleAnim(byte id,int[] hitTicks, int duration, int cd, List<T> actions) {
+    public SingleAnim(byte id,int[] hitTicks, int length, int cd, List<T> actions,IntFunction<Integer> speedModifier) {
         this.id = id;
         this.hitTicks = hitTicks;
-        this.duration = duration;
+        this.length = length;
         this.cd = cd;
         this.actions = actions;
+        this.speedModifier = speedModifier;
     }
 
     // 在该tick是否判定
     public boolean shouldHitAt(int currentTick) {
         for (int hitTick : hitTicks) {
-            if(hitTick == currentTick){
+            if(speedModifier.apply(hitTick) == currentTick){
                 return true;
             }
         }
         return false;
     }
+
     // 在该tick是否播放音效
     public boolean shouldPlaySoundAt(int animTick) {
         return false;
@@ -51,8 +57,8 @@ public class SingleAnim<T>{
         }
     }
 
-    public void addDuration(int increment) {
-        this.duration += increment;
+    public void addLength(int increment) {
+        this.length += increment;
     }
 
 
@@ -71,8 +77,8 @@ public class SingleAnim<T>{
         return actions;
     }
 
-    public int getDuration() {
-        return duration;
+    public int getLength() {
+        return length;
     }
     public int getCd() {
         return cd;

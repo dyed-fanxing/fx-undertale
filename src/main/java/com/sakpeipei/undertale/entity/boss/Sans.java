@@ -82,6 +82,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.function.ToIntFunction;
 
 public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -571,17 +572,18 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             existPersistentAttack = false;
         }
     }
+
     // 单次攻击
-    class SingleAttackGoalSingle extends SingleAnimGoal<Integer, Sans> {
-        private final List<SingleAnim<Integer>> attacks = List.of(
-                new SingleAnim<>((byte) 8,4,30,20,1),
-                new SingleAnim<>((byte) 9,4,30,20,2),
-                new SingleAnim<>((byte) 6,4,30,20,3)
+    class SingleAttackGoalSingle extends SingleAnimGoal<ToIntFunction<LivingEntity>, Sans> {
+        private final List<SingleAnim<ToIntFunction<LivingEntity>>> attacks = List.of(
+                new SingleAnim<>((byte) 8,4,30,20, Sans.this::shootBoneRingVolley),
+                new SingleAnim<>((byte) 9,4,30,20,target -> Sans.this.shootArcSweepVolley()),
+                new SingleAnim<>((byte) 6,4,30,20,Sans.this::summonAimedGBAroundSelf)
         );
-        private final List<SingleAnim<Integer>> groundAttacks = List.of(
-                new SingleAnim<>((byte) 6, 4 ,20, 30, 4),
-                new SingleAnim<>((byte) 6, 10,20, 30, 5),
-                new SingleAnim<>((byte) 6, 10,20, 30, 6)
+        private final List<SingleAnim<ToIntFunction<LivingEntity>>> groundAttacks = List.of(
+                new SingleAnim<>((byte) 6, 4 ,20, 30, (target) -> Sans.this.summonGroundBoneSpineAtSelf()),
+                new SingleAnim<>((byte) 6, 10,20, 30, (target) -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, 30f, ColorAttack.WHITE)),
+                new SingleAnim<>((byte) 6, 10,20, 30, (target) -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, ColorAttack.WHITE))
         );
 
         public SingleAttackGoalSingle() {
@@ -596,10 +598,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
 
         @Override
-        protected @NotNull SingleAnim<Integer> select(LivingEntity target) {
+        protected @NotNull SingleAnim<ToIntFunction<LivingEntity>> select(LivingEntity target) {
             boolean onGround = target.onGround();
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
-            List<SingleAnim<Integer>> availableAttacks = new ArrayList<>(attacks);
+            List<SingleAnim<ToIntFunction<LivingEntity>>> availableAttacks = new ArrayList<>(attacks);
             if (target.onGround()) {
                 availableAttacks.addAll(groundAttacks);
                 return availableAttacks.get(5);
@@ -612,16 +614,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
 
         @Override
         protected int execute(LivingEntity target) {
-            List<Integer> actions = anim.getActions();
-            return switch (actions.getFirst()) {
-                case 1 -> Sans.this.shootBoneRingVolley(target);
-                case 2 -> Sans.this.shootArcSweepVolley();
-                case 3 -> Sans.this.summonAimedGBAroundSelf(target);
-                case 4 -> Sans.this.summonGroundBoneSpineAtSelf();
-                case 5 -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, 30f, ColorAttack.WHITE);
-                case 6 -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, ColorAttack.WHITE);
-                default -> throw new IllegalStateException("Unexpected value: " + anim);
-            };
+            int cd = 0;
+            for (ToIntFunction<LivingEntity> action : anim.getActions()) {
+                cd = Math.max(cd,action.applyAsInt(target));
+            }
+            return cd;
         }
 
         @Override
@@ -748,7 +745,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                 LevelUtils.addFreshProjectile(this.level(), bone, pos, target.getX(), heights[this.random.nextInt(heights.length)], target.getZ());
             } while (!bone.level().noCollision(bone, bone.getBoundingBox()));
             bone.aimShoot();
-            delay += 6 - difficulty;
+            delay += 7 - difficulty - fatigueLevel;
         }
         return delay;
     }
@@ -778,7 +775,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
                     getZ() + Math.sin(yaw) * offsetX + Math.cos(yaw) * offsetZ,
                     eyeLookAngle
             );
-            delay += 2;
+            delay +=  7 - difficulty - fatigueLevel;
         }
         return delay;
     }
