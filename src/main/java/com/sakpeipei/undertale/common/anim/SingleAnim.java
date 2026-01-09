@@ -16,30 +16,30 @@ public class SingleAnim<T>{
     int animTick;  // 触发动画Tick
     int[] hitTicks;   // 判定Ticks
     protected int length; // 动画时长 施法/动画/动作
+    protected float speed = 1.0f; // 播放速度
     protected final int cd; // 攻击后摇CD
     final List<T> actions;      // 执行什么动作
-    IntFunction<Integer> speedModifier; // 动画速度修改器：可修改动画时长，修改动画判定时机
 
-    public SingleAnim(byte id, int hitTick, int length, int cd, T action) {
-        this(id,new int[]{hitTick},length,cd,List.of(action),null);
+    public SingleAnim(byte id, int hitTick, int length, int cd,T action) {
+        this(id,new int[]{hitTick},length,1.0f,cd,List.of(action));
     }
-    public SingleAnim(byte id, int hitTick, int length, int cd, T action,IntFunction<Integer> speedModifier) {
-        this(id,new int[]{hitTick},length,cd,List.of(action),speedModifier);
+    public SingleAnim(byte id, int hitTick, int length,float speed, int cd, T action) {
+        this(id,new int[]{hitTick},(int) Math.ceil(length * speed),speed,cd,List.of(action));
     }
 
-    public SingleAnim(byte id,int[] hitTicks, int length, int cd, List<T> actions,IntFunction<Integer> speedModifier) {
+    public SingleAnim(byte id,int[] hitTicks, int length,float speed, int cd, List<T> actions) {
         this.id = id;
         this.hitTicks = hitTicks;
         this.length = length;
         this.cd = cd;
         this.actions = actions;
-        this.speedModifier = speedModifier;
+        this.speed = speed;
     }
 
     // 在该tick是否判定
     public boolean shouldHitAt(int currentTick) {
         for (int hitTick : hitTicks) {
-            if(speedModifier.apply(hitTick) == currentTick){
+            if(hitTick == currentTick){
                 return true;
             }
         }

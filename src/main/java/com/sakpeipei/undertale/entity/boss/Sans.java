@@ -573,17 +573,19 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
         }
     }
 
+
     // 单次攻击
     class SingleAttackGoalSingle extends SingleAnimGoal<ToIntFunction<LivingEntity>, Sans> {
         private final List<SingleAnim<ToIntFunction<LivingEntity>>> attacks = List.of(
                 new SingleAnim<>((byte) 8,4,30,20, Sans.this::shootBoneRingVolley),
+                new SingleAnim<>((byte) 8,4,30,20, Sans.this::shootBoneRingVolley),
                 new SingleAnim<>((byte) 9,4,30,20,target -> Sans.this.shootArcSweepVolley()),
-                new SingleAnim<>((byte) 6,4,30,20,Sans.this::summonAimedGBAroundSelf)
+                new SingleAnim<>((byte) 6,4,30,20, Sans.this::summonAimedGBAroundSelf)
         );
         private final List<SingleAnim<ToIntFunction<LivingEntity>>> groundAttacks = List.of(
-                new SingleAnim<>((byte) 6, 4 ,20, 30, (target) -> Sans.this.summonGroundBoneSpineAtSelf()),
-                new SingleAnim<>((byte) 6, 10,20, 30, (target) -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, 30f, ColorAttack.WHITE)),
-                new SingleAnim<>((byte) 6, 10,20, 30, (target) -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, ColorAttack.WHITE))
+                new SingleAnim<>((byte) 6, 4 ,20, 30, target -> Sans.this.summonGroundBoneSpineAtSelf()),
+                new SingleAnim<>((byte) 6, 10,20, 30, target -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, 30f, ColorAttack.WHITE)),
+                new SingleAnim<>((byte) 6, 10,20, 30, target -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, ColorAttack.WHITE))
         );
 
         public SingleAttackGoalSingle() {
@@ -602,8 +604,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable 
             boolean onGround = target.onGround();
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
             List<SingleAnim<ToIntFunction<LivingEntity>>> availableAttacks = new ArrayList<>(attacks);
+
             if (target.onGround()) {
                 availableAttacks.addAll(groundAttacks);
+                availableAttacks.add(
+                        new SingleAnim<>((byte) 8,4 - Sans.this.fatigueLevel,30, 4.0f / (4 - Sans.this.fatigueLevel),20, Sans.this::shootBoneRingVolley)
+                )
                 return availableAttacks.get(5);
             }
             boolean inAir = target.isFallFlying() || (!onGround && (canFlying || target.onClimbable()));
