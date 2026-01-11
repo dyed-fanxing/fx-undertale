@@ -3,9 +3,11 @@ package com.sakpeipei.undertale.entity.ai.goal;
 import com.sakpeipei.undertale.common.anim.AnimStep;
 import com.sakpeipei.undertale.common.anim.SequenceAnim;
 import com.sakpeipei.undertale.entity.IAnimatable;
+import com.sakpeipei.undertale.network.AnimPacket;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -53,7 +55,7 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
         List<AnimStep<T>> steps = anim.getSteps();
         AnimStep<T> curr = steps.get(step);
         if(curr.shouldTriggerAnim(tick)){
-            mob.setAnimID(curr.getId());
+            PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),curr.getId(),curr.getSpeed()));
         }
         if(curr.shouldHitAt(tick)) {
             LivingEntity target = mob.getTarget();
@@ -76,7 +78,7 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
     @Override
     public void stop() {
         cooldownEndTick = anim.getCd() + mob.tickCount;
-        mob.setAnimID((byte)-1);
+        PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),(byte) -1,0f));
     }
 
     @Override

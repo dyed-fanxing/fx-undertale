@@ -1,8 +1,13 @@
 package com.sakpeipei.undertale.entity;
 
-import com.sakpeipei.undertale.network.AnimIDPacket;
+import com.sakpeipei.undertale.Undertale;
+import com.sakpeipei.undertale.network.AnimPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.neoforge.network.PacketDistributor;
+import software.bernie.geckolib.animatable.GeoAnimatable;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.constant.dataticket.SerializableDataTicket;
 
 /**
  * @author Sakqiongzi
@@ -11,13 +16,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public interface IAnimatable {
     byte getAnimID();
     void setAnimID(byte id);
-
-    /**
-     * 服务端发送动画ID
-     * @param id 动画ID
-     */
-    default void sendAnimId(byte id){
-        Entity entity = (Entity) this;
-        PacketDistributor.sendToPlayersTrackingEntity(entity,new AnimIDPacket(entity.getId(),id));
-    }
+    float getAnimSpeed();
+    void setAnimSpeed(float speed);
 }

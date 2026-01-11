@@ -61,26 +61,27 @@ public class SingleAnim<T>{
         this.length += increment;
     }
 
-
     public byte getId() {
         return id;
     }
-
     public int[] getHitTicks() {
         return hitTicks;
     }
-
-    public SoundEvent getSoundEvent() {
-        return null;
-    }
-    public List<T> getActions() {
-        return actions;
-    }
-
     public int getLength() {
         return length;
     }
     public int getCd() {
         return cd;
     }
+    public float getSpeed() {
+        return speed;
+    }
+
+    public List<T> getActions() {
+        return actions;
+    }
+    public SoundEvent getSoundEvent() {
+        return null;
+    }
+
 }

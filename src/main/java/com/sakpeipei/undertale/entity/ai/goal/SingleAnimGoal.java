@@ -2,9 +2,11 @@ package com.sakpeipei.undertale.entity.ai.goal;
 
 import com.sakpeipei.undertale.common.anim.SingleAnim;
 import com.sakpeipei.undertale.entity.IAnimatable;
+import com.sakpeipei.undertale.network.AnimPacket;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +36,7 @@ public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal
         LivingEntity target = mob.getTarget();
         if(target != null){
             anim = select(target);
-            mob.setAnimID(anim.getId());
+            PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),anim.getId(),anim.getSpeed()));
         }
     }
 
@@ -78,7 +80,7 @@ public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal
     @Override
     public void stop() {
         cooldownEndTick = anim.getCd() + mob.tickCount;
-        mob.setAnimID((byte) -1);
+        PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),(byte) -1,0f));
     }
 
     @Override

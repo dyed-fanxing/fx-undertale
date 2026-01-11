@@ -11,6 +11,7 @@ public class AnimStep<T>{
     final byte id;   // 动画id
     int animTick;  // 触发动画Tick
     int[] hitTicks;   // 判定Ticks
+    float speed;
     final T action;      // 执行什么动作
 
     public AnimStep(byte id, int animTick, int[] hitTicks, T action) {
@@ -65,17 +66,17 @@ public class AnimStep<T>{
     public byte getId() {
         return id;
     }
-
     public int[] getHitTicks() {
         return hitTicks;
     }
-
-    public SoundEvent getSoundEvent() {
-        return null;
+    public float getSpeed() {
+        return speed;
     }
-
     public T getAction() {
         return action;
+    }
+    public SoundEvent getSoundEvent() {
+        return null;
     }
 
 }

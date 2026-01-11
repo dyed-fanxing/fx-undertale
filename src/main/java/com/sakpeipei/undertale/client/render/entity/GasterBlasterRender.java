@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.client.render.entity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.client.model.entity.GasterBlasterFixedModel;
+import com.sakpeipei.undertale.client.model.entity.GasterBlasterModel;
 import com.sakpeipei.undertale.client.render.layer.GasterBlasterEyesLayer;
 import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -17,7 +17,7 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     public GasterBlasterRender(EntityRendererProvider.Context renderManager) {
-        super(renderManager, new GasterBlasterFixedModel());
+        super(renderManager, new GasterBlasterModel());
         this.addRenderLayer(new GasterBlasterEyesLayer<>(this, ResourceLocation.fromNamespaceAndPath(Undertale.MODID,"textures/entity/gaster_blaster_eyes.png")));
     }
 

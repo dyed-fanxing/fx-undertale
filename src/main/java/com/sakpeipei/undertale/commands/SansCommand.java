@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.boss.Sans;
+import com.sakpeipei.undertale.network.AnimPacket;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.server.level.ChunkTrackingView;
@@ -19,9 +20,11 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Sakqiongzi
@@ -44,7 +47,8 @@ public class SansCommand {
                                                 new AABB(pos.x-viewDis,pos.y-viewDis,pos.z-viewDis,pos.x+viewDis,pos.y+viewDis,pos.z+viewDis));
                                         if(sans != null) {
                                             sans.setPersistentAngerTarget(player.getUUID());
-                                            switch (IntegerArgumentType.getInteger(cc, "function")) {
+                                            int function = IntegerArgumentType.getInteger(cc, "function");
+                                            switch (function) {
                                                 case 1 -> sans.shootBoneRingVolley(player);
                                                 case 2 -> sans.shootArcSweepVolley();
                                                 case 3 -> sans.shootAimedBarrage(player);

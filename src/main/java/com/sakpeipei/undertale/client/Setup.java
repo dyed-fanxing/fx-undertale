@@ -58,7 +58,7 @@ public class Setup {
         registrar.playToClient(KaramPacket.TYPE,KaramPacket.STREAM_CODEC, KaramPacket::handle);
         registrar.playToClient(WarningTipPacket.TYPE, WarningTipPacket.STREAM_CODEC, WarningTipPacket::handle);
         registrar.playToClient(WarningTipAABBPacket.TYPE, WarningTipAABBPacket.STREAM_CODEC, WarningTipAABBPacket::handle);
-        registrar.playToClient(AnimIDPacket.TYPE,AnimIDPacket.STREAM_CODEC, AnimIDPacket::handle);
+        registrar.playToClient(AnimPacket.TYPE, AnimPacket.STREAM_CODEC, AnimPacket::handle);
         registrar.playToClient(GasterBlasterBeamEndPacket.TYPE,GasterBlasterBeamEndPacket.STREAM_CODEC, GasterBlasterBeamEndPacket::handle);
     }
 }
