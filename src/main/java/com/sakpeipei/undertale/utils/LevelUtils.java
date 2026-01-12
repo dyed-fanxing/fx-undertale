@@ -16,6 +16,10 @@ public class LevelUtils {
         entity.lookAt(EntityAnchorArgument.Anchor.FEET,targetPos);
         return level.addFreshEntity(entity);
     }
+
+
+
+
     /**
      * 添加弹射物到当前世界中，并看向目标实体
      * @param level 世界
@@ -25,6 +29,18 @@ public class LevelUtils {
      */
     public static boolean addFreshProjectile(Level level, Projectile projectile, Vec3 spawnPos, Entity target){
         projectile.setPos(spawnPos);
+        RotUtils.lookAtShoot(projectile, target);
+        return level.addFreshEntity(projectile);
+    }
+    /**
+     * 添加弹射物到当前世界中，并看向目标实体
+     * @param level 世界
+     * @param projectile 弹射物
+     * @param x,y,z 出生点
+     * @param target 目标实体
+     */
+    public static boolean addFreshProjectile(Level level, Projectile projectile, double x,double y,double z, Entity target){
+        projectile.setPos(x,y,z);
         RotUtils.lookAtShoot(projectile, target);
         return level.addFreshEntity(projectile);
     }
@@ -44,6 +60,18 @@ public class LevelUtils {
      * 添加弹射物到当前世界中，并看向目标位置
      * @param level 世界
      * @param projectile 弹射物
+     * @param spawnX,spawnY,spawnZ 出生点
+     * @param targetX,targetY,targetZ 目标位置
+     */
+    public static boolean addFreshProjectile(Level level, Projectile projectile, double spawnX,double spawnY,double spawnZ, double targetX,double targetY,double targetZ){
+        projectile.setPos(spawnX,spawnY,spawnZ);
+        RotUtils.lookAtShoot(projectile,targetX,targetY,targetZ);
+        return level.addFreshEntity(projectile);
+    }
+    /**
+     * 添加弹射物到当前世界中，并看向目标位置
+     * @param level 世界
+     * @param projectile 弹射物
      * @param spawnPos 出生点
      * @param targetPos 目标位置
      */
@@ -52,6 +80,9 @@ public class LevelUtils {
         RotUtils.lookAtShoot(projectile, targetPos);
         return level.addFreshEntity(projectile);
     }
+
+
+
     /**
      * 添加弹射物到当前世界中，并看向矢量方向
      * @param level 世界
