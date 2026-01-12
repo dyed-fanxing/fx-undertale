@@ -920,6 +920,9 @@
 				"right_elbow": {
 					"rotation": {
 						"vector": [0, 0, 0]
+					},
+					"position": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"left_arm": {
@@ -935,6 +938,9 @@
 				},
 				"left_elbow": {
 					"rotation": {
+						"vector": [0, 0, 0]
+					},
+					"position": {
 						"vector": [0, 0, 0]
 					}
 				}
@@ -977,6 +983,9 @@
 				"left_elbow": {
 					"rotation": {
 						"vector": [0, 0, 0]
+					},
+					"position": {
+						"vector": [0, 0, 0]
 					}
 				}
 			}
@@ -999,6 +1008,9 @@
 				"right_elbow": {
 					"rotation": {
 						"vector": [0, 0, 0]
+					},
+					"position": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"left_arm": {
@@ -1014,6 +1026,9 @@
 				},
 				"left_elbow": {
 					"rotation": {
+						"vector": [0, 0, 0]
+					},
+					"position": {
 						"vector": [0, 0, 0]
 					}
 				}
@@ -1055,6 +1070,9 @@
 				},
 				"left_elbow": {
 					"rotation": {
+						"vector": [0, 0, 0]
+					},
+					"position": {
 						"vector": [0, 0, 0]
 					}
 				}
@@ -1225,10 +1243,10 @@
 							"vector": [-89.14252, -39.17806, -56.17372]
 						},
 						"0.125": {
-							"vector": [0, -90, -155]
+							"vector": [15, -90, -155]
 						},
 						"0.5833": {
-							"vector": [0, -90, -155]
+							"vector": [15, -90, -155]
 						},
 						"0.625": {
 							"vector": [-104.8397, -29.43262, -71.50228]
@@ -1242,10 +1260,10 @@
 							"vector": [-1, 0, 0]
 						},
 						"0.125": {
-							"vector": [0, -0.25, 0]
+							"vector": [-2, 1, 0]
 						},
 						"0.5833": {
-							"vector": [0, -0.25, 0]
+							"vector": [-2, 1, 0]
 						},
 						"0.6667": {
 							"vector": [0, -0.25, -2]
@@ -1528,6 +1546,47 @@
 							"vector": [1, 1.1, 1],
 							"easing": "easeInExpo"
 						}
+					}
+				}
+			}
+		},
+		"attack.cast.left2": {
+			"loop": true,
+			"animation_length": 0.5,
+			"bones": {
+				"right_arm": {
+					"rotation": {
+						"vector": [24.76245, -39.25748, 2.24479]
+					},
+					"position": {
+						"vector": [1, -0.25, 0]
+					}
+				},
+				"right_elbow": {
+					"rotation": {
+						"vector": [-90, 0, 0]
+					},
+					"position": {
+						"vector": [0, 0, 2]
+					},
+					"scale": {
+						"vector": [1, 1.1, 1]
+					}
+				},
+				"left_arm": {
+					"rotation": {
+						"vector": ["-180 - 10 * math.sin(720 *query.anim_time)", 0, 45]
+					},
+					"position": {
+						"vector": [-2, 1, 0]
+					},
+					"scale": {
+						"vector": [1, 1.1, 1]
+					}
+				},
+				"left_elbow": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				}
 			}

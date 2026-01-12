@@ -151,7 +151,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             this.globalCD--;
         }
         int stamina = getStamina();
-        if (getPhaseID() == FIRST_PHASE && this.tickCount % 20 == 0) {
+        if (getPhaseID() == FIRST_PHASE && this.tickCount % 40 == 0) {
             stamina = Math.min(stamina + 1, maxStamina);
             setStamina(stamina);
         }
@@ -169,30 +169,34 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     public boolean hurt(@NotNull DamageSource source, float power) {
         Entity sourceEntity = source.getEntity();
         Entity directEntity = source.getDirectEntity();
-        if (isInvulnerableTo(source) || source.is(Tags.DamageTypes.IS_ENVIRONMENT) || (sourceEntity == null && directEntity == null)) {
+        if (isInvulnerableTo(source) || source.is(Tags.DamageTypes.IS_ENVIRONMENT)) {
             return false;
         }
         int stamina = getStamina();
         if(stamina == 0){
             return super.hurt(source, power);
         }
-        if(!source.is(Tags.DamageTypes.IS_TECHNICAL)){
-            if(getPhaseID() == 5 ) { // 免疫一切伤害 执行特殊攻击
+        if (!source.is(Tags.DamageTypes.IS_TECHNICAL)) {
+            if ((sourceEntity == null && directEntity == null) || getPhaseID() == SPECIAL_ATTACK) { // 免疫一切伤害 执行特殊攻击
                 return false;
             }
             power *= 0.5f;
 
-            if(source.is(DamageTypeTags.IS_PROJECTILE)){
+            if (source.is(DamageTypeTags.IS_PROJECTILE)) {
                 power *= 0.8f;
             }
-            if(source.is(Tags.DamageTypes.IS_MAGIC)){
+            if (source.is(Tags.DamageTypes.IS_MAGIC)) {
                 power *= 0.9f;
             }
-            if(source.is(Tags.DamageTypes.IS_PHYSICAL)){
+            if (source.is(Tags.DamageTypes.IS_PHYSICAL)) {
                 power *= 0.6f;
             }
         }
-        this.setStamina(Math.max(0,stamina - Mth.ceil(power)));
+        stamina = Math.max(0,stamina - Mth.ceil(power));
+        this.setStamina(stamina);
+        if(stamina <= maxStamina/2){
+            this.entityData.set(PHASE_ID,SECOND_PHASE);
+        }
 
         if (sourceEntity == null) {
             rangedTeleport(directEntity);
@@ -382,7 +386,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         this.entityData.set(STAMINA,stamina);
     }
 
-    private byte getPhaseID() {
+    public byte getPhaseID() {
         return this.entityData.get(PHASE_ID);
     }
     @Override
@@ -414,7 +418,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
         super.defineSynchedData(builder);
         builder.define(STAMINA, 0);
-        builder.define(PHASE_ID, OPENING_ATTACK);
+        builder.define(PHASE_ID, FIRST_PHASE);
         builder.define(IS_EYE_BLINK, false);
     }
 
@@ -596,8 +600,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         @Override
         public boolean canUse() {
             byte phaseID = getPhaseID();
-            boolean flag = !isAttacking && (phaseID == 1 && !existPersistentAttack) || (phaseID == 3 && existPersistentAttack);
-            return super.canUse() && seeTime > -60 && flag && fatigueLevel < 4;
+            return super.canUse() && seeTime > -60 && !isAttacking && fatigueLevel < 4 && ((phaseID == FIRST_PHASE && !existPersistentAttack) || phaseID == SECOND_PHASE) ;
         }
 
         @Override
@@ -615,7 +618,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
                         new SingleAnim<>((byte) 6, 10 - Sans.this.fatigueLevel,20,10.0f / (10 - Sans.this.fatigueLevel), 30, () -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, 30f, ColorAttack.WHITE)),
                         new SingleAnim<>((byte) 6, 10 - Sans.this.fatigueLevel,20,10.0f / (10 - Sans.this.fatigueLevel), 30, () -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, ColorAttack.WHITE))
                 ));
-                return availableAttacks.get(5);
+                return availableAttacks.get(3);
             }
             boolean inAir = target.isFallFlying() || (!onGround && (canFlying || target.onClimbable()));
             isAttacking = true;
@@ -665,7 +668,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         @Override
         protected @NotNull SequenceAnim<Object[]> select(LivingEntity target) {
             int difficulty = Sans.this.level().getDifficulty().getId();
-            if(getPhaseID() == 0) {
+            if(getPhaseID() == OPENING_ATTACK) {
                 return new SequenceAnim<>(200, 400, List.of(
                         new AnimStep<>((byte) -1, -1, 0, new Integer[]{10}),    // 黑屏传送
                         new AnimStep<>((byte) 1, 0,1, new Integer[]{1}),        // 重力下砸
@@ -675,7 +678,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
                         new AnimStep<>((byte) -1, -1,81, new Object[]{9, 2, 0f, 2.0f})   // 左右变大gb炮
                 ));
             }
-            if(getPhaseID() == 5){
+            if(getPhaseID() == SPECIAL_ATTACK){
 //                return new SequenceAnim<>(200, 400, List.of(
 //                        new AnimStep<>((byte) -1, -1, 0, new Integer[]{10}),  // 黑屏传送
 //                        new AnimStep<>((byte) 1, 0,1, new Integer[]{1}),    // 重力下砸
