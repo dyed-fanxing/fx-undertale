@@ -47,7 +47,7 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
 
     @Override
     public boolean canContinueToUse() {
-        return tick < anim.getDuration();
+        return tick < anim.getLength();
     }
 
     @Override
@@ -61,9 +61,9 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
             LivingEntity target = mob.getTarget();
             if (target != null) {
                 // 执行攻击时返回的额外动画时间 - 判定生效时剩余的动画时间，如果大于0，则代表这次攻击动画的时间比预设的多，需要增加动画持续时间
-                int remaining = execute(target, curr) - (anim.getDuration() - tick);
+                int remaining = execute(target, curr) - (anim.getLength() - tick);
                 if(remaining > 0){
-                    anim.addDuration(step, remaining);
+                    anim.addLength(step, remaining);
                 }
             }
             step++;
