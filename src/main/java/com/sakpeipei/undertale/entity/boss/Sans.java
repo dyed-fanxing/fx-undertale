@@ -5,6 +5,7 @@ import com.sakpeipei.undertale.common.LocalVec3;
 import com.sakpeipei.undertale.common.anim.AnimStep;
 import com.sakpeipei.undertale.common.anim.SequenceAnim;
 import com.sakpeipei.undertale.common.anim.SingleAnim;
+import com.sakpeipei.undertale.common.anim.SingleAnimT;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.IAnimatable;
 import com.sakpeipei.undertale.entity.ai.goal.NeutralMobAngerTargetGoal;
@@ -78,7 +79,9 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.function.IntFunction;
 import java.util.function.IntSupplier;
+import java.util.function.ToIntFunction;
 
 public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable, IEntityWithComplexSpawn {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -593,7 +596,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 
 
     // 单次攻击
-    class SingleAttackGoalSingle extends SingleAnimGoal<IntSupplier, Sans> {
+    class SingleAttackGoalSingle extends SingleAnimGoal<ToIntFunction<LivingEntity>, Sans> {
+        List<SingleAnimT<ToIntFunction<LivingEntity>>> availableAttacks = new ArrayList<>(List.of(
+                new SingleAnimT<>((byte) 8,4,30,() -> (4 + Sans.this.fatigueLevel)/4.0f,40, Sans.this::shootBoneRingVolley),
+                new SingleAnimT<>((byte) 9,4,30,() -> (4 + Sans.this.fatigueLevel)/4.0f,40, (target) -> Sans.this.shootArcSweepVolley()),
+                new SingleAnimT<>((byte) 6,4,30,() -> (4 + Sans.this.fatigueLevel)/4.0f,40, Sans.this::summonAimedGBAroundSelf)
+        ));
         public SingleAttackGoalSingle() {
             super(Sans.this);
         }
@@ -604,23 +612,26 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         }
 
         @Override
-        protected @NotNull SingleAnim<IntSupplier> select(LivingEntity target) {
+        protected @NotNull SingleAnim<ToIntFunction<LivingEntity>> select(LivingEntity target) {
             boolean onGround = target.onGround();
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
-            List<SingleAnim<IntSupplier>> availableAttacks = new ArrayList<>(List.of(
-                    new SingleAnim<>((byte) 8,4 - Sans.this.fatigueLevel,30,4.0f / (4 - Sans.this.fatigueLevel),20, () -> Sans.this.shootBoneRingVolley(target)),
-                    new SingleAnim<>((byte) 9,4 - Sans.this.fatigueLevel,30,4.0f / (4 - Sans.this.fatigueLevel),20, Sans.this::shootArcSweepVolley),
-                    new SingleAnim<>((byte) 6,4 - Sans.this.fatigueLevel,30,4.0f / (4 - Sans.this.fatigueLevel),20, () -> Sans.this.summonAimedGBAroundSelf(target))
+            List<SingleAnim<ToIntFunction<LivingEntity>>> availableAttacks = new ArrayList<>(List.of(
+                    new SingleAnim<>((byte) 8,4,30,(4 + Sans.this.fatigueLevel)/4.0f,40, Sans.this::shootBoneRingVolley),
+                    new SingleAnim<>((byte) 9,4,30,(4 + Sans.this.fatigueLevel)/4.0f,40, (t) -> Sans.this.shootArcSweepVolley()),
+                    new SingleAnim<>((byte) 6,4,30,(4 + Sans.this.fatigueLevel)/4.0f,40, Sans.this::summonAimedGBAroundSelf)
             ));
             if (target.onGround()) {
                 availableAttacks.addAll(List.of(
-                        new SingleAnim<>((byte) 6, 4  - Sans.this.fatigueLevel,20,4.0f  / (4  - Sans.this.fatigueLevel), 30, Sans.this::summonGroundBoneSpineAtSelf),
-                        new SingleAnim<>((byte) 6, 10 - Sans.this.fatigueLevel,20,10.0f / (10 - Sans.this.fatigueLevel), 30, () -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, 30f, ColorAttack.WHITE)),
-                        new SingleAnim<>((byte) 6, 10 - Sans.this.fatigueLevel,20,10.0f / (10 - Sans.this.fatigueLevel), 30, () -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, ColorAttack.WHITE))
+                        new SingleAnim<>((byte) 6, 4 ,20,(4 + Sans.this.fatigueLevel) / 4.0f, 50, (t) -> Sans.this.summonGroundBoneSpineAtSelf()),
+                        new SingleAnim<>((byte) 6, 10,20,(10 + Sans.this.fatigueLevel)/10.0f, 50, (t) -> Sans.this.summonGroundBoneSpineWaveAroundSelf(t, 30f, ColorAttack.WHITE)),
+                        new SingleAnim<>((byte) 6, 10,20,(10 + Sans.this.fatigueLevel)/10.0f, 50, (t) -> Sans.this.summonGroundBoneSpineWaveAroundSelf(t, ColorAttack.WHITE))
                 ));
                 return availableAttacks.get(3);
             }
             boolean inAir = target.isFallFlying() || (!onGround && (canFlying || target.onClimbable()));
+            if(inAir || getPhaseID() >= SECOND_PHASE) {
+                //todo 重力控制
+            }
             isAttacking = true;
 //            return availableAttacks.get(random.nextInt(availableAttacks.size()));
             return availableAttacks.get(2);
@@ -629,8 +640,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         @Override
         protected int execute(LivingEntity target) {
             int cd = 0;
-            for (IntSupplier action : anim.getActions()) {
-                cd = Math.max(cd,action.getAsInt());
+            for (ToIntFunction<LivingEntity> action : anim.getActions()) {
+                cd = Math.max(cd,action.applyAsInt(target));
             }
             return cd;
         }
@@ -638,9 +649,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         @Override
         public void stop() {
             super.stop();
+            cooldownEndTick -= 5 * fatigueLevel;
             isAttacking = false;
         }
     }
+
     // 序列连击
     class SequenceAttackGoal extends SequenceAnimGoal<Object[], Sans> {
         private final List<SequenceAnim<Object[]>> attacks = List.of(
@@ -801,7 +814,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     public int shootBoneRingVolley(LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
         double[] offsetXs = getPhaseID() == FIRST_PHASE ? new double[]{1.0} : new double[]{1.0, -1.0};
-        float speed = difficulty * 0.6f + 1.5f + fatigueLevel * 0.1f;
+        float speed = 1.5f + fatigueLevel * 0.1f ;
+//        float speed = 1.5f + fatigueLevel * 0.1f + difficulty * 0.6f;
         String attackTypeUUID = UUID.randomUUID().toString();
         int delay = 7;
         int layer = fatigueLevel + fatigueLevel<2? 1:0;
@@ -836,7 +850,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
      */
     public int shootArcSweepVolley() {
         int difficulty = this.level().getDifficulty().getId();
-        float speed = this.random.nextFloat() * 0.2f + fatigueLevel * 0.5f + 1.0f;
+        float speed = 1.0f + fatigueLevel * 0.2f;
         String attackTypeUUID = UUID.randomUUID().toString();
         int count = 5 + fatigueLevel * 2;
         float angleScope = 60f + 30f * fatigueLevel;

@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.common.anim;
 
-import net.minecraft.world.entity.monster.Monster;
+import com.sakpeipei.undertale.common.function.FloatSupplier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,31 +10,35 @@ import java.util.List;
  * @since 2025/11/21 15:27
  * 序列动画，由多个动画组成
  */
-public class SequenceAnim<T>{
+public class SequenceAnimT<T>{
 
     private int length;
     private final int cd;
-    private final List<AnimStep<T>> steps;
+    private final List<AnimStepT<T>> steps;
+    private final FloatSupplier speedModifier;
 
-    public SequenceAnim(byte id, int animTick,int hitTick, int length, int cd,T action) {
+    public SequenceAnimT(byte id, int animTick, int hitTick, int length,FloatSupplier speedModifier, int cd, T action) {
         this.length = length;
         this.cd = cd;
-        this.steps = List.of(new AnimStep<>(id,animTick,hitTick,action));
+        this.steps = List.of(new AnimStepT<>(id,animTick,hitTick,speedModifier,action));
+        this.speedModifier = speedModifier;
     }
-    public SequenceAnim(byte id, int animTick,int[] hitTick, int length, int cd,T action) {
+    public SequenceAnimT(byte id, int animTick, int[] hitTick, int length,FloatSupplier speedModifier, int cd, T action) {
         this.length = length;
         this.cd = cd;
-        this.steps = List.of(new AnimStep<>(id,animTick,hitTick,action));
+        this.steps = List.of(new AnimStepT<>(id,animTick,hitTick,speedModifier,action));
+        this.speedModifier = speedModifier;
     }
     /**
      * @param length 序列的length
      * @param cd 冷却时间
      * @param steps 步骤列表
      */
-    public SequenceAnim(int length, int cd,List<AnimStep<T>> steps) {
+    public SequenceAnimT(int length, int cd, List<AnimStepT<T>> steps, FloatSupplier speedModifier) {
         this.length = length;
         this.cd = cd;
         this.steps = steps;
+        this.speedModifier = speedModifier;
     }
 
     /**
@@ -44,14 +48,15 @@ public class SequenceAnim<T>{
      * @param cd 冷却时间
      * @param steps 要重复的步骤模板（每个步骤的hitTick是相对于该次重复的起始时间）
      */
-    public SequenceAnim(int round, int interval, int cd, List<AnimStep<T>> steps) {
+    public SequenceAnimT(int round, int interval, int cd, List<AnimStepT<T>> steps, FloatSupplier speedModifier) {
+        this.speedModifier = speedModifier;
         this.length = interval * round;
         this.cd = cd;
         this.steps = new ArrayList<>(steps.size() * round);
         this.steps.addAll(steps);
         for (int i = 1; i < round; i++) {
-            for (AnimStep<T> step : steps) {
-                this.steps.add(new AnimStep<>(step.id,step.animTick,step.hitTicks,step.action,i * interval));
+            for (AnimStepT<T> step : steps) {
+                this.steps.add(new AnimStepT<>(step.id,step.animTick,step.hitTicks,speedModifier,step.action,i * interval));
             }
         }
     }
@@ -59,24 +64,26 @@ public class SequenceAnim<T>{
     /**
      * 回合，单AnimStep，单判定时机
      */
-    public SequenceAnim(int round, int interval, int cd,byte id, int animTick,int hitTick,T action) {
+    public SequenceAnimT(int round, int interval, int cd, byte id, int animTick, int hitTick, T action, FloatSupplier speedModifier) {
+        this.speedModifier = speedModifier;
         this.length = interval * round;
         this.cd = cd;
         this.steps = new ArrayList<>();
         for (int i = 0; i < round; i++) {
-            this.steps.add(new AnimStep<>(id,i * interval + animTick,i * interval + hitTick,action));
+            this.steps.add(new AnimStepT<>(id,i * interval + animTick,i * interval + hitTick,speedModifier,action));
         }
     }
 
     /**
      * 回合，单AnimStep，多判定时机
      */
-    public SequenceAnim(int round, int interval, int cd,byte id, int animTick,int[] hitTick,T action) {
+    public SequenceAnimT(int round, int interval, int cd, byte id, int animTick, int[] hitTick, T action, FloatSupplier speedModifier) {
+        this.speedModifier = speedModifier;
         this.length = interval * round;
         this.cd = cd;
         this.steps = new ArrayList<>();
         for (int i = 0; i < round; i++) {
-            this.steps.add(new AnimStep<>(id,animTick,hitTick,action,i * interval));
+            this.steps.add(new AnimStepT<>(id,animTick,hitTick,speedModifier,action,i * interval));
         }
     }
     public void addLength(int step,int increment) {
@@ -86,9 +93,9 @@ public class SequenceAnim<T>{
         }
     }
 
-    public List<AnimStep<T>> getSteps() {return steps;}
+    public List<AnimStepT<T>> getSteps() {return steps;}
     public int getLength() {
-        return length;
+        return (int) (speedModifier.get()*length);
     }
     public int getCd() {
         return cd;
