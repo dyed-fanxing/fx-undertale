@@ -2,10 +2,8 @@ package com.sakpeipei.undertale.entity.boss;
 
 import com.sakpeipei.undertale.common.LocalDirection;
 import com.sakpeipei.undertale.common.LocalVec3;
-import com.sakpeipei.undertale.common.anim.AnimStep;
 import com.sakpeipei.undertale.common.anim.SequenceAnim;
 import com.sakpeipei.undertale.common.anim.SingleAnim;
-import com.sakpeipei.undertale.common.anim.SingleAnimT;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.IAnimatable;
 import com.sakpeipei.undertale.entity.ai.goal.NeutralMobAngerTargetGoal;
@@ -24,15 +22,12 @@ import com.sakpeipei.undertale.registry.SoundRegistry;
 import com.sakpeipei.undertale.utils.EntityUtils;
 import com.sakpeipei.undertale.utils.LevelUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
@@ -80,8 +75,6 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.function.IntFunction;
-import java.util.function.IntSupplier;
 import java.util.function.ToIntFunction;
 
 public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable, IEntityWithComplexSpawn {
@@ -653,11 +646,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 
         @Override
         protected int execute(LivingEntity target) {
-            int cd = 0;
-            for (ToIntFunction<LivingEntity> action : anim.getActions()) {
-                cd = Math.max(cd,action.applyAsInt(target));
-            }
-            return cd;
+            return anim.getAction().applyAsInt(target);
         }
 
         @Override

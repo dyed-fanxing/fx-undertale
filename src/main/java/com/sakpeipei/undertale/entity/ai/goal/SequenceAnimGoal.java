@@ -1,7 +1,5 @@
 package com.sakpeipei.undertale.entity.ai.goal;
 
-import com.sakpeipei.undertale.common.anim.AnimStep;
-import com.sakpeipei.undertale.common.anim.SequenceAnim;
 import com.sakpeipei.undertale.entity.IAnimatable;
 import com.sakpeipei.undertale.network.AnimPacket;
 import net.minecraft.world.entity.LivingEntity;
@@ -23,7 +21,8 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
     protected int tick; // 动画tick
     protected int cooldownEndTick;
     protected int step;
-    protected SequenceAnim<T> anim;
+    protected int triggerAnimTick; // 触发动画Tick
+    protected List<AnimStep<T>> steps;
 
     public SequenceAnimGoal(R mob) {
         this.mob = mob;
@@ -39,25 +38,24 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
     public void start() {
         tick = 0;
         step = 0;
+        triggerAnimTick = 0;
         LivingEntity target = mob.getTarget();
         if (target != null) {
-            anim = select(target);
+            steps = select(target);
         }
     }
 
     @Override
     public boolean canContinueToUse() {
-        return tick < anim.getLength();
+        return step < steps.size();
     }
 
     @Override
     public void tick() {
-        List<AnimStep<T>> steps = anim.getSteps();
         AnimStep<T> curr = steps.get(step);
-        if(curr.shouldTriggerAnim(tick)){
-            PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),curr.getId(),curr.getSpeed()));
-        }
-        if(curr.shouldHitAt(tick)) {
+        if(triggerAnimTick == tick){
+            PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),curr.getId(),1.0f));
+        } else if(curr.shouldHitAt(tick)) {
             LivingEntity target = mob.getTarget();
             if (target != null) {
                 // 执行攻击时返回的额外动画时间 - 判定生效时剩余的动画时间，如果大于0，则代表这次攻击动画的时间比预设的多，需要增加动画持续时间
@@ -66,7 +64,9 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
                     anim.addLength(step, remaining);
                 }
             }
+        } else if(tick == curr.getLength()-1){
             step++;
+            triggerAnimTick += curr.getLength();
         }
         tick++;
     }
@@ -87,7 +87,7 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
     }
 
     @NotNull
-    protected abstract SequenceAnim<T> select(LivingEntity target);
+    protected abstract List<AnimStep<T>> select(LivingEntity target);
 
     protected abstract int execute(LivingEntity target, AnimStep<T> anim);
 

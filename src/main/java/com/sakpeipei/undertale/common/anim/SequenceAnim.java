@@ -1,7 +1,5 @@
 package com.sakpeipei.undertale.common.anim;
 
-import net.minecraft.world.entity.monster.Monster;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,27 +10,22 @@ import java.util.List;
  */
 public class SequenceAnim<T>{
 
-    private int length;
     private final int cd;
-    private final List<AnimStep<T>> steps;
+    private final List<SingleAnim<T>> steps;
 
-    public SequenceAnim(byte id, int animTick,int hitTick, int length, int cd,T action) {
-        this.length = length;
+    public SequenceAnim(byte id, int animTick,int hitTick,  int cd,T action) {
         this.cd = cd;
-        this.steps = List.of(new AnimStep<>(id,animTick,hitTick,action));
+        this.steps = List.of(new SingleAnim<T>(id,animTick,hitTick,action));
     }
-    public SequenceAnim(byte id, int animTick,int[] hitTick, int length, int cd,T action) {
-        this.length = length;
+    public SequenceAnim(byte id, int animTick,int[] hitTick, int cd,T action) {
         this.cd = cd;
-        this.steps = List.of(new AnimStep<>(id,animTick,hitTick,action));
+        this.steps = List.of(new SingleAnim<T>(id,animTick,hitTick,action));
     }
     /**
-     * @param length 序列的length
      * @param cd 冷却时间
      * @param steps 步骤列表
      */
-    public SequenceAnim(int length, int cd,List<AnimStep<T>> steps) {
-        this.length = length;
+    public SequenceAnim( int cd,List<SingleAnim<T>> steps) {
         this.cd = cd;
         this.steps = steps;
     }
@@ -44,52 +37,45 @@ public class SequenceAnim<T>{
      * @param cd 冷却时间
      * @param steps 要重复的步骤模板（每个步骤的hitTick是相对于该次重复的起始时间）
      */
-    public SequenceAnim(int round, int interval, int cd, List<AnimStep<T>> steps) {
-        this.length = interval * round;
+    public SequenceAnim(int round, int interval, int cd, List<SingleAnim<T>> steps) {
         this.cd = cd;
         this.steps = new ArrayList<>(steps.size() * round);
         this.steps.addAll(steps);
         for (int i = 1; i < round; i++) {
-            for (AnimStep<T> step : steps) {
-                this.steps.add(new AnimStep<>(step.id,step.animTick,step.hitTicks,step.action,i * interval));
+            for (SingleAnim<T> step : steps) {
+                this.steps.add(new SingleAnim<>(step.id,step.hitTicks,step.action,i * interval));
             }
         }
     }
 
     /**
-     * 回合，单AnimStep，单判定时机
+     * 回合，单SingleAnim，单判定时机
      */
     public SequenceAnim(int round, int interval, int cd,byte id, int animTick,int hitTick,T action) {
-        this.length = interval * round;
         this.cd = cd;
         this.steps = new ArrayList<>();
         for (int i = 0; i < round; i++) {
-            this.steps.add(new AnimStep<>(id,i * interval + animTick,i * interval + hitTick,action));
+            this.steps.add(new SingleAnim<>(id,i * interval + animTick,i * interval + hitTick,action));
         }
     }
 
     /**
-     * 回合，单AnimStep，多判定时机
+     * 回合，单SingleAnim，多判定时机
      */
     public SequenceAnim(int round, int interval, int cd,byte id, int animTick,int[] hitTick,T action) {
-        this.length = interval * round;
         this.cd = cd;
         this.steps = new ArrayList<>();
         for (int i = 0; i < round; i++) {
-            this.steps.add(new AnimStep<>(id,animTick,hitTick,action,i * interval));
+            this.steps.add(new SingleAnim<>(id,animTick,hitTick,action,i * interval));
         }
     }
     public void addLength(int step,int increment) {
-        this.length += increment;
         for (int i = step; i < steps.size(); i++) {
             steps.get(i).applyOffset(increment);
         }
     }
 
-    public List<AnimStep<T>> getSteps() {return steps;}
-    public int getLength() {
-        return length;
-    }
+    public List<SingleAnim<T>> getSteps() {return steps;}
     public int getCd() {
         return cd;
     }
