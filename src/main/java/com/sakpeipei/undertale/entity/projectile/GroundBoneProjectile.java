@@ -124,6 +124,15 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
             this.yRotO = getYRot();
         }
     }
+    @Override
+    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
+        tag.putInt("Color",this.colorAttack.getColor().getRGB());
+        tag.putInt("Delay",delay);
+        tag.putFloat("Speed",speed);
+        if(movement != null){
+            tag.put("Movement", this.newDoubleList(movement.x, movement.y, movement.z));
+        }
+    }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
@@ -138,15 +147,6 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
         }
     }
 
-    @Override
-    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        tag.putInt("Color",this.colorAttack.getColor().getRGB());
-        tag.putInt("Delay",delay);
-        tag.putFloat("Speed",speed);
-        if(movement != null){
-            tag.put("Movement", this.newDoubleList(movement.x, movement.y, movement.z));
-        }
-    }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {

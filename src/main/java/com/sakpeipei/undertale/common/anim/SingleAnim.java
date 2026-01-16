@@ -23,7 +23,6 @@ public class SingleAnim<T>{
     public SingleAnim(byte id, int hitTick, int length, int cd,T action) {
         this(id,hitTick,length,1.0f,cd,action);
     }
-
     /**
      * 单判定
      */
@@ -35,6 +34,18 @@ public class SingleAnim<T>{
         this.action = action;
         this.speed = speed;
     }
+    /**
+     * 带判定，带偏移的
+     */
+    public SingleAnim(byte id, int hitTick, int length,float speed, int cd, T action,int offset) {
+        this.id = id;
+        this.hitTicks = new int[]{(int) ((hitTick + offset) * speed)};
+        this.length = (int) Math.ceil((length+offset) * speed);
+        this.cd = cd + offset;
+        this.action = action;
+        this.speed = speed;
+    }
+
 
     public SingleAnim(byte id, int[] hitTicks, int length, int cd,T actions) {
         this(id,hitTicks,length,1.0f,cd,actions);
@@ -49,6 +60,23 @@ public class SingleAnim<T>{
         }
         this.hitTicks = hitTicks;
         this.length = (int) Math.ceil(length * speed);
+        this.cd = cd;
+        this.action = action;
+        this.speed = speed;
+    }
+    public SingleAnim(byte id, int[] hitTicks, int length, int cd, T action, int offset) {
+        this(id,hitTicks,length,1.0f,cd,action,offset);
+    }
+    /**
+     * 多判定，带有偏移的
+     */
+    public SingleAnim(byte id,int[] hitTicks, int length,float speed, int cd, T action,int offset) {
+        this.id = id;
+        for (int i = 0; i < hitTicks.length; i++) {
+            hitTicks[i] = (int) ((hitTicks[i]+offset) * speed);
+        }
+        this.hitTicks = hitTicks;
+        this.length = (int) Math.ceil((length+offset) * speed);
         this.cd = cd;
         this.action = action;
         this.speed = speed;
@@ -69,10 +97,11 @@ public class SingleAnim<T>{
         return false;
     }
 
-    public void addHitTick(int increment) {
+    public void applyOffset(int offset) {
         for (int i = 0; i < hitTicks.length; i++) {
-            hitTicks[i] += increment;
+            hitTicks[i] += offset;
         }
+        this.length += offset;
     }
 
     public void addLength(int increment) {

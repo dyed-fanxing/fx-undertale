@@ -1,5 +1,7 @@
 package com.sakpeipei.undertale.utils;
 
+import com.sakpeipei.undertale.entity.DelayedEntity;
+import com.sakpeipei.undertale.event.handler.ServerTickHandler;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -11,12 +13,19 @@ import net.minecraft.world.phys.Vec3;
  * @since 2025-11-27 20:01
  */
 public class LevelUtils {
+
     public static boolean addFreshEntity(Level level, Entity entity, Vec3 spawnPos, Vec3 targetPos){
         entity.setPos(spawnPos);
         entity.lookAt(EntityAnchorArgument.Anchor.FEET,targetPos);
         return level.addFreshEntity(entity);
     }
 
+    /**
+     * 延迟加入实体
+     */
+    public static void delayAddFreshEntity(Entity entity, int delay){
+        ServerTickHandler.DELAYED_ENTITIES.add(new DelayedEntity(entity,delay));
+    }
 
 
 

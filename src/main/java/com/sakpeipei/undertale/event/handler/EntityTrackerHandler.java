@@ -17,10 +17,5 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public class EntityTrackerHandler {
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {
-        if (event.getTarget() instanceof GasterBlaster gasterBlaster) {
-            if (gasterBlaster.getEnd() != null) {
-//                PacketDistributor.sendToPlayersTrackingEntity(event.getTarget(), new GasterBlasterBeamEndPacket(gasterBlaster.getId(), gasterBlaster.getEnd()));
-            }
-        }
     }
 }
