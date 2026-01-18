@@ -1,5 +1,6 @@
 package com.sakpeipei.undertale.entity.boss;
 
+import com.sakpeipei.undertale.entity.DelayAction;
 import com.sakpeipei.undertale.entity.DelayEntity;
 import com.sakpeipei.undertale.entity.DelayedEntity;
 import com.sakpeipei.undertale.common.LocalDirection;
@@ -29,6 +30,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.*;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -58,6 +60,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import net.neoforged.neoforge.event.EventHooks;
@@ -78,6 +81,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.function.IntSupplier;
 import java.util.function.ToIntFunction;
 
 public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable, IEntityWithComplexSpawn {
@@ -114,6 +118,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 
 
     private final ArrayList<DelayEntity> delayEntities = new ArrayList<>();
+    private final ArrayList<DelayAction<IntSupplier>> delayActions = new ArrayList<>();
 
     public Sans(EntityType<? extends Monster> type, Level level) {
         super(type, level);
@@ -126,9 +131,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new PersistentAttackGoal());
-//        this.goalSelector.addGoal(2, new SequenceAttackGoal());
-        this.goalSelector.addGoal(3, new SingleAttackGoalSingle());
+//        this.goalSelector.addGoal(1, new SequenceAttackGoal());
+        this.goalSelector.addGoal(2, new PersistentAttackGoal());
+//        this.goalSelector.addGoal(3, new SingleAttackGoalSingle());
         this.goalSelector.addGoal(4, new SansMovementGoal(1.0, 16.0f));
 
 
@@ -145,6 +150,14 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     public void tick() {
         super.tick();
         delayEntities.removeIf(delayEntity -> delayEntity.tick(tickCount));
+        delayActions.removeIf(delayAction -> {
+            if(delayAction.delay() == tickCount){
+                IntSupplier action = delayAction.action();
+                action.getAsInt();
+                return true;
+            }
+            return false;
+        });
     }
 
     @Override
@@ -573,8 +586,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     //持续攻击，可脱手
     class PersistentAttackGoal extends SequenceAnimGoal<Integer, Sans> {
         List<SequenceAnim<Integer>> attacks = new ArrayList<>(List.of(
-                new SequenceAnim<>((byte) 1,4,30,100,1),
-                new SequenceAnim<>((byte) 1,0,30,100,2)
+                new SequenceAnim<>((byte) 6,4,30,100,1),
+                new SequenceAnim<>((byte) 6,0,30,100,2)
         ));
 
         HashMap<Integer, List<SequenceAnim<Integer>>> attackMap = new HashMap<>();
@@ -600,12 +613,14 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             int difficulty = Sans.this.level().getDifficulty().getId();
             List<SequenceAnim<Integer>> availableAttacks = new ArrayList<>(attacks);
             availableAttacks.addAll(attackMap.get(difficulty));
-            if (target.onGround()) {
-                availableAttacks.addAll(groundAttackMap.get(difficulty));
-            }
+//            if (target.onGround()) {
+//                availableAttacks.addAll(groundAttackMap.get(difficulty));
+//                return availableAttacks.get(3);
+//            }
             existPersistentAttack = true;
             isAttacking = true;
-            return availableAttacks.get(Sans.this.random.nextInt(availableAttacks.size()));
+//            return availableAttacks.get(Sans.this.random.nextInt(availableAttacks.size()));
+            return availableAttacks.get(1);
         }
 
         @Override
@@ -615,7 +630,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             return switch (action) {
                 case 1 -> Sans.this.shootAimedBarrage(target);
                 case 2 -> Sans.this.shootForwardBarrage(target);
-                case 3 -> Sans.this.summonGBAroundSelf(target, 1 + difficulty / 3,1.0f + fatigueLevel*0.25f);
+                case 3 -> Sans.this.summonGBAroundSelf(target, 1 ,1.0f + fatigueLevel*0.25f);
                 case 4 -> Sans.this.summonGroundBoneSpineAroundTarget(target);
                 default -> throw new IllegalStateException("Unexpected value: " + action);
             };
@@ -627,12 +642,14 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             cooldownEndTick -= 10*fatigueLevel;
             isAttacking = false;
             existPersistentAttack = false;
+            if (!FMLEnvironment.production) {
+                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("动画结束,CD：%d",anim.getCd() - 10 * fatigueLevel)),false);
+            }
         }
 
         @Override
-        protected void stepStop() {
-            super.stepStop();
-            this.stepCooldown -= 5*fatigueLevel;
+        protected void stepStop(SingleAnim<Integer> curr) {
+            stepCooldown = curr.getCd() - 5*fatigueLevel;
         }
     }
 
@@ -686,6 +703,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         public void stop() {
             super.stop();
             cooldownEndTick -= 5 * fatigueLevel;
+            if (!FMLEnvironment.production) {
+                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("动画结束,动画ID：%d，CD：%d",anim.getId(),anim.getCd() - 5 * fatigueLevel)),false);
+            }
             isAttacking = false;
         }
     }
@@ -780,9 +800,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         }
 
         @Override
-        protected void stepStop() {
-            super.stepStop();
-            this.stepCooldown -= 5*fatigueLevel;
+        protected void stepStop(SingleAnim<ToIntFunction<LivingEntity>> curr) {
+            stepCooldown = curr.getCd() - 5*fatigueLevel;
+
         }
     }
 
@@ -796,7 +816,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         int difficulty = this.level().getDifficulty().getId();
         String attackTypeUUID = UUID.randomUUID().toString();
         float speed = 0.6f + ( fatigueLevel + difficulty)*0.2f;
-        int delay = 14  - fatigueLevel;
+        int delay = 13  - fatigueLevel;
         int count = 7 * difficulty + 4 * fatigueLevel;
         // 三层高度：腿、身体、眼睛
         double[] heights = {
@@ -828,7 +848,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
      */
     public int shootForwardBarrage(LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
-        float speed = 0.6f + ( fatigueLevel + difficulty )*0.2f;
+        float speed = 1.0f + ( fatigueLevel + difficulty )*0.2f;
         String attackTypeUUID = UUID.randomUUID().toString();
         int delay = 10;
         int count = 10 + ( fatigueLevel + difficulty ) * 8;
@@ -838,10 +858,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         for (int i = 0; i < count; i++) {
             FlyingBone bone = createFlyingBone(attackTypeUUID, speed, delay);
             // 计算相对于视线方向的偏移（在局部坐标系）
-            double offsetX = this.random.nextGaussian() * (1.0 + (fatigueLevel + difficulty) *0.1);  // 左右
+            double offsetX = this.random.nextGaussian() * (1.2 + (fatigueLevel + difficulty) *0.1);  // 左右
             double offsetY = target.getBbHeight() * 0.5f + this.random.nextGaussian();     // 上下
             double offsetZ = this.random.nextGaussian() ;  // 前后
-            bone.vectorShoot(eyeLookAngle);
+            bone.aimFollowVectorShoot(true,true,eyeLookAngle);
             LevelUtils.addFreshProjectileByVec3(this.level(), bone,
                     getX() + Math.cos(yaw) * offsetX + (-Math.sin(yaw)) * offsetZ ,
                     getY() + offsetY,
@@ -1280,10 +1300,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         int difficulty = this.level().getDifficulty().getId();
         return summonGBAroundSelf(target, fatigueLevel/2 + difficulty/3 + 1, 1.0f + fatigueLevel*0.1f);
     }
-    public int summonGBAroundSelf(LivingEntity target, int round) {
 
-        summonGBAroundSelf(target,1,1.0f);
-    }
     /**
      * 在自身周围随机位置召唤GB
      */
@@ -1413,6 +1430,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
                 case 9 -> controller.setAnimation(RawAnimation.begin().thenPlay(phaseID == FIRST_PHASE ? ANIM_BONE_SWEEP_LEFT : ANIM_BONE_SWEEP));
             }
             controller.setAnimationSpeed(animSpeed);
+            // todo 粒子
+//            controller.setParticleKeyframeHandler(particleKeyframeEvent -> {
+//                particleKeyframeEvent.getKeyframeData().getLocator()
+//            })
             return PlayState.CONTINUE;
         });
 

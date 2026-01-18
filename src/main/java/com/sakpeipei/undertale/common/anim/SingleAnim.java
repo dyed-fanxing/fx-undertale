@@ -3,6 +3,7 @@ package com.sakpeipei.undertale.common.anim;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.*;
 
@@ -104,8 +105,8 @@ public class SingleAnim<T>{
         this.length += offset;
     }
 
-    public void addLength(int increment) {
-        this.length += increment;
+    public void offsetLength(int offset) {
+        this.length += offset;
     }
 
     public byte getId() {
@@ -131,4 +132,16 @@ public class SingleAnim<T>{
         return null;
     }
 
+
+    @Override
+    public String toString() {
+        return "SingleAnim{" +
+                "id=" + id +
+                ", hitTicks=" + Arrays.toString(hitTicks) +
+                ", length=" + length +
+                ", speed=" + speed +
+                ", cd=" + cd +
+                ", action=" + action +
+                '}';
+    }
 }

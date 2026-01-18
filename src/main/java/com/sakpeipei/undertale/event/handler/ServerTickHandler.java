@@ -18,7 +18,7 @@ public class ServerTickHandler {
     public static final List<DelayedEntity> DELAYED_ENTITIES =  new ArrayList<>();
 
     @SubscribeEvent
-    public static void onServerTick(ServerTickEvent event) {
+    public static void onServerTick(ServerTickEvent.Post event) {
         DELAYED_ENTITIES.removeIf(DelayedEntity::tick);
     }
 }

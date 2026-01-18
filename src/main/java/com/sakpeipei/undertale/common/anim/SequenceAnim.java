@@ -76,10 +76,17 @@ public class SequenceAnim<T>{
         }
     }
 
+    public void offsetLength(int step,int offset) {
+        steps.get(step).offsetLength(offset);
+        for (int i = step + 1; i < steps.size(); i++) {
+            steps.get(i).applyOffset(offset);
+        }
+    }
 
     public List<SingleAnim<T>> getSteps() {return steps;}
     public int getCd() {
         return cd;
     }
+
 
 }

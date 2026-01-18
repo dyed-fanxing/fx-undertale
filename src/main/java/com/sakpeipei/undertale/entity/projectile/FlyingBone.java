@@ -5,6 +5,7 @@ import com.sakpeipei.undertale.entity.boss.Sans;
 import com.sakpeipei.undertale.utils.RotUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -14,6 +15,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.fml.loading.FMLEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,8 @@ import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
+
+import java.util.Objects;
 
 /**
  * @author Sakqiongzi
@@ -30,11 +34,16 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     private static final Logger log = LoggerFactory.getLogger(FlyingBone.class);
-    protected Vec3 targetPos;   // 目标位置
-    private boolean isTrackTarget = false; //是否追踪目标
-    private boolean isAim = false; // 延迟阶段是否瞄准目标
-    private int delay;
+    protected Vec3 relativePos;     // 拥有者的相对位置
 
+    protected Vec3 shotVec;       // 射击矢量
+    private boolean isTrackTarget = false;  // 是否追踪目标
+    private boolean isAim = false;          // 延迟阶段是否瞄准目标
+    private boolean isFollow = false;       // 延迟阶段是否跟随拥有者
+    private boolean isFllowAngle = false;   // 是否跟随拥有者视线
+
+
+    private int delay;
     private float damage;
     private float speed;
 
@@ -57,6 +66,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         this(type, level);
         this.setNoGravity(true);
         setOwner(owner);
+        this.relativePos = this.position().subtract(owner.position());
         this.damage = damage;
         this.speed = speed;
         this.delay = delay;
@@ -73,23 +83,44 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         if (!this.level().isClientSide) {
             if(delay > 0){
                 if(isAim){
-                    if(this.getOwner() instanceof Targeting targeting){
+                    if(this.getOwner() instanceof Targeting targeting && targeting.getTarget() != null){
                         LivingEntity target = targeting.getTarget();
                         if (target != null) {
-                            this.targetPos = target.getEyePosition();
+                            RotUtils.lookAtShoot(this,target.getEyePosition());
                         }
                     }
-                    RotUtils.lookAtShoot(this,targetPos);
+                }else if(isFllowAngle){
+                    Entity owner = this.getOwner();
+                    if (owner != null) {
+                        RotUtils.lookAtShoot(this,owner.getViewVector(1.0f));
+                    }
+                }
+                if(isFollow){
+                    Entity owner = this.getOwner();
+                    if (owner != null) {
+                        this.setPos(owner.position().add(relativePos));
+                    }
                 }
             }else if(delay == 0){
                 if(isAim){
-                    this.shoot(targetPos.x - this.getX(),targetPos.y - this.getEyeY(),targetPos.z - this.getZ(), speed,0);
-                }else{
-                    // 这里的targetPos代表 motionVector
-                    if(targetPos == null){
-                        log.info("TargetPos是null");
+                    if(this.getOwner() instanceof Targeting targeting && targeting.getTarget() != null){
+                        LivingEntity target = targeting.getTarget();
+                        if (target != null) {
+                            this.shoot(target.getX() - this.getX(),target.getEyeY() - this.getEyeY(),target.getZ() - this.getZ(), speed,0);
+                        }
                     }
-                    this.shoot(targetPos.x,targetPos.y,targetPos.z, speed,0);
+                }else if(isFllowAngle){
+                    // 这里的targetPos代表 motionVector
+                    if (!FMLEnvironment.production) {
+                        Objects.requireNonNull(this.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal("TargetPos是null"),false);
+                    }
+                    Entity owner = this.getOwner();
+                    if (owner != null) {
+                        Vec3 viewVector = owner.getViewVector(1.0f);
+                        this.shoot(viewVector.x,viewVector.y,viewVector.z, speed,0);
+                    }
+                }else{
+                    this.shoot(shotVec.x,shotVec.y,shotVec.z, speed,0);
                 }
             }
         }
@@ -126,12 +157,16 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         super.onHitBlock(result);
         this.discard();
     }
-
     public void aimShoot(){
         this.isAim = true;
     }
-    public void vectorShoot(Vec3 motionVector){
-        this.targetPos = motionVector;
+    public void vectorShoot(Vec3 vec3){
+        this.shotVec = vec3;
+    }
+    public void aimFollowVectorShoot(boolean isAim,boolean isFollow,Vec3 vec3){
+        this.isAim = isAim;
+        this.isFollow = isFollow;
+        this.shotVec = vec3;
     }
 
     @Override
@@ -149,10 +184,16 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         super.addAdditionalSaveData(tag);
         tag.putInt("delay",delay);
         tag.putFloat("speed",speed);
-        if(targetPos != null){
-            tag.put("TargetPos", this.newDoubleList(targetPos.x, targetPos.y, targetPos.z));
+        if(relativePos != null){
+            tag.put("RelativePos", this.newDoubleList(relativePos.x, relativePos.y, relativePos.z));
         }
         tag.putBoolean("IsAim",isAim);
+        tag.putBoolean("IsFollow",isFollow);
+
+
+        if(shotVec != null){
+            tag.put("ShootVec", this.newDoubleList(shotVec.x, shotVec.y, shotVec.z));
+        }
     }
 
     @Override
@@ -160,11 +201,18 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         super.readAdditionalSaveData(tag);
         this.delay = tag.getInt("delay");
         this.speed = tag.getFloat("speed");
-        if (tag.contains("TargetPos")) {
-            ListTag list = tag.getList("TargetPos", 6);
-            this.targetPos = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
+        if (tag.contains("RelativePos")) {
+            ListTag list = tag.getList("RelativePos", 6);
+            this.relativePos = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
         }
+        this.isFollow = tag.getBoolean("IsFollow");
         this.isAim = tag.getBoolean("IsAim");
+
+
+        if (tag.contains("ShootVec")) {
+            ListTag list = tag.getList("ShootVec", 6);
+            this.shotVec = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
+        }
     }
 
 

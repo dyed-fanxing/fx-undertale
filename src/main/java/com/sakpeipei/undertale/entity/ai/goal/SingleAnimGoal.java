@@ -59,7 +59,7 @@ public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal
                 int cd = anim.getLength();
                 int remaining = execute(target) - (cd - tick);
                 if(remaining > 0){
-                    anim.addLength(remaining);
+                    anim.offsetLength(remaining);
                 }
             }
         }
