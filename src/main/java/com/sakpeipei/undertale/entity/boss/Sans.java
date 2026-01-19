@@ -1,8 +1,8 @@
 package com.sakpeipei.undertale.entity.boss;
 
+import com.sakpeipei.undertale.common.anim.RoundSequenceAnim;
 import com.sakpeipei.undertale.entity.DelayAction;
 import com.sakpeipei.undertale.entity.DelayEntity;
-import com.sakpeipei.undertale.entity.DelayedEntity;
 import com.sakpeipei.undertale.common.LocalDirection;
 import com.sakpeipei.undertale.common.LocalVec3;
 import com.sakpeipei.undertale.common.anim.SequenceAnim;
@@ -10,6 +10,7 @@ import com.sakpeipei.undertale.common.anim.SingleAnim;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.IAnimatable;
 import com.sakpeipei.undertale.entity.ai.goal.NeutralMobAngerTargetGoal;
+import com.sakpeipei.undertale.entity.ai.goal.RoundSequenceAnimGoal;
 import com.sakpeipei.undertale.entity.ai.goal.SequenceAnimGoal;
 import com.sakpeipei.undertale.entity.ai.goal.SingleAnimGoal;
 import com.sakpeipei.undertale.entity.attachment.KaramAttackData;
@@ -68,7 +69,6 @@ import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import oshi.util.tuples.Pair;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -583,26 +583,29 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             }
         }
     }
+
     //持续攻击，可脱手
     class PersistentAttackGoal extends SequenceAnimGoal<Integer, Sans> {
         List<SequenceAnim<Integer>> attacks = new ArrayList<>(List.of(
                 new SequenceAnim<>((byte) 6,4,30,100,1),
-                new SequenceAnim<>((byte) 6,0,30,100,2)
+                new SequenceAnim<>((byte) 6,0,30,100,2),
+                SequenceAnim.onceAnim(13,100,new SingleAnim<>((byte) 7, 4,30,20, 3))
         ));
-
-        HashMap<Integer, List<SequenceAnim<Integer>>> attackMap = new HashMap<>();
-        HashMap<Integer, List<SequenceAnim<Integer>>> groundAttackMap = new HashMap<>();
-
+        List<SequenceAnim<Integer>> groundAttacks = new ArrayList<>(List.of(
+                SequenceAnim.onceAnim(8, 100,new SingleAnim<>((byte) 7, 4,40,20, 4))
+        ));
+//        HashMap<Integer, List<SequenceAnim<Integer>>> attackMap = new HashMap<>();
+//        HashMap<Integer, List<SequenceAnim<Integer>>> groundAttackMap = new HashMap<>();
         public PersistentAttackGoal() {
             super(Sans.this);
-            for (int i = 0; i <= Difficulty.HARD.getId(); i++) {
-                attackMap.put(i,List.of(
-                        new SequenceAnim<>(3 + 4 * i, 100,new SingleAnim<>((byte) 7, 4,30,20, 3))
-                ));
-                groundAttackMap.put(i,List.of(
-                        new SequenceAnim<>(2 + 3 * i, 100,new SingleAnim<>((byte) 7, 4,40,20, 4))
-                ));
-            }
+//            for (int i = 0; i <= Difficulty.HARD.getId(); i++) {
+//                attackMap.put(i,List.of(
+//                        new SequenceAnim<>(3 + 4 * i, 100,new SingleAnim<>((byte) 7, 4,30,20, 3))
+//                ));
+//                groundAttackMap.put(i,List.of(
+//                        new SequenceAnim<>(2 + 3 * i, 100,new SingleAnim<>((byte) 7, 4,40,20, 4))
+//                ));
+//            }
         }
         @Override
         public boolean canUse() {
@@ -610,13 +613,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         }
         @Override
         protected @NotNull SequenceAnim<Integer> select(LivingEntity target) {
-            int difficulty = Sans.this.level().getDifficulty().getId();
             List<SequenceAnim<Integer>> availableAttacks = new ArrayList<>(attacks);
-            availableAttacks.addAll(attackMap.get(difficulty));
-//            if (target.onGround()) {
-//                availableAttacks.addAll(groundAttackMap.get(difficulty));
-//                return availableAttacks.get(3);
-//            }
+            if (target.onGround()) {
+                availableAttacks.addAll(groundAttacks);
+                return availableAttacks.get(3);
+            }
             existPersistentAttack = true;
             isAttacking = true;
 //            return availableAttacks.get(Sans.this.random.nextInt(availableAttacks.size()));
@@ -626,7 +627,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         @Override
         protected int execute(LivingEntity target, SingleAnim<Integer> anim) {
             int difficulty = Sans.this.level().getDifficulty().getId();
-            Integer action = anim.getAction();
+            Integer action = anim.action();
             return switch (action) {
                 case 1 -> Sans.this.shootAimedBarrage(target);
                 case 2 -> Sans.this.shootForwardBarrage(target);
@@ -643,13 +644,14 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             isAttacking = false;
             existPersistentAttack = false;
             if (!FMLEnvironment.production) {
-                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("动画结束,CD：%d",anim.getCd() - 10 * fatigueLevel)),false);
+                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("动画结束,CD：%d",anim.cd() - 10 * fatigueLevel)),false);
             }
         }
 
         @Override
         protected void stepStop(SingleAnim<Integer> curr) {
-            stepCooldown = curr.getCd() - 5*fatigueLevel;
+            super.stepStop(curr);
+            cooldownEndTick -= 5*fatigueLevel;
         }
     }
 
@@ -696,7 +698,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 
         @Override
         protected int execute(LivingEntity target) {
-            return anim.getAction().applyAsInt(target);
+            return anim.action().applyAsInt(target);
         }
 
         @Override
@@ -704,7 +706,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             super.stop();
             cooldownEndTick -= 5 * fatigueLevel;
             if (!FMLEnvironment.production) {
-                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("动画结束,动画ID：%d，CD：%d",anim.getId(),anim.getCd() - 5 * fatigueLevel)),false);
+                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("动画结束,动画ID：%d，CD：%d",anim.id(),anim.cd() - 5 * fatigueLevel)),false);
             }
             isAttacking = false;
         }
@@ -789,7 +791,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 
         @Override
         protected int execute(LivingEntity target, SingleAnim<ToIntFunction<LivingEntity>> anim) {
-            return anim.getAction().applyAsInt(target);
+            return anim.action().applyAsInt(target);
         }
 
         @Override
@@ -801,7 +803,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 
         @Override
         protected void stepStop(SingleAnim<ToIntFunction<LivingEntity>> curr) {
-            stepCooldown = curr.getCd() - 5*fatigueLevel;
+            super.stepStop(curr);
+            this.cooldownEndTick -= 5*fatigueLevel;
 
         }
     }

@@ -36,7 +36,7 @@ public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal
         LivingEntity target = mob.getTarget();
         if(target != null){
             anim = select(target);
-            PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),anim.getId(),anim.getSpeed()));
+            PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),anim.id(),1.0f));
         }
     }
 
@@ -47,7 +47,7 @@ public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal
      */
     @Override
     public boolean canContinueToUse() {
-        return tick < anim.getLength();
+        return tick < anim.length();
     }
 
     @Override
@@ -55,12 +55,9 @@ public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal
         LivingEntity target = mob.getTarget();
         if(target != null){
             if(anim.shouldHitAt(tick)){
-                // 执行攻击时返回的额外动画时间 - 判定生效时剩余的动画时间，如果大于0，则代表这次攻击动画的时间比预设的多，需要增加动画持续时间
-                int cd = anim.getLength();
-                int remaining = execute(target) - (cd - tick);
-                if(remaining > 0){
-                    anim.offsetLength(remaining);
-                }
+                // 执行攻击时返回的额外动画时间 - 判定生效时剩余的动画时间，如果大于0，则代表这次攻击动画的时间比预设的多，需要增加动画冷却时间
+                // execute(target) - (anim.getLength() - tick)
+                cooldownEndTick = Math.max(execute(target) - anim.length() + tick,0);
             }
         }
         tick++;
@@ -79,7 +76,7 @@ public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal
 
     @Override
     public void stop() {
-        cooldownEndTick = anim.getCd() + mob.tickCount;
+        cooldownEndTick += anim.cd() + mob.tickCount;
         PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),(byte) -1,0f));
     }
 

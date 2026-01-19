@@ -1,6 +1,7 @@
 package com.sakpeipei.undertale.entity.ai.goal;
 
-import com.sakpeipei.undertale.common.anim.SequenceAnim;
+import com.sakpeipei.undertale.common.anim.RoundSequenceAnim;
+import com.sakpeipei.undertale.common.anim.RoundSequenceGAnim;
 import com.sakpeipei.undertale.common.anim.SingleAnim;
 import com.sakpeipei.undertale.entity.IAnimatable;
 import com.sakpeipei.undertale.network.AnimPacket;
@@ -24,16 +25,17 @@ import java.util.Objects;
  * @since 2025-11-23 21:21
  * 序列动画执行器
  */
-public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Goal {
-    private static final Logger log = LogManager.getLogger(SequenceAnimGoal.class);
+public abstract class RoundSequenceAnimGoal<T,R extends Mob & IAnimatable> extends Goal {
+    private static final Logger log = LogManager.getLogger(RoundSequenceAnimGoal.class);
     protected final R mob;
     protected int tick;             // 动画tick
     protected int cooldownEndTick;  // 动画结束冷却Tick点
 
+    protected int round;
     protected int step;             // 当前步骤索引
-    protected SequenceAnim<T> anim;
+    protected RoundSequenceAnim<T> anim;
 
-    public SequenceAnimGoal(R mob) {
+    public RoundSequenceAnimGoal(R mob) {
         this.mob = mob;
     }
 
@@ -50,12 +52,17 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
         LivingEntity target = mob.getTarget();
         if (target != null) {
             anim = select(target);
+            round = anim.round();
             log.debug("选择动画，动画步骤：{}，判定Tick：{}",anim.steps(), anim.cd());
         }
     }
 
     @Override
-    public boolean canContinueToUse() { return step < anim.steps().size(); }
+    public boolean canContinueToUse() {
+        return round > 0;
+    }
+    // 0 1 2 3 4 5 6 7 8 9 10 11
+    // s         e s
     @Override
     public void tick() {
         if(mob.tickCount < cooldownEndTick ){
@@ -65,7 +72,7 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
         List<SingleAnim<T>> steps = anim.steps();
         SingleAnim<T> curr = steps.get(step);
         if(tick == 0){
-            PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),curr.id(),1.0f));
+            PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),steps.get(step).id(),1.0f));
         }
         if(curr.shouldHitAt(tick)) {
             LivingEntity target = mob.getTarget();
@@ -87,7 +94,10 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
             if (!FMLEnvironment.production) {
                 Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("步骤动画结束：步骤索引：%d,动画ID：%d，冷却时间：%d",step,curr.id(),cooldownEndTick-mob.tickCount)),false);
             }
-            step++;
+            if(++step == steps.size()){
+                round--;
+                step=0;
+            }
             tick=0;
         }
     }
@@ -111,7 +121,7 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
     }
 
     @NotNull
-    protected abstract SequenceAnim<T> select(LivingEntity target);
+    protected abstract RoundSequenceAnim<T> select(LivingEntity target);
 
     protected abstract int execute(LivingEntity target, SingleAnim<T> anim);
 
