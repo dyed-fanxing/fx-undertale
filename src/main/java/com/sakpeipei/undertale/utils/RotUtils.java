@@ -11,6 +11,76 @@ import net.minecraft.world.phys.Vec3;
  * 向量旋转工具
  */
 public class RotUtils {
+    public static Vec3 dirRot(Vec3 dir,float xRot, float yRot) {
+        return dir.xRot(-xRot * Mth.DEG_TO_RAD)
+                .yRot(-yRot * Mth.DEG_TO_RAD);
+    }
+    /**
+     * 获取dir向量绕世界坐标轴旋转后的向量
+     * @param dir 向量
+     * @param zRot 绕z轴旋转的角度
+     * @param xRot 绕x轴旋转的角度
+     * @param yRot 绕y轴旋转的角度
+     * @return dir向量绕世界坐标轴旋转后的向量
+     */
+    public static Vec3 dirRot(Vec3 dir, float zRot, float xRot, float yRot) {
+        return dir.zRot((zRot - 90) * Mth.DEG_TO_RAD)
+                .xRot(-xRot * Mth.DEG_TO_RAD)
+                .yRot(-yRot * Mth.DEG_TO_RAD);
+    }
+    public static void setRelativePos(Entity entity,Vec3 pos,float yaw,float pitch){
+        entity.setPos(pos.x,pos.y,pos.z);
+    }
+
+    public static Vec3 getWorldPos(Vec3 pos,float pitch,float yaw){
+        return getWorldPos((float) pos.x, (float) pos.y, (float) pos.z,pitch,yaw);
+    }
+    public static Vec3 getWorldPos(double x, double y, double z, float pitch, float yaw) {
+        return getWorldPos((float) x, (float) y, (float) z,pitch,yaw);
+    }
+    /**
+     * 根据 相对坐标和仰俯、航偏 获取世界坐标
+     * @param x,y,z 相对坐标
+     * @param pitch,yaw 仰俯，航偏
+     * @return 世界坐标
+     */
+    public static Vec3 getWorldPos(float x, float y, float z, float yaw, float pitch) {
+        float yawRad = -yaw * Mth.DEG_TO_RAD;
+        float pitchRad = -pitch * Mth.DEG_TO_RAD;
+        float cosYaw = Mth.cos(yawRad);
+        float sinYaw = Mth.sin(yawRad);
+        float cosPitch = Mth.cos(pitchRad);
+        float sinPitch = Mth.sin(pitchRad);
+
+        float z1 = z * cosPitch - y * sinPitch;
+        return new Vec3(
+                x * cosYaw + z1 * sinYaw,
+                y * cosPitch + z * sinPitch,
+                z1 * cosYaw - x * sinYaw
+        );
+    }
+
+
+    /**
+     * 对齐MC世界Roll翻滚方向
+     */
+    public static float zRot(float rot) {
+        return ( rot - 90) * Mth.DEG_TO_RAD;
+    }
+    /**
+     * 对齐MC世界Yaw航偏方向
+     */
+    public static float yRot(float rot) {
+        return -rot * Mth.DEG_TO_RAD;
+    }
+    /**
+     * 对齐MC世界Pitch仰俯方向
+     */
+    public static float xRot(float rot) {
+        return -rot * Mth.DEG_TO_RAD;
+    }
+
+
     // 航偏角度，同MC默认lookAt方法计算方式，对齐MC世界坐标Z轴
     public static float yRotD(Vec3 vec3) {
         return Mth.wrapDegrees((float)(Mth.atan2(vec3.x,vec3.z) * Mth.RAD_TO_DEG - 90.0F));
@@ -45,36 +115,6 @@ public class RotUtils {
     public static float xRotR(double y,double hd) {
         return (float)(-Mth.atan2(y, hd));
     }
-
-
-
-    /**
-     * 获取绕 dir向量 旋转zRot，yRot，xRot角度的向量
-     * @param dir 向量
-     * @param zRot 绕z轴旋转的角度
-     * @param yRot 绕y轴旋转的角度
-     * @param xRot 绕x轴旋转的角度
-     * @return 绕 dir向量 旋转zRot，yRot，xRot角度的向量
-     */
-    public static Vec3 dirRot(Vec3 dir, float zRot, float yRot, float xRot) {
-           return dir.zRot((zRot - 90) * Mth.DEG_TO_RAD)
-                .yRot(-yRot * Mth.DEG_TO_RAD)
-                .xRot(-xRot * Mth.DEG_TO_RAD);
-    }
-
-
-
-    public static float dirZRot(float rot) {
-      return ( rot - 90) * Mth.DEG_TO_RAD;
-    }
-    public static float dirYRot(float rot) {
-        return -rot * Mth.DEG_TO_RAD;
-    }
-    public static float dirXRot(float rot) {
-        return -rot * Mth.DEG_TO_RAD;
-    }
-
-
 
     /*
         !!!由于原版的弹射物shoot方法所调用的设置旋转的逻辑与Entity实体的逻辑不同
