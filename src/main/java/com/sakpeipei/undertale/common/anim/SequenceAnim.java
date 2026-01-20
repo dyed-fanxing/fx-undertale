@@ -21,7 +21,6 @@ public record SequenceAnim<T>(int cd, List<SingleAnim<T>> steps) {
         this(cd, List.of(new SingleAnim<>(id, hitTicks, length, 0, action)));
     }
 
-
     /**
      * 通过指定的回合数，构造重复的序列
      *

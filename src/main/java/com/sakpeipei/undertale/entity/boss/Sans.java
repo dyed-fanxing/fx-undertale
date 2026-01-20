@@ -631,7 +631,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             return switch (action) {
                 case 1 -> Sans.this.shootAimedBarrage(target);
                 case 2 -> Sans.this.shootForwardBarrage(target);
-                case 3 -> Sans.this.summonGBAroundSelf(target, 1 ,1.0f + fatigueLevel*0.25f);
+                case 3 -> Sans.this.summonGBAroundSelf(target, 1 ,1.0f + fatigueLevel*(0.25f*difficulty));
                 case 4 -> Sans.this.summonGroundBoneSpineAroundTarget(target);
                 default -> throw new IllegalStateException("Unexpected value: " + action);
             };
@@ -1311,18 +1311,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     public int summonGBAroundSelf(LivingEntity target, int count, float size) {
         for (int i = 0; i < count; i++) {
             GasterBlaster gb = createGasterBlaster(size);
-            Vec3 targetEyePos = target.getEyePosition();
-            // 先创建单位方向向量
-            Vec3 direction = new Vec3(0, 1, 0).zRot((this.random.nextFloat() * 180 - 90) * Mth.DEG_TO_RAD);
-            gb.setPos(this.getEyePosition().add(
-                    // 偏移可能的位置
-                    new Vec3(direction.x * (this.random.nextDouble() - 0.5) * 12,  // 左右
-                            direction.y * (this.random.nextDouble() * 3 + 3),    // 高度
-                            this.random.nextDouble() * 5
-                    ).xRot(-this.getXRot() * Mth.DEG_TO_RAD).yRot(-this.getYHeadRot() * Mth.DEG_TO_RAD)
-            ));
-            gb.lookAt(EntityAnchorArgument.Anchor.FEET, targetEyePos);
-            this.level().addFreshEntity(gb);
+            LevelUtils.addFreshEntity(level(),gb,this.getEyePosition().add(RotUtils.getWorldPos(
+                    this.random.nextDouble() *12 -6,
+                    this.random.nextDouble() * 3 + 3,
+                    this.random.nextDouble() * 5,
+                    this.getXRot(),this.getYHeadRot())),target.getEyePosition());
         }
         return 0;
     }
