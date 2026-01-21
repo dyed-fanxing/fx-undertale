@@ -631,7 +631,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             return switch (action) {
                 case 1 -> Sans.this.shootAimedBarrage(target);
                 case 2 -> Sans.this.shootForwardBarrage(target);
-                case 3 -> Sans.this.summonGBAroundSelf(target, 1 ,1.0f + fatigueLevel*(0.25f*difficulty));
+                case 3 -> Sans.this.summonGBAroundSelf(target, 1 ,1.0f + difficulty*0.25f + fatigueLevel*0.5f);
                 case 4 -> Sans.this.summonGroundBoneSpineAroundTarget(target);
                 default -> throw new IllegalStateException("Unexpected value: " + action);
             };
@@ -948,7 +948,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         }
         return 0;
     }
-
     protected FlyingBone createFlyingBone(String attackTypeUUID, float speed, int delay) {
         FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f, speed, delay);
         bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
