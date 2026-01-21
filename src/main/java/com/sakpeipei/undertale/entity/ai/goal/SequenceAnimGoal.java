@@ -55,7 +55,7 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
     }
 
     @Override
-    public boolean canContinueToUse() { return step < anim.steps().size(); }
+    public boolean canContinueToUse() { return step < anim.steps().size() && tick < anim.steps().getLast().length(); }
     @Override
     public void tick() {
         if(mob.tickCount < cooldownEndTick ){
@@ -76,6 +76,10 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
             }
             if (target != null) {
                 cooldownEndTick = Math.max(execute(target,curr) - curr.length() + tick,0);
+                int[] ints = curr.hitTicks();
+                if(tick == ints[ints.length - 1]){
+                    step++;
+                }
             }
         }
 
@@ -87,8 +91,6 @@ public abstract class SequenceAnimGoal<T,R extends Mob & IAnimatable> extends Go
             if (!FMLEnvironment.production) {
                 Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("步骤动画结束：步骤索引：%d,动画ID：%d，冷却时间：%d",step,curr.id(),cooldownEndTick-mob.tickCount)),false);
             }
-            step++;
-            tick=0;
         }
     }
 

@@ -70,18 +70,18 @@ public class GasterBlaster extends Entity implements IGasterBlaster, IEntityWith
     }
 
     public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner) {
-        this(type, level, owner, 1.0f, (short) 50);
+        this(type, level, owner, 1.0f, (short) 32);
     }
 
     public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner, float size) {
-        this(type, level, owner, size, (short) 50);
+        this(type, level, owner, size, (short) 32);
     }
 
-    public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner, float size, short decayTick) {
-        this(type, level, owner, size, 0.4f, (short) 18, decayTick);
+    public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner, float size, short shot) {
+        this(type, level, owner, size, 0.4f, (short) 17, shot);
     }
 
-    public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner, float size, float mouthHeightRatio, short fireTick, short decayTick) {
+    public GasterBlaster(EntityType<? extends Entity> type, Level level, LivingEntity owner, float size, float mouthHeightRatio, short charge, short shot) {
         super(type, level);
         super.setNoGravity(true);
         if (owner != null) {
@@ -89,8 +89,8 @@ public class GasterBlaster extends Entity implements IGasterBlaster, IEntityWith
         }
         this.size = size;
         this.mouthHeight = mouthHeightRatio * size;
-        this.fireTick = fireTick;
-        this.decayTick = decayTick;
+        this.fireTick = (short) (charge + 1);
+        this.decayTick = (short) (fireTick + shot);
     }
 
     @Override
