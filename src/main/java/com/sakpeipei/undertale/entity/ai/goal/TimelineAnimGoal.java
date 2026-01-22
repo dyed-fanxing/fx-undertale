@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.ToIntFunction;
 
 
 /**
@@ -22,16 +23,16 @@ import java.util.Objects;
  * @since 2025-11-23 21:21
  * 时间线动画执行器
  */
-public abstract class TimelineGoal<T,R extends Mob & IAnimatable> extends Goal {
-    private static final Logger log = LogManager.getLogger(TimelineGoal.class);
+public abstract class TimelineAnimGoal<R extends Mob & IAnimatable> extends Goal {
+    private static final Logger log = LogManager.getLogger(TimelineAnimGoal.class);
     protected final R mob;
     protected int tick;             // 动画tick
     protected int cooldownEndTick;  // 动画结束冷却Tick点
 
     protected int step;             // 当前步骤索引
-    protected TimelineAnim<T> anim;
+    protected TimelineAnim anim;
 
-    public TimelineGoal(R mob) {
+    public TimelineAnimGoal(R mob) {
         this.mob = mob;
     }
 
@@ -56,12 +57,12 @@ public abstract class TimelineGoal<T,R extends Mob & IAnimatable> extends Goal {
     @Override
     public void tick() {
         Map<Integer, Byte> anims = anim.anims();
-        Map<Integer, T> actions = anim.actions();
+        Map<Integer, ToIntFunction<LivingEntity>> actions = anim.actions();
         Byte animId = anims.get(tick);
         if(animId != null){
             PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),animId,1.0f));
         }
-        T action = actions.get(tick);
+        ToIntFunction<LivingEntity> action = actions.get(tick);
         if(action != null){
             LivingEntity target = mob.getTarget();
             // 只在开发环境（IDE运行）中显示消息
@@ -70,7 +71,7 @@ public abstract class TimelineGoal<T,R extends Mob & IAnimatable> extends Goal {
                 Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("发生判定：动画ID：%d，判定Tick：%d",animId, tick)), false);
             }
             if (target != null) {
-                execute(target,action);
+                action.applyAsInt(target);
             }
         }
         tick++;
@@ -91,8 +92,5 @@ public abstract class TimelineGoal<T,R extends Mob & IAnimatable> extends Goal {
     }
 
     @NotNull
-    protected abstract TimelineAnim<T> select(LivingEntity target);
-
-    protected abstract int execute(LivingEntity target, T action);
-
+    protected abstract TimelineAnim select(LivingEntity target);
 }

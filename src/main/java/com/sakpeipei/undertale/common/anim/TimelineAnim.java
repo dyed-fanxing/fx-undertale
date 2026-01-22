@@ -1,7 +1,11 @@
 package com.sakpeipei.undertale.common.anim;
 
+import net.minecraft.world.entity.LivingEntity;
+
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -11,41 +15,63 @@ import java.util.stream.IntStream;
  * 序列动画，由多个单动画组成
  * @param anims 触发动画的 Tick点Map<Tick点，动画事件>
  * @param actions 触发动作/行为或进行判定的 Tick点Map<Tick点，动作/行为/判定>
- * @param cd 冷却时间
  * @param length 动画时长
+ * @param cd 冷却时间
  */
-public record TimelineAnim<T>(int length, int cd,Map<Integer, Byte> anims, Map<Integer, T> actions) {
+public record TimelineAnim(int length, int cd, Map<Integer, Byte> anims, Map<Integer, ToIntFunction<LivingEntity>> actions) {
 
-    public TimelineAnim(byte id,int hitTick, int length, int cd, T action) {
-        this(cd,length,Map.of(0,id,length,(byte)-1),Map.of(hitTick,action));
+    // 单动画，单动作，单判定
+    public TimelineAnim(byte id, int length, int cd,int hitTick, ToIntFunction<LivingEntity> action) {
+        this(length,cd,Map.of(0,id),Map.of(hitTick,action));
     }
-    public TimelineAnim(int round, int cd, byte id, int hitTick, int interval, T action) {
-        this(cd, round * interval, Map.of(0, id),IntStream.range(0, round).boxed().collect(Collectors.toMap(
-                i -> hitTick + i * interval,
-                i -> action
-        )));
+    // 单动画，多动作，单判定
+    public TimelineAnim(byte id, int length, int cd, Map<Integer,ToIntFunction<LivingEntity>> actions) {
+        this(length,cd,Map.of(0,id),actions);
     }
 
-    // 使用Entry列表
-    public static <T> TimelineAnim<T> create(int cd,int length, Map<Integer, Byte> anims, Map.Entry<int[], T>[] actionEntries) {
-        anims.put(length,(byte) -1);
-        Map<Integer, T> actions = new HashMap<>();
-        for (Map.Entry<int[], T> entry : actionEntries) {
-            for (int time : entry.getKey()) {
-                actions.put(time, entry.getValue());
+    /**
+     * 多回合，单动画，单动作，单判定
+     * 动画总长度 = 最后一次判定的位置 + 最后执行行动后的长度
+     * 最后执行行动后的长度 = 间隔 - 动作的判定Tick = interval - hitTick
+     * @param round 回合数
+     * @param interval 间隔
+     */
+    public static TimelineAnim create(int round,int interval,int cd, byte id, int hitTick, ToIntFunction<LivingEntity> action) {
+        Map<Integer, ToIntFunction<LivingEntity>> acts = new HashMap<>(round);
+        int offsetHitTick = hitTick;
+        for (int i = 0; i < round; i++) {
+            acts.put(offsetHitTick, action);
+            offsetHitTick+=interval;
+        }
+        return new TimelineAnim( offsetHitTick - hitTick,cd,Map.of(0,id), Map.copyOf(acts) );
+    }
+    /**
+     * 多回合，单动画，多动作，单判定
+     * 动画总长度 = 最后一次判定的位置 + 最后执行行动后的长度
+     * 最后执行行动后的长度 = 间隔 - 回合内的第一个行动的判定Tick = interval - actions的第一个的key
+     * @param round 回合数
+     * @param interval 间隔
+     */
+    public static TimelineAnim create(int round,int interval,int cd, byte id, Map<Integer,ToIntFunction<LivingEntity>> actions) {
+        Map<Integer, ToIntFunction<LivingEntity>> acts = new HashMap<>(round * actions.size());
+        int offsetHitTick = 0;
+        for (int i = 0,offset = 0; i < round; i++,offset+=interval) {
+            for (Map.Entry<Integer, ToIntFunction<LivingEntity>> entry : actions.entrySet()) {
+                offsetHitTick = entry.getKey() + offset;
+                acts.put(offsetHitTick, entry.getValue());
             }
         }
-        return new TimelineAnim<>(cd,length,anims, actions );
+        return new TimelineAnim(offsetHitTick - actions.keySet().iterator().next(),cd,Map.of(0,id), Map.copyOf(acts) );
     }
 
-    // 使用Map列表
-    public static <T> TimelineAnim<T> create(int cd,int length,Map<Integer, Byte> anims, Map<int[], T> actions) {
-        Map<Integer, T> acts = new HashMap<>();
-        actions.forEach((hitTicks,action) -> {
-            for (int hitTick : hitTicks) {
-                acts.put(hitTick, action);
+    // 多动画，多动作，多判定
+    public static TimelineAnim create(int length,int cd,  Map<Integer, Byte> anims, Map<int[], ToIntFunction<LivingEntity>> actions) {
+        Map<Integer, ToIntFunction<LivingEntity>> acts = new HashMap<>();
+        for (Map.Entry<int[], ToIntFunction<LivingEntity>> entry : actions.entrySet()) {
+            for (int hitTick : entry.getKey()) {
+                acts.put(hitTick, entry.getValue());
             }
-        });
-        return new TimelineAnim<>(cd,length,anims,acts);
+        }
+        return new TimelineAnim(length,cd,anims, Map.copyOf(acts));
     }
 }
