@@ -24,7 +24,6 @@ public class CollisionDetectionUtils {
      * @param filter 过滤器
      * @param blockClip 方块碰撞检测条件
      * @param isCollision 是否包含碰撞检测，即静止时，是否使用碰撞检测
-     * @return
      */
     public static List<HitResult> getHitResultsOnMoveVector(Entity entity, Predicate<Entity> filter,ClipContext.Block blockClip,boolean isCollision) {
         return getHitResults(entity, entity.position(), entity.getDeltaMovement(),filter,0.3F, blockClip,isCollision);
@@ -85,7 +84,6 @@ public class CollisionDetectionUtils {
         Vec3 closestOnSegment = getClosestPointOnLineSegment(aabb.getCenter(), start, end);
         // 2. 找到AABB上离这个点最近的点
         // 3. 计算两点之间的距离平方 <= 距离平方小于等于半径平方则碰撞为ture，否则 false
-        Undertale.LOGGER.debug("射线检测是否相交：{}，胶囊体检测是否相交：{}",aabb.clip(start,end),aabb.distanceToSqr(closestOnSegment) <= r * r);
         return aabb.distanceToSqr(closestOnSegment) <= r * r;
     }
 

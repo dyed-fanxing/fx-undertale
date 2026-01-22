@@ -1,6 +1,7 @@
 package com.sakpeipei.undertale.client.render.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.model.entity.GasterBlasterModel;
@@ -13,6 +14,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
@@ -30,6 +33,11 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     }
 
     @Override
+    public void scaleModelForRender(float widthScale, float heightScale, PoseStack poseStack, GasterBlaster animatable, BakedGeoModel model, boolean isReRender, float partialTick, int packedLight, int packedOverlay) {
+        super.scaleModelForRender(animatable.getSize(), animatable.getSize(), poseStack, animatable, model, isReRender, partialTick, packedLight, packedOverlay);
+    }
+
+    @Override
     public void render(@NotNull GasterBlaster animatable, float entityYaw, float partialTick, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         super.render(animatable, entityYaw, partialTick, poseStack, bufferSource, packedLight);
         GasterBlasterBeamRenderer.render(animatable, partialTick, poseStack, bufferSource, packedLight);
@@ -41,7 +49,7 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
         if (super.shouldRender(animatable, frustum, cameraX, cameraY, cameraZ)) {
             return true;
         }
-        if(!Vec3.ZERO.equals(animatable.getEnd())){
+        if(animatable.getEnd() != null){
             return frustum.isVisible( new AABB(animatable.getStart(), animatable.getEnd()));
         }
         return false;

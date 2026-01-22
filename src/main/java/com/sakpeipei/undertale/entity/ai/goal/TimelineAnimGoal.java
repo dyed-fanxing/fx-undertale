@@ -61,14 +61,18 @@ public abstract class TimelineAnimGoal<R extends Mob & IAnimatable> extends Goal
         Byte animId = anims.get(tick);
         if(animId != null){
             PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),animId,1.0f));
+            if (!FMLEnvironment.production) {
+                log.debug("触发动画：{}",animId);
+                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("触发动画：%d", animId)), false);
+            }
         }
         ToIntFunction<LivingEntity> action = actions.get(tick);
         if(action != null){
             LivingEntity target = mob.getTarget();
             // 只在开发环境（IDE运行）中显示消息
             if (!FMLEnvironment.production) {
-                log.debug("发生判定，动画ID：{}，判定Tick：{}",animId,tick);
-                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("发生判定：动画ID：%d，判定Tick：%d",animId, tick)), false);
+                log.debug("发生判定，判定Tick：{}",tick);
+                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("发生判定，判定Tick：%d", tick)), false);
             }
             if (target != null) {
                 action.applyAsInt(target);

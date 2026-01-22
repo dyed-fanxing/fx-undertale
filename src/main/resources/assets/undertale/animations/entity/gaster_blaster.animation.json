@@ -172,7 +172,7 @@
 				}
 			}
 		},
-		"anticipation": {
+		"fire": {
 			"animation_length": 1,
 			"bones": {
 				"root": {
@@ -228,7 +228,7 @@
 				}
 			}
 		},
-		"fire": {
+		"shot": {
 			"animation_length": 1,
 			"bones": {
 				"root": {

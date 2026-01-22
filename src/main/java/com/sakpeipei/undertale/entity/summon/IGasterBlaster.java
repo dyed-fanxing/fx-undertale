@@ -24,13 +24,10 @@ public interface IGasterBlaster extends TraceableEntity{
     /**
      * 光束攻击起点，即嘴（炮口位置）
      */
-    // 光束攻击起点
     default Vec3 getStart(){
         return ((Entity) this).position().add(0,getMonthHeight(),0);
     }
-    // 光束攻击终点
     Vec3 getEnd();
-    void setEnd(Vector3f end);
     /**
      * 能否攻击目标
      */

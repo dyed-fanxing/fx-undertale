@@ -175,14 +175,8 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
 
     @Override
     public Vec3 getEnd() {
-        return null;
+        return end;
     }
-
-    @Override
-    public void setEnd(Vector3f end) {
-
-    }
-
 
     /**
      * 阶段处理

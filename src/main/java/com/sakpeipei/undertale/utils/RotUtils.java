@@ -44,7 +44,7 @@ public class RotUtils {
      * @param pitch,yaw 仰俯，航偏
      * @return 世界坐标
      */
-    public static Vec3 getWorldPos(float x, float y, float z, float yaw, float pitch) {
+    public static Vec3 getWorldPos(float x, float y, float z, float pitch, float yaw) {
         float yawRad = -yaw * Mth.DEG_TO_RAD;
         float pitchRad = -pitch * Mth.DEG_TO_RAD;
         float cosYaw = Mth.cos(yawRad);

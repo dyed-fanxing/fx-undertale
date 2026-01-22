@@ -2,7 +2,6 @@ package com.sakpeipei.undertale.event.handler;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.undertale.entity.boss.Sans;
 import com.sakpeipei.undertale.registry.EntityTypeRegistry;
@@ -14,7 +13,7 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 @EventBusSubscriber(modid = Undertale.MODID)
-public class EventHandlers {
+public class LivingEntityAttributesHandlers {
     /**
      * 注册需要属性的实体，即继承自LivingEntity
      */

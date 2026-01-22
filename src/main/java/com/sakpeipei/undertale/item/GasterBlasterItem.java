@@ -57,7 +57,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
             HitResult hitResult = player.pick(GasterBlaster.DEFAULT_LENGTH, 1.0f, false);
             Vec3 targetPos = hitResult.getLocation();;
             // 2. 创建炮台实体
-            GasterBlaster blaster = new GasterBlaster(EntityTypeRegistry.GASTER_BLASTER.get(), level, player);
+            GasterBlaster blaster = new GasterBlaster(level, player);
             // 2. 计算炮台生成位置（圆形分布） //向上安全距离的向量
             double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
             blaster.setPos(player.position().add(new Vec3(0,safeDistance,0)
