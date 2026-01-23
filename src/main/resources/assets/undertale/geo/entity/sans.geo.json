@@ -102,7 +102,7 @@
 				{
 					"name": "right_elbow",
 					"parent": "right_arm",
-					"pivot": [-8, 15, 0],
+					"pivot": [8, 15, 0],
 					"cubes": [
 						{
 							"origin": [-10, 9, -2],
@@ -116,10 +116,12 @@
 								"down": {"uv": [70, 44], "uv_size": [-4, -4]}
 							}
 						}
-					],
-					"locators": {
-						"right_locator": [-8, 9, 0]
-					}
+					]
+				},
+				{
+					"name": "right_hand",
+					"parent": "right_elbow",
+					"pivot": [-8, 9, 0]
 				},
 				{
 					"name": "left_arm",
@@ -157,10 +159,12 @@
 								"down": {"uv": [66, 44], "uv_size": [4, -4]}
 							}
 						}
-					],
-					"locators": {
-						"left_locator": [8, 9, 0]
-					}
+					]
+				},
+				{
+					"name": "left_hand",
+					"parent": "left_elbow",
+					"pivot": [8, 9, 0]
 				},
 				{
 					"name": "head",

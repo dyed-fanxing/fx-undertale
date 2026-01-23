@@ -44,14 +44,19 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     }
 
     @Override
+    public void preRender(PoseStack poseStack, GasterBlaster animatable, BakedGeoModel model, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
+        super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
+    }
+
+    @Override
     public boolean shouldRender(@NotNull GasterBlaster animatable, @NotNull Frustum frustum, double cameraX, double cameraY, double cameraZ) {
         // 如果实体本身在视锥内，直接渲染
         if (super.shouldRender(animatable, frustum, cameraX, cameraY, cameraZ)) {
             return true;
         }
-        if(animatable.getEnd() != null){
-            return frustum.isVisible( new AABB(animatable.getStart(), animatable.getEnd()));
+        if(frustum.isVisible( new AABB(animatable.getStart(), animatable.getEnd()))) {
+            return true;
         }
-        return false;
+        return animatable.position().subtract(cameraX, cameraY, cameraZ).lengthSqr() < 1024;
     }
 }

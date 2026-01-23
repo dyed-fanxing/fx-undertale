@@ -29,7 +29,6 @@ public abstract class TimelineAnimGoal<R extends Mob & IAnimatable> extends Goal
     protected int tick;             // 动画tick
     protected int cooldownEndTick;  // 动画结束冷却Tick点
 
-    protected int step;             // 当前步骤索引
     protected TimelineAnim anim;
 
     public TimelineAnimGoal(R mob) {
@@ -45,7 +44,6 @@ public abstract class TimelineAnimGoal<R extends Mob & IAnimatable> extends Goal
     @Override
     public void start() {
         tick = 0;
-        step = 0;
         LivingEntity target = mob.getTarget();
         if (target != null) {
             anim = select(target);
@@ -53,7 +51,10 @@ public abstract class TimelineAnimGoal<R extends Mob & IAnimatable> extends Goal
     }
 
     @Override
-    public boolean canContinueToUse() { return tick < anim.length();}
+    public boolean canContinueToUse() {
+        LivingEntity target = mob.getTarget();
+        return target != null && target.isAlive() && mob.canAttack(target) && tick < anim.length();
+    }
     @Override
     public void tick() {
         Map<Integer, Byte> anims = anim.anims();
@@ -61,8 +62,8 @@ public abstract class TimelineAnimGoal<R extends Mob & IAnimatable> extends Goal
         Byte animId = anims.get(tick);
         if(animId != null){
             PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),animId,1.0f));
+            log.debug("触发动画：{}",animId);
             if (!FMLEnvironment.production) {
-                log.debug("触发动画：{}",animId);
                 Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("触发动画：%d", animId)), false);
             }
         }
@@ -70,10 +71,10 @@ public abstract class TimelineAnimGoal<R extends Mob & IAnimatable> extends Goal
         if(action != null){
             LivingEntity target = mob.getTarget();
             // 只在开发环境（IDE运行）中显示消息
-            if (!FMLEnvironment.production) {
-                log.debug("发生判定，判定Tick：{}",tick);
-                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("发生判定，判定Tick：%d", tick)), false);
-            }
+            log.debug("发生判定，判定Tick：{}",tick);
+//            if (!FMLEnvironment.production) {
+//                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("发生判定，判定Tick：%d", tick)), false);
+//            }
             if (target != null) {
                 action.applyAsInt(target);
             }

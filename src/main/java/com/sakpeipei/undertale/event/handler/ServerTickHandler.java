@@ -15,10 +15,7 @@ import java.util.List;
  */
 @EventBusSubscriber(modid = Undertale.MODID)
 public class ServerTickHandler {
-    public static final List<DelayedEntity> DELAYED_ENTITIES =  new ArrayList<>();
-
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
-        DELAYED_ENTITIES.removeIf(DelayedEntity::tick);
     }
 }

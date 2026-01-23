@@ -56,7 +56,7 @@ public class GasterBlasterBeamRenderer {
                 partialSize =  halfSize + (float) Math.sin((entity.tickCount + partialTicks) * 0.5f) * 0.05f;
             } else if(entity.tickCount < discardTick) {
                 partialSize = Mth.lerp( (entity.tickCount + partialTicks )/ discardTick,halfSize,0);
-                LogUtils.getLogger().debug("光束半径大小：{},tickCount：{},discardTick：{}", partialSize,entity.tickCount,discardTick);
+//                LogUtils.getLogger().debug("光束半径大小：{},tickCount：{},discardTick：{}", partialSize,entity.tickCount,discardTick);
             }
             RenderUtils.renderCapsule(poseStack,buffer.getBuffer(BEAM_FRONT_TYPE),partialSize,(float) dir.length(),segments, r, g, b, a,OverlayTexture.NO_OVERLAY,packedLight);
         }

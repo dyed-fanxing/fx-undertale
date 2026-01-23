@@ -13,22 +13,21 @@ import net.minecraft.world.phys.Vec3;
  * @since 2025-11-27 20:01
  */
 public class LevelUtils {
-
+    public static boolean addFreshEntity(Level level, Entity entity,  Vec3 targetPos){
+        entity.lookAt(EntityAnchorArgument.Anchor.FEET,targetPos);
+        return level.addFreshEntity(entity);
+    }
     public static boolean addFreshEntity(Level level, Entity entity, Vec3 spawnPos, Vec3 targetPos){
         entity.setPos(spawnPos);
         entity.lookAt(EntityAnchorArgument.Anchor.FEET,targetPos);
         return level.addFreshEntity(entity);
     }
 
-    /**
-     * 延迟加入实体
-     */
-    public static void delayAddFreshEntity(Entity entity, int delay){
-        ServerTickHandler.DELAYED_ENTITIES.add(new DelayedEntity(entity,delay));
+
+    public static boolean addFreshProjectile(Level level, Projectile projectile,Entity target){
+        RotUtils.lookAtShoot(projectile, target);
+        return level.addFreshEntity(projectile);
     }
-
-
-
     /**
      * 添加弹射物到当前世界中，并看向目标实体
      * @param level 世界
@@ -41,6 +40,7 @@ public class LevelUtils {
         RotUtils.lookAtShoot(projectile, target);
         return level.addFreshEntity(projectile);
     }
+
     /**
      * 添加弹射物到当前世界中，并看向目标实体
      * @param level 世界
@@ -51,6 +51,10 @@ public class LevelUtils {
     public static boolean addFreshProjectile(Level level, Projectile projectile, double x,double y,double z, Entity target){
         projectile.setPos(x,y,z);
         RotUtils.lookAtShoot(projectile, target);
+        return level.addFreshEntity(projectile);
+    }
+    public static boolean addFreshProjectile(Level level, Projectile projectile,double x,double y,double z){
+        RotUtils.lookAtShoot(projectile,x,y,z);
         return level.addFreshEntity(projectile);
     }
     /**

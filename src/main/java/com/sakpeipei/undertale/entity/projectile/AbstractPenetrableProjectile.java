@@ -5,6 +5,7 @@ import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -15,7 +16,9 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import net.neoforged.neoforge.event.EventHooks;
+import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,16 +29,15 @@ import java.util.List;
  * @author Sakqiongzi
  * @since 2025-09-26 21:05
  * 可跟随owner的弹射物
- * 与 AbstractHurtingProjectile的区别在于tick中的旋转更新为立刻更新，而不是类似模拟重物的平滑更新
- *
+ * 与 AbstractHurtingProjectile的区别在于，可穿透攻击，即会检测路径上多个可命中实体，而不是第一个
  */
-public abstract class AbstractPenetrableProjectile extends Projectile {
-    public double accelerationPower;
+public abstract class AbstractPenetrableProjectile extends Projectile implements IEntityWithComplexSpawn {
+    public float accelerationPower;
 
     public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level) {
-        this(type, level,0.1);
+        this(type, level,0.1f);
     }
-    public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level,double accelerationPower) {
+    public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level,float accelerationPower) {
         super(type, level);
         this.accelerationPower = accelerationPower;
     }
@@ -125,14 +127,24 @@ public abstract class AbstractPenetrableProjectile extends Projectile {
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("acceleration_power")) {
-            this.accelerationPower = tag.getDouble("acceleration_power");
+        if (tag.contains("accelerationPower")) {
+            this.accelerationPower = tag.getFloat("accelerationPower");
         }
     }
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putDouble("acceleration_power", this.accelerationPower);
+        tag.putFloat("accelerationPower", this.accelerationPower);
+    }
+
+    @Override
+    public void writeSpawnData(@NotNull RegistryFriendlyByteBuf buffer) {
+        buffer.writeFloat(accelerationPower);
+    }
+
+    @Override
+    public void readSpawnData(@NotNull RegistryFriendlyByteBuf buffer) {
+        this.accelerationPower = buffer.readFloat();
     }
 
     @Override

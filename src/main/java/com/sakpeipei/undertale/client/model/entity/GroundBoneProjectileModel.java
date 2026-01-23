@@ -14,16 +14,15 @@ public class GroundBoneProjectileModel extends DefaultedEntityGeoModel<GroundBon
     }
 
 
+
+
     @Override
     public void setCustomAnimations(GroundBoneProjectile animatable, long instanceId, AnimationState<GroundBoneProjectile> animationState) {
-        GeoBone up = this.getBone("edge-up").get();
+        GeoBone up = this.getBone("up").get();
         GeoBone body = this.getBone("body").get();
         BoneSnapshot upInitial = up.getInitialSnapshot();
-        BoneSnapshot bodyInitial = body.getInitialSnapshot();
-        float addHeight = animatable.getHeight() * 16;
-
-        double ySize = bodyInitial.getBone().getCubes().getFirst().size().y;
-        body.setScaleY(1.0f + addHeight/ (float)ySize);
-        up.setPosY(upInitial.getOffsetY() + addHeight);
+        float heightScale = animatable.getHeightScale();
+        body.setScaleY((heightScale - 0.1875f) / 0.8125f);
+        up.setPosY(upInitial.getOffsetY() + (heightScale - 1) * 16);
     }
 }

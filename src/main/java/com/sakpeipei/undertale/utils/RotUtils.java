@@ -18,15 +18,15 @@ public class RotUtils {
     /**
      * 获取dir向量绕世界坐标轴旋转后的向量
      * @param dir 向量
-     * @param zRot 绕z轴旋转的角度
-     * @param xRot 绕x轴旋转的角度
-     * @param yRot 绕y轴旋转的角度
+     * @param roll  翻滚角度，绕z轴旋转的角度
+     * @param pitch 仰俯角度，绕x轴旋转的角度
+     * @param yaw  航偏角度，绕y轴旋转的角度
      * @return dir向量绕世界坐标轴旋转后的向量
      */
-    public static Vec3 dirRot(Vec3 dir, float zRot, float xRot, float yRot) {
-        return dir.zRot((zRot - 90) * Mth.DEG_TO_RAD)
-                .xRot(-xRot * Mth.DEG_TO_RAD)
-                .yRot(-yRot * Mth.DEG_TO_RAD);
+    public static Vec3 dirRot(Vec3 dir, float roll, float pitch, float yaw) {
+        return dir.zRot(roll * Mth.DEG_TO_RAD)
+                .xRot(-pitch * Mth.DEG_TO_RAD)
+                .yRot(-yaw * Mth.DEG_TO_RAD);
     }
     public static void setRelativePos(Entity entity,Vec3 pos,float yaw,float pitch){
         entity.setPos(pos.x,pos.y,pos.z);
@@ -39,18 +39,66 @@ public class RotUtils {
         return getWorldPos((float) x, (float) y, (float) z,pitch,yaw);
     }
     /**
-     * 根据 相对坐标和仰俯、航偏 获取世界坐标
+     * 根据 相对坐标和仰俯、航偏 获取世界坐标，先翻滚，再仰俯，后航偏
+     * @param x,y,z 相对坐标
+     * @param roll,pitch,yaw 仰俯，航偏
+     * @return 世界坐标
+     */
+    public static Vec3 getWorldPos(float x, float y, float z, float roll, float pitch, float yaw) {
+        float rollRad = roll * Mth.DEG_TO_RAD;
+        float pitchRad = -pitch * Mth.DEG_TO_RAD;
+        float yawRad = -yaw * Mth.DEG_TO_RAD;
+
+        float cosRoll = Mth.cos(rollRad);
+        float sinRoll = Mth.sin(rollRad);
+        float cosPitch = Mth.cos(pitchRad);
+        float sinPitch = Mth.sin(pitchRad);
+        float cosYaw = Mth.cos(yawRad);
+        float sinYaw = Mth.sin(yawRad);
+
+        float cycr = cosYaw * cosRoll;
+        float sycr = sinYaw * cosRoll;      
+        float cysr = cosYaw * sinRoll;      
+        float sysr = sinYaw * sinRoll;      
+        float crcp = cosRoll * cosPitch;    
+        float crsp = cosRoll * sinPitch;    
+
+        // 组合项
+        float cysrcp = cysr * cosPitch;     
+        float cysrsp = cysr * sinPitch;     
+        float sysrcp = sysr * cosPitch;     
+        float sysrsp = sysr * sinPitch;     
+        float sycrcp = sycr * cosPitch;     
+        float cycrcp = cycr * cosPitch;     
+
+        // 使用提取的变量计算
+        float worldX = cycr * x
+                + (-cysrcp - sysrsp) * y
+                + (-cysrsp + sycrcp) * z;
+
+        float worldY = sinRoll * x
+                + crcp * y
+                + crsp * z;
+
+        float worldZ = (-sycr) * x
+                + (sysrcp - cysrsp) * y
+                + (sysrsp + cycrcp) * z;
+
+        return new Vec3(worldX, worldY, worldZ);
+    }
+    /**
+     * 根据 相对坐标和仰俯、航偏 获取世界坐标，先仰俯 后航偏
      * @param x,y,z 相对坐标
      * @param pitch,yaw 仰俯，航偏
      * @return 世界坐标
      */
     public static Vec3 getWorldPos(float x, float y, float z, float pitch, float yaw) {
-        float yawRad = -yaw * Mth.DEG_TO_RAD;
         float pitchRad = -pitch * Mth.DEG_TO_RAD;
-        float cosYaw = Mth.cos(yawRad);
-        float sinYaw = Mth.sin(yawRad);
+        float yawRad = -yaw * Mth.DEG_TO_RAD;
         float cosPitch = Mth.cos(pitchRad);
         float sinPitch = Mth.sin(pitchRad);
+        float cosYaw = Mth.cos(yawRad);
+        float sinYaw = Mth.sin(yawRad);
 
         float z1 = z * cosPitch - y * sinPitch;
         return new Vec3(

@@ -56,7 +56,6 @@ public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal
         if(target != null){
             if(anim.shouldHitAt(tick)){
                 // 执行攻击时返回的额外动画时间 - 判定生效时剩余的动画时间，如果大于0，则代表这次攻击动画的时间比预设的多，需要增加动画冷却时间
-                // execute(target) - (anim.getLength() - tick)
                 cooldownEndTick = Math.max(execute(target) - anim.length() + tick,0);
             }
         }

@@ -7,6 +7,7 @@ import com.sakpeipei.undertale.entity.projectile.GroundBoneProjectile;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
 
 /**
  * @author Sakqiongzi

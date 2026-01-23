@@ -76,7 +76,7 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
         }
         this.damage = damage;
         this.delay = delay;
-        this.startY = y - this.getBbHeight() * offset;
+        this.startY = y - this.getBbHeight() ;
         setPos(x,startY,z);
         this.offset = offset;
         this.colorAttack = colorAttack;
@@ -103,7 +103,7 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
             float progress = (float) (-delay) / lifetime;
             float easedProgress = Mth.sin(progress * Mth.PI); // 从0到1再到0
             Vec3 pos = position();
-            this.setPos(pos.x,startY + this.getBbHeight() * easedProgress,pos.z);
+            this.setPos(pos.x,startY + this.getBbHeight()*offset * easedProgress,pos.z);
             // 碰撞检测
             if (!this.level().isClientSide) {
                 for (LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class,this.getBoundingBox(), this::canHitEntity)) {
@@ -196,33 +196,33 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
 
     @Override
     protected void readAdditionalSaveData(@NotNull CompoundTag tag) {
-        if (tag.hasUUID("OwnerUUID")) {
-            this.ownerUUID = tag.getUUID("OwnerUUID");
+        if (tag.hasUUID("ownerUUID")) {
+            this.ownerUUID = tag.getUUID("ownerUUID");
         }
-        if (tag.contains("Color")) {
-            this.colorAttack = ColorAttack.getInstance(tag.getInt("Color"));
+        if (tag.contains("color")) {
+            this.colorAttack = ColorAttack.getInstance(tag.getInt("color"));
         }
-        if(tag.contains("Offset")){
-            this.offset = tag.getDouble("Offset");
+        if(tag.contains("offset")){
+            this.offset = tag.getDouble("offset");
             this.startY = getY() - this.getBbHeight() * this.offset;
         }
-        if(tag.contains("IsPlaySound")){
-            this.isPlaySound = tag.getBoolean("IsPlaySound");
+        if(tag.contains("isPlaySound")){
+            this.isPlaySound = tag.getBoolean("isPlaySound");
         }
-        if(tag.contains("Lifetime")){
-            this.lifetime = tag.getInt("Lifetime");
+        if(tag.contains("lifetime")){
+            this.lifetime = tag.getInt("lifetime");
         }
     }
 
     @Override
     protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
         if (this.ownerUUID != null) {
-            tag.putUUID("OwnerUUID", this.ownerUUID);
+            tag.putUUID("ownerUUID", this.ownerUUID);
         }
-        tag.putInt("Color",this.colorAttack.getColor().getRGB());
-        tag.putDouble("Offset",this.offset);
-        tag.putBoolean("IsPlaySound",this.isPlaySound);
-        tag.putInt("Lifetime",this.lifetime);
+        tag.putInt("color",this.colorAttack.getColor().getRGB());
+        tag.putDouble("offset",this.offset);
+        tag.putBoolean("isPlaySound",this.isPlaySound);
+        tag.putInt("lifetime",this.lifetime);
     }
 
     @Override

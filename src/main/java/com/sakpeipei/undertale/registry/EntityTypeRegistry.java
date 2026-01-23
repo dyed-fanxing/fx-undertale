@@ -30,7 +30,7 @@ public class EntityTypeRegistry {
     public static final DeferredHolder<EntityType<?>,EntityType<GasterBlaster>> GASTER_BLASTER =
             ENTITY_TYPES.register("gaster_blaster",
                     () -> EntityType.Builder.<GasterBlaster>of(GasterBlaster::new, MobCategory.MISC)
-                            .sized(1.5f, 1f)  // 碰撞箱
+                            .sized(1.8f, 1.5f)  // 碰撞箱
                             .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
                             .build(ResourceLocation.fromNamespaceAndPath(Undertale.MODID,"gaster_blaster").toString())
             );
@@ -57,13 +57,13 @@ public class EntityTypeRegistry {
     );
     public static final DeferredHolder<EntityType<?>, EntityType<GroundBoneProjectile>> GROUND_BONE_PROJECTILE = register("ground_bone_projectile",
             EntityType.Builder.<GroundBoneProjectile>of(GroundBoneProjectile::new, MobCategory.MISC)
-                    .sized(0.25f, 0.99f)  // 碰撞箱
+                    .sized(0.25f, 1.0f)  // 碰撞箱
                     .eyeHeight(0.5445f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
     public static final DeferredHolder<EntityType<?>, EntityType<GroundBone>> GROUND_BONE = register("ground_bone",
             EntityType.Builder.<GroundBone>of(GroundBone::new, MobCategory.MISC)
-                    .sized(0.25f, 0.99f)  // 碰撞箱
+                    .sized(0.25f, 1.0f)  // 碰撞箱
                     .eyeHeight(0.5445f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );

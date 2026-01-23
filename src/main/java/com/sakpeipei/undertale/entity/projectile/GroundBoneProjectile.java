@@ -33,53 +33,46 @@ import java.awt.*;
  */
 public class GroundBoneProjectile extends AbstractPenetrableProjectile implements IEntityWithComplexSpawn, AttackColored,GeoEntity, GeoAnimatable {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private float height;
+    private float heightScale = 1.0f;
 
-    private float damage;
-    private float speed;
-    private int delay;
+    private float damage = 1.0f;
+    private float speed = 1.0f;
+    private int delay = 10;
 
     protected Vec3 movement;     // 运动向量
-    private ColorAttack colorAttack;
+    private ColorAttack colorAttack = ColorAttack.WHITE;
 
     public GroundBoneProjectile(EntityType<? extends GroundBoneProjectile> type, Level level) {
         super(type, level);
-        this.colorAttack = ColorAttack.WHITE;
     }
-    public GroundBoneProjectile(Level level, LivingEntity owner,double x,double y,double z,float height,float damage, float speed,  ColorAttack colorAttack) {
+    public GroundBoneProjectile(Level level, LivingEntity owner,double x,double y,double z,float heightScale,float damage, float speed,  ColorAttack colorAttack) {
         this(EntityTypeRegistry.GROUND_BONE_PROJECTILE.get(), level);
         this.setNoGravity(true);
         setOwner(owner);
-        this.height = height;
+        this.heightScale = heightScale;
         this.damage = damage;
         this.speed = speed;
         this.colorAttack = colorAttack;
-        // 因为Entity类的构造方法直接使用了getDimensions，而调用时本类的heightScale还没有初始化
-        this.refreshDimensions();
         setPos(x,y,z);
+        refreshDimensions();
     }
 
     @Override
     public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
-        EntityDimensions dimensions = this.getType().getDimensions();
-        return dimensions.scale(1f,dimensions.height() + height / dimensions.height());
+        return this.getType().getDimensions().scale(1f,heightScale);
     }
 
     @Override
     public void tick() {
         super.tick();
-        AABB currentBb = this.getBoundingBox();
-//        log.info("Tick {} , 碰撞箱 {}" ,this.tickCount,currentBb);
-
-        // 检查是否与方块碰撞
-        boolean colliding = !this.level().noCollision(this, currentBb);
-//        log.info("是否碰撞 {}" ,colliding);
-
-        if(!this.level().isClientSide) {
-            delay--;
-            if(delay == 0){
+        delay--;
+        if(delay == 0){
+            if(!this.level().isClientSide) {
                 this.shoot(movement.x,movement.y,movement.z, speed ,0);
             }
+        }
+        if(delay < -200){
+            this.discard();
         }
     }
 
@@ -90,10 +83,8 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
 
     @Override
     protected void onHitEntity(@NotNull EntityHitResult result) {
-
         Entity target = result.getEntity();
         Entity owner = this.getOwner();
-
         // 设置伤害逻辑
         if (target instanceof LivingEntity livingTarget) {
             DamageSource damageSource;
@@ -124,29 +115,34 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
             this.yRotO = getYRot();
         }
     }
-    @Override
-    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        tag.putInt("Color",this.colorAttack.getColor().getRGB());
-        tag.putInt("Delay",delay);
-        tag.putFloat("Speed",speed);
-        if(movement != null){
-            tag.put("Movement", this.newDoubleList(movement.x, movement.y, movement.z));
-        }
-    }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
-        this.delay = tag.getInt("Delay");
-        this.speed = tag.getFloat("Speed");
-        if(tag.contains("Color")){
-            this.colorAttack = ColorAttack.getInstance(tag.getInt("Color"));
+        this.delay = tag.getInt("delay");
+        this.speed = tag.getFloat("speed");
+        if(tag.contains("heightScale")){
+            this.heightScale = tag.getFloat("heightScale");
+            this.refreshDimensions();
         }
-        if (tag.contains("Movement")) {
-            ListTag list = tag.getList("Movement", 6);
+        if(tag.contains("color")){
+            this.colorAttack = ColorAttack.getInstance(tag.getInt("color"));
+        }
+        if (tag.contains("movement")) {
+            ListTag list = tag.getList("movement", 6);
             this.movement = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
         }
     }
 
+    @Override
+    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
+        tag.putInt("color",this.colorAttack.getColor().getRGB());
+        tag.putInt("delay",delay);
+        tag.putFloat("speed",speed);
+        tag.putFloat("heightScale",heightScale);
+        if(movement != null){
+            tag.put("movement", this.newDoubleList(movement.x, movement.y, movement.z));
+        }
+    }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
@@ -154,19 +150,20 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
     }
 
     @Override
-    public void writeSpawnData(RegistryFriendlyByteBuf buf) {
-        buf.writeFloat(this.height);
+    public void writeSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
+        buf.writeFloat(this.heightScale);
         buf.writeInt(this.colorAttack.getColor().getRGB());
     }
 
     @Override
-    public void readSpawnData(RegistryFriendlyByteBuf buf) {
-        this.height = buf.readFloat();
+    public void readSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
+        this.heightScale = buf.readFloat();
         this.colorAttack = ColorAttack.getInstance(buf.readInt());
+        refreshDimensions();
     }
 
-    public float getHeight() {
-        return height;
+    public float getHeightScale() {
+        return heightScale;
     }
 
     @Override
