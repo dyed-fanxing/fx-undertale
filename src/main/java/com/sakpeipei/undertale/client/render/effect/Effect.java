@@ -13,7 +13,7 @@ import org.joml.Matrix4f;
 /**
  * @author yujinbao
  * @since 2025/11/18 14:44
- * 装饰物：仅客户端用于特效显示或渲染贴图等
+ * 特效：仅客户端用于特效显示或渲染贴图等
  * 如：攻击预警提示框，魔法法阵贴图等
  */
 @OnlyIn(Dist.CLIENT)

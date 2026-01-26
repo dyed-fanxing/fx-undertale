@@ -57,9 +57,10 @@ public class Setup {
         registrar.playToClient(GasterBlasterProPacket.TYPE, GasterBlasterProPacket.STREAM_CODEC, GasterBlasterProPacket::handle);
         registrar.playToClient(KaramPacket.TYPE,KaramPacket.STREAM_CODEC, KaramPacket::handle);
         registrar.playToClient(WarningTipPacket.TYPE, WarningTipPacket.STREAM_CODEC, WarningTipPacket::handle);
-        registrar.playToClient(WarningTipAABBPacket.TYPE, WarningTipAABBPacket.STREAM_CODEC, WarningTipAABBPacket::handle);
+//        registrar.playToClient(WarningTipAABBPacket.TYPE, WarningTipAABBPacket.STREAM_CODEC, WarningTipAABBPacket::handle);
         registrar.playToClient(AnimPacket.TYPE, AnimPacket.STREAM_CODEC, AnimPacket::handle);
-        registrar.playToClient(GasterBlasterBeamEndPacket.TYPE,GasterBlasterBeamEndPacket.STREAM_CODEC, GasterBlasterBeamEndPacket::handle);
+//        registrar.playToClient(GasterBlasterBeamEndPacket.TYPE,GasterBlasterBeamEndPacket.STREAM_CODEC, GasterBlasterBeamEndPacket::handle);
+        registrar.playToClient(TimeJumpTeleportPacket.TYPE,TimeJumpTeleportPacket.STREAM_CODEC, TimeJumpTeleportPacket::handle);
     }
 }
 

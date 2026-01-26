@@ -5,19 +5,22 @@ import com.sakpeipei.undertale.entity.AttackColored;
 import com.sakpeipei.undertale.entity.boss.Sans;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.registry.EntityTypeRegistry;
+import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
@@ -25,6 +28,7 @@ import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.awt.*;
+import java.util.List;
 
 
 /**
@@ -32,6 +36,7 @@ import java.awt.*;
  * @since 2025-10-06 21:18
  */
 public class GroundBoneProjectile extends AbstractPenetrableProjectile implements IEntityWithComplexSpawn, AttackColored,GeoEntity, GeoAnimatable {
+    private static final Logger log = LoggerFactory.getLogger(GroundBoneProjectile.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private float heightScale = 1.0f;
 
@@ -65,15 +70,25 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
     @Override
     public void tick() {
         super.tick();
+        HitResult hitResultOnMoveVector = ProjectileUtil.getHitResultOnMoveVector(this, Entity::isAlive);
+        List<HitResult> entityHitResultsOnMoveVector = CollisionDetectionUtils.getEntityHitResultsOnMoveVector(this, this.position(), this.position().add(this.getDeltaMovement()), this.getBoundingBox().expandTowards(this.getDeltaMovement()), Entity::isAlive, 0.3F,false);
+//        for (HitResult hitResult : entityHitResultsOnMoveVector) {
+//            log.debug("地面弹射骨头 碰撞检测：{}",((EntityHitResult)hitResult).getEntity());
+//        }
         delay--;
-        if(delay == 0){
-            if(!this.level().isClientSide) {
+        if(!this.level().isClientSide) {
+            if(delay == 0){
                 this.shoot(movement.x,movement.y,movement.z, speed ,0);
             }
+            if(delay < -200){
+                this.discard();
+            }
         }
-        if(delay < -200){
-            this.discard();
-        }
+    }
+
+    @Override
+    protected boolean isCollision() {
+        return true;
     }
 
     @Override
@@ -115,6 +130,16 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
             this.yRotO = getYRot();
         }
     }
+    @Override
+    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
+        tag.putInt("color",this.colorAttack.getColor().getRGB());
+        tag.putInt("delay",delay);
+        tag.putFloat("speed",speed);
+        tag.putFloat("heightScale",heightScale);
+        if(movement != null){
+            tag.put("movement", this.newDoubleList(movement.x, movement.y, movement.z));
+        }
+    }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
@@ -134,22 +159,6 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
     }
 
     @Override
-    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        tag.putInt("color",this.colorAttack.getColor().getRGB());
-        tag.putInt("delay",delay);
-        tag.putFloat("speed",speed);
-        tag.putFloat("heightScale",heightScale);
-        if(movement != null){
-            tag.put("movement", this.newDoubleList(movement.x, movement.y, movement.z));
-        }
-    }
-
-    @Override
-    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
-        super.defineSynchedData(builder);
-    }
-
-    @Override
     public void writeSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
         buf.writeFloat(this.heightScale);
         buf.writeInt(this.colorAttack.getColor().getRGB());
@@ -161,6 +170,12 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
         this.colorAttack = ColorAttack.getInstance(buf.readInt());
         refreshDimensions();
     }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
+        super.defineSynchedData(builder);
+    }
+
 
     public float getHeightScale() {
         return heightScale;

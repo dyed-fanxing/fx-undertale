@@ -54,8 +54,7 @@ public class SansCommand {
                                                 case 3 -> sans.shootAimedBarrage(player);
                                                 case 4 -> sans.shootForwardBarrage(player);
                                                 case 5 -> sans.summonGroundBoneSpineAtSelf();
-                                                case 6 -> sans.summonGroundBoneSpineWaveAroundSelf(player, 30f, ColorAttack.WHITE);
-                                                case 7 -> sans.summonGroundBoneSpineWaveAroundSelf(player, ColorAttack.WHITE);
+                                                case 6 -> sans.summonGroundBoneSpineWaveAroundSelf(player);
                                             }
                                         }
                                     }

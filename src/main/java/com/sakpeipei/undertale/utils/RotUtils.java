@@ -11,6 +11,9 @@ import net.minecraft.world.phys.Vec3;
  * 向量旋转工具
  */
 public class RotUtils {
+    public static Vec3 dirRot(Vec3 dir,float yRot) {
+        return dir.yRot(-yRot * Mth.DEG_TO_RAD);
+    }
     public static Vec3 dirRot(Vec3 dir,float xRot, float yRot) {
         return dir.xRot(-xRot * Mth.DEG_TO_RAD)
                 .yRot(-yRot * Mth.DEG_TO_RAD);

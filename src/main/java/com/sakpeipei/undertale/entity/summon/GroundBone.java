@@ -39,13 +39,13 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
     private LivingEntity owner;
     @Nullable
     private UUID ownerUUID;
-    private float damage;
-    private int delay;
+    private float damage = 1.0f;
+    private int delay = 20;
 
-    private double startY;
-    private double offset;
-    private boolean isPlaySound;
-    private int lifetime;
+    private double startY ;
+    private float offset = 1.0f;
+    private boolean isPlaySound = false;
+    private int lifetime = 10;
 
 
 
@@ -58,7 +58,7 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
     private double lerpXRot;
 
     public GroundBone(EntityType<? extends GroundBone> type, Level level) {
-        this(level,null,1.0f,20,0,0,0);
+        super(type,level);
     }
 
     public GroundBone(Level level, LivingEntity owner, float damage,int delay,double x, double y, double z) {
@@ -68,7 +68,7 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
     /**
      * @param offset 自身高度上升的比例 0 ~ 1 范围
      */
-    public GroundBone(Level level, LivingEntity owner, float damage,int delay,double x, double y, double z,double offset, ColorAttack colorAttack,boolean isPlaySound,int lifetime) {
+    public GroundBone(Level level, LivingEntity owner, float damage,int delay,double x, double y, double z,float offset, ColorAttack colorAttack,boolean isPlaySound,int lifetime) {
         super(EntityTypeRegistry.GROUND_BONE.get(), level);
         this.setNoGravity(true);
         if(owner != null) {
@@ -193,6 +193,17 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
     public float lerpTargetYRot() {
         return this.lerpSteps > 0 ? (float)this.lerpYRot : this.getYRot();
     }
+    @Override
+    protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
+        if (this.ownerUUID != null) {
+            tag.putUUID("ownerUUID", this.ownerUUID);
+        }
+        tag.putInt("color",this.colorAttack.getColor().getRGB());
+        tag.putDouble("startY",this.startY);
+        tag.putFloat("offset",this.offset);
+        tag.putBoolean("isPlaySound",this.isPlaySound);
+        tag.putInt("lifetime",this.lifetime);
+    }
 
     @Override
     protected void readAdditionalSaveData(@NotNull CompoundTag tag) {
@@ -203,8 +214,10 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
             this.colorAttack = ColorAttack.getInstance(tag.getInt("color"));
         }
         if(tag.contains("offset")){
-            this.offset = tag.getDouble("offset");
-            this.startY = getY() - this.getBbHeight() * this.offset;
+            this.offset = tag.getFloat("offset");
+        }
+        if(tag.contains("startY")){
+            this.startY =  tag.getDouble("startY");
         }
         if(tag.contains("isPlaySound")){
             this.isPlaySound = tag.getBoolean("isPlaySound");
@@ -215,21 +228,11 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
     }
 
     @Override
-    protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        if (this.ownerUUID != null) {
-            tag.putUUID("ownerUUID", this.ownerUUID);
-        }
-        tag.putInt("color",this.colorAttack.getColor().getRGB());
-        tag.putDouble("offset",this.offset);
-        tag.putBoolean("isPlaySound",this.isPlaySound);
-        tag.putInt("lifetime",this.lifetime);
-    }
-
-    @Override
     public void writeSpawnData(RegistryFriendlyByteBuf buf) {
         buf.writeInt(this.delay);
         buf.writeInt(this.colorAttack.getColor().getRGB());
         buf.writeDouble(this.startY);
+        buf.writeFloat(this.offset);
         buf.writeBoolean(this.isPlaySound);
         buf.writeInt(this.lifetime);
     }
@@ -239,6 +242,7 @@ public class GroundBone extends Entity implements GeoEntity, IEntityWithComplexS
         this.delay = buf.readInt();
         this.colorAttack = ColorAttack.getInstance(buf.readInt());
         this.startY = buf.readDouble();
+        this.offset = buf.readFloat();
         this.isPlaySound = buf.readBoolean();
         this.lifetime = buf.readInt();
 

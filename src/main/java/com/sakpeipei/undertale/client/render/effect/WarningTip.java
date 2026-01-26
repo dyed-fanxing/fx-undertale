@@ -3,20 +3,17 @@ package com.sakpeipei.undertale.client.render.effect;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.sakpeipei.undertale.common.Config;
-import com.sakpeipei.undertale.utils.ColorUtils;
 import com.sakpeipei.undertale.utils.RenderUtils;
 import net.minecraft.client.Camera;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.particles.ColorParticleOption;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.awt.*;
 
@@ -39,8 +36,8 @@ public class WarningTip extends Effect {
         this.r = r;this.g = g;this.b = b;this.a = a;
     }
 
-    public WarningTip(float x,float y,float z,float radius, float height, int lifetime, Color color) {
-        this(x,y,z,radius, height, lifetime, color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+    public WarningTip(float x,float y,float z,float radius, float height, int lifetime, int color) {
+        this(x,y,z,radius, height, lifetime, FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), FastColor.ARGB32.alpha(color));
     }
     @Override
     protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {

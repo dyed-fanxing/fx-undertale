@@ -50,6 +50,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
             super.tick();
             List<HitResult> hitResults = CollisionDetectionUtils.getHitResultsOnMoveVector(this,this::canHitEntity,getClipType(),isCollision());
             for (HitResult hitResult : hitResults) {
+
                 if (hitResult.getType() != HitResult.Type.MISS && !EventHooks.onProjectileImpact(this, hitResult)) {
                     ProjectileDeflection projectileDeflection = this.hitTargetOrDeflectSelf(hitResult);
                     if(projectileDeflection != ProjectileDeflection.NONE){

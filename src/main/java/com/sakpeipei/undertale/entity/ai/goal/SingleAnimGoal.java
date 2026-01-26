@@ -17,7 +17,8 @@ import org.jetbrains.annotations.NotNull;
 public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal {
     protected final R mob;
     protected int tick;             // 动画Tick
-    protected int cooldownEndTick;  // 冷却结束Tick点
+    protected int cooldownEndTick;  // 动画冷却结束Tick点
+    protected int length;           // 动画长度
     protected SingleAnim<T> anim;
 
     public SingleAnimGoal(R mob) {

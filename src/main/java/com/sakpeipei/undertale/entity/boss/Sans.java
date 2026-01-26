@@ -1,5 +1,6 @@
 package com.sakpeipei.undertale.entity.boss;
 
+import com.ibm.icu.impl.Pair;
 import com.sakpeipei.undertale.common.anim.TimelineAnim;
 import com.sakpeipei.undertale.entity.DelayAction;
 import com.sakpeipei.undertale.entity.DelayEntity;
@@ -39,6 +40,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.TimeUtil;
@@ -108,6 +110,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     public static final byte MERCY_PHASE = 2;
     public static final byte SECOND_PHASE = 3;
     public static final byte SPECIAL_ATTACK = 4;
+    public static final byte END_PHASE = 5;
 
     private static final EntityDataAccessor<Byte> PHASE_ID = SynchedEntityData.defineId(Sans.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> IS_EYE_BLINK = SynchedEntityData.defineId(Sans.class, EntityDataSerializers.BOOLEAN);
@@ -123,9 +126,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     private float animSpeed;
 
 
-    private final List<DelayEntity> delayEntities = new ArrayList<>();
-    private final List<DelayAction<IntSupplier>> delayActions = new ArrayList<>();
-
     public Sans(EntityType<? extends Monster> type, Level level) {
         super(type, level);
 //        maxStamina = level.getDifficulty().getId() * 5;
@@ -137,8 +137,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(0, new FloatGoal(this));
-//        this.goalSelector.addGoal(1, new SequenceAttackGoal());
-        this.goalSelector.addGoal(2, new PersistentAttackGoal());
+        this.goalSelector.addGoal(1, new SequenceAttackGoal());
+//        this.goalSelector.addGoal(2, new PersistentAttackGoal());
 //        this.goalSelector.addGoal(3, new SingleAttackGoalSingle());
         this.goalSelector.addGoal(4, new SansMovementGoal(1.0, 16.0f));
 
@@ -175,13 +175,22 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             stamina = Math.min(stamina + 1, maxStamina);
             setStamina(stamina);
         }
-
-        fatigueLevel = 1 - Mth.floor((float) (stamina - 1) / maxStamina * 2);
+        //todo 判断玩家是否选择了饶恕
         LivingEntity target = this.getTarget();
-        if (target != null && target.getDeltaMovement() instanceof LocalVec3 && target.onGround() && isAppendSpine) {
-            this.summonGroundBoneSpineAtTarget(target);
-            isAppendSpine = false;
+        if(target != null) {
+            if(false){
+                gravityControl(target,LocalDirection.DOWN);
+                isAppendSpine = true;
+            }
+            if (target.getDeltaMovement() instanceof LocalVec3 && target.onGround() && isAppendSpine) {
+                if(false){
+
+                }
+                this.summonGroundBoneSpineAtTarget(target);
+                isAppendSpine = false;
+            }
         }
+
         super.customServerAiStep();
     }
 
@@ -196,12 +205,18 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         if (stamina == 0) {
             return super.hurt(source, power);
         }
-        if (!source.is(Tags.DamageTypes.IS_TECHNICAL)) {
-            if ((sourceEntity == null && directEntity == null) || getPhaseID() == SPECIAL_ATTACK) { // 免疫一切伤害 执行特殊攻击
-                return false;
-            }
+        byte phaseID = getPhaseID();
+        boolean flag;
+        // 直接免疫的
+        if(phaseID == MERCY_PHASE){
+            this.entityData.set(PHASE_ID, SECOND_PHASE);
+            flag = false;
+        }else if (source.is(Tags.DamageTypes.IS_TECHNICAL)){
+            flag = true;
+        }else if (phaseID == SPECIAL_ATTACK || (sourceEntity == null && directEntity == null)){
+            flag = false;
+        }else{
             power *= 0.5f;
-
             if (source.is(DamageTypeTags.IS_PROJECTILE)) {
                 power *= 0.8f;
             }
@@ -211,11 +226,25 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             if (source.is(Tags.DamageTypes.IS_PHYSICAL)) {
                 power *= 0.6f;
             }
+            flag = true;
         }
-        stamina = Math.max(0, stamina - Mth.ceil(power));
-        this.setStamina(stamina);
-        if (stamina <= maxStamina / 2) {
-            this.entityData.set(PHASE_ID, SECOND_PHASE);
+        if(flag){
+            if(phaseID <= FIRST_PHASE){
+                stamina = Math.max(maxStamina/2, stamina - Mth.ceil(power));
+                if(stamina <= maxStamina / 2){
+                    this.entityData.set(PHASE_ID, MERCY_PHASE);
+                    fatigueLevel = 1;
+                }
+            }else if(phaseID == SECOND_PHASE){
+                stamina = Math.max(0, stamina - Mth.ceil(power));
+                this.setStamina(stamina);
+                if(stamina <= maxStamina/20){
+                    fatigueLevel = 2;
+                }
+                if(stamina == 0){
+                    this.entityData.set(PHASE_ID, END_PHASE);
+                }
+            }
         }
 
         if (sourceEntity == null) {
@@ -462,8 +491,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putInt("stamina", this.getStamina());
         tag.putInt("maxStamina", this.maxStamina);
+        tag.putInt("stamina", this.getStamina());
         tag.putByte("phaseId",this.getPhaseID());
         this.addPersistentAngerSaveData(tag);
     }
@@ -471,11 +500,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("stamina")) {
-            setStamina(tag.getInt("stamina"));
-        }
         if (tag.contains("maxStamina")) {
             this.maxStamina = tag.getInt("maxStamina");
+        }
+        if (tag.contains("stamina")) {
+            setStamina(tag.getInt("stamina"));
         }
         if(tag.contains("phaseId")) {
             this.entityData.set(PHASE_ID,tag.getByte("phaseId"));
@@ -553,7 +582,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
                     seeTime = Math.max(-60, seeTime - 1);
                 }
                 Sans.this.getLookControl().setLookAt(target, Sans.this.getHeadRotSpeed(), Sans.this.getMaxHeadXRot());
-
+                byte phaseID = getPhaseID();
+                if(phaseID == MERCY_PHASE || phaseID == END_PHASE){
+                    return;
+                }
                 if (seeTime > 0) {
                     //                    ++this.strafingTime;
                     if (disSqr <= backRadiusSqr) {
@@ -579,11 +611,19 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         }
     }
 
+    class MercyGoal extends Goal {
+        @Override
+        public boolean canUse() {
+            return getPhaseID() == MERCY_PHASE;
+        }
+
+    }
+
     //持续攻击，可脱手
     class PersistentAttackGoal extends TimelineAnimGoal<Sans> {
         List<TimelineAnim> attacks = new ArrayList<>(List.of(
-                new TimelineAnim((byte) 6, 30, 150, 4, Sans.this::shootAimedBarrage),
-                new TimelineAnim((byte) 6, 30, 150, 0, Sans.this::shootForwardBarrage)
+                new TimelineAnim((byte) 6, 30, 400, 4, mob::shootAimedBarrage),
+                new TimelineAnim((byte) 6, 30, 400, 0, mob::shootForwardBarrage)
         ));
 
         public PersistentAttackGoal() {
@@ -592,22 +632,23 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 
         @Override
         public boolean canUse() {
-            return super.canUse() && seeTime > -60 && !isAttacking;
+            byte phaseID = getPhaseID();
+            return (phaseID == FIRST_PHASE || phaseID == SECOND_PHASE) && !isAttacking && super.canUse() && seeTime > -60;
         }
 
         @Override
         protected @NotNull TimelineAnim select(LivingEntity target) {
-            int difficulty = Sans.this.level().getDifficulty().getId();
+            int difficulty = mob.level().getDifficulty().getId();
             List<TimelineAnim> availableAttacks = new ArrayList<>(attacks);
-            int factor = Sans.this.random.nextInt(2);
-            availableAttacks.add(TimelineAnim.create( 3*(difficulty+1-factor), 19-2*difficulty-5*fatigueLevel+factor*10, 100, (byte) 7, 4, (t) -> Sans.this.summonGBAroundSelf(t, 1, 0.5f+(difficulty+fatigueLevel)*0.25f+factor*0.5f)));
+            int factor = mob.random.nextInt(2);
+            availableAttacks.add(TimelineAnim.create(3*(difficulty+1-factor), 15-2*difficulty-5*fatigueLevel+factor*10, 400, (byte) 7, 4, (t) -> mob.summonGBAroundSelf(t, 1, 0.5f+(difficulty+fatigueLevel)*0.25f+factor*0.5f)));
             if (target.onGround()) {
-                availableAttacks.add(TimelineAnim.create(3*difficulty, 30-3*difficulty-5*fatigueLevel, 100, (byte) 7, 4, Sans.this::summonGroundBoneSpineAtTarget));
+                availableAttacks.add(TimelineAnim.create(3*difficulty, 26-3*difficulty-5*fatigueLevel, 400, (byte) 7, 4, mob::summonGroundBoneSpineAtTarget));
             }
             existPersistentAttack = true;
             isAttacking = true;
-//            return availableAttacks.get(Sans.this.random.nextInt(availableAttacks.size()));
             return availableAttacks.get(0);
+//            return availableAttacks.get(mob.random.nextInt(availableAttacks.size()));
         }
 
         @Override
@@ -617,7 +658,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             isAttacking = false;
             existPersistentAttack = false;
             if (!FMLEnvironment.production) {
-                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("动画结束,CD：%d", anim.cd() - 10 * fatigueLevel)), false);
+                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("持久攻击结束，动画ID：%d冷却时间为：%d",anim.anims().keySet().iterator().next(),anim.cd() - 10 * fatigueLevel)), false);
             }
         }
     }
@@ -625,18 +666,16 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     // 单次攻击
     class SingleAttackGoalSingle extends SingleAnimGoal<ToIntFunction<LivingEntity>, Sans> {
         List<SingleAnim<ToIntFunction<LivingEntity>>> attacks = new ArrayList<>(List.of(
-                new SingleAnim<>((byte) 8, 3, 30, 40, Sans.this::shootBoneRingVolley),
-                new SingleAnim<>((byte) 9, 7, 30, 40, (target) -> Sans.this.shootArcSweepVolley()),
-                new SingleAnim<>((byte) 6, 4, 30, 40, Sans.this::summonGBAroundSelf),
-                new SingleAnim<>((byte) 6, 4, 30, 40, Sans.this::summonGBAroundTarget),
-                new SingleAnim<>((byte) 6, 4, 30, 40, Sans.this::summonGBFront)
+                new SingleAnim<>((byte) 8, 3, 30, 40, mob::shootBoneRingVolley),
+                new SingleAnim<>((byte) 9, 7, 30, 40, (target) -> mob.shootArcSweepVolley()),
+                new SingleAnim<>((byte) 6, 4, 30, 60, mob::summonGBAroundSelf),
+                new SingleAnim<>((byte) 6, 4, 30, 60, mob::summonGBAroundTarget),
+                new SingleAnim<>((byte) 6, 4, 30, 60, mob::summonGBFront)
         ));
         List<SingleAnim<ToIntFunction<LivingEntity>>> groundAttacks = new ArrayList<>(List.of(
-                new SingleAnim<>((byte) 6, 4, 20, 50, (target) -> Sans.this.summonGroundBoneSpineAtSelf()),
-                new SingleAnim<>((byte) 6, 10, 20, 50, (target) -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, 30f, ColorAttack.WHITE)),
-                new SingleAnim<>((byte) 6, 10, 20, 50, (target) -> Sans.this.summonGroundBoneSpineWaveAroundSelf(target, ColorAttack.WHITE))
+                new SingleAnim<>((byte) 6, 10, 20, 50, mob::summonGroundBoneSpineWaveAroundSelf)
         ));
-
+        SingleAnim<ToIntFunction<LivingEntity>> closeGroundAttack = new SingleAnim<>((byte) 6, 4, 20, 50, (target) -> mob.summonGroundBoneSpineAtSelf());
         public SingleAttackGoalSingle() {
             super(Sans.this);
         }
@@ -644,7 +683,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         @Override
         public boolean canUse() {
             byte phaseID = getPhaseID();
-            return super.canUse() && seeTime > -60 && !isAttacking && fatigueLevel < 3 && ((phaseID == FIRST_PHASE && !existPersistentAttack) || phaseID == SECOND_PHASE);
+            return ((phaseID == FIRST_PHASE && !isAttacking) || (phaseID == SECOND_PHASE && (!isAttacking || existPersistentAttack))) && super.canUse() && seeTime > -60 ;
         }
 
         @Override
@@ -652,17 +691,18 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             boolean onGround = target.onGround();
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
             List<SingleAnim<ToIntFunction<LivingEntity>>> availableAttacks = new ArrayList<>(attacks);
-//            if (target.onGround()) {
-//                availableAttacks.addAll(groundAttacks);
-//                return availableAttacks.get(3);
-//            }
+            if (target.onGround()) {
+                if(target.closerThan(mob,5)){
+                    availableAttacks.add(closeGroundAttack);
+                }
+                availableAttacks.addAll(groundAttacks);
+            }
             boolean inAir = target.isFallFlying() || (!onGround && (canFlying || target.onClimbable()));
             if (inAir || getPhaseID() >= SECOND_PHASE) {
                 //todo 重力控制
             }
             isAttacking = true;
-//            return availableAttacks.get(random.nextInt(availableAttacks.size()));
-            return availableAttacks.get(2);
+            return availableAttacks.get(random.nextInt(availableAttacks.size()));
         }
 
         @Override
@@ -675,7 +715,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             super.stop();
             cooldownEndTick -= 5 * fatigueLevel;
             if (!FMLEnvironment.production) {
-                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("动画结束,动画ID：%d，CD：%d", anim.id(), anim.cd() - 5 * fatigueLevel)), false);
+                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("单次攻击结束，动画ID：%d,冷却时间为：%d",anim.id(), anim.cd() - 10 * fatigueLevel)), false);
             }
             isAttacking = false;
         }
@@ -684,20 +724,20 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     // 序列连击
     class SequenceAttackGoal extends TimelineAnimGoal<Sans> {
         private final List<TimelineAnim> attacks = List.of(new TimelineAnim((byte) 8, 230, 200, Map.of(
-                4, (target) -> Sans.this.summonGBAroundTarget(target, 2, 18.0),
-                54, (target) -> Sans.this.summonGBAroundTarget(target, 2, 36.0),
-                104, (target) -> Sans.this.summonGBAroundTarget(target, 2, 54.0),
-                154, (target) -> Sans.this.summonGBAroundTarget(target, 2, 72.0),
-                204, (target) -> Sans.this.summonGBAroundTarget(target, 2, 90.f)
+                4, (target) -> mob.summonGBAroundTarget(target, 2, 18f),
+                54, (target) -> mob.summonGBAroundTarget(target, 2, 36f),
+                104, (target) -> mob.summonGBAroundTarget(target, 2, 54f),
+                154, (target) -> mob.summonGBAroundTarget(target, 2, 72f),
+                204, (target) -> mob.summonGBAroundTarget(target, 2, 90f)
         )));
         private final List<TimelineAnim> groundAttacks = List.of(
                 new TimelineAnim((byte) 3, 230, 200, Map.of(
-                        4, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.WHITE),
-                        74, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.AQUA),
-                        144, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.WHITE),
-                        214, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.AQUA),
-                        284, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.WHITE),
-                        354, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.AQUA)
+                        4, (target) -> mob.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.WHITE),
+                        74, (target) -> mob.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.AQUA),
+                        144, (target) -> mob.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.WHITE),
+                        214, (target) -> mob.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.AQUA),
+                        284, (target) -> mob.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.WHITE),
+                        354, (target) -> mob.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.AQUA)
                 )));
 
         public SequenceAttackGoal() {
@@ -706,37 +746,45 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 
         @Override
         protected @NotNull TimelineAnim select(LivingEntity target) {
-            int difficulty = Sans.this.level().getDifficulty().getId();
-            if (getPhaseID() == OPENING_ATTACK) {
-                Sans.this.entityData.set(PHASE_ID, FIRST_PHASE);
-                return new TimelineAnim(400, 400, Map.of(4, (byte) 1, 8, (byte) 4), Map.of(
-                        4, Sans.this::timeJumpTeleport,
-                        24, (t) -> Sans.this.gravityControl(t, LocalDirection.DOWN),
-                        44, (t) -> Sans.this.summonGroundBoneMatrix(t, 0),
-                        64, (t) -> Sans.this.summonGroundBoneMatrix(t, 0),
-                        84, (t) -> Sans.this.summonGBAroundTarget(t, 4, 0f),
-                        104, (t) -> Sans.this.summonGBAroundTarget(t, 4, 45f),
-                        124, (t) -> Sans.this.summonGBAroundTarget(t, 2, 0f)
-                ));
-            }
-            if (getPhaseID() == SPECIAL_ATTACK) {
-            }
+            int difficulty = mob.level().getDifficulty().getId();
+//            if (getPhaseID() == OPENING_ATTACK) {
+//                return new TimelineAnim(400, 400, Map.of(4, (byte) 1, 8, (byte) 4), Map.of(
+//                        4, mob::timeJumpTeleport,
+//                        24, (t) -> mob.gravityControl(t, LocalDirection.DOWN),
+//                        44, (t) -> mob.summonGroundBoneMatrix(t, 0),
+//                        64, (t) -> mob.summonGroundBoneMatrix(t, 0),
+//                        84, (t) -> mob.summonGBAroundTarget(t, 4, 0f),
+//                        104, (t) -> mob.summonGBAroundTarget(t, 4, 45f),
+//                        124, (t) -> mob.summonGBAroundTarget(t, 2, 0f)
+//                ));
+//            }
+//            if (getPhaseID() == SPECIAL_ATTACK) {
+//                return new TimelineAnim(400, 400, Map.of(4, (byte) 1, 8, (byte) 4), Map.of(
+//                        4, mob::timeJumpTeleport
+//                ));
+//            }
 
-            List<TimelineAnim> availableAttacks = new ArrayList<>(attacks);
-            if (target.onGround()) {
-                availableAttacks.addAll(groundAttacks);
-                availableAttacks.addAll(List.of(TimelineAnim.create(5, 20, 400, (byte) 6, Map.of(
-                        4, (t) -> Sans.this.summonGroundBoneWall(t, ColorAttack.WHITE, 1f, LocalDirection.FRONT),
-                        24, (t) -> Sans.this.summonGroundBoneWall(t, ColorAttack.AQUA, 1f, LocalDirection.FRONT)
-                ))));
-            }
+//            List<TimelineAnim> availableAttacks = new ArrayList<>(attacks);
+            List<TimelineAnim> availableAttacks = new ArrayList<>();
+//            if (target.onGround()) {
+////                availableAttacks.addAll(groundAttacks);
+//                availableAttacks.addAll(List.of(TimelineAnim.create(5, 20, 100, (byte) 6, Map.of(
+//                        4, (t) -> mob.summonGroundBoneWall(t, ColorAttack.WHITE, 1f, LocalDirection.FRONT),
+//                        24, (t) -> mob.summonGroundBoneWall(t, ColorAttack.AQUA, 2f, LocalDirection.FRONT)
+//                ))));
+//            }
+            availableAttacks.addAll(List.of(TimelineAnim.create(5, 16, 100, (byte) 6,List.of(
+                    Pair.of(4, (t) -> mob.summonGroundBoneWall(t, ColorAttack.WHITE, 1f, LocalDirection.FRONT)),
+                    Pair.of(24, (t) -> mob.summonGroundBoneWall(t, ColorAttack.WHITE, 2f, LocalDirection.FRONT))
+            ))));
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
 //            boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
-//            if(inAir || Sans.this.stamina <= maxStamina / 2 ) {
+//            if(inAir || mob.stamina <= maxStamina / 2 ) {
 //                availableList.addAll(stateSequences.get(3));
 //            }
             isAttacking = true;
-            return availableAttacks.get(random.nextInt(availableAttacks.size()));
+//            return availableAttacks.get(random.nextInt(availableAttacks.size()));
+            return availableAttacks.get(0);
         }
 
 
@@ -745,108 +793,17 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             super.stop();
             this.cooldownEndTick -= 10 * fatigueLevel;
             isAttacking = false;
+            byte phaseID = getPhaseID();
+            if (phaseID == OPENING_ATTACK) {
+                mob.entityData.set(PHASE_ID, FIRST_PHASE);
+            }else if(phaseID == SPECIAL_ATTACK){
+                mob.entityData.set(PHASE_ID, END_PHASE);
+            }
         }
 
     }
 
-    // 序列连击
-    class SequenceAttackTGoal extends SequenceAnimGoal<ToIntFunction<LivingEntity>, Sans> {
-        private final List<SequenceAnim<ToIntFunction<LivingEntity>>> attacks = List.of(
-                new SequenceAnim<>(200, List.of(
-                        new SingleAnim<>((byte) 8, 4, 20, 40, (target) -> Sans.this.summonGBAroundTarget(target, 2, 18.0)),
-                        new SingleAnim<>((byte) -1, 4, 20, 40, (target) -> Sans.this.summonGBAroundTarget(target, 2, 36.0)),
-                        new SingleAnim<>((byte) -1, 4, 20, 40, (target) -> Sans.this.summonGBAroundTarget(target, 2, 54.0)),
-                        new SingleAnim<>((byte) -1, 4, 20, 40, (target) -> Sans.this.summonGBAroundTarget(target, 2, 72.0)),
-                        new SingleAnim<>((byte) -1, 4, 20, 40, (target) -> Sans.this.summonGBAroundTarget(target, 2, 90.0))
-                ))
-        );
-        List<SequenceAnim<ToIntFunction<LivingEntity>>> groundAttacks = List.of(
-                new SequenceAnim<>(200, List.of(
-                        new SingleAnim<>((byte) 3, 4, 30, 40, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 1, ColorAttack.WHITE)),
-                        new SingleAnim<>((byte) 3, 4, 30, 40, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 2, ColorAttack.AQUA)),
-                        new SingleAnim<>((byte) 3, 4, 30, 40, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 3, ColorAttack.WHITE)),
-                        new SingleAnim<>((byte) 3, 4, 30, 40, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 4, ColorAttack.AQUA)),
-                        new SingleAnim<>((byte) 3, 4, 30, 40, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 4, ColorAttack.WHITE)),
-                        new SingleAnim<>((byte) 3, 4, 30, 40, (target) -> Sans.this.summonParallelGroundBoneSpineWaveAroundSelf(target, 5, ColorAttack.AQUA))
-                ))
-        );
-        Map<Integer, List<SequenceAnim<ToIntFunction<LivingEntity>>>> attackMap = new HashMap<>();
-        Map<Integer, List<SequenceAnim<ToIntFunction<LivingEntity>>>> groundAttackMap = new HashMap<>();
 
-        public SequenceAttackTGoal() {
-            super(Sans.this);
-            for (int i = 0; i <= Difficulty.HARD.getId(); i++) {
-                attackMap.put(i, List.of(
-
-                ));
-                groundAttackMap.put(i, List.of(
-                        new SequenceAnim<>(3 + 2 * i, 100, List.of(
-                                new SingleAnim<>((byte) 6, 4, 50, 20, (target) -> Sans.this.summonGroundBoneWall(target, ColorAttack.WHITE, 1f, LocalDirection.FRONT)),
-                                new SingleAnim<>((byte) -1, 4, 50, 20, (target) -> Sans.this.summonGroundBoneWall(target, ColorAttack.AQUA, 1f, LocalDirection.FRONT))
-                        ))
-                ));
-            }
-        }
-
-        @Override
-        protected @NotNull SequenceAnim<ToIntFunction<LivingEntity>> select(LivingEntity target) {
-            int difficulty = Sans.this.level().getDifficulty().getId();
-            if (getPhaseID() == OPENING_ATTACK) {
-                Sans.this.entityData.set(PHASE_ID, FIRST_PHASE);
-                return new SequenceAnim<>(400, List.of(
-                        new SingleAnim<>((byte) -1, 0, 20, 20, Sans.this::timeJumpTeleport),    // 黑屏传送
-                        new SingleAnim<>((byte) 1, 1, 20, 20, (t) -> Sans.this.gravityControl(t, LocalDirection.DOWN)),          // 重力下砸
-                        new SingleAnim<>((byte) 4, 4, 40, 20, (t) -> Sans.this.summonGroundBoneMatrix(t, 0)),            // 向前召唤骨头矩阵
-                        new SingleAnim<>((byte) -1, 4, 40, 20, (t) -> Sans.this.summonGBAroundTarget(t, 4, 0f)),   // 十字gb炮
-                        new SingleAnim<>((byte) -1, 4, 40, 20, (t) -> Sans.this.summonGBAroundTarget(t, 4, 45f)),  // 交叉gb炮
-                        new SingleAnim<>((byte) -1, 4, 40, 20, (t) -> Sans.this.summonGBAroundTarget(t, 2, 0f))   // 左右变大gb炮
-                ));
-            }
-            if (getPhaseID() == SPECIAL_ATTACK) {
-                return new SequenceAnim<>(400, List.of(
-                        new SingleAnim<>((byte) -1, 0, 20, 20, Sans.this::timeJumpTeleport),    // 黑屏传送
-                        new SingleAnim<>((byte) 1, 1, 20, 20, (t) -> Sans.this.gravityControl(t, LocalDirection.DOWN)),          // 重力下砸
-                        new SingleAnim<>((byte) 4, 4, 40, 20, (t) -> Sans.this.summonGroundBoneMatrix(t, 0)),            // 向前召唤骨头矩阵
-                        new SingleAnim<>((byte) -1, 4, 40, 20, (t) -> Sans.this.summonGBAroundTarget(t, 4, 0f)),   // 十字gb炮
-                        new SingleAnim<>((byte) -1, 4, 40, 20, (t) -> Sans.this.summonGBAroundTarget(t, 4, 45f)),  // 交叉gb炮
-                        new SingleAnim<>((byte) -1, 4, 40, 20, (t) -> Sans.this.summonGBAroundTarget(t, 2, 0f))   // 左右变大gb炮
-                ));
-            }
-
-            List<SequenceAnim<ToIntFunction<LivingEntity>>> availableAttacks = new ArrayList<>(attacks);
-            if (target.onGround()) {
-                availableAttacks.addAll(groundAttacks);
-                availableAttacks.addAll(groundAttackMap.get(difficulty));
-            }
-            boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
-//            boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
-//            if(inAir || Sans.this.stamina <= maxStamina / 2 ) {
-//                availableList.addAll(stateSequences.get(3));
-//            }
-            isAttacking = true;
-            return availableAttacks.get(random.nextInt(availableAttacks.size()));
-        }
-
-
-        @Override
-        protected int execute(LivingEntity target, SingleAnim<ToIntFunction<LivingEntity>> anim) {
-            return anim.action().applyAsInt(target);
-        }
-
-        @Override
-        public void stop() {
-            super.stop();
-            this.cooldownEndTick -= 10 * fatigueLevel;
-            isAttacking = false;
-        }
-
-        @Override
-        protected void stepStop(SingleAnim<ToIntFunction<LivingEntity>> curr) {
-            super.stepStop(curr);
-            this.cooldownEndTick -= 5 * fatigueLevel;
-
-        }
-    }
 
 
     /**
@@ -994,43 +951,42 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     /**
      * 在指定方向召唤前进骨墙
      */
-    public int summonGroundBoneWall(LivingEntity target, ColorAttack color, float addHeight, LocalDirection direction) {
+    public int summonGroundBoneWall(LivingEntity target, ColorAttack color, float height, LocalDirection direction) {
         Level level = this.level();
         int difficulty = level.getDifficulty().getId();
         String attackTypeUUID = UUID.randomUUID().toString();
         int count = difficulty * 3;
         float speed = 0.8f + difficulty * 0.5f;
-        double interval = 0.375;
-        double xOffset = -interval * (count - 1) / 2;
+        float interval = 0.375f;
+        float xOffset = -interval * (count - 1) / 2;
         // 获取自身水平视线方向
         Vec3 horLookAngle = calculateViewVector(0, this.getYHeadRot());
         Vec3 perpendicular = new Vec3(-horLookAngle.z, 0, horLookAngle.x); // 垂直方向
         // 计算目标到自身的距离减1
         double distance = this.distanceTo(target) - 1;
         // 根据directionType计算起始位置（都基于目标位置）
-        Vec3 centerPos;
-        switch (direction) {
-            // 前方：目标位置 + 视线方向 * (距离-1)
-            case FRONT -> centerPos = target.position().add(horLookAngle.scale(distance));
-            // 后方：目标位置 - 视线方向 * (距离-1)
-            case BACK -> centerPos = target.position().add(horLookAngle.scale(-distance));
-            // 左侧：目标位置 - 垂直方向 * (距离-1)
-            case LEFT -> centerPos = target.position().add(perpendicular.scale(-distance));
-            // 右侧：目标位置 + 垂直方向 * (距离-1)
-            case RIGHT -> centerPos = target.position().add(perpendicular.scale(distance));
-            // 默认前方
-            default -> centerPos = target.position().add(horLookAngle.scale(distance));
-        }
+        Vec3 centerPos = target.position().add(horLookAngle.scale(distance));
+//        switch (direction) {
+//            // 前方：目标位置 + 视线方向 * (距离-1)
+//            case FRONT -> centerPos = target.position().add(horLookAngle.scale(distance));
+//            // 后方：目标位置 - 视线方向 * (距离-1)
+//            case BACK -> centerPos = target.position().add(horLookAngle.scale(-distance));
+//            // 左侧：目标位置 - 垂直方向 * (距离-1)
+//            case LEFT -> centerPos = target.position().add(perpendicular.scale(-distance));
+//            // 右侧：目标位置 + 垂直方向 * (距离-1)
+//            case RIGHT -> centerPos = target.position().add(perpendicular.scale(distance));
+//            // 默认前方
+//            default -> centerPos = target.position().add(horLookAngle.scale(distance));
+//        }
         // 计算骨墙朝向（从起始位置朝向目标）
         Vec3 toTarget = target.position().subtract(centerPos).normalize();
         float yRot = (float) Math.atan2(toTarget.x, toTarget.z);
         for (int i = 0; i < count; i++) {
-            Vec3 pos = centerPos.add(new Vec3(xOffset, 0, 0).yRot(yRot));
-            GroundBoneProjectile bone = new GroundBoneProjectile(level, this, pos.x, this.getY(), pos.z, addHeight, 1f, speed, color);
+            Vec3 pos = this.position().add(RotUtils.dirRot(new Vec3(xOffset, 0, 1f),this.getYHeadRot()));
+            GroundBoneProjectile bone = new GroundBoneProjectile(level, this, pos.x, this.getY(), pos.z, height, (float) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue(), 0.1F, color);
             bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
             // 朝向目标射击
-            bone.delayShoot(10, toTarget);
-            bone.setYRot(RotUtils.shootYRot(toTarget));
+            bone.delayShoot(10, horLookAngle);
             level.addFreshEntity(bone);
             xOffset += interval;
         }
@@ -1132,42 +1088,23 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 
 
     /**
-     * 骨刺波动 - 以自身为中心发射，特定角度步长发射
+     * 骨刺波动 - 以自身为中心发射，单击
      */
-    public int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, float angleStep, ColorAttack color) {
-        return summonGroundBoneSpineWaveAroundSelf(target, 1 + this.fatigueLevel * 2, angleStep, color);
-    }
-
-    /**
-     * 骨刺波动 - 以自身为中心发射
-     */
-    public int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, int count, float angleStep, ColorAttack color) {
+    public int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
+        int count = 3 + 2*fatigueLevel;
+        float interval =  27f-(difficulty+fatigueLevel)*3f;
+        if (!FMLEnvironment.production) {
+            Objects.requireNonNull(this.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("骨刺波动，数量：%d,角度间隔：%f",count,interval)), false);
+        }
         Vec3 horLookAngle = calculateViewVector(0, getYHeadRot());
-        int rows = ATTACK_RANGE * 2 + difficulty / 3 * 5;
-        int cols = 3 + difficulty;
+        int rows = ATTACK_RANGE * 2 + (difficulty+fatigueLevel)*2;
+        int cols = 2 + difficulty+fatigueLevel;
         int delay = 10;
         // 计算起始角度（让波动对称分布）
-        float angle = -angleStep * (count - 1) / 2f;
-        for (int i = 0; i < count; i++, angle += angleStep) {
-            delay = summonGroundBoneSpineWave(target, rows, cols, this.position(), horLookAngle.yRot(angle * Mth.DEG_TO_RAD), color, 10);
-        }
-        return delay;
-    }
-
-    /**
-     * 骨刺波动 - 以自身为中心的圆径向发射，无初始偏移
-     */
-    public int summonGroundBoneSpineWaveAroundSelf(@NotNull LivingEntity target, ColorAttack color) {
-        int difficulty = this.level().getDifficulty().getId();
-        Vec3 horLookAngle = calculateViewVector(0, getYHeadRot());
-        int rows = ATTACK_RANGE * 2 + difficulty / 3 * 5;
-        int cols = 3 + difficulty;
-        int delay = 10;
-        int count = 5 + fatigueLevel + difficulty;
-        float angleStep = 360f / count, angle = 0;
-        for (int i = 0; i < count; i++, angle += angleStep) {
-            delay = summonGroundBoneSpineWave(target, rows, cols, this.position(), horLookAngle.yRot(angle * Mth.DEG_TO_RAD), color, 10);
+        float angle = interval * (1 - count)*0.5f;
+        for (int i = 0; i < count; i++, angle += interval) {
+            delay = summonGroundBoneSpineWave(target, rows, cols, this.position(), horLookAngle.yRot(angle * Mth.DEG_TO_RAD), ColorAttack.WHITE, 10);
         }
         return delay;
     }
@@ -1206,24 +1143,24 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     public int summonGroundBoneSpineAtSelf() {
         int difficulty = this.level().getDifficulty().getId();
         Vec3 pos = this.position();
-        int layer = 13 + fatigueLevel + difficulty;
-        int delay = 13 - fatigueLevel;
+        int layer = 6+2*(fatigueLevel+difficulty);
+        int delay = 13-fatigueLevel-difficulty;
         float spacing = 0.7f;
+        float offset = 1.0f;
         String attackTypeUUID = UUID.randomUUID().toString();
-        double groundY = createGroundBone(attackTypeUUID, pos.x, pos.z, pos.y, pos.y, delay, 20, 1.0f, ColorAttack.WHITE, true);
+        double groundY = createGroundBone(attackTypeUUID, pos.x, pos.z, pos.y, pos.y, delay, 20, offset, ColorAttack.WHITE, true);
         this.level().playSound(null, pos.x, pos.y, pos.z, SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
-        PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket((float) pos.x, (float) groundY, (float) pos.z, layer * spacing, 1.0f, 20, Color.RED));
-
+        PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket((float) pos.x, (float) groundY, (float) pos.z, layer * spacing, offset, 20, Color.RED.getRGB()));
         for (int i = 0; i < layer; i++) {
             int count = 8 * (i + 1);
             float interval = 360f / count;
             float r = spacing * (i + 1);
-            float angle = interval / 2; // 初始位置错位
+            float angle = interval; // 初始位置错位
             for (int j = 0; j < count; j++, angle += interval) {
                 createGroundBone(attackTypeUUID,
                         pos.x + r * Mth.cos(angle * Mth.DEG_TO_RAD),
                         pos.z + r * Mth.sin(angle * Mth.DEG_TO_RAD),
-                        pos.y, pos.y, delay, 20, 1.0f, ColorAttack.WHITE, false);
+                        pos.y, pos.y, delay, 20, offset, ColorAttack.WHITE, false);
             }
             delay += (i % 3 == 0 ? 1 : 0);
         }
@@ -1262,7 +1199,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         float spacing = 0.7f;
         double groundY = createGroundBone(attackTypeUUID, x, z, minY, maxY, delay, lifetime, offset, ColorAttack.WHITE, true);
         this.level().playSound(null, x, getY(), z, SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
-        PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket((float) x, (float) groundY, (float) z, layer * spacing, offset, lifetime, Color.RED));
+        PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket((float) x, (float) groundY, (float) z, layer * spacing, offset, lifetime, Color.RED.getRGB()));
         for (int i = 0; i < layer; i++) {
             int count = 8 * (i + 1);
             float interval = 360f / count;
@@ -1278,33 +1215,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         return delay;
     }
 
-    /**
-     * 实心正方形骨刺
-     *
-     * @param target   目标
-     * @param size     正方形半径（从中心到边的格数）
-     * @param x        中心坐标x
-     * @param z        中心坐标z
-     * @param delay    延迟
-     * @param lifetime 生命周期
-     * @param offset   骨刺刺出自身高度的比例
-     * @return 执行CD
-     */
-    public int summonSquareGroundBoneSpine(LivingEntity target, int size, double x, double z, int delay, int lifetime, float offset) {
-        String attackTypeUUID = UUID.randomUUID().toString();
-        double minY = Math.min(target.getY(), this.getY());
-        double maxY = Math.max(target.getY(), this.getY()) + 1.0;
-        // 生成整个实心正方形区域
-        for (int i = -size; i <= size; i++) {
-            for (int j = -size; j <= size; j++) {
-                double boneX = x + i * 0.5f;
-                double boneZ = z + j * 0.5f;
-                boolean isCenter = (i == 0 && j == 0);
-                createGroundBone(attackTypeUUID, boneX, boneZ, minY, maxY, delay, lifetime, offset, ColorAttack.WHITE, isCenter);
-            }
-        }
-        return delay;
-    }
 
     /**
      * @param offset      根据难度决定骨刺刺出自身高度的比例
@@ -1326,31 +1236,6 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         return spawnY;
     }
 
-    /**
-     * 用于单击
-     */
-    public int summonGBAroundSelfTest(LivingEntity target) {
-        GasterBlaster gb = createGasterBlaster(1.0f, 28);
-        gb.setPos(this.getEyePosition().add(RotUtils.getWorldPos(
-                0,3,0,this.getXRot(), this.getYHeadRot()
-        )));
-        this.level().addFreshEntity(gb);
-
-
-        GasterBlaster gb2 = createGasterBlaster(1.0f, 28);
-        gb2.setPos(this.getEyePosition().add(RotUtils.getWorldPos(
-                1,3,0,this.getXRot(), this.getYHeadRot()
-        )));
-        if (!FMLEnvironment.production) {
-            if(level().noCollision(gb2)){
-                Objects.requireNonNull(this.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal("未发生碰撞"), false);
-                this.level().addFreshEntity(gb2);
-            }else{
-                Objects.requireNonNull(this.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal("发生碰撞"), false);
-            }
-        }
-        return 0;
-    }
 
     /**
      * 用于单击
@@ -1358,9 +1243,9 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     public int summonGBAroundSelf(LivingEntity target) {
         int difficulty = this.level().getDifficulty().getId();
         if (!FMLEnvironment.production) {
-            Objects.requireNonNull(this.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("GB单击，数量：%d,大小：%f",fatigueLevel + difficulty/3 + 1,0.5f +  (fatigueLevel+difficulty) * 0.25f)), false);
+            Objects.requireNonNull(this.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("GB单击，数量：%d,大小：%f",1 + fatigueLevel + difficulty/3,1.0f+difficulty*0.25f)), false);
         }
-        return summonGBAroundSelf(target, fatigueLevel + difficulty/3 + 1, 0.5f +  (fatigueLevel+difficulty) * 0.25f);
+        return summonGBAroundSelf(target, 1 + fatigueLevel + difficulty/3, 1.0f+difficulty*0.25f);
     }
 
     /**
@@ -1388,23 +1273,42 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
      * 用于单击，环绕目标周围
      */
     public int summonGBAroundTarget(LivingEntity target) {
-        return summonGBAroundTarget(target, 2 + this.random.nextInt(3 + fatigueLevel), 45.0 * this.random.nextInt(4));
+        int difficulty = this.level().getDifficulty().getId();
+        // 简单2~4 普通2~5 困难2~6
+        int count = 2 + this.random.nextInt(1+difficulty + fatigueLevel);
+        return summonGBAroundTarget(target, count, this.random.nextInt(count)*180f/count);
     }
-
     /**
      * 以目标和自身长度为半径的圆环上召唤GB，固定360度范围，根据数量自动计算角度步长和大小
      */
-    public int summonGBAroundTarget(LivingEntity target, int count, double offsetAngle) {
-        return summonGBAroundTarget(target, count, offsetAngle, 360.0 / count, 1.0f + (4 - count + fatigueLevel) * 0.25f, 32);
+    public int summonGBAroundTarget(LivingEntity target, int count, float offsetAngle) {
+        int difficulty = this.level().getDifficulty().getId();
+        if (!FMLEnvironment.production) {
+            Objects.requireNonNull(this.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("GB单击，数量：%d,大小：%f",count,1.0f + (1+difficulty+ fatigueLevel-count ) * 0.25f)), false);
+        }
+        return summonGBAroundTarget(target, count, offsetAngle, 360f / count, 1.0f + (1+difficulty+fatigueLevel-count)*0.25f, 28);
     }
 
     /**
-     * 用于单击，在前方
+     * 以目标和自身长度为半径的圆环上召唤GB，在自身前方对称召唤GB，用于单击
      */
     public int summonGBFront(LivingEntity target) {
-        return summonGBAroundTarget(target, (1 + fatigueLevel) * 2, 0.0, 30.0, 1.0f + fatigueLevel * 0.1f, 32);
+        int difficulty = this.level().getDifficulty().getId();
+        // 简单1~3 普通1~4 困难1~5
+        int count = 1+this.random.nextInt(1+difficulty+fatigueLevel);
+        float angleStep = 90f/count;
+        return summonGBFront(target, count, angleStep);
     }
-
+    /**
+     * 以目标和自身长度为半径的圆环上召唤GB，在自身前方对称召唤GB，用于自定义的序列攻击，
+     */
+    public int summonGBFront(LivingEntity target,int count,float angleStep) {
+        int difficulty = this.level().getDifficulty().getId();
+        if (!FMLEnvironment.production) {
+            Objects.requireNonNull(this.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("GB单击，数量：%d,大小：%f,偏转角度：%f，角度步长：%f",count,1.0f + (1+difficulty+fatigueLevel-count)*0.25f,-(count-1)*angleStep*0.5f,angleStep)), false);
+        }
+        return summonGBAroundTarget(target, count, (1-count)*angleStep*0.5f, angleStep, 1.0f + (1+difficulty+fatigueLevel-count)*0.25f, 28);
+    }
     /**
      * 以目标和自身长度为半径的圆环上召唤GB
      *
@@ -1413,22 +1317,18 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
      * @param offsetAngle 初始偏移角度（度）
      * @param angleStep   角度步长（度）
      */
-    public int summonGBAroundTarget(LivingEntity target, int count, double offsetAngle, double angleStep, float size, int shot) {
-        double baseRadius = this.distanceTo(target) * 0.75f; // 以距离为基准半径
-        double currentAngle = offsetAngle; // 从指定角度开始
-
-        for (int i = 0; i < count; i++) {
-            // 固定半径保持对称性
-            double radius = baseRadius + (this.random.nextDouble() * 2.0 - 1.0);
-            double height = this.random.nextDouble() * 3 + 1;
+    public int summonGBAroundTarget(LivingEntity target, int count, float offsetAngle, float angleStep, float size, int shot) {
+        Vec3 targetPos = new Vec3(target.getX(),target.getY(0.5f),target.getZ());
+        double radius = this.distanceTo(target) * 0.75f + (this.random.nextDouble() * 2.0 - 1.0);
+        float currentAngle = offsetAngle; // 从指定角度开始
+        float height = this.random.nextFloat() * 3f;
+        for (int i = 0; i < count; i++,currentAngle += angleStep) {
             GasterBlaster gb = createGasterBlaster(size, shot);
-            Vec3 targetEyePos = target.getEyePosition();
             // 计算圆形上的位置
             double xOffset = Math.sin(currentAngle * Mth.DEG_TO_RAD) * radius;
-            double zOffset = Math.cos(currentAngle * Mth.DEG_TO_RAD) * radius;
-            LevelUtils.addFreshEntity(this.level(), gb, targetEyePos.add(xOffset, height, zOffset), targetEyePos);
-            // 按照固定角度步长递增
-            currentAngle += angleStep;
+            double zOffset = -Math.cos(currentAngle * Mth.DEG_TO_RAD) * radius;
+            LevelUtils.addFreshEntity(this.level(), gb, RotUtils.getWorldPos(xOffset,height,zOffset,this.getXRot(),this.getYHeadRot())
+                    .add(targetPos),targetPos);
         }
         return 0;
     }
@@ -1452,7 +1352,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
      */
     public int timeJumpTeleport(LivingEntity target) {
         //todo 玩家黑屏 + 音效
-        PacketDistributor.sendToServer(new TimeJumpTeleportPacket(target.getId(), target.tickCount + 20));
+        PacketDistributor.sendToPlayersTrackingEntity(this,new TimeJumpTeleportPacket(target.getId(), target.tickCount + 20));
         this.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.SANS_TELEPORT_TIME_JUMP.get(), SoundSource.HOSTILE);
         return 0;
     }

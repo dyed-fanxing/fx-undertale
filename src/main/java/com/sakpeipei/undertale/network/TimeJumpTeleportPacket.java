@@ -19,15 +19,15 @@ import org.jetbrains.annotations.NotNull;
 public record TimeJumpTeleportPacket(int entityId, int endTick) implements CustomPacketPayload {
     public static final String END_TICK = Undertale.MODID + ":teleport_time_jump_end_tick";
 
-    public static final CustomPacketPayload.Type<TimeJumpTeleportPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "black_screen_packet"));
+    public static final CustomPacketPayload.Type<TimeJumpTeleportPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "teleport_time_jump_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, TimeJumpTeleportPacket> STREAM_CODEC = CustomPacketPayload.codec(TimeJumpTeleportPacket::write, TimeJumpTeleportPacket::new);
 
     public TimeJumpTeleportPacket(FriendlyByteBuf buf) {
-        this(buf.readVarInt(),buf.readByte());
+        this(buf.readVarInt(),buf.readVarInt());
     }
     public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(this.entityId);
-        buf.writeByte(this.endTick);
+        buf.writeVarInt(this.endTick);
     }
 
     public static void handle(TimeJumpTeleportPacket packet, IPayloadContext context) {
