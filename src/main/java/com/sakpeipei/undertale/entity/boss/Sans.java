@@ -775,7 +775,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 //            }
             availableAttacks.addAll(List.of(TimelineAnim.create(5, 16, 100, (byte) 6,List.of(
                     Pair.of(4, (t) -> mob.summonGroundBoneWall(t, ColorAttack.WHITE, 1f, LocalDirection.FRONT)),
-                    Pair.of(24, (t) -> mob.summonGroundBoneWall(t, ColorAttack.WHITE, 2f, LocalDirection.FRONT))
+                    Pair.of(14, (t) -> mob.summonGroundBoneWall(t, ColorAttack.AQUA, 2f, LocalDirection.FRONT))
             ))));
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
 //            boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
@@ -983,7 +983,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         float yRot = (float) Math.atan2(toTarget.x, toTarget.z);
         for (int i = 0; i < count; i++) {
             Vec3 pos = this.position().add(RotUtils.dirRot(new Vec3(xOffset, 0, 1f),this.getYHeadRot()));
-            GroundBoneProjectile bone = new GroundBoneProjectile(level, this, pos.x, this.getY(), pos.z, height, (float) this.getAttribute(Attributes.ATTACK_DAMAGE).getValue(), 0.1F, color);
+            GroundBoneProjectile bone = new GroundBoneProjectile(level, this, pos.x, this.getY(), pos.z, height, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), speed, color);
             bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
             // 朝向目标射击
             bone.delayShoot(10, horLookAngle);

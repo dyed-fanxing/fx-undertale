@@ -2,6 +2,7 @@ package com.sakpeipei.undertale.entity.projectile;
 
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
+import com.sakpeipei.undertale.utils.ProjectileUtils;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -48,7 +49,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         Entity entity = this.getOwner();
         if (this.level().isClientSide || (entity == null || !entity.isRemoved()) && this.level().isLoaded(this.blockPosition())) {
             super.tick();
-            List<HitResult> hitResults = CollisionDetectionUtils.getHitResultsOnMoveVector(this,this::canHitEntity,getClipType(),isCollision());
+            List<HitResult> hitResults = ProjectileUtils.getHitResultsOnMoveVector(this,this::canHitEntity,getClipType(),isCollision());
             for (HitResult hitResult : hitResults) {
 
                 if (hitResult.getType() != HitResult.Type.MISS && !EventHooks.onProjectileImpact(this, hitResult)) {
@@ -167,5 +168,6 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
     protected ClipContext.@NotNull Block getClipType() {
         return ClipContext.Block.COLLIDER;
     }
+
 
 }

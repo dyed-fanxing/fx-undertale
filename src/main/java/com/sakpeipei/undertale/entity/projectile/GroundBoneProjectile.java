@@ -6,6 +6,7 @@ import com.sakpeipei.undertale.entity.boss.Sans;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
+import com.sakpeipei.undertale.utils.ProjectileUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -70,11 +71,6 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
     @Override
     public void tick() {
         super.tick();
-        HitResult hitResultOnMoveVector = ProjectileUtil.getHitResultOnMoveVector(this, Entity::isAlive);
-        List<HitResult> entityHitResultsOnMoveVector = CollisionDetectionUtils.getEntityHitResultsOnMoveVector(this, this.position(), this.position().add(this.getDeltaMovement()), this.getBoundingBox().expandTowards(this.getDeltaMovement()), Entity::isAlive, 0.3F,false);
-//        for (HitResult hitResult : entityHitResultsOnMoveVector) {
-//            log.debug("地面弹射骨头 碰撞检测：{}",((EntityHitResult)hitResult).getEntity());
-//        }
         delay--;
         if(!this.level().isClientSide) {
             if(delay == 0){
@@ -84,11 +80,6 @@ public class GroundBoneProjectile extends AbstractPenetrableProjectile implement
                 this.discard();
             }
         }
-    }
-
-    @Override
-    protected boolean isCollision() {
-        return true;
     }
 
     @Override
