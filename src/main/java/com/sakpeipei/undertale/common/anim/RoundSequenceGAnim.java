@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.function.IntFunction;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/21 15:27
  * 序列动画，由多个单动画组成
  * @param  cd 冷却时间

@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.utils;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/18 16:58
  */
 public class ColorUtils {

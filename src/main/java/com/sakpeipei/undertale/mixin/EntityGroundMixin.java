@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/14 10:46
  * Entity重力相关方法
  */

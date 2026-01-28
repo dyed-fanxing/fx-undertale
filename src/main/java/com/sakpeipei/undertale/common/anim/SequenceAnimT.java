@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/21 15:27
  * 序列动画，由多个动画组成
  */

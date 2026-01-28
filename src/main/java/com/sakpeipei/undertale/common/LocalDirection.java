@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.common;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/28 15:45
  * 局部方向
  */

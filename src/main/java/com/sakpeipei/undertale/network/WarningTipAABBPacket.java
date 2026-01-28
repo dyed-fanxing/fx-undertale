@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/18 14:10
  */
 public record WarningTipAABBPacket(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int lifetime, Color color) implements CustomPacketPayload {

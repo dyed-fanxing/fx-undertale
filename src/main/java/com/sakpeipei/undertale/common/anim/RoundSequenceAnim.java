@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.common.anim;
 import java.util.List;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/21 15:27
  * 序列动画，由多个单动画组成
  * @param  round 回合数

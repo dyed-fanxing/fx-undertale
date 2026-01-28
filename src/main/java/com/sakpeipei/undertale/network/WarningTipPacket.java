@@ -12,7 +12,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/18 14:10
  */
 public record WarningTipPacket(float x,float y,float z,float r, float h,int lifetime, int color) implements CustomPacketPayload {

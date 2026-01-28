@@ -9,7 +9,6 @@ import com.sakpeipei.undertale.utils.ProjectileUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
 import com.sakpeipei.undertale.utils.TimeOfImpactUtils;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -50,7 +49,6 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
     private UUID ownerUUID;
     private LivingEntity owner;
 
-    protected Vec3 relativePos;     // 拥有者的相对位置
     private float heightScale = 1.0f;
 
     private int delay = 10;
@@ -60,14 +58,6 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
     private ColorAttack colorAttack = ColorAttack.WHITE;
 
 
-    // 核心插值属性，在跟随拥有者时需要，开始移动时不使用
-    public int lerpSteps;
-    private double lerpX;
-    private double lerpY;
-    private double lerpZ;
-    private double lerpYRot;
-    private double lerpXRot;
-
     public MovingGroundBone(EntityType<? extends MovingGroundBone> type, Level level) {
         super(type, level);
         this.setNoGravity(true);
@@ -75,7 +65,7 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
     /**
      * 延迟移动，无需传递移动向量
      */
-    public MovingGroundBone(Level level, LivingEntity owner, int delay, float heightScale, float speed, float damage, ColorAttack colorAttack, Vec3 relativePos) {
+    public MovingGroundBone(Level level, LivingEntity owner, int delay, float heightScale, float speed, float damage, ColorAttack colorAttack) {
         this(EntityTypeRegistry.MOVING_GROUND_BONE.get(), level);
         this.setNoGravity(true);
         this.owner = owner;
@@ -85,7 +75,6 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
         this.damage = damage;
         this.speed = speed;
         this.colorAttack = colorAttack;
-        this.relativePos = relativePos;
         refreshDimensions();
     }
     /**
@@ -116,13 +105,6 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
     public void tick() {
         super.tick();
         delay--;
-        if(delay > 0){
-            if (this.lerpSteps > 0 && this.getDeltaMovement().equals(Vec3.ZERO)) {
-                this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
-                this.lerpSteps--;
-            }
-            return;
-        }
         if (delay < 0) {
             if (TimeOfImpactUtils.isBlockCollide(this, ClipContext.Block.COLLIDER)) {
                 this.discard();
@@ -182,9 +164,6 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
 
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        if (relativePos != null) {
-            tag.put("relativePos", this.newDoubleList(relativePos.x, relativePos.y, relativePos.z));
-        }
         if (owner != null) {
             tag.putUUID("ownerUUID", owner.getUUID());
         }
@@ -200,10 +179,6 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
             if (((ServerLevel) this.level()).getEntity(tag.getUUID("ownerUUID")) instanceof LivingEntity entity) {
                 this.owner = entity;
             }
-        }
-        if (tag.contains("relativePos")) {
-            ListTag list = tag.getList("relativePos", 6);
-            this.relativePos = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
         }
         if (tag.contains("delay")) {
             this.delay = tag.getInt("delay");
@@ -279,38 +254,6 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
     @Override
     public Color getColor() {
         return colorAttack.getColor();
-    }
-
-
-    @Override
-    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
-        this.lerpX = x;
-        this.lerpY = y;
-        this.lerpZ = z;
-        this.lerpYRot = yRot;
-        this.lerpXRot = xRot;
-        this.lerpSteps = steps;
-    }
-
-    @Override
-    public double lerpTargetX() {
-        return this.lerpSteps > 0 ? this.lerpX : this.getX();
-    }
-    @Override
-    public double lerpTargetY() {
-        return this.lerpSteps > 0 ? this.lerpY : this.getY();
-    }
-    @Override
-    public double lerpTargetZ() {
-        return this.lerpSteps > 0 ? this.lerpZ : this.getZ();
-    }
-    @Override
-    public float lerpTargetXRot() {
-        return this.lerpSteps > 0 ? (float) this.lerpXRot : this.getXRot();
-    }
-    @Override
-    public float lerpTargetYRot() {
-        return this.lerpSteps > 0 ? (float) this.lerpYRot : this.getYRot();
     }
 
 

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/17 16:13
  * 装饰物渲染处理器
  */

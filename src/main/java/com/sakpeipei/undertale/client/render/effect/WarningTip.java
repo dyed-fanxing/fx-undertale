@@ -19,7 +19,7 @@ import java.awt.*;
 
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/17 14:27
  * 预警提示/攻击提示 渲染器
  */

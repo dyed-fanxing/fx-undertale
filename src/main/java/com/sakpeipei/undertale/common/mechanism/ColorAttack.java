@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/9/24 09:53
  */
 public interface ColorAttack {

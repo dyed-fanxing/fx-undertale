@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/21 15:27
  * 序列动画，由多个单动画组成
  * @param anims 触发动画的 Tick点Map<Tick点，动画事件>

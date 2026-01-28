@@ -6,7 +6,7 @@ import java.awt.*;
 
 /**
  * 橙色攻击
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/9/24 10:19
  */
 public class OrangeAttack implements ColorAttack{

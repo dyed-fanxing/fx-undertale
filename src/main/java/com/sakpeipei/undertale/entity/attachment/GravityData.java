@@ -10,7 +10,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/11/14 10:17
  * 重力方向数据 - 存储实体的重力状态
  */

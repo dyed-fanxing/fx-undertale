@@ -14,7 +14,7 @@ import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
 /**
  * Sans 疲劳层
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/12/31 10:30
  */
 public class SansFatigueLayer extends GeoRenderLayer<Sans>{

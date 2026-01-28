@@ -11,7 +11,7 @@ import java.awt.*;
 
 /**
  * 水色攻击
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/9/24 10:10
  */
 public class AquaAttack implements ColorAttack{

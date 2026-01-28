@@ -10,7 +10,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/9/9 13:50
  */
 public class MobEffectRegistry {

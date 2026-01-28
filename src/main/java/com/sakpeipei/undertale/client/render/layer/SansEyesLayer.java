@@ -12,7 +12,7 @@ import software.bernie.geckolib.renderer.GeoRenderer;
 
 /**
  * Sans 审判眼层
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/12/31 10:30
  */
 public class SansEyesLayer extends AnimatedGlowingLayer<Sans>{

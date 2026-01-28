@@ -14,7 +14,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2026/1/6 14:35
  * GB炮光束终点位置
  */

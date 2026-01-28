@@ -13,7 +13,7 @@ import static net.minecraft.client.renderer.RenderStateShard.*;
 import static net.minecraft.client.renderer.RenderStateShard.NO_CULL;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2026/1/6 13:50
  */
 public interface RenderTypes {

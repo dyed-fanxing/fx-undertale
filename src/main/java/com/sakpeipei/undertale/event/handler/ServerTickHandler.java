@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2026/1/16 15:13
  */
 @EventBusSubscriber(modid = Undertale.MODID)

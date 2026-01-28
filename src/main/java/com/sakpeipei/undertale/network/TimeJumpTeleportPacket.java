@@ -13,7 +13,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/12/16 15:45
  */
 public record TimeJumpTeleportPacket(int entityId, int endTick) implements CustomPacketPayload {

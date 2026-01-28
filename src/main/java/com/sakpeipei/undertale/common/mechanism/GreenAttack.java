@@ -6,7 +6,7 @@ import java.awt.*;
 
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2025/9/24 10:23
  */
 public class GreenAttack implements ColorAttack{

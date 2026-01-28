@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.entity;
 import net.minecraft.world.entity.Entity;
 
 /**
- * @author yujinbao
+ * @author Sakpeipei
  * @since 2026/1/16 15:08
  */
 public class DelayedEntity {
