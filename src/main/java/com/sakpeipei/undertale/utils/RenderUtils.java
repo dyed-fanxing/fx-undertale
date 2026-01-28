@@ -227,9 +227,9 @@ public class RenderUtils {
             Vec3 downPoint2 = new Vec3(radius * (float) Math.cos(radian2), height, radius * (float) Math.sin(radian2));
             // 法线（从圆柱中心向外）
             Vec3 normal = upPoint1.normalize();
-            drawLine(pose,consumer,upPoint1,upPoint2,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
-            drawLine(pose,consumer,upPoint1,downPoint1,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
-            drawLine(pose,consumer,downPoint1,downPoint2,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
+            renderLine(pose,consumer,upPoint1,upPoint2,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
+            renderLine(pose,consumer,upPoint1,downPoint1,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
+            renderLine(pose,consumer,downPoint1,downPoint2,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
         }
     }
     /**
@@ -439,20 +439,34 @@ public class RenderUtils {
     /**
      * 线段，只需两个点，但是渲染的类型得是Line
      */
-    public static void drawLine(PoseStack.Pose pose, VertexConsumer consumer, Vec3 p1, Vec3 p2,
+    public static void renderLine(PoseStack.Pose pose, VertexConsumer consumer, Vec3 p1, Vec3 p2,
                                     float normalX, float normalY, float normalZ,
                                     int r, int g, int b, int a,
                                     int overlay, int light) {
         Matrix4f matrix = pose.pose();
-        // 顶点1
         consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z)
                 .setNormal(pose, normalX, normalY, normalZ)
                 .setColor(r, g, b, a)
                 .setOverlay(overlay)
                 .setLight(light);
-        // 顶点2
         consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z)
                 .setNormal(pose, normalX, normalY, normalZ)
+                .setColor(r, g, b, a)
+                .setOverlay(overlay)
+                .setLight(light);
+    }
+    /**
+     * 线段，只需两个点，但是渲染的类型得是Line
+     */
+    public static void renderLine(PoseStack.Pose pose, VertexConsumer consumer, Vec3 p1, Vec3 p2,int r, int g, int b, int a,int overlay, int light) {
+        Matrix4f matrix = pose.pose();
+        consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z)
+                .setNormal(0,1,0)
+                .setColor(r, g, b, a)
+                .setOverlay(overlay)
+                .setLight(light);
+        consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z)
+                .setNormal(0,1,0)
                 .setColor(r, g, b, a)
                 .setOverlay(overlay)
                 .setLight(light);

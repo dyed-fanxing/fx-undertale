@@ -5,7 +5,11 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -117,8 +121,6 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         return !this.isInvulnerableTo(damageSource);
     }
 
-
-
     @Override
     public boolean shouldRenderAtSqrDistance(double r) {
         double d0 = this.getBoundingBox().getSize() * (double)2.0F;
@@ -152,6 +154,28 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
     public void readSpawnData(@NotNull RegistryFriendlyByteBuf buffer) {
         this.accelerationPower = buffer.readFloat();
     }
+
+    /**
+     * 获取实体添加进世界的数据包，将服务端实体的速度也加入
+     */
+    @Override
+    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity serverEntity) {
+        Entity entity = this.getOwner();
+        int i = entity == null ? 0 : entity.getId();
+        Vec3 vec3 = serverEntity.getPositionBase();
+        return new ClientboundAddEntityPacket(this.getId(), this.getUUID(), vec3.x(), vec3.y(), vec3.z(), serverEntity.getLastSentXRot(), serverEntity.getLastSentYRot(), this.getType(), i, serverEntity.getLastSentMovement(), 0.0F);
+    }
+
+    /**
+     * 客户端添加实体，进行额外的速度设置
+     */
+    @Override
+    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        Vec3 vec3 = new Vec3(packet.getXa(), packet.getYa(), packet.getZa());
+        this.setDeltaMovement(vec3);
+    }
+
 
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {

@@ -11,25 +11,24 @@ import net.minecraft.world.phys.Vec3;
  * 向量旋转工具
  */
 public class RotUtils {
-    public static Vec3 dirRot(Vec3 dir,float yRot) {
-        return dir.yRot(-yRot * Mth.DEG_TO_RAD);
-    }
-    public static Vec3 dirRot(Vec3 dir,float xRot, float yRot) {
-        return dir.xRot(-xRot * Mth.DEG_TO_RAD)
-                .yRot(-yRot * Mth.DEG_TO_RAD);
+
+    /**
+     * 将向量（坐标）vec对齐MC世界Roll翻滚方向
+     */
+    public static Vec3 zRot(Vec3 vec,float roll) {
+        return vec.yRot(roll * Mth.DEG_TO_RAD);
     }
     /**
-     * 获取dir向量绕世界坐标轴旋转后的向量
-     * @param dir 向量
-     * @param roll  翻滚角度，绕z轴旋转的角度
-     * @param pitch 仰俯角度，绕x轴旋转的角度
-     * @param yaw  航偏角度，绕y轴旋转的角度
-     * @return dir向量绕世界坐标轴旋转后的向量
+     * 将向量（坐标）vec对齐MC世界Pitch仰俯方向
      */
-    public static Vec3 dirRot(Vec3 dir, float roll, float pitch, float yaw) {
-        return dir.zRot(roll * Mth.DEG_TO_RAD)
-                .xRot(-pitch * Mth.DEG_TO_RAD)
-                .yRot(-yaw * Mth.DEG_TO_RAD);
+    public static Vec3 xRot(Vec3 vec,float pitch) {
+        return vec.yRot(-pitch * Mth.DEG_TO_RAD);
+    }
+    /**
+     * 将向量（坐标）vec对齐MC世界Yaw航偏方向
+     */
+    public static Vec3 yRot(Vec3 vec,float yaw) {
+        return vec.yRot(-yaw * Mth.DEG_TO_RAD);
     }
 
     public static Vec3 getWorldPos(Vec3 pos,float pitch,float yaw){
@@ -39,7 +38,7 @@ public class RotUtils {
         return getWorldPos((float) x, (float) y, (float) z,pitch,yaw);
     }
     /**
-     * 根据 相对坐标和仰俯、航偏 获取世界坐标，先仰俯 后航偏
+     * 根据 相对向量（坐标）和仰俯、航偏 获取世界向量（坐标），先仰俯 后航偏
      * @param x,y,z 相对坐标
      * @param pitch,yaw 仰俯，航偏
      * @return 世界坐标
@@ -108,24 +107,6 @@ public class RotUtils {
         return new Vec3(worldX, worldY, worldZ);
     }
 
-    /**
-     * 对齐MC世界Roll翻滚方向
-     */
-    public static float zRot(float rot) {
-        return ( rot - 90) * Mth.DEG_TO_RAD;
-    }
-    /**
-     * 对齐MC世界Yaw航偏方向
-     */
-    public static float yRot(float rot) {
-        return -rot * Mth.DEG_TO_RAD;
-    }
-    /**
-     * 对齐MC世界Pitch仰俯方向
-     */
-    public static float xRot(float rot) {
-        return -rot * Mth.DEG_TO_RAD;
-    }
 
 
     // 航偏角度，同MC默认lookAt方法计算方式，对齐MC世界坐标Z轴
@@ -196,8 +177,8 @@ public class RotUtils {
     }
 
     public static void absRotateByShoot(Entity entity, Entity target){
-        Vec3 dir = new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getY(),target.getZ() - entity.getZ());
-        entity.absRotateTo(shootXRot(dir.y,dir.horizontalDistance()),shootYRot(dir.x,dir.z));
+        Vec3 vec = new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getY(),target.getZ() - entity.getZ());
+        entity.absRotateTo(shootXRot(vec.y,vec.horizontalDistance()),shootYRot(vec.x,vec.z));
     }
     public static void lookAtShoot(Entity entity, Entity target){
         lookVecShoot(entity,new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getEyeY(),target.getZ() - entity.getZ()));

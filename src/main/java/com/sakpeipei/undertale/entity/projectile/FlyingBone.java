@@ -1,12 +1,15 @@
 package com.sakpeipei.undertale.entity.projectile;
 
 import com.sakpeipei.undertale.common.DamageTypes;
+import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.boss.Sans;
+import com.sakpeipei.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.undertale.utils.RotUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -63,8 +66,10 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     public FlyingBone(EntityType<? extends FlyingBone> type, Level level) {
         super(type, level);
     }
-
-    public FlyingBone(EntityType<? extends FlyingBone> type,  Level level,LivingEntity owner,float damage,float speed,int delay) {
+    /**
+     * 延迟移动，无需传递移动向量
+     */
+    public FlyingBone(EntityType<? extends FlyingBone> type, Level level, LivingEntity owner, float damage, float speed, int delay) {
         this(type, level);
         this.setNoGravity(true);
         setOwner(owner);
@@ -72,57 +77,53 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         this.speed = speed;
         this.delay = delay;
     }
+    /**
+     * 立即移动，需要传递移动向量
+     * velocity 移动向量，单位化的
+     */
+    public FlyingBone(EntityType<? extends FlyingBone> type, Level level, LivingEntity owner, float damage, float speed,Vec3 velocity) {
+        this(type, level);
+        this.setNoGravity(true);
+        setOwner(owner);
+        this.damage = damage;
+        this.speed = speed;
+        this.delay = 0;
+        this.setDeltaMovement(velocity.scale(damage));
+    }
 
     @Override
     public void tick() {
-        super.tick();
-        // 处理旋转插值
-        if (this.lerpSteps > 0 && this.getDeltaMovement().lengthSqr() == 0.0f) {
-            this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
-            this.lerpSteps--;
-        }
-        if (!this.level().isClientSide) {
-            Entity owner = getOwner();
-            if(owner == null) {
-                return;
-            }
-
-            if(delay > 0){
-                if(isAim){
-                    if(owner instanceof Targeting targeting && targeting.getTarget() != null){
-                        LivingEntity target = targeting.getTarget();
-                        if (target != null) {
-                            RotUtils.lookAtShoot(this,target.getEyePosition());
-                        }
-                    }
-                }else if(isFollowAngle){
-                    RotUtils.lookVecShoot(this,owner.getViewVector(1.0f));
-                }
-                if(isFollow){
-                    this.setPos(owner.position().add(RotUtils.getWorldPos(relativePos,owner.getXRot(),owner.getYHeadRot())));
-                }
-            }else if(delay == 0){
-                if(isAim){
-                    if(this.getOwner() instanceof Targeting targeting && targeting.getTarget() != null){
-                        LivingEntity target = targeting.getTarget();
-                        if (target != null) {
-                            this.shoot(target.getX() - this.getX(),target.getEyeY() - this.getEyeY(),target.getZ() - this.getZ(), speed,0);
-                        }
-                    }
-                }else if(isFollowAngle){
-                    Vec3 viewVector = owner.getViewVector(1.0f);
-                    this.shoot(viewVector.x,viewVector.y,viewVector.z, speed,0);
-                }else{
-                    if(shotVec == null){
-                        log.error("FlyingBone shotVec is null，isAim：{},isFollow：{},isFollowAngle：{},isRoll：{}", isAim,isFollow,isFollowAngle,isRoll);
-                    }
-                    this.shoot(shotVec.x,shotVec.y,shotVec.z, speed,0);
-                }
-            }
-        }
         delay--;
-        if (this.getOwner() == null) {
-            discard();
+        if (delay > 0) {
+            // 处理旋转插值
+            if (this.lerpSteps > 0 && Vec3.ZERO.equals(this.getDeltaMovement())) {
+                this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
+                this.lerpSteps--;
+            }
+            Entity owner = getOwner();
+            if (owner != null) {
+                if (isAim) {
+                    if (owner instanceof Targeting targeting && targeting.getTarget() != null) {
+                        LivingEntity target = targeting.getTarget();
+                        if (target != null) {
+                            RotUtils.lookAtShoot(this, target.getEyePosition());
+                        }
+                    }
+                } else if (isFollowAngle) {
+                    RotUtils.lookVecShoot(this, owner.getViewVector(1.0f));
+                }
+                if (isFollow) {
+                    this.setPos(owner.position().add(RotUtils.getWorldPos(relativePos, owner.getXRot(), owner.getYHeadRot())));
+                }
+            }
+            return;
+        }
+        if(delay < 0){
+            super.tick();
+        }
+        if (delay == 0 && !this.level().isClientSide) {
+            Vec3 vec3 = this.calculateViewVector(this.getXRot(), this.getYRot());
+            this.shoot(vec3.x, vec3.y, vec3.z, speed, 0);
         }
     }
 
@@ -133,17 +134,17 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         // 设置伤害逻辑
         if (target instanceof LivingEntity livingTarget) {
             DamageSource damageSource;
-            if(owner instanceof Sans){
-                damageSource = damageSources().source(DamageTypes.FRAME,this,owner);
-            }else{
+            if (owner instanceof Sans) {
+                damageSource = damageSources().source(DamageTypes.FRAME, this, owner);
+            } else {
                 damageSource = this.damageSources().mobProjectile(this, (LivingEntity) owner);
             }
-            if(!livingTarget.hurt(damageSource, damage)){
+            if (!livingTarget.hurt(damageSource, damage)) {
                 // TODO 如果是因为无敌导致的，则不应该执行，因为是穿透的，因为继续走，而不是被阻挡，待判定要不要用这个
-                if(livingTarget.isBlocking()){
+                if (livingTarget.isBlocking()) {
                     this.setNoGravity(false);
                     this.deflect(ProjectileDeflection.MIRROR_DEFLECT, target, this.getOwner(), false);
-                    if(!this.level().isClientSide){
+                    if (!this.level().isClientSide) {
                         this.setDeltaMovement(this.getDeltaMovement().scale(0.2));
                     }
                 }
@@ -157,22 +158,18 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         this.discard();
     }
 
-    public void aimShoot(){
+    public void aimShoot() {
         this.isAim = true;
     }
 
-    public void vectorShoot(Vec3 vec3){
+    public void vectorShoot(Vec3 vec3) {
         this.shotVec = vec3;
     }
 
-    public void followAngleShoot(Vec3 relativePos){
+    public void followAngleShoot(Vec3 relativePos) {
         this.isFollow = true;
         this.relativePos = relativePos;
         this.isFollowAngle = true;
-    }
-
-    public void setRelativePos(Vec3 relativePos){
-        this.relativePos = relativePos;
     }
 
     @Override
@@ -188,18 +185,19 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        tag.putInt("delay",delay);
-        tag.putFloat("speed",speed);
-        if(relativePos != null){
+        if (relativePos != null) {
             tag.put("relativePos", this.newDoubleList(relativePos.x, relativePos.y, relativePos.z));
         }
-        tag.putBoolean("isFollow",isFollow);
-        tag.putBoolean("isFollowAngle",isFollowAngle);
-        tag.putBoolean("isAim",isAim);
-        tag.putBoolean("isRoll",isRoll);
+
+        tag.putInt("delay", delay);
+        tag.putFloat("speed", speed);
+        tag.putBoolean("isFollow", isFollow);
+        tag.putBoolean("isFollowAngle", isFollowAngle);
+        tag.putBoolean("isAim", isAim);
+        tag.putBoolean("isRoll", isRoll);
 
 
-        if(shotVec != null){
+        if (shotVec != null) {
             tag.put("shotVec", this.newDoubleList(shotVec.x, shotVec.y, shotVec.z));
         }
     }
@@ -207,11 +205,17 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        this.delay = tag.getInt("delay");
-        this.speed = tag.getFloat("speed");
+        this.setNoGravity(true);
+        this.accelerationPower = 0.0f;
+        if (tag.contains("delay")) {
+            this.delay = tag.getInt("delay");
+        }
+        if (tag.contains("speed")) {
+            this.speed = tag.getFloat("speed");
+        }
         if (tag.contains("relativePos")) {
             ListTag list = tag.getList("relativePos", 6);
-            this.relativePos = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
+            this.relativePos = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
         }
         this.isFollow = tag.getBoolean("isFollow");
         this.isFollowAngle = tag.getBoolean("isFollowAngle");
@@ -220,24 +224,39 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
 
         if (tag.contains("shotVec")) {
             ListTag list = tag.getList("shotVec", 6);
-            this.shotVec = new Vec3(list.getDouble(0),list.getDouble(1),list.getDouble(2));
+            this.shotVec = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
         }
     }
 
     @Override
-    public void writeSpawnData(@NotNull RegistryFriendlyByteBuf buffer) {
-        super.writeSpawnData(buffer);
+    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket p_150170_) {
+        super.recreateFromPacket(p_150170_);
     }
 
     @Override
-    public void readSpawnData(@NotNull RegistryFriendlyByteBuf buffer) {
-        super.readSpawnData(buffer);
+    public void writeSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
+        super.writeSpawnData(buf);
+        buf.writeInt(this.delay);
+        Vec3 vec3 = this.getDeltaMovement();
+        buf.writeFloat(this.speed);
     }
+
+    @Override
+    public void readSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
+        super.readSpawnData(buf);
+        this.delay = buf.readInt();
+        if(delay <= 0){
+            this.setDeltaMovement(new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble()));
+        }
+        this.speed = buf.readFloat();
+    }
+
+
 
     @Override
     public void lerpMotion(double p_37279_, double p_37280_, double p_37281_) {
         this.setDeltaMovement(p_37279_, p_37280_, p_37281_);
-        if(this.xRotO == 0 && this.yRotO == 0){
+        if (this.xRotO == 0 && this.yRotO == 0) {
             this.xRotO = getXRot();
             this.yRotO = getYRot();
         }
@@ -257,31 +276,35 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     public double lerpTargetX() {
         return this.lerpSteps > 0 ? this.lerpX : this.getX();
     }
+
     @Override
     public double lerpTargetY() {
         return this.lerpSteps > 0 ? this.lerpY : this.getY();
     }
+
     @Override
     public double lerpTargetZ() {
         return this.lerpSteps > 0 ? this.lerpZ : this.getZ();
     }
+
     @Override
     public float lerpTargetXRot() {
-        return this.lerpSteps > 0 ? (float)this.lerpXRot : this.getXRot();
+        return this.lerpSteps > 0 ? (float) this.lerpXRot : this.getXRot();
     }
+
     @Override
     public float lerpTargetYRot() {
-        return this.lerpSteps > 0 ? (float)this.lerpYRot : this.getYRot();
+        return this.lerpSteps > 0 ? (float) this.lerpYRot : this.getYRot();
     }
 
 
     @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {}
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+    }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
     }
-
 
 }

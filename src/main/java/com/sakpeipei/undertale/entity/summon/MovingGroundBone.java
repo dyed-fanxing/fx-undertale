@@ -8,10 +8,14 @@ import com.sakpeipei.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.undertale.utils.ProjectileUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
 import com.sakpeipei.undertale.utils.TimeOfImpactUtils;
-import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
@@ -31,33 +35,70 @@ import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.awt.*;
-import java.util.List;
+import java.util.UUID;
 
 /**
  * 地面移动骨骼 - 作为环境危险实体而非弹射物
+ *
  * @author Sakqiongzi
  * @since 2025-10-06 21:18
  */
-public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn, AttackColored,TraceableEntity, GeoEntity {
+public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn, AttackColored, TraceableEntity, GeoEntity {
     private static final Logger log = LoggerFactory.getLogger(MovingGroundBone.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private float heightScale = 1.0f;
-    private float damage = 1.0f;
-    private float speed = 1.0f;
-    private int delay = 10;
-    private ColorAttack colorAttack = ColorAttack.WHITE;
+
+    private UUID ownerUUID;
     private LivingEntity owner;
 
+    protected Vec3 relativePos;     // 拥有者的相对位置
+    private float heightScale = 1.0f;
+
+    private int delay = 10;
+    private float speed = 1.0f;
+
+    private float damage = 1.0f;
+    private ColorAttack colorAttack = ColorAttack.WHITE;
+
+
+    // 核心插值属性，在跟随拥有者时需要，开始移动时不使用
+    public int lerpSteps;
+    private double lerpX;
+    private double lerpY;
+    private double lerpZ;
+    private double lerpYRot;
+    private double lerpXRot;
 
     public MovingGroundBone(EntityType<? extends MovingGroundBone> type, Level level) {
         super(type, level);
         this.setNoGravity(true);
     }
-
-    public MovingGroundBone(Level level, LivingEntity owner,int delay,float heightScale,float speed, float damage, ColorAttack colorAttack) {
+    /**
+     * 延迟移动，无需传递移动向量
+     */
+    public MovingGroundBone(Level level, LivingEntity owner, int delay, float heightScale, float speed, float damage, ColorAttack colorAttack, Vec3 relativePos) {
         this(EntityTypeRegistry.MOVING_GROUND_BONE.get(), level);
+        this.setNoGravity(true);
         this.owner = owner;
+        this.ownerUUID = owner.getUUID();
         this.delay = delay;
+        this.heightScale = heightScale;
+        this.damage = damage;
+        this.speed = speed;
+        this.colorAttack = colorAttack;
+        this.relativePos = relativePos;
+        refreshDimensions();
+    }
+    /**
+     * 立即移动，需要传递移动向量，无需相对位置
+     * velocity 移动向量，单位化的
+     */
+    public MovingGroundBone(Level level, LivingEntity owner, float heightScale, float speed,Vec3 velocity, float damage, ColorAttack colorAttack) {
+        this(EntityTypeRegistry.MOVING_GROUND_BONE.get(), level);
+        this.setNoGravity(true);
+        this.owner = owner;
+        this.ownerUUID = owner.getUUID();
+        this.delay = 0;
+        this.setDeltaMovement(velocity.scale(speed));
         this.heightScale = heightScale;
         this.damage = damage;
         this.speed = speed;
@@ -74,42 +115,42 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
     @Override
     public void tick() {
         super.tick();
-
         delay--;
-        if (!this.level().isClientSide) {
-            if (delay == 0) {
-                // 启动移动，但不使用弹射物的shoot方法
-                this.setDeltaMovement(this.getLookAngle().scale(speed));
+        if(delay > 0){
+            if (this.lerpSteps > 0 && this.getDeltaMovement().equals(Vec3.ZERO)) {
+                this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
+                this.lerpSteps--;
             }
-
-            // 移动后执行CCD碰撞检测
-            if (delay <= 0 && !this.getDeltaMovement().equals(Vec3.ZERO)) {
-                if(TimeOfImpactUtils.getBlockHitResult(this, ClipContext.Block.COLLIDER).getType() == HitResult.Type.MISS){
-                    log.debug("发生方块碰撞");
-                    this.discard();
-                    return;
-                }
-                List<EntityHitResult> entityHitResults = ProjectileUtils.getEntityHitResultsOnMoveVector(this, this::canHitEntity, false);
-                for (EntityHitResult entityHitResult : entityHitResults) {
-                    if(entityHitResult.getType() != HitResult.Type.MISS && entityHitResult.getEntity() instanceof LivingEntity entity){
+            return;
+        }
+        if (delay < 0) {
+            if (TimeOfImpactUtils.isBlockCollide(this, ClipContext.Block.COLLIDER)) {
+                this.discard();
+                return;
+            }
+            if (!this.level().isClientSide) {
+                for (EntityHitResult entityHitResult : ProjectileUtils.getEntityHitResultsOnMoveVector(this, this::canHitEntity, false)) {
+                    if (entityHitResult.getType() != HitResult.Type.MISS && entityHitResult.getEntity() instanceof LivingEntity entity) {
                         applyDamageTo(entity);
                     }
                 }
+            }
+            this.checkInsideBlocks();
 
+            Vec3 vec3 = this.getDeltaMovement();
+            this.setPos(this.getX() + vec3.x, this.getY() + vec3.y, this.getZ() + vec3.z);
+            // 更新旋转（可选，用于视觉效果）
+            if (!vec3.equals(Vec3.ZERO)) {
+                RotUtils.lookVec(this, vec3);
             }
         }
 
-        // 应用移动（基于速度，而非弹射物逻辑）
-        Vec3 delta = this.getDeltaMovement();
-        this.setPos(this.getX() + delta.x, this.getY() + delta.y, this.getZ() + delta.z);
-
-        // 更新旋转（可选，用于视觉效果）
-        if (!delta.equals(Vec3.ZERO)) {
-            RotUtils.lookVec(this,this.getDeltaMovement());
+        if (delay == 0 && !this.level().isClientSide) {
+            this.setDeltaMovement(this.getLookAngle().scale(speed));
+            this.hasImpulse = true;
         }
+
     }
-
-
     /**
      * 判断是否可命中实体
      */
@@ -126,10 +167,8 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
         if (owner instanceof Sans) {
             damageSource = this.damageSources().source(DamageTypes.FRAME, this, owner);
         } else {
-            // 使用魔法或自定义伤害类型，确保不被盾牌完全格挡
             damageSource = this.damageSources().indirectMagic(this, owner);
         }
-
         // 尝试伤害，返回是否成功（可用于后续逻辑，如命中后销毁）
         boolean hurtSuccess = target.hurt(damageSource, damage);
 
@@ -141,22 +180,37 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
         }
     }
 
-
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
+        if (relativePos != null) {
+            tag.put("relativePos", this.newDoubleList(relativePos.x, relativePos.y, relativePos.z));
+        }
+        if (owner != null) {
+            tag.putUUID("ownerUUID", owner.getUUID());
+        }
         tag.putInt("color", this.colorAttack.getColor().getRGB());
         tag.putInt("delay", delay);
         tag.putFloat("speed", speed);
         tag.putFloat("heightScale", heightScale);
-        if (owner != null) {
-            tag.putUUID("ownerUUID", owner.getUUID());
-        }
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
-        this.delay = tag.getInt("delay");
-        this.speed = tag.getFloat("speed");
+        if (tag.contains("ownerUUID")) {
+            if (((ServerLevel) this.level()).getEntity(tag.getUUID("ownerUUID")) instanceof LivingEntity entity) {
+                this.owner = entity;
+            }
+        }
+        if (tag.contains("relativePos")) {
+            ListTag list = tag.getList("relativePos", 6);
+            this.relativePos = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
+        }
+        if (tag.contains("delay")) {
+            this.delay = tag.getInt("delay");
+        }
+        if (tag.contains("speed")) {
+            this.speed = tag.getFloat("speed");
+        }
         if (tag.contains("heightScale")) {
             this.heightScale = tag.getFloat("heightScale");
             refreshDimensions();
@@ -164,36 +218,60 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
         if (tag.contains("color")) {
             this.colorAttack = ColorAttack.getInstance(tag.getInt("color"));
         }
-        if (tag.contains("ownerUUID")) {
-            if (((ServerLevel)this.level()).getEntity(tag.getUUID("ownerUUID")) instanceof LivingEntity entity) {
-                this.owner = entity;
-            }
-        }
     }
 
     @Override
     public void writeSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
+        buf.writeFloat(this.speed);
+        buf.writeInt(this.delay);
         buf.writeFloat(this.heightScale);
         buf.writeInt(this.colorAttack.getColor().getRGB());
     }
 
     @Override
     public void readSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
+        this.speed = buf.readFloat();
+        this.delay = buf.readInt();
         this.heightScale = buf.readFloat();
         this.colorAttack = ColorAttack.getInstance(buf.readInt());
         refreshDimensions();
     }
 
+    /**
+     * 获取实体添加进世界的数据包，将服务端实体的速度也加入
+     */
     @Override
-    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
-        // 可在此添加需要与客户端同步的数据
+    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity serverEntity) {
+        Entity entity = this.getOwner();
+        int i = entity == null ? 0 : entity.getId();
+        Vec3 vec3 = serverEntity.getPositionBase();
+        return new ClientboundAddEntityPacket(this.getId(), this.getUUID(), vec3.x(), vec3.y(), vec3.z(), serverEntity.getLastSentXRot(), serverEntity.getLastSentYRot(), this.getType(), i, serverEntity.getLastSentMovement(), 0.0F);
     }
 
-    // ========== Getter方法 ==========
+    /**
+     * 客户端添加实体，进行额外的速度设置
+     */
+    @Override
+    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        Vec3 vec3 = new Vec3(packet.getXa(), packet.getYa(), packet.getZa());
+        this.setDeltaMovement(vec3);
+    }
+    @Override
+    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
+    }
+
     @Override
     public @Nullable Entity getOwner() {
+        if(owner != null){
+            return owner;
+        }
+        if(this.level() instanceof ServerLevel level && ownerUUID != null){
+            owner = (LivingEntity) level.getEntity(ownerUUID);
+        }
         return owner;
     }
+
     public float getHeightScale() {
         return heightScale;
     }
@@ -203,9 +281,41 @@ public class MovingGroundBone extends Entity implements IEntityWithComplexSpawn,
         return colorAttack.getColor();
     }
 
+
+    @Override
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        this.lerpX = x;
+        this.lerpY = y;
+        this.lerpZ = z;
+        this.lerpYRot = yRot;
+        this.lerpXRot = xRot;
+        this.lerpSteps = steps;
+    }
+
+    @Override
+    public double lerpTargetX() {
+        return this.lerpSteps > 0 ? this.lerpX : this.getX();
+    }
+    @Override
+    public double lerpTargetY() {
+        return this.lerpSteps > 0 ? this.lerpY : this.getY();
+    }
+    @Override
+    public double lerpTargetZ() {
+        return this.lerpSteps > 0 ? this.lerpZ : this.getZ();
+    }
+    @Override
+    public float lerpTargetXRot() {
+        return this.lerpSteps > 0 ? (float) this.lerpXRot : this.getXRot();
+    }
+    @Override
+    public float lerpTargetYRot() {
+        return this.lerpSteps > 0 ? (float) this.lerpYRot : this.getYRot();
+    }
+
+
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        // 你的动画控制器逻辑
     }
 
     @Override

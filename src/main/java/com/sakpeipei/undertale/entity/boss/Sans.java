@@ -766,7 +766,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 //            }
             availableAttacks.addAll(List.of(TimelineAnim.create(5, 16, 100, (byte) 6,List.of(
                     Pair.of(4, (t) -> mob.summonGroundBoneWall(t, ColorAttack.WHITE, 1f, LocalDirection.FRONT)),
-                    Pair.of(14, (t) -> mob.summonGroundBoneWall(t, ColorAttack.AQUA, 2f, LocalDirection.FRONT))
+                    Pair.of(14-difficulty-fatigueLevel, (t) -> mob.summonGroundBoneWall(t, ColorAttack.AQUA, 2f, LocalDirection.FRONT))
             ))));
             boolean canFlying = target instanceof FlyingMob || target instanceof FlyingAnimal || target.hasEffect(MobEffects.LEVITATION);
 //            boolean inAir = target.isFallFlying() || (!onGround && ( canFlying || target.onClimbable()));
@@ -946,38 +946,35 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         Level level = this.level();
         int difficulty = level.getDifficulty().getId();
         String attackTypeUUID = UUID.randomUUID().toString();
-        int count = difficulty * 3;
+        int count = 5 + difficulty * 3 + (color == ColorAttack.AQUA?4:0);
         float speed = 0.8f + difficulty * 0.5f;
         float interval = 0.375f;
         float xOffset = -interval * (count - 1) / 2;
         // 获取自身水平视线方向
         Vec3 horLookAngle = calculateViewVector(0, this.getYHeadRot());
-        Vec3 perpendicular = new Vec3(-horLookAngle.z, 0, horLookAngle.x); // 垂直方向
+        Vec3 perpendicular = new Vec3(-horLookAngle.z, 0, horLookAngle.x);
         // 计算目标到自身的距离减1
         double distance = this.distanceTo(target) - 1;
         // 根据directionType计算起始位置（都基于目标位置）
-        Vec3 centerPos = target.position().add(horLookAngle.scale(distance));
-//        switch (direction) {
-//            // 前方：目标位置 + 视线方向 * (距离-1)
-//            case FRONT -> centerPos = target.position().add(horLookAngle.scale(distance));
-//            // 后方：目标位置 - 视线方向 * (距离-1)
-//            case BACK -> centerPos = target.position().add(horLookAngle.scale(-distance));
-//            // 左侧：目标位置 - 垂直方向 * (距离-1)
-//            case LEFT -> centerPos = target.position().add(perpendicular.scale(-distance));
-//            // 右侧：目标位置 + 垂直方向 * (距离-1)
-//            case RIGHT -> centerPos = target.position().add(perpendicular.scale(distance));
-//            // 默认前方
-//            default -> centerPos = target.position().add(horLookAngle.scale(distance));
-//        }
+        Vec3 relativePos = horLookAngle.scale(distance);
+        switch (direction) {
+            // 前方：视线方向 * (距离-1)
+            case FRONT -> relativePos = horLookAngle.scale(-distance);
+            // 后方：- 视线方向 * (距离-1)
+            case BACK  -> relativePos = horLookAngle.scale(distance);
+            // 右侧：垂直方向 * (距离-1)
+            case RIGHT -> relativePos = perpendicular.scale(-distance);
+            // 左侧：- 垂直方向 * (距离-1)
+            case LEFT  -> relativePos = perpendicular.scale(distance);
+        }
         // 计算骨墙朝向（从起始位置朝向目标）
-        Vec3 toTarget = target.position().subtract(centerPos).normalize();
-        float yRot = (float) Math.atan2(toTarget.x, toTarget.z);
+        Vec3 toTarget = target.position().subtract(centerPos);
         for (int i = 0; i < count; i++) {
-            Vec3 pos = this.position().add(RotUtils.dirRot(new Vec3(xOffset, 0, 1f),this.getYHeadRot()));
-            MovingGroundBone bone = new MovingGroundBone(level, this,10, height, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), speed, color);
+            Vec3 pos = this.position().add(RotUtils.yRot(relativePos,this.getYHeadRot()));
+            MovingGroundBone bone = new MovingGroundBone(level, this,12-difficulty-fatigueLevel, height,speed, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE),  color,relativePos);
             bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
             bone.setPos(pos.x, this.getY(), pos.z);
-            RotUtils.lookVec(bone,horLookAngle);
+            RotUtils.lookVec(bone,toTarget);
             level.addFreshEntity(bone);
             xOffset += interval;
         }
@@ -1038,7 +1035,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
                         .add(normalDir.scale(xOffset))     // 左右偏移
                         .add(direction.scale(zOffset));     // 前后偏移（负值表示向前）
                 // 生成骨头
-                MovingGroundBone bone = new MovingGroundBone(level, this,0, 1.0f, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), 0.6f, ColorAttack.WHITE);
+                MovingGroundBone bone = new MovingGroundBone(level, this,0, 1.0f, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), 0.6f, ColorAttack.WHITE,pos);
                 bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
                 bone.setPos(pos.x, this.getY(), pos.z);
                 RotUtils.lookVec(bone,direction);

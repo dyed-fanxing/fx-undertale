@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.network;
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.client.event.handler.DecorationRendererHandler;
+import com.sakpeipei.undertale.client.render.effect.EffectRendererHandler;
 import com.sakpeipei.undertale.client.render.effect.WarningTip;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -37,6 +37,6 @@ public record WarningTipPacket(float x,float y,float z,float r, float h,int life
         return TYPE;
     }
     public static void handle(WarningTipPacket packet, IPayloadContext context) {
-        context.enqueueWork(() -> DecorationRendererHandler.addDecoration(new WarningTip(packet.x, packet.y, packet.z, packet.r, packet.h, packet.lifetime, packet.color)));
+        context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip(packet.x, packet.y, packet.z, packet.r, packet.h, packet.lifetime, packet.color)));
     }
 }

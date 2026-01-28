@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.network;
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.client.event.handler.DecorationRendererHandler;
+import com.sakpeipei.undertale.client.render.effect.EffectRendererHandler;
 import com.sakpeipei.undertale.client.render.effect.WarningTipAABB;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -10,8 +10,6 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -54,7 +52,7 @@ public record WarningTipAABBPacket(double minX, double minY, double minZ, double
     }
     public static void handle(WarningTipAABBPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
-            DecorationRendererHandler.addDecoration(new WarningTipAABB(
+            EffectRendererHandler.addDecoration(new WarningTipAABB(
                     new AABB(packet.minX, packet.minY,packet.minZ, packet.maxX, packet.maxY, packet.maxZ),
                     packet.lifetime,packet.color
             ));

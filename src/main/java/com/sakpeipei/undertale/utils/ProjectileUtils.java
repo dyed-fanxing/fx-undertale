@@ -1,6 +1,9 @@
 package com.sakpeipei.undertale.utils;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.*;
@@ -76,8 +79,14 @@ public class ProjectileUtils {
     public static List<EntityHitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to, double inflateX,double inflateY,double inflateZ, AABB searchArea, Predicate<Entity> filter,boolean allowStaticHit) {
         Level level = entity.level();
         List<EntityHitResult> results = new ArrayList<>();
-        for (Entity entity1 : level.getEntities(entity, searchArea, filter)) {
+        List<Entity> entities = level.getEntities(entity, searchArea, filter);
+        for (Entity entity1 : entities) {
             AABB aabb = entity1.getBoundingBox().inflate(inflateX,inflateY,inflateZ);
+            if(aabb.contains(from)){
+                results.add(new EntityHitResult(entity1, from));
+                log.debug("起点：{} 在目标扩大后的盒子：{}内",from,aabb);
+                continue;
+            }
             if(allowStaticHit){
                 // 优先射线交点，没有就使用目标位置
                 Vec3 hitPoint = aabb.clip(from, to).orElse(entity1.position());
@@ -87,6 +96,7 @@ public class ProjectileUtils {
                 results.add(new EntityHitResult(entity1, hitPoint));
             }else{
                 Optional<Vec3> hitPos = aabb.clip(from, to);
+                log.debug("射线：{}是否与目标扩大后的碰撞箱：{} 相交：{}",to.subtract(from),aabb,hitPos.isPresent());
                 if (hitPos.isPresent()) {
                     // 检查骑乘关系（如果需要）
                     if (entity1.getRootVehicle() == entity.getRootVehicle() && !entity1.canRiderInteract()) {

@@ -103,8 +103,8 @@ public class TimeOfImpactUtils {
             FluidState fluidState = level.getFluidState(pos);
 
             // 只检查碰撞形状，不计算详细位置
-            if (testShapeCollisionQuick(box, clipBlock.get(blockState, level, pos, context), pos, velocity,level,blockState) ||
-                    testShapeCollisionQuick(box, clipFluid.canPick(fluidState) ? fluidState.getShape(level, pos) : Shapes.empty(), pos, velocity,level,blockState)) {
+            if (testShapeCollisionQuick(box, clipBlock.get(blockState, level, pos, context), pos, velocity) ||
+                    testShapeCollisionQuick(box, clipFluid.canPick(fluidState) ? fluidState.getShape(level, pos) : Shapes.empty(), pos, velocity)) {
                 return true; // 只要有一个碰撞就返回true
             }
         }
@@ -116,32 +116,18 @@ public class TimeOfImpactUtils {
      * 快速形状碰撞检测（不计算位置，只判断是否碰撞）
      */
     private static boolean testShapeCollisionQuick(AABB movingBox, VoxelShape shape,
-                                                   BlockPos pos, Vec3 velocity,
-                                                   Level level, BlockState state) { // 添加参数
+                                                   BlockPos pos, Vec3 velocity) { // 添加参数
         if (shape.isEmpty()) return false;
-        // 检查主形状
+
         for (AABB part : shape.toAabbs()) {
             AABB blockBox = part.move(pos);
             double collisionTime = calculateCollisionTime(movingBox, blockBox, velocity);
 
-            // 简化判断：只要碰撞时间在[0,1]范围内
-            if (collisionTime >= 0 && collisionTime <= 1.0) {
+            // 只要在移动过程中有碰撞（0-1之间），就返回true
+            if (collisionTime >= 0 && collisionTime < 1.0) {
                 return true;
             }
         }
-        // 检查交互形状
-        VoxelShape interactionShape = state.getInteractionShape(level, pos);
-        if (!interactionShape.isEmpty()) {
-            for (AABB part : interactionShape.toAabbs()) {
-                AABB blockBox = part.move(pos);
-                double collisionTime = calculateCollisionTime(movingBox, blockBox, velocity);
-
-                if (collisionTime >= 0 && collisionTime <= 1.0) {
-                    return true;
-                }
-            }
-        }
-
         return false;
     }
 

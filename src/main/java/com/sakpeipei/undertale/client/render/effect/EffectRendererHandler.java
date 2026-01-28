@@ -1,9 +1,8 @@
-package com.sakpeipei.undertale.client.event.handler;
+package com.sakpeipei.undertale.client.render.effect;
 
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.client.render.effect.Effect;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -23,7 +22,7 @@ import java.util.List;
  * 装饰物渲染处理器
  */
 @EventBusSubscriber(modid = Undertale.MODID, value = Dist.CLIENT)
-public class DecorationRendererHandler {
+public class EffectRendererHandler {
     private final static List<Effect> EFFECTS = new ArrayList<>();
 
     @SubscribeEvent

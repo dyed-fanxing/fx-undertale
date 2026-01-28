@@ -26,5 +26,4 @@ public class MovingGroundBoneRender extends ColorAttackRenderer<MovingGroundBone
         poseStack.mulPose(Axis.XP.rotationDegrees(animatable.getXRot()));
         super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
     }
-
 }
