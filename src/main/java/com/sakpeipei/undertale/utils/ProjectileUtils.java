@@ -3,10 +3,7 @@ package com.sakpeipei.undertale.utils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,87 +18,51 @@ public class ProjectileUtils {
     private static final Logger log = LoggerFactory.getLogger(ProjectileUtils.class);
 
     /**
-     * 获取实体在移动方向上的碰撞结果列表，默认自身实体范围，无额外扩大碰撞检测
+     * 获取弹射物在移动方向上的碰撞结果列表，默认自身范围，无额外扩大碰撞检测
      */
-    public static List<HitResult> getHitResultsOnMoveVector(Entity entity, Predicate<Entity> filter, ClipContext.Block blockClip, boolean hasStatic) {
-        return getHitResults(entity, entity.getBoundingBox().getCenter(), entity.getDeltaMovement(),filter, blockClip,hasStatic);
-    }
-    public static List<HitResult> getHitResultsOnMoveVector(Entity entity, Predicate<Entity> filter,boolean hasStatic) {
-        return getHitResults(entity, entity.getBoundingBox().getCenter(), entity.getDeltaMovement(),filter,0.3F, ClipContext.Block.COLLIDER,hasStatic);
-    }
-    /**
-     * 获取实体在移动方向上的碰撞结果列表，只能用于正方体碰撞箱的弹射物
-     * 原理是起点在移动方向上扩大运动向量的线段和目标碰撞箱扩大pickable大小的碰撞检测，是射线和碰撞箱的检测
-     */
-    public static List<HitResult> getHitResultsOnMoveVector(Entity entity, Predicate<Entity> filter,float pickable,ClipContext.Block blockClip,boolean hasStatic) {
-        return getHitResults(entity, entity.getBoundingBox().getCenter(), entity.getDeltaMovement(),filter,0.3F, blockClip,hasStatic);
-    }
-
-
-
-    /**
-     * 获取实体在from起点到dir向量线段之间的碰撞检测结果列表（包含方块碰撞和实体碰撞）
-     */
-    private static List<HitResult> getHitResults(Entity entity,Vec3 from,Vec3 dir,  Predicate<Entity> filter, ClipContext.Block blockClip,boolean hasStatic) {
-        Vec3 to = from.add(dir);
-        Level level = entity.level();
-        HitResult hitResult = TimeOfImpactUtils.getBlockHitResult(entity.level(),entity.getBoundingBox(),dir,new ClipContext(from, to, blockClip, ClipContext.Fluid.NONE, entity));
-        if (hitResult != null && hitResult.getType() != HitResult.Type.MISS) {
-            to = hitResult.getLocation();
-            log.debug("CCD的hitResult：{}，location：{}",hitResult,hitResult.getLocation());
+    public static List<HitResult> getHitResultsOnMoveVector(Entity entity, Predicate<Entity> filter, ClipContext.Block blockClip, boolean allowStaticHit) {
+        Vec3 from = entity.getBoundingBox().getCenter();
+        Vec3 velocity = entity.getDeltaMovement();
+        Vec3 to = from.add(velocity);
+        BlockHitResult blockHitResult = entity.level().clip(new ClipContext(from, to, blockClip, ClipContext.Fluid.NONE, entity));
+        if(blockHitResult.getType() != HitResult.Type.MISS){
+            Vec3 location = blockHitResult.getLocation();
+            to = new Vec3(location.x, to.y, location.z);
         }
-
-        List<HitResult> hitResults = getEntityHitResults(entity, from, to, entity.getBoundingBox().expandTowards(dir), filter,hasStatic);
-        if(hitResult != null && hitResult.getType() != HitResult.Type.MISS){
-            hitResults.add(hitResult);
-        }
-        return hitResults;
-    }
-
-
-
-
-    /**
-     * 获取实体在from起点到dir向量线段之间的碰撞检测结果列表（包含方块碰撞和实体碰撞）
-     * @param dir 向量
-     * @param blockClip 方块判定
-     * @param pickable 扩大目标碰撞箱三个坐标轴
-     */
-    private static List<HitResult> getHitResults(Entity entity,Vec3 from,Vec3 dir,  Predicate<Entity> filter, float pickable, ClipContext.Block blockClip,boolean hasStatic) {
-        Vec3 to = from.add(dir);
-        Level level = entity.level();
-        HitResult hitResult = level.clip(new ClipContext(from, to, blockClip, ClipContext.Fluid.NONE, entity));
-        if (hitResult.getType() != HitResult.Type.MISS) {
-            to = hitResult.getLocation();
-        }
-        List<HitResult> hitResults = getEntityHitResults(entity, from, to, entity.getBoundingBox().expandTowards(dir), filter, pickable,hasStatic);
-        if(hitResult.getType() != HitResult.Type.MISS){
-            hitResults.add(hitResult);
-        }
-        return hitResults;
-    }
-
-
-
-    /**
-     * 获取实体在from到to两点线段之间的实体碰撞检测结果列表
-     */
-    public static List<HitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to, AABB searchArea, Predicate<Entity> filter,boolean hasStatic) {
         float halfWidth = entity.getBbWidth() * 0.5f;
-        return getEntityHitResults(entity, from, to, halfWidth,entity.getBbHeight() * 0.5f,halfWidth,searchArea, filter, hasStatic);
+        List<HitResult> hitResults = new ArrayList<>(getEntityHitResults(entity,from,to,halfWidth,entity.getBbHeight()*0.5f,halfWidth,entity.getBoundingBox().expandTowards(velocity), filter, allowStaticHit));
+        hitResults.add(blockHitResult);
+        return hitResults;
     }
 
-
     /**
-     * 获取实体在from到to两点线段之间的实体碰撞检测结果列表
-     * @param pickable 扩大目标碰撞箱三个坐标轴
+     * 获取弹射物移动向量上的实体碰撞检测结果列表
      */
-    public static List<HitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to, AABB searchArea, Predicate<Entity> filter, float pickable,boolean hasStatic) {
-        return getEntityHitResults(entity, from, to, pickable,pickable,pickable,searchArea, filter, hasStatic);
+    public static List<EntityHitResult> getEntityHitResultsOnMoveVector(Entity entity,Predicate<Entity> filter,boolean allowStaticHit){
+        float halfWidth = entity.getBbWidth() * 0.5f;
+        Vec3 from = entity.getBoundingBox().getCenter();
+        Vec3 velocity = entity.getDeltaMovement();
+        Vec3 to = from.add(velocity);
+        return getEntityHitResults(entity, from, to, halfWidth,entity.getBbHeight() * 0.5f,halfWidth,entity.getBoundingBox().expandTowards(velocity), filter, allowStaticHit);
+    }
+    /**
+     * 获取弹射物移动向量上的实体碰撞检测结果列表
+     */
+    public static List<EntityHitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to,Predicate<Entity> filter,boolean allowStaticHit){
+        float halfWidth = entity.getBbWidth() * 0.5f;
+        return getEntityHitResults(entity, from, to, halfWidth,entity.getBbHeight() * 0.5f,halfWidth,entity.getBoundingBox().expandTowards(entity.getDeltaMovement()), filter, allowStaticHit);
     }
 
     /**
-     * 获取实体在线段之间的实体碰撞检测结果列表
+     * 获取弹射物移动向量上的实体碰撞检测结果列表
+     */
+    public static List<EntityHitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to, AABB searchArea,Predicate<Entity> filter,boolean allowStaticHit){
+        float halfWidth = entity.getBbWidth() * 0.5f;
+        return getEntityHitResults(entity, from, to, halfWidth,entity.getBbHeight() * 0.5f,halfWidth,searchArea, filter, allowStaticHit);
+    }
+
+    /**
+     * 获取弹射物在线段之间的实体碰撞检测结果列表
      * 原理是起点from和终点to的线段和目标AABB碰撞箱扩大后的碰撞箱是否碰撞，是射线和AABB碰撞箱的检测
      *
      * @param entity 实体
@@ -110,14 +71,14 @@ public class ProjectileUtils {
      * @param inflateX,inflateY,inflateZ 扩大目标碰撞箱的检测范围，即实体自身碰撞箱一半
      * @param searchArea 粗略筛选实体的AABB碰撞箱
      * @param filter 过滤器
-     * @param hasStatic 是否检测静态碰撞，即实体静止不同时是否检测
+     * @param allowStaticHit 是否允许静态碰撞，即实体静止不同时是否检测碰撞
      */
-    public static List<HitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to, double inflateX,double inflateY,double inflateZ, AABB searchArea, Predicate<Entity> filter,boolean hasStatic) {
+    public static List<EntityHitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to, double inflateX,double inflateY,double inflateZ, AABB searchArea, Predicate<Entity> filter,boolean allowStaticHit) {
         Level level = entity.level();
-        List<HitResult> results = new ArrayList<>();
+        List<EntityHitResult> results = new ArrayList<>();
         for (Entity entity1 : level.getEntities(entity, searchArea, filter)) {
             AABB aabb = entity1.getBoundingBox().inflate(inflateX,inflateY,inflateZ);
-            if(hasStatic){
+            if(allowStaticHit){
                 // 优先射线交点，没有就使用目标位置
                 Vec3 hitPoint = aabb.clip(from, to).orElse(entity1.position());
                 if (entity1.getRootVehicle() == entity.getRootVehicle() && !entity1.canRiderInteract()) {

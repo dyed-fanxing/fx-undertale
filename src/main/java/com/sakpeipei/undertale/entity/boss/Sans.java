@@ -1,21 +1,20 @@
 package com.sakpeipei.undertale.entity.boss;
 
 import com.ibm.icu.impl.Pair;
-import com.sakpeipei.undertale.common.anim.TimelineAnim;
-import com.sakpeipei.undertale.entity.DelayAction;
-import com.sakpeipei.undertale.entity.DelayEntity;
 import com.sakpeipei.undertale.common.LocalDirection;
 import com.sakpeipei.undertale.common.LocalVec3;
-import com.sakpeipei.undertale.common.anim.SequenceAnim;
 import com.sakpeipei.undertale.common.anim.SingleAnim;
+import com.sakpeipei.undertale.common.anim.TimelineAnim;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.IAnimatable;
-import com.sakpeipei.undertale.entity.ai.goal.*;
+import com.sakpeipei.undertale.entity.ai.goal.NeutralMobAngerTargetGoal;
+import com.sakpeipei.undertale.entity.ai.goal.SingleAnimGoal;
+import com.sakpeipei.undertale.entity.ai.goal.TimelineAnimGoal;
 import com.sakpeipei.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.undertale.entity.projectile.FlyingBone;
-import com.sakpeipei.undertale.entity.projectile.GroundBoneProjectile;
 import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import com.sakpeipei.undertale.entity.summon.GroundBone;
+import com.sakpeipei.undertale.entity.summon.MovingGroundBone;
 import com.sakpeipei.undertale.network.TimeJumpTeleportPacket;
 import com.sakpeipei.undertale.network.WarningTipPacket;
 import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
@@ -29,7 +28,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -40,12 +39,10 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.tags.FluidTags;
-import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.TimeUtil;
 import net.minecraft.util.valueproviders.UniformInt;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
@@ -62,7 +59,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
@@ -76,20 +72,15 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.*;
 import software.bernie.geckolib.animation.AnimationState;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.animation.keyframe.BoneAnimationQueue;
-import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DefaultAnimations;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.function.IntSupplier;
 import java.util.function.ToIntFunction;
 
 public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable, IEntityWithComplexSpawn {
@@ -983,10 +974,10 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         float yRot = (float) Math.atan2(toTarget.x, toTarget.z);
         for (int i = 0; i < count; i++) {
             Vec3 pos = this.position().add(RotUtils.dirRot(new Vec3(xOffset, 0, 1f),this.getYHeadRot()));
-            GroundBoneProjectile bone = new GroundBoneProjectile(level, this, pos.x, this.getY(), pos.z, height, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), speed, color);
+            MovingGroundBone bone = new MovingGroundBone(level, this,10, height, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), speed, color);
             bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
-            // 朝向目标射击
-            bone.delayShoot(10, horLookAngle);
+            bone.setPos(pos.x, this.getY(), pos.z);
+            RotUtils.lookVec(bone,horLookAngle);
             level.addFreshEntity(bone);
             xOffset += interval;
         }
@@ -1047,13 +1038,11 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
                         .add(normalDir.scale(xOffset))     // 左右偏移
                         .add(direction.scale(zOffset));     // 前后偏移（负值表示向前）
                 // 生成骨头
-                GroundBoneProjectile bone = new GroundBoneProjectile(
-                        level, this,
-                        pos.x, this.getY(), pos.z,
-                        0.5f, 1f, 0.6f, ColorAttack.WHITE
-                );
+                MovingGroundBone bone = new MovingGroundBone(level, this,0, 1.0f, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), 0.6f, ColorAttack.WHITE);
                 bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
-                bone.delayShoot(0, direction);
+                bone.setPos(pos.x, this.getY(), pos.z);
+                RotUtils.lookVec(bone,direction);
+                bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
                 bone.setYRot(RotUtils.shootYRot(direction));
                 level.addFreshEntity(bone);
             }

@@ -1,7 +1,5 @@
 package com.sakpeipei.undertale.entity.projectile;
 
-import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
 import com.sakpeipei.undertale.utils.ProjectileUtils;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -15,15 +13,15 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileDeflection;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import net.neoforged.neoforge.event.EventHooks;
-import org.apache.logging.log4j.LogManager;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,9 +47,19 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         Entity entity = this.getOwner();
         if (this.level().isClientSide || (entity == null || !entity.isRemoved()) && this.level().isLoaded(this.blockPosition())) {
             super.tick();
-            List<HitResult> hitResults = ProjectileUtils.getHitResultsOnMoveVector(this,this::canHitEntity,getClipType(),isCollision());
+            AABB boundingBox = this.getBoundingBox();
+            Vec3 from = boundingBox.getCenter();
+            Vec3 velocity = this.getDeltaMovement();
+            Vec3 to = from.add(velocity);
+//            AABB searchArea = boundingBox.expandTowards(velocity);
+            BlockHitResult blockHitResult = getBlockHitResult(from,to);
+            if(blockHitResult.getType() != HitResult.Type.MISS) {
+                Vec3 location = blockHitResult.getLocation();
+                to = new Vec3(location.x, to.y, location.z);
+            }
+            List<HitResult> hitResults = new ArrayList<>(ProjectileUtils.getEntityHitResults(this, from, to, boundingBox.expandTowards(velocity), this::canHitEntity, false));
+            hitResults.add(blockHitResult);
             for (HitResult hitResult : hitResults) {
-
                 if (hitResult.getType() != HitResult.Type.MISS && !EventHooks.onProjectileImpact(this, hitResult)) {
                     ProjectileDeflection projectileDeflection = this.hitTargetOrDeflectSelf(hitResult);
                     if(projectileDeflection != ProjectileDeflection.NONE){
@@ -82,13 +90,12 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
                 f = this.getInertia();
             }
             this.setDeltaMovement(vec3.add(vec3.normalize().scale(this.accelerationPower)).scale(f));
-//            this.setDeltaMovement(vec3.scale(f));
             if(!this.isNoGravity()){
                 this.applyGravity();
             }
             ParticleOptions particleoptions = this.getTrailParticle();
             if (particleoptions != null) {
-                this.level().addParticle(particleoptions, d0, d1 + this.getBbHeight() / 2, d2, 0.0F, 0.0F, 0.0F);
+                this.level().addParticle(particleoptions, d0, d1 + this.getBbHeight()*0.5f, d2, 0.0F, 0.0F, 0.0F);
             }
             this.setPos(d0, d1, d2);
         } else {
@@ -96,11 +103,8 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         }
     }
 
-    /**
-     * 用于决定碰撞判定的类型，碰撞判定，还是线段判定
-     */
-    protected boolean isCollision(){
-        return false;
+    protected BlockHitResult getBlockHitResult(Vec3 from,Vec3 to) {
+        return this.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
     }
 
     @Override
@@ -164,10 +168,5 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
     protected ParticleOptions getTrailParticle() {
         return ParticleTypes.WHITE_ASH;
     }
-
-    protected ClipContext.@NotNull Block getClipType() {
-        return ClipContext.Block.COLLIDER;
-    }
-
 
 }

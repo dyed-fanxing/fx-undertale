@@ -1,15 +1,15 @@
 package com.sakpeipei.undertale.client.model.entity;
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.entity.projectile.GroundBoneProjectile;
+import com.sakpeipei.undertale.entity.summon.MovingGroundBone;
 import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.animation.state.BoneSnapshot;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
-public class GroundBoneProjectileModel extends DefaultedEntityGeoModel<GroundBoneProjectile> {
-    public GroundBoneProjectileModel() {
+public class MovingGroundBoneModel extends DefaultedEntityGeoModel<MovingGroundBone> {
+    public MovingGroundBoneModel() {
         super(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "bone"));
     }
 
@@ -17,7 +17,7 @@ public class GroundBoneProjectileModel extends DefaultedEntityGeoModel<GroundBon
 
 
     @Override
-    public void setCustomAnimations(GroundBoneProjectile animatable, long instanceId, AnimationState<GroundBoneProjectile> animationState) {
+    public void setCustomAnimations(MovingGroundBone animatable, long instanceId, AnimationState<MovingGroundBone> animationState) {
         GeoBone up = this.getBone("up").get();
         GeoBone body = this.getBone("body").get();
         BoneSnapshot upInitial = up.getInitialSnapshot();
