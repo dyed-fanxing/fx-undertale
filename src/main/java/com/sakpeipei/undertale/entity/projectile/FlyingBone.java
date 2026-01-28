@@ -41,7 +41,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     private static final Logger log = LoggerFactory.getLogger(FlyingBone.class);
     protected Vec3 relativePos;     // 拥有者的相对位置
 
-    protected Vec3 shotVec;       // 射击矢量
+    protected Vec3 shotVec;         // 射击矢量
     private boolean isTrackTarget = false;  // 是否追踪目标
     private boolean isAim = false;          // 延迟阶段是否瞄准目标
     private boolean isFollow = false;       // 延迟阶段是否跟随拥有者
@@ -107,10 +107,12 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
                         LivingEntity target = targeting.getTarget();
                         if (target != null) {
                             RotUtils.lookAtShoot(this, target.getEyePosition());
+                            shotVec = target.getEyePosition().subtract(this.getEyePosition());
                         }
                     }
                 } else if (isFollowAngle) {
                     RotUtils.lookVecShoot(this, owner.getViewVector(1.0f));
+                    shotVec = owner.getViewVector(1.0f);
                 }
                 if (isFollow) {
                     this.setPos(owner.position().add(RotUtils.getWorldPos(relativePos, owner.getXRot(), owner.getYHeadRot())));
@@ -121,9 +123,8 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         if(delay < 0){
             super.tick();
         }
-        if (delay == 0 && !this.level().isClientSide) {
-            Vec3 vec3 = this.calculateViewVector(this.getXRot(), this.getYRot());
-            this.shoot(vec3.x, vec3.y, vec3.z, speed, 0);
+        if (delay == 0 && !this.level().isClientSide && shotVec != null) {
+            this.shoot(shotVec.x, shotVec.y, shotVec.z, speed, 0);
         }
     }
 

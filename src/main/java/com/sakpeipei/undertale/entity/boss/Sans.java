@@ -638,7 +638,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             }
             existPersistentAttack = true;
             isAttacking = true;
-            return availableAttacks.get(0);
+            return availableAttacks.get(1);
 //            return availableAttacks.get(mob.random.nextInt(availableAttacks.size()));
         }
 
