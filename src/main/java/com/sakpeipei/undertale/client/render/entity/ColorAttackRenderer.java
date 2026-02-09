@@ -28,6 +28,4 @@ public abstract class ColorAttackRenderer<T extends Entity & GeoAnimatable & Att
         return color;
     }
 
-
-
 }

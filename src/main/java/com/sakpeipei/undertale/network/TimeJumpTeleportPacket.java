@@ -1,5 +1,6 @@
 package com.sakpeipei.undertale.network;
 
+import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.Undertale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -15,8 +16,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Sakpeipei
  * @since 2025/12/16 15:45
+ * @param tick 持续Tick
  */
-public record TimeJumpTeleportPacket(int entityId, int endTick) implements CustomPacketPayload {
+public record TimeJumpTeleportPacket(int entityId, int tick) implements CustomPacketPayload {
     public static final String END_TICK = Undertale.MODID + ":teleport_time_jump_end_tick";
 
     public static final CustomPacketPayload.Type<TimeJumpTeleportPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "teleport_time_jump_packet"));
@@ -27,7 +29,7 @@ public record TimeJumpTeleportPacket(int entityId, int endTick) implements Custo
     }
     public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(this.entityId);
-        buf.writeVarInt(this.endTick);
+        buf.writeVarInt(this.tick);
     }
 
     public static void handle(TimeJumpTeleportPacket packet, IPayloadContext context) {
@@ -36,7 +38,8 @@ public record TimeJumpTeleportPacket(int entityId, int endTick) implements Custo
             if (level != null) {
                 Entity entity = level.getEntity(packet.entityId);
                 if (entity != null) {
-                    entity.getPersistentData().putInt(END_TICK,packet.endTick);
+                    LogUtils.getLogger().debug("目标受到时间跳跃：自身Tick:{}，时间跳跃持续Tick：{}，客户端结束Tick：{}", entity.tickCount, packet.tick,entity.tickCount + packet.tick);
+                    entity.getPersistentData().putInt(END_TICK,entity.tickCount +  packet.tick);
                 }
             }
         });

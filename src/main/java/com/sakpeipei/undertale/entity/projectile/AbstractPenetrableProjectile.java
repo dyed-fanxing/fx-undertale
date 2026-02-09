@@ -61,7 +61,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
                 Vec3 location = blockHitResult.getLocation();
                 to = new Vec3(location.x, to.y, location.z);
             }
-            List<HitResult> hitResults = new ArrayList<>(ProjectileUtils.getEntityHitResults(this, from, to, boundingBox.expandTowards(velocity), this::canHitEntity, false));
+            List<HitResult> hitResults = new ArrayList<>(ProjectileUtils.getEntityHitResults(this, from, to, boundingBox.expandTowards(velocity), this::canHitEntity));
             hitResults.add(blockHitResult);
             for (HitResult hitResult : hitResults) {
                 if (hitResult.getType() != HitResult.Type.MISS && !EventHooks.onProjectileImpact(this, hitResult)) {

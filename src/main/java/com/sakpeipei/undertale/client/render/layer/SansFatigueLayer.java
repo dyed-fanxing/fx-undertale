@@ -20,7 +20,8 @@ import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 public class SansFatigueLayer extends GeoRenderLayer<Sans>{
     private static final ResourceLocation[] TEXTURES = new ResourceLocation[]{
             ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/sans_sweat_1.png"),
-            ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/sans_sweat_2.png")
+            ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/sans_sweat_2.png"),
+            ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/sans_sweat_3.png"),
     };
     public SansFatigueLayer(GeoRenderer<Sans> entityRendererIn) {
         super(entityRendererIn);
@@ -31,8 +32,10 @@ public class SansFatigueLayer extends GeoRenderLayer<Sans>{
         int stamina = animatable.getStamina();
         int sweat = -1;
         if(stamina == 0){
+            sweat = 2;
+        } else if(stamina <= animatable.getMaxStamina()/10){
             sweat = 1;
-        }else if(stamina <= animatable.getMaxStamina()/2){
+        } else if(stamina <= animatable.getMaxStamina()/2){
             sweat = 0;
         }
         if(sweat != -1){

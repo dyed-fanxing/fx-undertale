@@ -230,15 +230,9 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     }
 
     @Override
-    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket p_150170_) {
-        super.recreateFromPacket(p_150170_);
-    }
-
-    @Override
     public void writeSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
         super.writeSpawnData(buf);
         buf.writeInt(this.delay);
-        Vec3 vec3 = this.getDeltaMovement();
         buf.writeFloat(this.speed);
     }
 
@@ -246,9 +240,6 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
     public void readSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
         super.readSpawnData(buf);
         this.delay = buf.readInt();
-        if(delay <= 0){
-            this.setDeltaMovement(new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble()));
-        }
         this.speed = buf.readFloat();
     }
 

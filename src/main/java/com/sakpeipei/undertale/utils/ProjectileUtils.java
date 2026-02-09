@@ -23,7 +23,7 @@ public class ProjectileUtils {
     /**
      * 获取弹射物在移动方向上的碰撞结果列表，默认自身范围，无额外扩大碰撞检测
      */
-    public static List<HitResult> getHitResultsOnMoveVector(Entity entity, Predicate<Entity> filter, ClipContext.Block blockClip, boolean allowStaticHit) {
+    public static List<HitResult> getHitResultsOnMoveVector(Entity entity, Predicate<Entity> filter, ClipContext.Block blockClip) {
         Vec3 from = entity.getBoundingBox().getCenter();
         Vec3 velocity = entity.getDeltaMovement();
         Vec3 to = from.add(velocity);
@@ -33,7 +33,7 @@ public class ProjectileUtils {
             to = new Vec3(location.x, to.y, location.z);
         }
         float halfWidth = entity.getBbWidth() * 0.5f;
-        List<HitResult> hitResults = new ArrayList<>(getEntityHitResults(entity,from,to,halfWidth,entity.getBbHeight()*0.5f,halfWidth,entity.getBoundingBox().expandTowards(velocity), filter, allowStaticHit));
+        List<HitResult> hitResults = new ArrayList<>(getEntityHitResults(entity,from,to,halfWidth,entity.getBbHeight()*0.5f,halfWidth,entity.getBoundingBox().expandTowards(velocity), filter));
         hitResults.add(blockHitResult);
         return hitResults;
     }
@@ -41,27 +41,27 @@ public class ProjectileUtils {
     /**
      * 获取弹射物移动向量上的实体碰撞检测结果列表
      */
-    public static List<EntityHitResult> getEntityHitResultsOnMoveVector(Entity entity,Predicate<Entity> filter,boolean allowStaticHit){
+    public static List<EntityHitResult> getEntityHitResultsOnMoveVector(Entity entity,Predicate<Entity> filter){
         float halfWidth = entity.getBbWidth() * 0.5f;
         Vec3 from = entity.getBoundingBox().getCenter();
         Vec3 velocity = entity.getDeltaMovement();
         Vec3 to = from.add(velocity);
-        return getEntityHitResults(entity, from, to, halfWidth,entity.getBbHeight() * 0.5f,halfWidth,entity.getBoundingBox().expandTowards(velocity), filter, allowStaticHit);
+        return getEntityHitResults(entity, from, to, halfWidth,entity.getBbHeight() * 0.5f,halfWidth,entity.getBoundingBox().expandTowards(velocity), filter);
     }
     /**
      * 获取弹射物移动向量上的实体碰撞检测结果列表
      */
-    public static List<EntityHitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to,Predicate<Entity> filter,boolean allowStaticHit){
+    public static List<EntityHitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to,Predicate<Entity> filter){
         float halfWidth = entity.getBbWidth() * 0.5f;
-        return getEntityHitResults(entity, from, to, halfWidth,entity.getBbHeight() * 0.5f,halfWidth,entity.getBoundingBox().expandTowards(entity.getDeltaMovement()), filter, allowStaticHit);
+        return getEntityHitResults(entity, from, to, halfWidth,entity.getBbHeight() * 0.5f,halfWidth,entity.getBoundingBox().expandTowards(entity.getDeltaMovement()), filter);
     }
 
     /**
      * 获取弹射物移动向量上的实体碰撞检测结果列表
      */
-    public static List<EntityHitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to, AABB searchArea,Predicate<Entity> filter,boolean allowStaticHit){
+    public static List<EntityHitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to, AABB searchArea,Predicate<Entity> filter){
         float halfWidth = entity.getBbWidth() * 0.5f;
-        return getEntityHitResults(entity, from, to, halfWidth,entity.getBbHeight() * 0.5f,halfWidth,searchArea, filter, allowStaticHit);
+        return getEntityHitResults(entity, from, to, halfWidth,entity.getBbHeight() * 0.5f,halfWidth,searchArea, filter);
     }
 
     /**
@@ -74,36 +74,20 @@ public class ProjectileUtils {
      * @param inflateX,inflateY,inflateZ 扩大目标碰撞箱的检测范围，即实体自身碰撞箱一半
      * @param searchArea 粗略筛选实体的AABB碰撞箱
      * @param filter 过滤器
-     * @param allowStaticHit 是否允许静态碰撞，即实体静止不同时是否检测碰撞
      */
-    public static List<EntityHitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to, double inflateX,double inflateY,double inflateZ, AABB searchArea, Predicate<Entity> filter,boolean allowStaticHit) {
+    public static List<EntityHitResult> getEntityHitResults(Entity entity, Vec3 from, Vec3 to, double inflateX,double inflateY,double inflateZ, AABB searchArea, Predicate<Entity> filter) {
         Level level = entity.level();
         List<EntityHitResult> results = new ArrayList<>();
         List<Entity> entities = level.getEntities(entity, searchArea, filter);
         for (Entity entity1 : entities) {
             AABB aabb = entity1.getBoundingBox().inflate(inflateX,inflateY,inflateZ);
-            if(aabb.contains(from)){
-                results.add(new EntityHitResult(entity1, from));
-                log.debug("起点：{} 在目标扩大后的盒子：{}内",from,aabb);
-                continue;
-            }
-            if(allowStaticHit){
-                // 优先射线交点，没有就使用目标位置
-                Vec3 hitPoint = aabb.clip(from, to).orElse(entity1.position());
+            Optional<Vec3> hitPos = aabb.clip(from, to);
+            if (hitPos.isPresent()) {
+                // 检查骑乘关系（如果需要）
                 if (entity1.getRootVehicle() == entity.getRootVehicle() && !entity1.canRiderInteract()) {
-                    continue;
+                    continue;  // 跳过不能交互的同乘实体
                 }
-                results.add(new EntityHitResult(entity1, hitPoint));
-            }else{
-                Optional<Vec3> hitPos = aabb.clip(from, to);
-                log.debug("射线：{}是否与目标扩大后的碰撞箱：{} 相交：{}",to.subtract(from),aabb,hitPos.isPresent());
-                if (hitPos.isPresent()) {
-                    // 检查骑乘关系（如果需要）
-                    if (entity1.getRootVehicle() == entity.getRootVehicle() && !entity1.canRiderInteract()) {
-                        continue;  // 跳过不能交互的同乘实体
-                    }
-                    results.add(new EntityHitResult(entity1, hitPos.get()));
-                }
+                results.add(new EntityHitResult(entity1, hitPos.get()));
             }
         }
         // 按距离排序（近到远）

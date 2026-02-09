@@ -2,11 +2,12 @@ package com.sakpeipei.undertale.client.render.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.sakpeipei.undertale.client.model.entity.MovingGroundBoneModel;
+import com.sakpeipei.undertale.client.model.entity.MovingBoneModel;
 import com.sakpeipei.undertale.entity.summon.MovingGroundBone;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
 
 /**
  * @author Sakqiongzi
@@ -16,7 +17,12 @@ public class MovingGroundBoneRender extends ColorAttackRenderer<MovingGroundBone
     private static final Logger log = LogManager.getLogger(MovingGroundBoneRender.class);
 
     public MovingGroundBoneRender(EntityRendererProvider.Context renderManager) {
-        super(renderManager, new MovingGroundBoneModel());
+        super(renderManager, new MovingBoneModel());
+    }
+
+    @Override
+    public void scaleModelForRender(float widthScale, float heightScale, PoseStack poseStack, MovingGroundBone animatable, BakedGeoModel model, boolean isReRender, float partialTick, int packedLight, int packedOverlay) {
+        super.scaleModelForRender(animatable.getScale(), animatable.getScale(), poseStack, animatable, model, isReRender, partialTick, packedLight, packedOverlay);
     }
 
     @Override

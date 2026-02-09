@@ -4,9 +4,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.client.model.entity.GroundBoneModel;
 import com.sakpeipei.undertale.entity.summon.GroundBone;
+import com.sakpeipei.undertale.entity.summon.LateralBone;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
 
 /**
  * @author Sakqiongzi
@@ -17,6 +19,10 @@ public class GroundBoneRender extends ColorAttackRenderer<GroundBone> {
     public GroundBoneRender(EntityRendererProvider.Context renderManager) {
         super(renderManager, new GroundBoneModel());
     }
+    @Override
+    public void scaleModelForRender(float widthScale, float heightScale, PoseStack poseStack, GroundBone animatable, BakedGeoModel model, boolean isReRender, float partialTick, int packedLight, int packedOverlay) {
+        super.scaleModelForRender(animatable.getScale(), animatable.getScale(), poseStack, animatable, model, isReRender, partialTick, packedLight, packedOverlay);
+    }
 
     @Override
     protected void applyRotations(GroundBone animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
@@ -26,13 +32,4 @@ public class GroundBoneRender extends ColorAttackRenderer<GroundBone> {
         super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
     }
 
-    @Override
-    protected int getBlockLightLevel(@NotNull GroundBone entity, @NotNull BlockPos pos) {
-        return 15; // 最大亮度
-    }
-
-    @Override
-    protected int getSkyLightLevel(@NotNull GroundBone entity, @NotNull BlockPos pos) {
-        return 15; // 最大亮度
-    }
 }

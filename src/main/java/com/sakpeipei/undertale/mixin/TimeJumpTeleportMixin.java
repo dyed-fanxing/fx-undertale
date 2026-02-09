@@ -30,27 +30,21 @@ public class TimeJumpTeleportMixin {
     @Inject(method = "renderCameraOverlays", at=@At("TAIL"))
     private void renderCameraOverlays(GuiGraphics guiGraphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         Entity entity = this.minecraft.cameraEntity;
-        CompoundTag persistentData = null;
         if (entity != null) {
-            persistentData = entity.getPersistentData();
-        }
-        if (persistentData != null) {
-            int blackScreenEndTick = persistentData.getInt(TimeJumpTeleportPacket.END_TICK);
-            if(entity.tickCount < blackScreenEndTick){
-                // 3. 直接渲染纯黑屏
-                RenderSystem.disableDepthTest();
-                RenderSystem.depthMask(false);
-                RenderSystem.enableBlend();
-
-                guiGraphics.fill(RenderType.guiOverlay(),
-                        0, 0,
-                        guiGraphics.guiWidth(), guiGraphics.guiHeight(),
-                        -200, 0xFF000000  // 纯黑色，完全不透明
-                );
-
-                RenderSystem.disableBlend();
-                RenderSystem.depthMask(true);
-                RenderSystem.enableDepthTest();
+            CompoundTag persistentData = entity.getPersistentData();
+            if (persistentData.contains(TimeJumpTeleportPacket.END_TICK)) {
+                int endTick = persistentData.getInt(TimeJumpTeleportPacket.END_TICK);
+                if(entity.tickCount < endTick){
+                    // 3. 直接渲染纯黑屏
+                    RenderSystem.disableDepthTest();
+                    RenderSystem.depthMask(false);
+                    RenderSystem.enableBlend();
+                    //纯黑色，不透明
+                    guiGraphics.fill(RenderType.guiOverlay(),0, 0,guiGraphics.guiWidth(), guiGraphics.guiHeight(),-200, 0xFF000000 );
+                    RenderSystem.disableBlend();
+                    RenderSystem.depthMask(true);
+                    RenderSystem.enableDepthTest();
+                }
             }
         }
     }

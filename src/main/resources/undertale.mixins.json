@@ -1,21 +1,25 @@
 {
-    "required": true,
-    "minVersion": "0.8",
-    "package": "com.sakpeipei.undertale.mixin",
-    "compatibilityLevel": "JAVA_21",
-    "mixins": [
-        "AbstractArrowMixin",
-        "LivingEntityGravityMixin",
-        "ServerGamePacketListenerImplMixin",
-        "EntityGroundMixin"
-    ],
-    "client": [
-        "BlackScreenTeleportMixin",
-        "EntityRenderDispatcherMixin",
-        "KarmaHeartMixin",
-        "TimeJumpTeleportMixin"
-    ],
-    "injectors": {
-        "defaultRequire": 1
-    }
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.sakpeipei.undertale.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AbstractArrowMixin",
+    "gravity.EntityGravityMixin",
+    "gravity.LivingEntityGravityMixin",
+    "gravity.LocalPlayerGravityMinix",
+    "gravity.PlayerGravityMixin",
+    "gravity.ServerGamePacketListenerImplMixin"
+  ],
+  "client": [
+    "EntityRenderDispatcherMixin",
+    "KarmaHeartMixin",
+    "TimeJumpTeleportMixin",
+    "gravity.CameraMixin",
+    "gravity.EntityRenderDispatcherGravityMixin",
+    "gravity.LivingEntityRendererGravityMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }

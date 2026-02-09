@@ -4,10 +4,12 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.logging.LogUtils;
 import com.mojang.math.Axis;
+import com.sakpeipei.undertale.common.phys.OBB;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import java.awt.*;
@@ -227,9 +229,9 @@ public class RenderUtils {
             Vec3 downPoint2 = new Vec3(radius * (float) Math.cos(radian2), height, radius * (float) Math.sin(radian2));
             // 法线（从圆柱中心向外）
             Vec3 normal = upPoint1.normalize();
-            renderLine(pose,consumer,upPoint1,upPoint2,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
-            renderLine(pose,consumer,upPoint1,downPoint1,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
-            renderLine(pose,consumer,downPoint1,downPoint2,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a,overlay,light);
+            renderLine(pose,consumer,upPoint1,upPoint2,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a);
+            renderLine(pose,consumer,upPoint1,downPoint1,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a);
+            renderLine(pose,consumer,downPoint1,downPoint2,(float) normal.x, (float) normal.y, (float) normal.z,r,g,b,a);
         }
     }
     /**
@@ -441,34 +443,118 @@ public class RenderUtils {
      */
     public static void renderLine(PoseStack.Pose pose, VertexConsumer consumer, Vec3 p1, Vec3 p2,
                                     float normalX, float normalY, float normalZ,
-                                    int r, int g, int b, int a,
-                                    int overlay, int light) {
+                                    int r, int g, int b, int a) {
         Matrix4f matrix = pose.pose();
-        consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z)
-                .setNormal(pose, normalX, normalY, normalZ)
-                .setColor(r, g, b, a)
-                .setOverlay(overlay)
-                .setLight(light);
-        consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z)
-                .setNormal(pose, normalX, normalY, normalZ)
-                .setColor(r, g, b, a)
-                .setOverlay(overlay)
-                .setLight(light);
+        consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z).setNormal(pose, normalX, normalY, normalZ).setColor(r, g, b, a);
+        consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z).setNormal(pose, normalX, normalY, normalZ).setColor(r, g, b, a);
     }
+    public static void renderLine(PoseStack.Pose pose, VertexConsumer consumer, Vec3 p1, Vec3 p2,
+                                  float normalX, float normalY, float normalZ,
+                                  float r, float g, float b, float a) {
+        Matrix4f matrix = pose.pose();
+        consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z).setNormal(pose, normalX, normalY, normalZ).setColor(r, g, b, a);
+        consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z).setNormal(pose, normalX, normalY, normalZ).setColor(r, g, b, a);
+    }
+
+//    /**
+//     * 最简单的OBB渲染（线框）
+//     */
+//    public static void renderOBBWireframe(PoseStack poseStack, VertexConsumer consumer, OBB obb,
+//                                          int r, int g, int b, int a, int packedLight) {
+//        // 获取新的pose
+//        PoseStack.Pose pose = poseStack.last();
+//        // 获取OBB尺寸
+//        float width = obb.getWidth();
+//        float length = obb.getLength();
+//        float height = obb.getHeight();
+//        // 应用变换
+//        poseStack.pushPose();
+//
+//        // 移动到中心 - 修正：去掉负号
+//        Vec3 center = obb.getCenter();
+//        poseStack.translate(center.x, center.y, center.z);  // 修正这里
+//        // 应用旋转
+//        float yaw = obb.getYaw();
+//        float pitch = obb.getPitch();
+//        poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
+//        poseStack.mulPose(Axis.XP.rotationDegrees(pitch));
+//
+//        // 直接渲染立方体线框
+//        renderOBBOutline(pose, consumer, width, length, height, r, g, b, a, packedLight);
+//        poseStack.popPose();
+//    }
+
     /**
-     * 线段，只需两个点，但是渲染的类型得是Line
+     * 渲染OBB（实体）
      */
-    public static void renderLine(PoseStack.Pose pose, VertexConsumer consumer, Vec3 p1, Vec3 p2,int r, int g, int b, int a,int overlay, int light) {
-        Matrix4f matrix = pose.pose();
-        consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z)
-                .setNormal(0,1,0)
-                .setColor(r, g, b, a)
-                .setOverlay(overlay)
-                .setLight(light);
-        consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z)
-                .setNormal(0,1,0)
-                .setColor(r, g, b, a)
-                .setOverlay(overlay)
-                .setLight(light);
+    public static void renderOBBSolid(PoseStack poseStack, VertexConsumer consumer, OBB obb,
+                                      int r, int g, int b, int a, int packedLight) {
+        PoseStack.Pose pose = poseStack.last();
+
+        // 获取OBB尺寸
+        float length = obb.getLength();
+        float height = obb.getHeight();
+        float width = obb.getWidth();
+
+        // 应用变换
+        poseStack.pushPose();
+
+        // 移动到中心 - 这里正确，保持不变
+        Vec3 center = obb.getCenter();
+        poseStack.translate(center.x, center.y, center.z);
+
+        // 应用旋转
+        float yaw = obb.getYaw();
+        float pitch = obb.getPitch();
+        poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
+        poseStack.mulPose(Axis.XP.rotationDegrees(pitch));
+
+        // 获取新的pose
+        pose = poseStack.last();
+
+        // 直接渲染立方体
+        RenderUtils.renderCube(consumer, length, width, height, pose, r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
+
+        poseStack.popPose();
     }
+
+    public static void renderOBBOutline(PoseStack.Pose pose, VertexConsumer consumer, OBB obb,int r, int g, int b, int a) {
+        // 移动到中心 - 这里正确，保持不变
+        Vec3[] vertices = obb.getVertices();
+        // 底部四边形（使用(0,1,0)作为法线）
+        RenderUtils.renderLine(pose, consumer, vertices[0], vertices[1], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[1], vertices[3], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[3], vertices[2], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[2], vertices[0], 0, 1, 0, r, g, b, a);
+        // 顶部四边形（使用(0,1,0)作为法线）
+        RenderUtils.renderLine(pose, consumer, vertices[4], vertices[5], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[5], vertices[7], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[7], vertices[6], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[6], vertices[4], 0, 1, 0, r, g, b, a);
+        // 垂直边（使用(0,0,1)作为法线）
+        RenderUtils.renderLine(pose, consumer, vertices[0], vertices[4], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[1], vertices[5], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[2], vertices[6], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[3], vertices[7], 0, 0, 1, r, g, b, a);
+    }
+    public static void renderOBBOutline(PoseStack.Pose pose, VertexConsumer consumer, OBB obb,float r, float g, float b, float a) {
+        // 移动到中心 - 这里正确，保持不变
+        Vec3[] vertices = obb.getVertices();
+        // 底部四边形（使用(0,1,0)作为法线）
+        RenderUtils.renderLine(pose, consumer, vertices[0], vertices[1], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[1], vertices[3], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[3], vertices[2], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[2], vertices[0], 0, 1, 0, r, g, b, a);
+        // 顶部四边形（使用(0,1,0)作为法线）
+        RenderUtils.renderLine(pose, consumer, vertices[4], vertices[5], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[5], vertices[7], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[7], vertices[6], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[6], vertices[4], 0, 1, 0, r, g, b, a);
+        // 垂直边（使用(0,0,1)作为法线）
+        RenderUtils.renderLine(pose, consumer, vertices[0], vertices[4], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[1], vertices[5], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[2], vertices[6], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[3], vertices[7], 0, 0, 1, r, g, b, a);
+    }
+
 }

@@ -20,7 +20,9 @@ public class PlayerHandler {
     @SubscribeEvent
     public static void onPlayerTickPre(PlayerTickEvent.Post event) {
     }
-
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+    }
     @SubscribeEvent
     public static void onPlayer(PlayerEvent.PlayerLoggedInEvent event) {
 //        event.getEntity().getPersistentData().remove(GasterBlasterProItem.GASTER_BLASTER_PRO_KEY);

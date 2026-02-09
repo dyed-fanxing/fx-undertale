@@ -1,4 +1,4 @@
-package com.sakpeipei.undertale.common;
+package com.sakpeipei.undertale.common.phys;
 
 import net.minecraft.world.phys.Vec3;
 

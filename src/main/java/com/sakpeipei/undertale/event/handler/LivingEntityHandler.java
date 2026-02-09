@@ -52,7 +52,7 @@ public class LivingEntityHandler {
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
         Entity entity = event.getEntity();
-        if(entity instanceof Sans){
+        if(entity instanceof FlyingBone){
 //            entity.discard();
 //            event.setCanceled(true);
         }

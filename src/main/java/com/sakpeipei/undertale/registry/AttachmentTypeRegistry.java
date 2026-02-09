@@ -25,8 +25,9 @@ public class AttachmentTypeRegistry {
             "karma_attack", () -> AttachmentType.builder(KaramAttackData::new).serialize(KaramAttackData.CODEC).build()
     );
     public static final Supplier<AttachmentType<GravityData>> GRAVITY = ATTACHMENT_TYPES.register(
-            "gravity", () -> AttachmentType.builder(GravityData::new).serialize(GravityData.CODEC).build()
+            "gravity", () -> AttachmentType.builder(()->new GravityData()).serialize(GravityData.CODEC).build()
     );
+
     public static void register(IEventBus bus) {
         ATTACHMENT_TYPES.register(bus);
     }

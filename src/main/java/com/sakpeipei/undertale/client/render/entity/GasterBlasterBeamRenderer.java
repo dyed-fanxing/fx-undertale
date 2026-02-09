@@ -48,7 +48,7 @@ public class GasterBlasterBeamRenderer {
             RenderUtils.renderSphere(poseStack.last(),buffer.getBuffer(BEAM_FRONT_TYPE), partialSize, segments, r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
         }else{
             Vec3 dir = entity.getEnd().subtract(entity.getStart());
-            poseStack.mulPose(Axis.YP.rotationDegrees(RotUtils.yRotD(dir) + 90f));
+            poseStack.mulPose(Axis.YP.rotationDegrees(-RotUtils.yRotD(dir)));
             poseStack.mulPose(Axis.XP.rotationDegrees(RotUtils.xRotD(dir) + 90f)); // 要渲染的胶囊体默认是竖向的Y轴的，需要旋转到Z轴
             if(entity.tickCount < shotTick) {
                 partialSize = Mth.lerp((partialTicks + entity.tickCount)/shotTick, 0, halfSize);

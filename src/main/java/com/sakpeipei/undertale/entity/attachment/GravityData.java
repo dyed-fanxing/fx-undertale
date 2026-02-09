@@ -1,13 +1,19 @@
 package com.sakpeipei.undertale.entity.attachment;
 
-import com.mojang.math.Axis;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.sakpeipei.undertale.common.LocalDirection;
+import com.sakpeipei.undertale.common.phys.LocalDirection;
 import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
+import com.sakpeipei.undertale.utils.CoordsUtils;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Targeting;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Sakpeipei
@@ -15,151 +21,211 @@ import org.joml.Quaternionf;
  * 重力方向数据 - 存储实体的重力状态
  */
 public class GravityData {
-    // 控制方向
-    private Vec3 vec3 = new Vec3(0, -1, 0);
-    private Vec3 previousGravityDirection = new Vec3(0, -1, 0);
-    private int transitionTicks = 0;
-    private static final int TRANSITION_DURATION = 10;
-    /**
-     * 是否激活重力，标记控制是否为重力控制
-     * 若为true，则会改变目标姿态和局部重力
-     * 若为false，则只是给予目标冲量
-     */
-    private boolean active;
+    private static final Logger log = LoggerFactory.getLogger(GravityData.class);
+    // 预定义的重力方向四元数
+    public static final Quaternionf QUAT_NORTH = new Quaternionf().rotationX(Mth.PI * 0.5f);  // 绕X转90度
+    public static final Quaternionf QUAT_SOUTH = new Quaternionf().rotationX(-Mth.PI * 0.5f); // 绕X转-90度
+    public static final Quaternionf QUAT_EAST = new Quaternionf().rotationZ(Mth.PI * 0.5f);   // 绕Z转90度
+    public static final Quaternionf QUAT_WEST = new Quaternionf().rotationZ(-Mth.PI * 0.5f);  // 绕Z转-90度
+
     // Codec用于序列化，支持网络同步
-    public static final Codec<GravityData> CODEC = RecordCodecBuilder.create(instance ->
-            instance.group(
-                    Vec3.CODEC.fieldOf("vec3").forGetter(data -> data.vec3),
-                    Vec3.CODEC.fieldOf("previousGravityDirection").forGetter(data -> data.previousGravityDirection),
-                    Codec.INT.fieldOf("transitionTicks").forGetter(data -> data.transitionTicks)
-            ).apply(instance, GravityData::new)
-    );
+    public static final Codec<GravityData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Direction.CODEC.fieldOf("gravity").forGetter(data -> data.gravity)
+    ).apply(instance, GravityData::new));
 
-    // 构造方法
-    public GravityData() {}
+    // 控制方向
+    private Direction gravity = Direction.DOWN;
+    private Quaternionf logicToWorld = new Quaternionf();
+    private Quaternionf worldToLogic = new Quaternionf();
+    private Quaternionf oldToNewWorld = new Quaternionf();
 
-    public GravityData(Vec3 vec3, Vec3 previousGravityDirection, int transitionTicks) {
-        this.vec3 = vec3;
-        this.previousGravityDirection = previousGravityDirection;
-        this.transitionTicks = transitionTicks;
+    public GravityData() {
     }
 
-    // Getter 和 Setter 方法
-    public Vec3 getVec3() {
-        return vec3;
+    public GravityData(Direction gravity) {
+        this.gravity = gravity;
+        this.logicToWorld = getGravityQuaternionf(gravity);
+        this.worldToLogic = logicToWorld.invert(new Quaternionf());
     }
-    public boolean isActive() {
-        return active;
+    public GravityData(Direction forward, LocalDirection logicGravity) {
+        this.gravity = switch (logicGravity) {
+            case DOWN -> Direction.DOWN;
+            case UP -> Direction.UP;
+            case FRONT -> forward;
+            case BACK -> forward.getOpposite();
+            case LEFT -> forward.getCounterClockWise();
+            case RIGHT -> forward.getClockWise();
+        };
+        this.logicToWorld = getGravityQuaternionf(gravity);
+        this.worldToLogic = logicToWorld.invert(new Quaternionf());
     }
-
-    public void setGravityDirection(Vec3 direction) {
-        this.previousGravityDirection = this.vec3;
-        this.vec3 = direction.normalize();
-        this.transitionTicks = TRANSITION_DURATION;
+    public GravityData(Direction forward, Quaternionf oldWorldToLogic) {
+        this.gravity = forward;
+        this.logicToWorld = getGravityQuaternionf(gravity);
+        this.worldToLogic = logicToWorld.invert(new Quaternionf());
+        this.oldToNewWorld = logicToWorld.mul(oldWorldToLogic,new Quaternionf());
     }
-
-    public Vec3 getPreviousGravityDirection() {
-        return previousGravityDirection;
+    public Direction getGravity() {
+        return gravity;
+    }
+    /**
+     * 获取局部坐标系的右方向在世界坐标系中的向量
+     * 局部右方向 = (1,0,0)，转换到世界坐标系
+     */
+    public Vector3f getRight() {
+        // 局部右方向 (1,0,0) 转换到世界坐标系
+        return logicToWorld.transform(new Vector3f(1, 0, 0));
     }
 
     /**
-     * 基于攻击者朝向设置相对重力方向
+     * 获取局部坐标系的上方向在世界坐标系中的向量
+     * 局部上方向 = (0,1,0)，转换到世界坐标系
      */
-    public void setRelativeGravity(Entity attacker, LocalDirection localDirection) {
-        switch (localDirection) {
-            case FRONT -> setGravityDirection(attacker.getLookAngle().normalize());
-            case BACK -> setGravityDirection(attacker.getLookAngle().reverse().normalize());
-            case LEFT -> {
-                Vec3 lookVec = attacker.getLookAngle();
-                setGravityDirection(new Vec3(-lookVec.z, lookVec.y, lookVec.x).normalize());
-            }
-            case RIGHT -> {
-                Vec3 lookVec = attacker.getLookAngle();
-                setGravityDirection(new Vec3(lookVec.z, lookVec.y, -lookVec.x).normalize());
-            }
-            case UP -> setGravityDirection(new Vec3(0, 1, 0));
-            case DOWN -> setGravityDirection(new Vec3(0, -1, 0));
-        }
+    public Vector3f getUp() {
+        return logicToWorld.transform(new Vector3f(0, 1, 0));
+    }
+
+    /**
+     * 获取局部坐标系的前方向在世界坐标系中的向量
+     * 局部前方向 = (0,0,1)，转换到世界坐标系
+     */
+    public Vector3f getForward() {
+        return logicToWorld.transform(new Vector3f(0, 0, 1));
+    }
+
+
+
+    public Quaternionf getLogicToWorld() {
+        return logicToWorld;
+
+    }
+
+    public Quaternionf getWorldToLogic() {
+        return worldToLogic;
+    }
+
+    @Override
+    public String toString() {
+        return "GravityData{" +
+                "gravity=" + gravity +
+                ",gravityNormal=" + gravity.getNormal() +
+                ",forward=" + getForward() +
+                ",up=" + getUp() +
+                ",right=" + getRight() +
+                '}';
     }
 
     /**
      * 对目标实体应用攻击者的相对重力
      */
-    public static void applyRelativeGravity(Entity attacker, Entity target, LocalDirection direction) {
-        target.getData(AttachmentTypeRegistry.GRAVITY).setRelativeGravity(attacker, direction);
+    public static GravityData applyRelativeGravity(Entity attacker, Entity target, LocalDirection logicGravity) {
+        Direction forward = Direction.fromYRot(attacker.getYHeadRot());
+        GravityData oldGravity = target.getData(AttachmentTypeRegistry.GRAVITY);
+        GravityData gravityData = new GravityData(calculateGravity(forward, logicGravity),oldGravity.getWorldToLogic());
+        log.info("应用的重力坐标系：{},逻辑转世界矩阵：{},世界转逻辑矩阵：{}",gravityData,gravityData.getLogicToWorld(),gravityData.getWorldToLogic());
+        target.setData(AttachmentTypeRegistry.GRAVITY, gravityData);
+        gravityData.applyGravity(target,oldGravity);
+        return gravityData;
     }
 
-    /**
-     * 获取从默认重力到当前重力的旋转四元数
-     */
-    public Quaternionf getRotationQuaternion() {
-        if (transitionTicks > 0) {
-            float progress = 1.0f - (transitionTicks / (float) TRANSITION_DURATION);
-            Vec3 interpolated = lerp(previousGravityDirection, vec3, progress);
-            return getRotationFromTo(new Vec3(0, -1, 0), interpolated);
+
+    public void applyGravity(Entity target,GravityData oldGravity) {
+        Vec3 posOld = target.position();
+        Vec3 logicPos = switch (oldGravity.getGravity()) {
+            case DOWN -> target.position();
+            case UP   -> target.position().subtract(0,target.getBbHeight(),0);
+            case NORTH -> null;
+            case SOUTH -> null;
+            case WEST -> null;
+            case EAST -> null;
+        };
+        float xRotOld = target.getXRot();
+        float yRotOld = target.getYRot();
+        switch (this.gravity) {
+            case UP   -> {
+                target.setPos(logicPos.add(0,target.getBbHeight(),0));
+            }
+//            case EAST -> ppos.add(target.getBbHeight()*0.5f,target.getBbWidth(),0);
+//            case WEST -> ppos.add(-target.getBbHeight()*0.5f,target.getBbWidth(),0);
+//            case SOUTH -> ppos.add(0,target.getBbWidth(),target.getBbHeight()*0.5f);
+//            case NORTH -> ppos.add(0,target.getBbWidth(),-target.getBbHeight()*0.5f);
+        };
+            log.info("target之前世界坐标系的角度：({},{})，位置：{}，之后世界坐标系的角度：({},{})，位置：{}",xRotOld,yRotOld, posOld,target.getXRot(),target.getYRot(),target.position());
+    }
+
+    public void applyPos(Entity target,Direction gravity,Quaternionf oldWorldToLogic) {
+        Vec3 logicPos = CoordsUtils.transform(target.position(), oldWorldToLogic);
+        switch (this.gravity) {
+            case UP -> {
+                Quaternionf localRotation = new Quaternionf().rotationY(target.getYRot()).rotateX(target.getXRot());
+                Quaternionf re = localRotation.mul(this.logicToWorld, new Quaternionf());
+                Vector3f eulerAnglesXYZ = re.getEulerAnglesXYZ(new Vector3f());
+                target.setXRot(eulerAnglesXYZ.x);
+                target.setYRot(eulerAnglesXYZ.y);
+                target.setPos(logicPos.add(0, target.getBbHeight(), 0));
+            }
         }
-        return getRotationFromTo(new Vec3(0, -1, 0), vec3);
     }
+    private static float[] getYawPitchFromQuaternion(Quaternionf q) {
+        // 从四元数计算前向向量
+        float x = 2 * (q.x * q.z - q.w * q.y);
+        float y = 2 * (q.y * q.z + q.w * q.x);
+        float z = 1 - 2 * (q.x * q.x + q.y * q.y);
 
-    public void tick() {
-        if (transitionTicks > 0) {
-            transitionTicks--;
+        // 标准化
+        float length = (float)Math.sqrt(x * x + y * y + z * z);
+        x /= length;
+        y /= length;
+        z /= length;
+
+        // 计算 yaw 和 pitch
+        float yaw = (float)Math.toDegrees(Math.atan2(x, z));
+        float pitch = (float)Math.toDegrees(-Math.asin(y));
+
+        return new float[]{yaw, pitch};
+    }
+    public static Direction calculateGravity(Direction forward, LocalDirection logicGravity) {
+        return switch (logicGravity) {
+            case DOWN -> Direction.DOWN;
+            case UP -> Direction.UP;
+            case FRONT -> forward;
+            case BACK -> forward.getOpposite();
+            case LEFT -> forward.getCounterClockWise();
+            case RIGHT -> forward.getClockWise();
+        };
+    }
+    /**
+     * 根据重力方向获取局部→世界变换矩阵
+     */
+    public static Quaternionf getGravityQuaternionf(Direction gravity) {
+        return switch (gravity) {
+            case DOWN -> new Quaternionf();
+            case UP -> new Quaternionf().rotationZ(Mth.PI);
+            case NORTH -> QUAT_NORTH;
+            case SOUTH -> QUAT_SOUTH;
+            case EAST -> QUAT_EAST;
+            case WEST -> QUAT_WEST;
+        };
+    }
+    public static int round(float p, float v) {
+        int i = (int)p;
+        if (v > 0) {
+            return p > (float)i ? i + 1 : i;
+        } else {
+            return p < (float)i ? i - 1 : i;
         }
     }
-
-    /**
-     * 计算从方向A旋转到方向B所需的四元数
-     */
-    private Quaternionf getRotationFromTo(Vec3 from, Vec3 to) {
-        from = from.normalize();
-        to = to.normalize();
-
-        if (from.equals(to)) {
-            return new Quaternionf(0, 0, 0, 1);
-        }
-
-        if (from.equals(to.reverse())) {
-            return Axis.ZP.rotationDegrees(180);
-        }
-
-        Vec3 axis = from.cross(to).normalize();
-        double dot = Math.max(-1, Math.min(1, from.dot(to)));
-        double angle = Math.acos(dot);
-
-        Quaternionf rotation = new Quaternionf();
-        rotation.setAngleAxis((float)angle, (float)axis.x, (float)axis.y, (float)axis.z);
-        return rotation;
+    public static int round(double p, double v) {
+        int i = (int)p;
+        return p > (float)i ? i + (int)v : i;
     }
-
     /**
-     * 线性插值计算
+     * 根据v的正负进行向上取整或向下取整
+     * @param p 被取整数
+     * @param v 必须传递1或-1
      */
-    private Vec3 lerp(Vec3 start, Vec3 end, float progress) {
-        double x = start.x + (end.x - start.x) * progress;
-        double y = start.y + (end.y - start.y) * progress;
-        double z = start.z + (end.z - start.z) * progress;
-        return new Vec3(x, y, z);
-    }
-
-    /**
-     * 重置为默认重力（向下）
-     */
-    public void reset() {
-        setGravityDirection(new Vec3(0, -1, 0));
-    }
-
-    /**
-     * 获取过渡进度（0.0到1.0）
-     */
-    public float getTransitionProgress() {
-        if (transitionTicks <= 0) return 1.0f;
-        return 1.0f - (transitionTicks / (float) TRANSITION_DURATION);
-    }
-
-    /**
-     * 检查是否正在过渡中
-     */
-    public boolean isTransitioning() {
-        return transitionTicks > 0;
+    public static int round(double p, int v) {
+        int i = (int)p;
+        return p > (float)i ? i + v : i;
     }
 }

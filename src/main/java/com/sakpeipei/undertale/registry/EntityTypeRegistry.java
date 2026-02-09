@@ -3,10 +3,7 @@ package com.sakpeipei.undertale.registry;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.entity.boss.Sans;
 import com.sakpeipei.undertale.entity.projectile.FlyingBone;
-import com.sakpeipei.undertale.entity.summon.GasterBlaster;
-import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
-import com.sakpeipei.undertale.entity.summon.GroundBone;
-import com.sakpeipei.undertale.entity.summon.MovingGroundBone;
+import com.sakpeipei.undertale.entity.summon.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -44,15 +41,15 @@ public class EntityTypeRegistry {
             );
     public static final DeferredHolder<EntityType<?>, EntityType<Sans>> SANS = register("sans",
             EntityType.Builder.of(Sans::new, MobCategory.MONSTER)
-                    .sized(0.8f, 1.8f)  // 碰撞箱
+                    .sized(0.8f, 2.0f)  // 碰撞箱
                     .eyeHeight(1.6665f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位)
     );
 
-    public static final DeferredHolder<EntityType<?>, EntityType<FlyingBone>> FLYING_BONE = register("flying_bone",
-            EntityType.Builder.<FlyingBone>of(FlyingBone::new, MobCategory.MISC)
-                    .sized(0.5f,0.5f)
-                    .eyeHeight(0.25f)
+    public static final DeferredHolder<EntityType<?>, EntityType<GroundBone>> GROUND_BONE = register("ground_bone",
+            EntityType.Builder.<GroundBone>of(GroundBone::new, MobCategory.MISC)
+                    .sized(0.25f, 1.0f)  // 碰撞箱
+                    .eyeHeight(0.5445f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
     public static final DeferredHolder<EntityType<?>, EntityType<MovingGroundBone>> MOVING_GROUND_BONE = register("moving_ground_bone",
@@ -61,10 +58,16 @@ public class EntityTypeRegistry {
                     .eyeHeight(0.5445f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
-    public static final DeferredHolder<EntityType<?>, EntityType<GroundBone>> GROUND_BONE = register("ground_bone",
-            EntityType.Builder.<GroundBone>of(GroundBone::new, MobCategory.MISC)
-                    .sized(0.25f, 1.0f)  // 碰撞箱
-                    .eyeHeight(0.5445f)
+    public static final DeferredHolder<EntityType<?>, EntityType<LateralBone>> LATERAL_BONE = register("lateral_bone",
+            EntityType.Builder.<LateralBone>of(LateralBone::new, MobCategory.MISC)
+                    .sized(0.25f, 0.25f)  // 碰撞箱
+                    .eyeHeight(0.125f)
+                    .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
+    );
+    public static final DeferredHolder<EntityType<?>, EntityType<FlyingBone>> FLYING_BONE = register("flying_bone",
+            EntityType.Builder.<FlyingBone>of(FlyingBone::new, MobCategory.MISC)
+                    .sized(0.3125f,0.3125f)
+                    .eyeHeight(0.25f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
 }

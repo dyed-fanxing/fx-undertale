@@ -30,9 +30,10 @@ public class Setup {
         event.registerEntityRenderer(EntityTypeRegistry.GASTER_BLASTER.get(), GasterBlasterRender::new);
         event.registerEntityRenderer(EntityTypeRegistry.GASTER_BLASTER_PRO.get(), GasterBlasterProRender::new);
         event.registerEntityRenderer(EntityTypeRegistry.SANS.get(), SansRender::new);
-        event.registerEntityRenderer(EntityTypeRegistry.FLYING_BONE.get(), FlyingBoneRender::new);
         event.registerEntityRenderer(EntityTypeRegistry.GROUND_BONE.get(), GroundBoneRender::new);
         event.registerEntityRenderer(EntityTypeRegistry.MOVING_GROUND_BONE.get(), MovingGroundBoneRender::new);
+        event.registerEntityRenderer(EntityTypeRegistry.LATERAL_BONE.get(), LateralBoneRender::new);
+        event.registerEntityRenderer(EntityTypeRegistry.FLYING_BONE.get(), FlyingBoneRender::new);
     }
 
     /**
@@ -61,6 +62,7 @@ public class Setup {
         registrar.playToClient(AnimPacket.TYPE, AnimPacket.STREAM_CODEC, AnimPacket::handle);
 //        registrar.playToClient(GasterBlasterBeamEndPacket.TYPE,GasterBlasterBeamEndPacket.STREAM_CODEC, GasterBlasterBeamEndPacket::handle);
         registrar.playToClient(TimeJumpTeleportPacket.TYPE,TimeJumpTeleportPacket.STREAM_CODEC, TimeJumpTeleportPacket::handle);
+        registrar.playToClient(GravityPacket.TYPE,GravityPacket.STREAM_CODEC, GravityPacket::handle);
     }
 }
 
