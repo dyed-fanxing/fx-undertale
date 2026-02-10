@@ -7,7 +7,6 @@
     "AbstractArrowMixin",
     "gravity.EntityGravityMixin",
     "gravity.LivingEntityGravityMixin",
-    "gravity.LocalPlayerGravityMinix",
     "gravity.PlayerGravityMixin",
     "gravity.ServerGamePacketListenerImplMixin"
   ],
@@ -17,7 +16,8 @@
     "TimeJumpTeleportMixin",
     "gravity.CameraMixin",
     "gravity.EntityRenderDispatcherGravityMixin",
-    "gravity.LivingEntityRendererGravityMixin"
+    "gravity.LivingEntityRendererGravityMixin",
+    "gravity.MouseHandlerGravityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

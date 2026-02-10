@@ -17,6 +17,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Player.class)
 public abstract class PlayerGravityMixin {
 
+    /**
+     * 玩家能否以当前姿势Pose适应所在方块与实体
+     * 根据重力方向重写需要进行碰撞检测的碰撞箱
+     */
     @Inject(method = "canPlayerFitWithinBlocksAndEntitiesWhen", at = @At("HEAD"), cancellable = true)
     protected void canPlayerFitWithinBlocksAndEntitiesWhen(Pose pose, CallbackInfoReturnable<Boolean> cir) {
         Player self = (Player) (Object) (this);
@@ -34,6 +38,12 @@ public abstract class PlayerGravityMixin {
             case EAST -> null;
         });
     }
+
+
+    /**
+     * 对于dx和dz位移以及高度大于maxUpStep的方块，会不会掉落下去，用于玩家shift在方块边缘时，高度大于maxUpStep的方块会不会掉落
+     * 根据重力方向重写需要进行碰撞检测的碰撞箱
+     */
     @Inject(method = "canFallAtLeast", at = @At("HEAD"), cancellable = true)
     protected void canFallAtLeast(double dx, double dz, float maxUpStep, CallbackInfoReturnable<Boolean> cir) {
         Player self = (Player) (Object) (this);

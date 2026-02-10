@@ -26,12 +26,10 @@ import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -47,11 +45,6 @@ import static net.minecraft.world.entity.Entity.collideBoundingBox;
 @Mixin(Entity.class)
 public abstract class EntityGravityMixin {
     private static final Logger log = LoggerFactory.getLogger(EntityGravityMixin.class);
-//    protected abstract Vec3 collide(Vec3 movement);
-
-//    @Shadow public boolean horizontalCollision;
-//    @Shadow public boolean verticalCollision;
-//    @Shadow public boolean verticalCollisionBelow;
 
     @Shadow
     private Vec3 position;
@@ -106,6 +99,10 @@ public abstract class EntityGravityMixin {
         return null;
     }
 
+
+    /**
+     * 根据重力方向重新返回Dimensions
+     */
     @Inject(method = "getDimensions", at = @At("HEAD"), cancellable = true)
     public void getDimensions(Pose pose, CallbackInfoReturnable<EntityDimensions> cir) {
         Entity self = (Entity) (Object) (this);
@@ -118,6 +115,9 @@ public abstract class EntityGravityMixin {
         });
     }
 
+    /**
+     * 根据重力方向重新构建碰撞箱
+     */
     @Inject(method = "makeBoundingBox", at = @At("HEAD"), cancellable = true)
     protected void makeBoundingBox(CallbackInfoReturnable<AABB> cir) {
         Entity self = (Entity) (Object) (this);
@@ -135,6 +135,9 @@ public abstract class EntityGravityMixin {
         });
     }
 
+    /**
+     * 根据重力方向返回眼睛Y轴位置
+     */
     @Inject(method = "getEyeY", at = @At(value = "HEAD"), cancellable = true)
     public void getEyeY(CallbackInfoReturnable<Double> cir) {
         Entity self = (Entity) (Object) (this);
@@ -148,7 +151,9 @@ public abstract class EntityGravityMixin {
         });
     }
 
-
+    /**
+     * 根据重力方向返回眼睛位置
+     */
     @Inject(method = "getEyePosition()Lnet/minecraft/world/phys/Vec3;", at = @At(value = "HEAD"), cancellable = true)
     public void getEyePosition(CallbackInfoReturnable<Vec3> cir) {
         Entity self = (Entity) (Object) (this);
@@ -164,73 +169,53 @@ public abstract class EntityGravityMixin {
         });
     }
 
-
+    /**
+     * 根据重力方向返回眼睛位置
+     */
     @Inject(method = "getEyePosition(F)Lnet/minecraft/world/phys/Vec3;", at = @At(value = "HEAD"), cancellable = true)
-    public void getEyePositionLerp(float lerp, CallbackInfoReturnable<Vec3> cir) {
+    public void getEyePositionLerp(float partialTick, CallbackInfoReturnable<Vec3> cir) {
         Entity self = (Entity) (Object) (this);
         GravityData data = self.getData(AttachmentTypeRegistry.GRAVITY);
         if (data.getGravity() == Direction.DOWN) return;
         cir.cancel();
         cir.setReturnValue(switch (data.getGravity()) {
             case UP -> new Vec3(
-                    Mth.lerp(lerp, self.xo, self.getX()),
-                    Mth.lerp(lerp, self.yo, self.getY()) - this.eyeHeight,
-                    Mth.lerp(lerp, self.zo, self.getZ())
+                    Mth.lerp(partialTick, self.xo, self.getX()),
+                    Mth.lerp(partialTick, self.yo, self.getY()) - this.eyeHeight,
+                    Mth.lerp(partialTick, self.zo, self.getZ())
             );
             case DOWN -> new Vec3(
-                    Mth.lerp(lerp, self.xo, self.getX()),
-                    Mth.lerp(lerp, self.yo, self.getY()) + this.eyeHeight,
-                    Mth.lerp(lerp, self.zo, self.getZ())
+                    Mth.lerp(partialTick, self.xo, self.getX()),
+                    Mth.lerp(partialTick, self.yo, self.getY()) + this.eyeHeight,
+                    Mth.lerp(partialTick, self.zo, self.getZ())
             );
             case EAST -> new Vec3(
-                    Mth.lerp(lerp, self.xo, self.getX()) - this.eyeHeight,
-                    Mth.lerp(lerp, self.yo, self.getY()),
-                    Mth.lerp(lerp, self.zo, self.getZ())
+                    Mth.lerp(partialTick, self.xo, self.getX()) - this.eyeHeight,
+                    Mth.lerp(partialTick, self.yo, self.getY()),
+                    Mth.lerp(partialTick, self.zo, self.getZ())
             );
             case WEST -> new Vec3(
-                    Mth.lerp(lerp, self.xo, self.getX()) + this.eyeHeight,
-                    Mth.lerp(lerp, self.yo, self.getY()),
-                    Mth.lerp(lerp, self.zo, self.getZ())
+                    Mth.lerp(partialTick, self.xo, self.getX()) + this.eyeHeight,
+                    Mth.lerp(partialTick, self.yo, self.getY()),
+                    Mth.lerp(partialTick, self.zo, self.getZ())
             );
             case SOUTH -> new Vec3(
-                    Mth.lerp(lerp, self.xo, self.getX()),
-                    Mth.lerp(lerp, self.yo, self.getY()),
-                    Mth.lerp(lerp, self.zo, self.getZ()) - this.eyeHeight
+                    Mth.lerp(partialTick, self.xo, self.getX()),
+                    Mth.lerp(partialTick, self.yo, self.getY()),
+                    Mth.lerp(partialTick, self.zo, self.getZ()) - this.eyeHeight
             );
             case NORTH -> new Vec3(
-                    Mth.lerp(lerp, self.xo, self.getX()),
-                    Mth.lerp(lerp, self.yo, self.getY()),
-                    Mth.lerp(lerp, self.zo, self.getZ()) + this.eyeHeight
+                    Mth.lerp(partialTick, self.xo, self.getX()),
+                    Mth.lerp(partialTick, self.yo, self.getY()),
+                    Mth.lerp(partialTick, self.zo, self.getZ()) + this.eyeHeight
             );
         });
     }
 
-
-    @Inject(method = "turn", at = @At("HEAD"), cancellable = true)
-    private void turn(double yawChange, double pitchChange, CallbackInfo ci) {
-        Entity self = (Entity) (Object) (this);
-        GravityData data = self.getData(AttachmentTypeRegistry.GRAVITY);
-        if (data.getGravity() == Direction.DOWN) return;
-        ci.cancel();
-        switch (data.getGravity()) {
-            case UP -> {
-                yawChange = -yawChange;
-                pitchChange = -pitchChange;
-            }
-        }
-        float f = (float) pitchChange * 0.15F;
-        float f1 = (float) yawChange * 0.15F;
-        self.setXRot(self.getXRot() + f);
-        self.setYRot(self.getYRot() + f1);
-        self.setXRot(Mth.clamp(self.getXRot(), -90.0F, 90.0F));
-        self.xRotO += f;
-        self.yRotO += f1;
-        self.xRotO = Mth.clamp(self.xRotO, -90.0F, 90.0F);
-        if (this.vehicle != null) {
-            this.vehicle.onPassengerTurned(self);
-        }
-    }
-
+    /**
+     * moveRelative 根据当前身体角度处理向前移动时的在X和Z轴上的速度增量
+     * 根据重力方向修正yRot角度：由于速度存储的是局部，所以需要yRot由世界转局部
+     */
     @ModifyArg(method = "moveRelative", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getInputVector(Lnet/minecraft/world/phys/Vec3;FF)Lnet/minecraft/world/phys/Vec3;"),index = 2)
     public float getInputVector(float yRot) {
         Entity self = (Entity) (Object) this;
@@ -247,7 +232,10 @@ public abstract class EntityGravityMixin {
         };
     }
 
-
+    /**
+     * 根据重力方向设置自身所在的方块位置blockPosition
+     * 默认坐标系下为向下对齐，所以需要修正
+     */
     @Inject(method = "setPosRaw", at = @At("HEAD"), cancellable = true)
     public final void setPosRaw(double x, double y, double z, CallbackInfo ci) {
         Entity self = (Entity) (Object) this;
@@ -278,7 +266,10 @@ public abstract class EntityGravityMixin {
         }
     }
 
-
+    /**
+     * 根据重力方向检查脚下的可支撑方块位置mainSupportingBlockPos
+     * 默认坐标系下为向下对齐，所以需要修正
+     */
     @Inject(method = "checkSupportingBlock", at = @At("HEAD"), cancellable = true)
     private void checkSupportingBlock(boolean verticalCollisionBelow, Vec3 deltaMovement, CallbackInfo ci) {
         Entity self = (Entity) (Object) this;
@@ -311,7 +302,10 @@ public abstract class EntityGravityMixin {
         ci.cancel();
     }
 
-
+    /**
+     * 根据重力方向设置脚下的方块位置BlockPos
+     * 默认坐标系下为向下对齐，所以需要修正
+     */
     @Inject(method = "getOnPos(F)Lnet/minecraft/core/BlockPos;", at = @At("HEAD"), cancellable = true)
     private void BlockPos(float dy, CallbackInfoReturnable<BlockPos> cir) {
         Entity self = (Entity) (Object) this;
@@ -344,32 +338,29 @@ public abstract class EntityGravityMixin {
         }
     }
 
-
-    @Redirect(
-            method = "move",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lnet/minecraft/world/entity/Entity;setPos(DDD)V"
-            )
-    )
-    private void setPos(Entity instance, double x, double y, double z) {
-        if (instance instanceof Player) {
-            GravityData data = instance.getData(AttachmentTypeRegistry.GRAVITY);
-            if (data.getGravity() == Direction.DOWN) {
-                instance.setPos(x, y, z);
-                return;
-            }
-            double posX = instance.getX();
-            double posY = instance.getY();
-            double posZ = instance.getZ();
-            double logicX = x - posX, logicY = y - posY, logicZ = z - posZ;
-            double[] worldDD = CoordsUtils.transformArray(logicX, logicY, logicZ, data.getLogicToWorld());
-            instance.setPos(posX + worldDD[0], posY + worldDD[1], posZ + worldDD[2]);
-        } else {
-            instance.setPos(x, y, z);
-        }
+    /**
+     * 将局部速度转换为世界速度加到世界位置
+     */
+    @ModifyArgs(method = "move",at = @At(value = "INVOKE",target = "Lnet/minecraft/world/entity/Entity;setPos(DDD)V"))
+    private void setPosM(Args args) {
+        Entity self = (Entity) (Object) this;
+        GravityData data = self.getData(AttachmentTypeRegistry.GRAVITY);
+        Direction gravity = data.getGravity();
+        if (gravity == Direction.DOWN) return;
+        double posX = self.getX();
+        double posY = self.getY();
+        double posZ = self.getZ();
+        // 减出增量，对增量进行转换
+        double[] worldDD = CoordsUtils.transformArray((double) args.get(0) - posX, (double) args.get(1) - posY, (double) args.get(2) - posZ, data.getLogicToWorld());
+        args.set(0, posX+worldDD[0]);
+        args.set(1, posY+worldDD[1]);
+        args.set(2, posZ+worldDD[2]);
     }
 
+
+    /**
+     * 根据重力方向重写碰撞检测
+     */
     @Inject(method = "collide", at = @At("HEAD"), cancellable = true)
     private void collide(Vec3 logicDD, CallbackInfoReturnable<Vec3> cir) {
         Entity self = (Entity) (Object) this;
@@ -436,6 +427,9 @@ public abstract class EntityGravityMixin {
         }
     }
 
+    /**
+     * 根据重力方向重收集可以走上 <=maxUpStep高度方块 的高度列表
+     */
     @Unique
     private static float[] undertale$collectCandidateStepUpHeights(AABB aabb, List<VoxelShape> voxelShapes, float maxUpStep, Direction gravity, float dy) {
         FloatSet floatset = new FloatArraySet(4);
@@ -465,18 +459,4 @@ public abstract class EntityGravityMixin {
         return afloat;
     }
 
-    @Inject(method = "move", at = @At("HEAD"))
-    public void moveHead(MoverType p_19973_, Vec3 p_19974_, CallbackInfo ci) {
-        Entity self = (Entity) (Object) this;
-        if (self instanceof Player && self.level().isClientSide) {
-        }
-    }
-
-    @Inject(method = "move", at = @At("TAIL"))
-    public void moveTail(MoverType p_19973_, Vec3 p_19974_, CallbackInfo ci) {
-        Entity self = (Entity) (Object) this;
-        if (self instanceof Player && !self.level().isClientSide) {
-//            log.info("脚踩的方块状态：{},位置：{},自身所在的方块状态：{},位置：{}，速度影响因子：{}", self.level().getBlockState(self.getOnPos()), self.getOnPos(), self.level().getBlockState(self.blockPosition()), self.blockPosition(), this.getBlockSpeedFactor());
-        }
-    }
 }

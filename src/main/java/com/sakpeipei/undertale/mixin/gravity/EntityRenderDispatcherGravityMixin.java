@@ -28,6 +28,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(EntityRenderDispatcher.class)
 public class EntityRenderDispatcherGravityMixin {
 
+
+    /**
+     * 根据重力方向渲染偏移
+     * @param offset 局部偏移
+     */
     @ModifyVariable(method = "render",at = @At(value = "INVOKE_ASSIGN",
                     target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;getRenderOffset(Lnet/minecraft/world/entity/Entity;F)Lnet/minecraft/world/phys/Vec3;"),
             ordinal = 0)
