@@ -61,10 +61,13 @@ public abstract class CameraMixin {
         if (data.getGravity() != Direction.DOWN) {
             switch (gravity) {
                 case UP -> {
+
                     roll += 180f;
+                    yaw += 180f;
                     this.yRot = yaw;
                     this.xRot = pitch;
                     this.roll = roll;
+                    // 计算旋转四元数
                     this.rotation.rotationYXZ((float)Math.PI - yaw * ((float)Math.PI / 180F), -pitch * ((float)Math.PI / 180F), -roll * ((float)Math.PI / 180F));
                     FORWARDS.rotate(this.rotation, this.forwards);
                     UP.rotate(this.rotation, this.up);

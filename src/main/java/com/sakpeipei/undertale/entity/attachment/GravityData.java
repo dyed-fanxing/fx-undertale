@@ -207,25 +207,4 @@ public class GravityData {
             case WEST -> QUAT_WEST;
         };
     }
-    public static int round(float p, float v) {
-        int i = (int)p;
-        if (v > 0) {
-            return p > (float)i ? i + 1 : i;
-        } else {
-            return p < (float)i ? i - 1 : i;
-        }
-    }
-    public static int round(double p, double v) {
-        int i = (int)p;
-        return p > (float)i ? i + (int)v : i;
-    }
-    /**
-     * 根据v的正负进行向上取整或向下取整
-     * @param p 被取整数
-     * @param v 必须传递1或-1
-     */
-    public static int round(double p, int v) {
-        int i = (int)p;
-        return p > (float)i ? i + v : i;
-    }
 }

@@ -3,9 +3,7 @@ package com.sakpeipei.undertale.mixin.gravity;
 import com.sakpeipei.undertale.entity.attachment.GravityData;
 import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.undertale.utils.CoordsUtils;
-import it.unimi.dsi.fastutil.doubles.DoubleComparator;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import it.unimi.dsi.fastutil.doubles.DoubleListIterator;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
 import it.unimi.dsi.fastutil.floats.FloatArrays;
 import it.unimi.dsi.fastutil.floats.FloatSet;
@@ -30,6 +28,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -208,7 +207,7 @@ public abstract class EntityGravityMixin {
 
 
     @Inject(method = "turn", at = @At("HEAD"), cancellable = true)
-    private void onTurn(double yawChange, double pitchChange, CallbackInfo ci) {
+    private void turn(double yawChange, double pitchChange, CallbackInfo ci) {
         Entity self = (Entity) (Object) (this);
         GravityData data = self.getData(AttachmentTypeRegistry.GRAVITY);
         if (data.getGravity() == Direction.DOWN) return;
@@ -230,6 +229,22 @@ public abstract class EntityGravityMixin {
         if (this.vehicle != null) {
             this.vehicle.onPassengerTurned(self);
         }
+    }
+
+    @ModifyArg(method = "moveRelative", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getInputVector(Lnet/minecraft/world/phys/Vec3;FF)Lnet/minecraft/world/phys/Vec3;"),index = 2)
+    public float getInputVector(float yRot) {
+        Entity self = (Entity) (Object) this;
+        GravityData data = self.getData(AttachmentTypeRegistry.GRAVITY);
+        Direction gravity = data.getGravity();
+        if (gravity == Direction.DOWN) return yRot;
+        return switch (gravity) {
+            case DOWN -> 0.0F;
+            case UP -> -yRot;
+            case NORTH -> 0.0F;
+            case SOUTH -> 0.0F;
+            case WEST -> 0.0F;
+            case EAST -> 0.0F;
+        };
     }
 
 
@@ -349,9 +364,6 @@ public abstract class EntityGravityMixin {
             double posZ = instance.getZ();
             double logicX = x - posX, logicY = y - posY, logicZ = z - posZ;
             double[] worldDD = CoordsUtils.transformArray(logicX, logicY, logicZ, data.getLogicToWorld());
-            if (instance instanceof Player) {
-//                log.info("局部速度：{}，世界速度：{}", new Vec3(logicX, logicY, logicZ), worldDD);
-            }
             instance.setPos(posX + worldDD[0], posY + worldDD[1], posZ + worldDD[2]);
         } else {
             instance.setPos(x, y, z);
