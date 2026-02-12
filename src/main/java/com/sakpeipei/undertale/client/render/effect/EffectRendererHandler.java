@@ -21,7 +21,7 @@ import java.util.List;
  * @since 2025/11/17 16:13
  * 装饰物渲染处理器
  */
-@EventBusSubscriber(modid = Undertale.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Undertale.MOD_ID, value = Dist.CLIENT)
 public class EffectRendererHandler {
     private final static List<Effect> EFFECTS = new ArrayList<>();
 

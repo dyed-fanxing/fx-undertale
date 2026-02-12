@@ -4,30 +4,25 @@ import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.AttackColored;
 import com.sakpeipei.undertale.entity.boss.Sans;
-import com.sakpeipei.undertale.registry.EntityTypeRegistry;
-import com.sakpeipei.undertale.registry.SoundRegistry;
+import com.sakpeipei.undertale.registry.EntityTypes;
+import com.sakpeipei.undertale.registry.SoundTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
-import software.bernie.geckolib.constant.dataticket.SerializableDataTicket;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import javax.annotation.Nullable;
 import java.awt.*;
-import java.util.UUID;
 
 /**
  * @author Sakqiongzi
@@ -63,7 +58,7 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
     }
 
     public GroundBone(Level level, LivingEntity owner,float scale,float growScale,float damage,int lifetime,int delay,ColorAttack colorAttack,boolean isPlaySound,boolean isCurve) {
-        super(EntityTypeRegistry.GROUND_BONE.get(), level,owner);
+        super(EntityTypes.GROUND_BONE.get(), level,owner);
         this.setNoGravity(true);
         this.scale = scale;
         this.growScale = growScale;
@@ -101,7 +96,7 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
         }
         if(this.level().isClientSide){
             if(delay == 0 && isPlaySound){
-                this.level().playLocalSound(this,SoundRegistry.SANS_BONE_SPINE.get(), SoundSource.HOSTILE,1,1);
+                this.level().playLocalSound(this, SoundTypes.SANS_BONE_SPINE.get(), SoundSource.HOSTILE,1,1);
             }
         }
         if (delay >= -lifetime && delay < 0) {

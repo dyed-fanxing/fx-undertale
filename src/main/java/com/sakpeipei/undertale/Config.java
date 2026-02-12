@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  * 配置类示例。虽然不是必须的，但建议使用配置类来保持配置的组织性。
  * 演示如何使用NeoForge的配置API
  */
-@EventBusSubscriber(modid = Undertale.MODID) // 自动注册到模组事件总线
+@EventBusSubscriber(modid = Undertale.MOD_ID) // 自动注册到模组事件总线
 public class Config {
     // 配置构建器
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();

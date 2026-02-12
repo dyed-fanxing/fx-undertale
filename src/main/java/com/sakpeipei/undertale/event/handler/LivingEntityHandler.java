@@ -4,7 +4,7 @@ import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.entity.boss.Sans;
 import com.sakpeipei.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
-import com.sakpeipei.undertale.registry.EntityTypeRegistry;
+import com.sakpeipei.undertale.registry.EntityTypes;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -18,15 +18,15 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
  * @author Sakqiongzi
  * @since 2025-09-08 23:05
  */
-@EventBusSubscriber(modid = Undertale.MODID)
+@EventBusSubscriber(modid = Undertale.MOD_ID)
 public class LivingEntityHandler {
     /**
      * 注册需要属性的实体，即继承自LivingEntity
      */
     @SubscribeEvent
     public static void onAttributeCreate(EntityAttributeCreationEvent event) {
-        event.put(EntityTypeRegistry.GASTER_BLASTER_PRO.get(), GasterBlasterPro.createAttributes().build());
-        event.put(EntityTypeRegistry.SANS.get(), Sans.createAttributes().build());
+        event.put(EntityTypes.GASTER_BLASTER_PRO.get(), GasterBlasterPro.createAttributes().build());
+        event.put(EntityTypes.SANS.get(), Sans.createAttributes().build());
     }
 
     /**

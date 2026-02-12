@@ -15,6 +15,6 @@ public interface EntityTypeTags {
     TagKey<EntityType<?>> DODGE_PROJECTILE = create("dodge_projectile");
 
     private static TagKey<EntityType<?>> create(String name) {
-        return TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(Undertale.MODID,name));
+        return TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID,name));
     }
 }

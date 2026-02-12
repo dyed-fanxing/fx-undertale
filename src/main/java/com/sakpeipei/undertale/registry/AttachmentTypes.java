@@ -15,8 +15,8 @@ import java.util.function.Supplier;
  * @author Sakqiongzi
  * @since 2025-09-13 22:07
  */
-public class AttachmentTypeRegistry {
-    public static DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Undertale.MODID);
+public class AttachmentTypes {
+    public static DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Undertale.MOD_ID);
 
     public static final Supplier<AttachmentType<KaramMobEffectData>> KARMA_MOB_EFFECT = ATTACHMENT_TYPES.register(
             "karma_mob_effect", () -> AttachmentType.builder(KaramMobEffectData::new).serialize(KaramMobEffectData.CODEC).build()

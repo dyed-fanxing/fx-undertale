@@ -12,7 +12,7 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 public class SansRender extends GeoEntityRenderer<Sans> {
     public SansRender(EntityRendererProvider.Context renderManager) {
         super(renderManager, new SansModel());
-        this.renderLayers.addLayer(new SansEyesLayer(this, ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/sans_eyes.png")));
+        this.renderLayers.addLayer(new SansEyesLayer(this, ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "textures/entity/sans_eyes.png")));
         this.renderLayers.addLayer(new SansFatigueLayer(this));
     }
 

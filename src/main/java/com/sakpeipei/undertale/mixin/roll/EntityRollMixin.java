@@ -1,10 +1,6 @@
 package com.sakpeipei.undertale.mixin.roll;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import com.sakpeipei.undertale.entity.IRollable;
-import com.sakpeipei.undertale.entity.attachment.GravityData;
-import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -14,7 +10,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -65,24 +60,24 @@ public abstract class EntityRollMixin  implements IRollable {
 
 
 
-    @Redirect(method = "saveWithoutId", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;newFloatList([F)Lnet/minecraft/nbt/ListTag;",ordinal = 0))
-    private ListTag rotationInSaveWithoutId(Entity instance, float[] floats){
-        IRollable rollable = (IRollable)instance;
-        Direction gravity = instance.getData(AttachmentTypeRegistry.GRAVITY).getGravity();
-        return switch (gravity){
-            case DOWN,UP -> this.newFloatList(instance.getYRot(), instance.getXRot());
-            case EAST,WEST,SOUTH,NORTH -> this.newFloatList(instance.getYRot(), instance.getXRot(),rollable.undertale$getRoll());
-        };
-    }
-    @Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setRot(FF)V",shift = At.Shift.AFTER))
-    private void setRoll(CallbackInfo ci){
-        this.undertale$setRoll(undertale$getRoll() % 360.0F);
-    }
-    @Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setXRot(F)V",shift = At.Shift.AFTER))
-    private void setRollInLoadAfterSetXRot(CallbackInfo ci, @Local(ordinal = 2) ListTag listTag2){
-        this.undertale$setRoll(listTag2.getFloat(2));
-    }
-
+//    @Redirect(method = "saveWithoutId", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;newFloatList([F)Lnet/minecraft/nbt/ListTag;",ordinal = 0))
+//    private ListTag rotationInSaveWithoutId(Entity instance, float[] floats){
+//        IRollable rollable = (IRollable)instance;
+//        Direction gravity = instance.getData(AttachmentTypeRegistry.GRAVITY).getGravity();
+//        return switch (gravity){
+//            case DOWN,UP -> this.newFloatList(instance.getYRot(), instance.getXRot());
+//            case EAST,WEST,SOUTH,NORTH -> this.newFloatList(instance.getYRot(), instance.getXRot(),rollable.undertale$getRoll());
+//        };
+//    }
+//    @Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setRot(FF)V",shift = At.Shift.AFTER))
+//    private void setRoll(CallbackInfo ci){
+//        this.undertale$setRoll(undertale$getRoll() % 360.0F);
+//    }
+//    @Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setXRot(F)V",shift = At.Shift.AFTER))
+//    private void setRollInLoadAfterSetXRot(CallbackInfo ci, @Local(ordinal = 2) ListTag listTag2){
+//        this.undertale$setRoll(listTag2.getFloat(2));
+//    }
+//
 
 
     @Inject(method = "getForward", at = @At("HEAD"), cancellable = true)

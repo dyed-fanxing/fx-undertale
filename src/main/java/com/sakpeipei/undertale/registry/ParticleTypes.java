@@ -17,8 +17,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-public class ParticleRegistry {
-    public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES = DeferredRegister.create(Registries.PARTICLE_TYPE,Undertale.MODID);
+public class ParticleTypes {
+    public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES = DeferredRegister.create(Registries.PARTICLE_TYPE,Undertale.MOD_ID);
     public static void register(IEventBus bus) {
         PARTICLE_TYPES.register(bus);
     }

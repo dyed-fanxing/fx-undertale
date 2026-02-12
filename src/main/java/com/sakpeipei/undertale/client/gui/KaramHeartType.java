@@ -8,25 +8,25 @@ import net.minecraft.resources.ResourceLocation;
  * @since 2025-09-14 18:58
  */
 public class KaramHeartType {
-    private static final ResourceLocation full = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/karma_full");
-    private static final ResourceLocation fullBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/karma_full_blinking");
+    private static final ResourceLocation full = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/karma_full");
+    private static final ResourceLocation fullBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/karma_full_blinking");
 
-    private static final ResourceLocation leftHalf = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/left_karma_half");
-    private static final ResourceLocation leftHalfBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/left_karma_half_blinking");
+    private static final ResourceLocation leftHalf = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/left_karma_half");
+    private static final ResourceLocation leftHalfBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/left_karma_half_blinking");
 
-    private static final ResourceLocation rightHalf = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/right_karma_half");
-    private static final ResourceLocation rightHalfBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/right_karma_half_blinking");
+    private static final ResourceLocation rightHalf = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/right_karma_half");
+    private static final ResourceLocation rightHalfBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/right_karma_half_blinking");
 
 
 
-    private static final ResourceLocation hardcoreFull = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/karma_hardcore_full");
-    private static final ResourceLocation hardcoreFullBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/karma_hardcore_full_blinking");
+    private static final ResourceLocation hardcoreFull = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/karma_hardcore_full");
+    private static final ResourceLocation hardcoreFullBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/karma_hardcore_full_blinking");
 
-    private static final ResourceLocation leftHardcoreHalf = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/left_karma_hardcore_half");
-    private static final ResourceLocation leftHardcoreHalfBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/left_karma_hardcore_half_blinking");
+    private static final ResourceLocation leftHardcoreHalf = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/left_karma_hardcore_half");
+    private static final ResourceLocation leftHardcoreHalfBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/left_karma_hardcore_half_blinking");
 
-    private static final ResourceLocation rightHardcoreHalf = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/right_karma_hardcore_half");
-    private static final ResourceLocation rightHardcoreHalfBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "hud/heart/right_karma_hardcore_half_blinking");
+    private static final ResourceLocation rightHardcoreHalf = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/right_karma_hardcore_half");
+    private static final ResourceLocation rightHardcoreHalfBlinking = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "hud/heart/right_karma_hardcore_half_blinking");
     /**
      * 获取纹理
      * @param isHardCore 困难模式

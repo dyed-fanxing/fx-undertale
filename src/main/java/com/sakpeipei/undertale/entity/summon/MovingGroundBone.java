@@ -4,7 +4,7 @@ import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.AttackColored;
 import com.sakpeipei.undertale.entity.boss.Sans;
-import com.sakpeipei.undertale.registry.EntityTypeRegistry;
+import com.sakpeipei.undertale.registry.EntityTypes;
 import com.sakpeipei.undertale.utils.RotUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -52,7 +52,7 @@ public class MovingGroundBone extends AbstractMovingEntity implements IEntityWit
      * 延迟移动，无需传递移动向量
      */
     public MovingGroundBone(Level level, LivingEntity owner,float scale, float growScale,  int delay,float speed, float damage, ColorAttack colorAttack) {
-        super(EntityTypeRegistry.MOVING_GROUND_BONE.get(), level,owner);
+        super(EntityTypes.MOVING_GROUND_BONE.get(), level,owner);
         this.setNoGravity(true);
         this.scale = scale;
         this.growScale = growScale;
@@ -67,7 +67,7 @@ public class MovingGroundBone extends AbstractMovingEntity implements IEntityWit
      * velocity 移动向量，单位化的
      */
     public MovingGroundBone(Level level, LivingEntity owner,float scale, float growScale, float speed,Vec3 velocity, float damage, ColorAttack colorAttack) {
-        super(EntityTypeRegistry.MOVING_GROUND_BONE.get(), level,owner);
+        super(EntityTypes.MOVING_GROUND_BONE.get(), level,owner);
         this.setNoGravity(true);
         this.scale = scale;
         this.growScale = growScale;

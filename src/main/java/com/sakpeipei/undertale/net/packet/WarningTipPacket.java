@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @since 2025/11/18 14:10
  */
 public record WarningTipPacket(float x,float y,float z,float r, float h,int lifetime, int color) implements CustomPacketPayload {
-    public static final Type<WarningTipPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "warning_tip_packet"));
+    public static final Type<WarningTipPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "warning_tip_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, WarningTipPacket> STREAM_CODEC = CustomPacketPayload.codec(WarningTipPacket::write, WarningTipPacket::new);
 
     public WarningTipPacket(FriendlyByteBuf buf) {

@@ -4,7 +4,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.damagesource.DamageType;
 
-import static com.sakpeipei.undertale.Undertale.MODID;
+import static com.sakpeipei.undertale.Undertale.MOD_ID;
 
 public interface DamageTypes {
 
@@ -14,6 +14,6 @@ public interface DamageTypes {
 
     private static ResourceKey<DamageType> create(String name){
         return  ResourceKey.create(Registries.DAMAGE_TYPE,
-                ResourceLocation.fromNamespaceAndPath(MODID, name));
+                ResourceLocation.fromNamespaceAndPath(MOD_ID, name));
     }
 }

@@ -4,8 +4,8 @@ import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.undertale.entity.attachment.KaramMobEffectData;
 import com.sakpeipei.undertale.entity.boss.Sans;
-import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
-import com.sakpeipei.undertale.registry.MobEffectRegistry;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
+import com.sakpeipei.undertale.registry.MobEffectTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
@@ -30,10 +30,10 @@ public class KarmaMobEffect extends MobEffect {
     @Override
     public boolean applyEffectTick(@NotNull LivingEntity entity, int amplifier) {
         if(!entity.level().isClientSide){
-            KaramMobEffectData karamData = entity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT);
+            KaramMobEffectData karamData = entity.getData(AttachmentTypes.KARMA_MOB_EFFECT);
             byte value = karamData.getValue();
             if(value == 0){
-                entity.removeEffect(MobEffectRegistry.KARMA);
+                entity.removeEffect(MobEffectTypes.KARMA);
             }else if(entity.tickCount % DAMAGE_INTERVAL_FRAMES[value/10] == 0){
                 float last = entity.getAbsorptionAmount();
                 if (entity.getHealth() > 1) {
@@ -67,11 +67,11 @@ public class KarmaMobEffect extends MobEffect {
         }
         Entity sourceEntity = source.getEntity();
         if (source.getEntity() instanceof Sans) {
-            KaramMobEffectData karamData = entity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT);
+            KaramMobEffectData karamData = entity.getData(AttachmentTypes.KARMA_MOB_EFFECT);
             Set<String> attacks = karamData.getAttacks();
             Entity attackEntity = source.getDirectEntity();
             if (attackEntity != null) {
-                KaramAttackData data = attackEntity.getData(AttachmentTypeRegistry.KARMA_ATTACK);
+                KaramAttackData data = attackEntity.getData(AttachmentTypes.KARMA_ATTACK);
                 String uuid = data.getUUID();
                 String key = null;
                 if (sourceEntity != null) {
@@ -92,7 +92,7 @@ public class KarmaMobEffect extends MobEffect {
     @Override
     public void onMobRemoved(@NotNull LivingEntity entity, int amplifier, Entity.RemovalReason removalReason) {
         if(removalReason.shouldDestroy()){
-            entity.removeData(AttachmentTypeRegistry.KARMA_MOB_EFFECT);
+            entity.removeData(AttachmentTypes.KARMA_MOB_EFFECT);
         }
     }
 }

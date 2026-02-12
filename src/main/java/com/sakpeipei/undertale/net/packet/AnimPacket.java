@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @since 2025-11-19 20:02
  */
 public record AnimPacket(int entityId, byte id,float speed) implements CustomPacketPayload{
-    public static final CustomPacketPayload.Type<AnimPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "anim_id_packet"));
+    public static final CustomPacketPayload.Type<AnimPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "anim_id_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, AnimPacket> STREAM_CODEC = CustomPacketPayload.codec(AnimPacket::write, AnimPacket::new);
 
     public AnimPacket(FriendlyByteBuf buf) {

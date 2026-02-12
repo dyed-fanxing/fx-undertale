@@ -19,9 +19,9 @@ import net.minecraft.world.phys.Vec3;
 
 public class GasterBlasterBeamRenderer {
     // 侧面材质：四周面
-    private static final ResourceLocation SIDE = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/beam/side.png");
+    private static final ResourceLocation SIDE = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "textures/entity/beam/side.png");
     // 正面材质：前后面
-    private static final ResourceLocation FRONT = ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/beam/front.png");
+    private static final ResourceLocation FRONT = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "textures/entity/beam/front.png");
 
     private static final RenderType BEAM_FRONT_TYPE = RenderTypes.GB_BEAM.apply(FRONT);
 

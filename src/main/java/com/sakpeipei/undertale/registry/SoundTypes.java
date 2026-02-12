@@ -8,8 +8,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-public class SoundRegistry {
-    private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Undertale.MODID);
+public class SoundTypes {
+    private static final DeferredRegister<SoundEvent> SOUNDS = DeferredRegister.create(Registries.SOUND_EVENT, Undertale.MOD_ID);
     public static void register(IEventBus bus) {
         SOUNDS.register(bus);
     }
@@ -26,6 +26,6 @@ public class SoundRegistry {
 
     public static DeferredHolder<SoundEvent, SoundEvent> register(String name){
         return SOUNDS.register(name,() ->
-                SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(Undertale.MODID,name)));
+                SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID,name)));
     }
 }

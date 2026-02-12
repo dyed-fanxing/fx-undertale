@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.event.handler;
 
 import com.sakpeipei.undertale.entity.attachment.GravityData;
-import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -15,7 +15,7 @@ public class EntityHandler {
     public static void onEntityRefreshDimension(EntityEvent.Size event){
         EntityDimensions newSize = event.getNewSize();
         Entity entity = event.getEntity();
-        GravityData data = entity.getData(AttachmentTypeRegistry.GRAVITY);
+        GravityData data = entity.getData(AttachmentTypes.GRAVITY);
         if(data.getGravity() != Direction.DOWN){
 //            entity.getEyeHeight()
 //            entity.getEyePosition()

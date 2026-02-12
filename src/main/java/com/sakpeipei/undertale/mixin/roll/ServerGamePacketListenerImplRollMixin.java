@@ -29,7 +29,8 @@ public abstract class ServerGamePacketListenerImplRollMixin {
 
     @Redirect(method = "handleMovePlayer",at = @At(value = "INVOKE",target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;containsInvalidValues(DDDFF)Z"))
     private boolean redirectContainsInvalidValues(double x, double y, double z, float yRot, float xRot, @Local(ordinal = 0, argsOnly = true) ServerboundMovePlayerPacket packet) {
-        return containsInvalidValues(x, y, z, yRot, xRot) || !Floats.isFinite(((IRollable)packet).undertale$getRoll());
+
+        return containsInvalidValues(x, y, z, yRot, xRot) || !Floats.isFinite(((IRollHolder)packet).undertale$getRoll(0F));
     }
 
     @Inject(method = "handleMovePlayer",at = @At(value = "INVOKE",target = "Lnet/minecraft/server/level/ServerPlayer;absMoveTo(DDDFF)V",shift = At.Shift.AFTER))

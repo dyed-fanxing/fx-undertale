@@ -21,7 +21,7 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     public GasterBlasterRender(EntityRendererProvider.Context renderManager) {
         super(renderManager, new GasterBlasterModel());
-        this.addRenderLayer(new GasterBlasterEyesLayer<>(this, ResourceLocation.fromNamespaceAndPath(Undertale.MODID,"textures/entity/gaster_blaster_eyes.png")));
+        this.addRenderLayer(new GasterBlasterEyesLayer<>(this, ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID,"textures/entity/gaster_blaster_eyes.png")));
     }
 
     @Override

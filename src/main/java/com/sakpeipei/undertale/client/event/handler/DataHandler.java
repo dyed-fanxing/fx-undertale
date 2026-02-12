@@ -13,7 +13,7 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 import java.util.concurrent.CompletableFuture;
 
-@EventBusSubscriber(modid = Undertale.MODID)
+@EventBusSubscriber(modid = Undertale.MOD_ID)
 public class DataHandler {
     @SubscribeEvent
     public static void onGatherData(GatherDataEvent event) {
@@ -22,7 +22,7 @@ public class DataHandler {
         CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
         ExistingFileHelper existingFileHelper = event.getExistingFileHelper();
         LogUtils.getLogger().info("数据前");
-        event.getGenerator().addProvider(event.includeServer(), new EntityTypeTagsProvider(output, lookupProvider, Undertale.MODID, existingFileHelper));
-        event.getGenerator().addProvider(event.includeServer(), new DamageTypeTagsProvider(output, lookupProvider, Undertale.MODID, existingFileHelper));
+        event.getGenerator().addProvider(event.includeServer(), new EntityTypeTagsProvider(output, lookupProvider, Undertale.MOD_ID, existingFileHelper));
+        event.getGenerator().addProvider(event.includeServer(), new DamageTypeTagsProvider(output, lookupProvider, Undertale.MOD_ID, existingFileHelper));
     }
 }

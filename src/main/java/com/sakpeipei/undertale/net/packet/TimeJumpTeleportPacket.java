@@ -19,9 +19,9 @@ import org.jetbrains.annotations.NotNull;
  * @param tick 持续Tick
  */
 public record TimeJumpTeleportPacket(int entityId, int tick) implements CustomPacketPayload {
-    public static final String END_TICK = Undertale.MODID + ":teleport_time_jump_end_tick";
+    public static final String END_TICK = Undertale.MOD_ID + ":teleport_time_jump_end_tick";
 
-    public static final CustomPacketPayload.Type<TimeJumpTeleportPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "teleport_time_jump_packet"));
+    public static final CustomPacketPayload.Type<TimeJumpTeleportPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "teleport_time_jump_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, TimeJumpTeleportPacket> STREAM_CODEC = CustomPacketPayload.codec(TimeJumpTeleportPacket::write, TimeJumpTeleportPacket::new);
 
     public TimeJumpTeleportPacket(FriendlyByteBuf buf) {

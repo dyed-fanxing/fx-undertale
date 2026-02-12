@@ -19,7 +19,7 @@ import java.awt.*;
  * @since 2025/11/18 14:10
  */
 public record WarningTipAABBPacket(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int lifetime, Color color) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<WarningTipAABBPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "warning_tip_aabb_packet"));
+    public static final CustomPacketPayload.Type<WarningTipAABBPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "warning_tip_aabb_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, WarningTipAABBPacket> STREAM_CODEC = CustomPacketPayload.codec(WarningTipAABBPacket::write, WarningTipAABBPacket::new);
 
     public WarningTipAABBPacket(double minX, double minY, double minZ, double maxX, double maxY, double maxZ, int lifetime, Color color) {

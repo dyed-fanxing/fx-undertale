@@ -5,8 +5,8 @@ import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.render.item.GasterBlasterProItemRender;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.undertale.net.packet.GasterBlasterProPacket;
-import com.sakpeipei.undertale.registry.EntityTypeRegistry;
-import com.sakpeipei.undertale.registry.ItemRegistry;
+import com.sakpeipei.undertale.registry.EntityTypes;
+import com.sakpeipei.undertale.registry.ItemTypes;
 import com.sakpeipei.undertale.utils.RayUtils;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 public class GasterBlasterProItem extends GasterBlasterItem {
 
 
-    public static final String GASTER_BLASTER_PRO_KEY = Undertale.MODID + ":gaster_blaster_pro";
+    public static final String GASTER_BLASTER_PRO_KEY = Undertale.MOD_ID + ":gaster_blaster_pro";
     private static final Logger log = LoggerFactory.getLogger(GasterBlasterProItem.class);
 
     public GasterBlasterProItem(Properties properties) {
@@ -51,7 +51,7 @@ public class GasterBlasterProItem extends GasterBlasterItem {
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
         // 1. 检查冷却
-        if (player.getCooldowns().isOnCooldown(ItemRegistry.GASTER_BLASTER.get())) {
+        if (player.getCooldowns().isOnCooldown(ItemTypes.GASTER_BLASTER.get())) {
             player.displayClientMessage(Component.literal("§c冷却中！"), true);
             return InteractionResultHolder.fail(itemStack);
         }
@@ -64,7 +64,7 @@ public class GasterBlasterProItem extends GasterBlasterItem {
             if(exist) blaster = (GasterBlasterPro) serverLevel.getEntity(persistentData.getUUID(GASTER_BLASTER_PRO_KEY));
             if(blaster == null){
                 exist = false;
-                blaster = new GasterBlasterPro(EntityTypeRegistry.GASTER_BLASTER_PRO.get(), serverLevel,player);
+                blaster = new GasterBlasterPro(EntityTypes.GASTER_BLASTER_PRO.get(), serverLevel,player);
             }
             if(player.isShiftKeyDown()){ // shift模式，精确射击，没有目标实体不执行
                 GasterBlasterPro finalBlaster = blaster;
@@ -110,7 +110,7 @@ public class GasterBlasterProItem extends GasterBlasterItem {
         // 只在服务端执行
         if(level instanceof ServerLevel serverLevel){
             // 检查冷却
-            if (player.getCooldowns().isOnCooldown(ItemRegistry.GASTER_BLASTER.get())) {
+            if (player.getCooldowns().isOnCooldown(ItemTypes.GASTER_BLASTER.get())) {
                 player.displayClientMessage(Component.literal("§c物品冷却中，请等待！"), true);
                 return InteractionResult.FAIL;
             }
@@ -122,7 +122,7 @@ public class GasterBlasterProItem extends GasterBlasterItem {
                 blaster.moveTo(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
             }
             else{
-                blaster = new GasterBlasterPro(EntityTypeRegistry.GASTER_BLASTER_PRO.get(), level, player);
+                blaster = new GasterBlasterPro(EntityTypes.GASTER_BLASTER_PRO.get(), level, player);
                 persistentData.putUUID(GASTER_BLASTER_PRO_KEY, blaster.getUUID());
                 blaster.setPos(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
                 level.addFreshEntity(blaster);

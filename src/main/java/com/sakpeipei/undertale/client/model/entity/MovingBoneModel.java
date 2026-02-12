@@ -10,7 +10,7 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class MovingBoneModel extends DefaultedEntityGeoModel<MovingGroundBone> {
     public MovingBoneModel() {
-        super(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "bone"));
+        super(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "bone"));
     }
 
     @Override

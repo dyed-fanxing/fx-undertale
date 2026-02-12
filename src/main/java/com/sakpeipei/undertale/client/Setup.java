@@ -4,13 +4,16 @@ import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.particle.BallGrowParticle;
 import com.sakpeipei.undertale.client.particle.LightStreakParticle;
 import com.sakpeipei.undertale.client.render.entity.*;
+import com.sakpeipei.undertale.client.screen.GravitySelectionScreen;
 import com.sakpeipei.undertale.net.packet.*;
-import com.sakpeipei.undertale.registry.EntityTypeRegistry;
-import com.sakpeipei.undertale.registry.ParticleRegistry;
+import com.sakpeipei.undertale.registry.EntityTypes;
+import com.sakpeipei.undertale.registry.MenuTypes;
+import com.sakpeipei.undertale.registry.ParticleTypes;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -18,22 +21,21 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 /**
  * 本地客户端注册绑定服务端相关的注册表标识
  */
-@EventBusSubscriber(modid = Undertale.MODID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = Undertale.MOD_ID, value = Dist.CLIENT)
 public class Setup {
     /**
      * 监听客户端实体渲染事件
      * 添加 将服务端注册的标识与客户端具体渲染实现绑定一起
-     * @param event
      */
     @SubscribeEvent
     public static void registerRendererHandler(final EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(EntityTypeRegistry.GASTER_BLASTER.get(), GasterBlasterRender::new);
-        event.registerEntityRenderer(EntityTypeRegistry.GASTER_BLASTER_PRO.get(), GasterBlasterProRender::new);
-        event.registerEntityRenderer(EntityTypeRegistry.SANS.get(), SansRender::new);
-        event.registerEntityRenderer(EntityTypeRegistry.GROUND_BONE.get(), GroundBoneRender::new);
-        event.registerEntityRenderer(EntityTypeRegistry.MOVING_GROUND_BONE.get(), MovingGroundBoneRender::new);
-        event.registerEntityRenderer(EntityTypeRegistry.LATERAL_BONE.get(), LateralBoneRender::new);
-        event.registerEntityRenderer(EntityTypeRegistry.FLYING_BONE.get(), FlyingBoneRender::new);
+        event.registerEntityRenderer(EntityTypes.GASTER_BLASTER.get(), GasterBlasterRender::new);
+        event.registerEntityRenderer(EntityTypes.GASTER_BLASTER_PRO.get(), GasterBlasterProRender::new);
+        event.registerEntityRenderer(EntityTypes.SANS.get(), SansRender::new);
+        event.registerEntityRenderer(EntityTypes.GROUND_BONE.get(), GroundBoneRender::new);
+        event.registerEntityRenderer(EntityTypes.MOVING_GROUND_BONE.get(), MovingGroundBoneRender::new);
+        event.registerEntityRenderer(EntityTypes.LATERAL_BONE.get(), LateralBoneRender::new);
+        event.registerEntityRenderer(EntityTypes.FLYING_BONE.get(), FlyingBoneRender::new);
     }
 
     /**
@@ -41,13 +43,13 @@ public class Setup {
      * @param event 三种注册方式
      */
     @SubscribeEvent
-    public static void registerParticleProviderHandler(RegisterParticleProvidersEvent event) {
-        event.registerSpriteSet(ParticleRegistry.BALL_GROW.get(), BallGrowParticle.Provider::new);
-        event.registerSpriteSet(ParticleRegistry.LIGHT_STREAK.get(), LightStreakParticle.Provider::new);
+    public static void registerParticleProviderHandler(final RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(ParticleTypes.BALL_GROW.get(), BallGrowParticle.Provider::new);
+        event.registerSpriteSet(ParticleTypes.LIGHT_STREAK.get(), LightStreakParticle.Provider::new);
     }
 
     /**
-     * 监听客户端注册网络发包事件
+     * 监听客户端服务端注册网络发包事件
      * @param event 三种注册方式
      */
     @SubscribeEvent
@@ -63,6 +65,15 @@ public class Setup {
 //        registrar.playToClient(GasterBlasterBeamEndPacket.TYPE,GasterBlasterBeamEndPacket.STREAM_CODEC, GasterBlasterBeamEndPacket::handle);
         registrar.playToClient(TimeJumpTeleportPacket.TYPE,TimeJumpTeleportPacket.STREAM_CODEC, TimeJumpTeleportPacket::handle);
         registrar.playToClient(GravityPacket.TYPE,GravityPacket.STREAM_CODEC, GravityPacket::handle);
+        registrar.playToServer(GravitySelectionPacket.TYPE,GravitySelectionPacket.STREAM_CODEC, GravitySelectionPacket::handle);
+    }
+
+    /**
+     * 监听客户端菜单屏幕事件
+     */
+    @SubscribeEvent
+    public static void onRegisterMenuScreens(final RegisterMenuScreensEvent event) {
+        event.register(MenuTypes.GRAVITY_SELECTION_MENU.get(), GravitySelectionScreen::new);
     }
 }
 

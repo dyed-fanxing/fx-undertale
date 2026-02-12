@@ -2,8 +2,8 @@ package com.sakpeipei.undertale.entity.summon;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.common.DamageTypes;
-import com.sakpeipei.undertale.registry.EntityTypeRegistry;
-import com.sakpeipei.undertale.registry.SoundRegistry;
+import com.sakpeipei.undertale.registry.EntityTypes;
+import com.sakpeipei.undertale.registry.SoundTypes;
 import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -65,7 +65,7 @@ public class GasterBlaster extends Entity implements IGasterBlaster, IEntityWith
         this(level, owner, size,17,shot);
     }
     public GasterBlaster(Level level, LivingEntity owner, float size,int charge, int shot) {
-        super(EntityTypeRegistry.GASTER_BLASTER.get(), level);
+        super(EntityTypes.GASTER_BLASTER.get(), level);
         super.setNoGravity(true);
         if (owner != null) {
             setOwner(owner);
@@ -256,14 +256,14 @@ public class GasterBlaster extends Entity implements IGasterBlaster, IEntityWith
             if(this.tickCount < fireTick) {
                 controller.setAnimation(CHARGE_ANIM);
                 controller.setAnimationSpeed(20.0/fireTick);
-                controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundRegistry.GASTER_BLASTER_CHARGE.get(), SoundSource.NEUTRAL, 1, 1));
+                controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundTypes.GASTER_BLASTER_CHARGE.get(), SoundSource.NEUTRAL, 1, 1));
             }else if (this.tickCount < shotTick) {
                 controller.setAnimation(FIRE_ANIM);
                 controller.setAnimationSpeed(20.0/(shotTick-fireTick));
             }else if (this.tickCount < decayTick) {
                 controller.setAnimation(SHOT_ANIM);
                 controller.setAnimationSpeed(20.0 / (decayTick - shotTick));
-                controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundRegistry.GASTER_BLASTER_FIRE.get(), SoundSource.NEUTRAL, 1, 1));
+                controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundTypes.GASTER_BLASTER_FIRE.get(), SoundSource.NEUTRAL, 1, 1));
             } else {
                 controller.setAnimation(DECAY_ANIM);
                 controller.setAnimationSpeed(6.666667);

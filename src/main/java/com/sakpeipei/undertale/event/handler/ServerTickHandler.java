@@ -13,7 +13,7 @@ import java.util.List;
  * @author Sakpeipei
  * @since 2026/1/16 15:13
  */
-@EventBusSubscriber(modid = Undertale.MODID)
+@EventBusSubscriber(modid = Undertale.MOD_ID)
 public class ServerTickHandler {
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {

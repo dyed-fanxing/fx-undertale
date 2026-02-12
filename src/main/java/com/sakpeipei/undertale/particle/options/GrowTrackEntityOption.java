@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.particle.options;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.sakpeipei.undertale.registry.ParticleRegistry;
+import com.sakpeipei.undertale.registry.ParticleTypes;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -34,6 +34,6 @@ public record GrowTrackEntityOption(float size, short lifetime, int entityId) im
 
     @Override
     public @NotNull ParticleType<?> getType() {
-        return ParticleRegistry.BALL_GROW.get();
+        return ParticleTypes.BALL_GROW.get();
     }
 }

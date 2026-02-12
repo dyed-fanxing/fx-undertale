@@ -11,7 +11,7 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
  * @author Sakqiongzi
  * @since 2025-10-19 21:40
  */
-@EventBusSubscriber(modid = Undertale.MODID)
+@EventBusSubscriber(modid = Undertale.MOD_ID)
 public class PlayerHandler {
     @SubscribeEvent
     public static void onPlayerTickPre(PlayerTickEvent.Pre event) {

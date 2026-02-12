@@ -13,7 +13,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 
 public record GasterBlasterProPacket(int entityId,short timer) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<GasterBlasterProPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "gaster_blaster_pro"));
+    public static final CustomPacketPayload.Type<GasterBlasterProPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "gaster_blaster_pro"));
     public static final StreamCodec<RegistryFriendlyByteBuf, GasterBlasterProPacket> STREAM_CODEC = CustomPacketPayload.codec(GasterBlasterProPacket::write, GasterBlasterProPacket::new);
 
 

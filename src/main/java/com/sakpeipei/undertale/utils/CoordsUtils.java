@@ -31,19 +31,6 @@ public class CoordsUtils {
     public static Vector3f transform3F(Vec3 vec, Matrix3f matrix) {
         return matrix.transform(vec.toVector3f());
     }
-    /**
-     * 坐标变换
-     */
-    public static double[] transformArray(double x,double y,double z, Matrix3f matrix) {
-        Vector3f out = matrix.transform(new Vector3f((float) x, (float) y, (float) z));
-        return new double[]{out.x, out.y, out.z};
-    }
-    public static Vec3 transform(double x,double y,double z, Matrix3f matrix) {
-        return new Vec3(matrix.transform(new Vector3f((float) x, (float) y, (float) z)));
-    }
-
-
-
 
 
     /**
@@ -54,25 +41,8 @@ public class CoordsUtils {
         Vector4f out = quaternionf.transform(in);
         return new Vector3f(out.x, out.y, out.z);
     }
-    /**
-     * 坐标旋转
-     */
-    public static Vec3 transform(Vec3 vec, Quaternionf quaternionf) {
-        Vector3f out = quaternionf.transform(vec.toVector3f());
-        return new Vec3(out.x, out.y, out.z);
-    }
     public static Vector3f transform3F(Vec3 vec, Quaternionf quaternionf) {
         return quaternionf.transform(vec.toVector3f());
-    }
-    /**
-     * 坐标变换
-     */
-    public static double[] transformArray(double x,double y,double z, Quaternionf quaternionf) {
-        Vector3f out = quaternionf.transform(new Vector3f((float) x, (float) y, (float) z));
-        return new double[]{out.x, out.y, out.z};
-    }
-    public static Vec3 transform(double x,double y,double z, Quaternionf quaternionf) {
-        return new Vec3(quaternionf.transform(new Vector3f((float) x, (float) y, (float) z)));
     }
 
 

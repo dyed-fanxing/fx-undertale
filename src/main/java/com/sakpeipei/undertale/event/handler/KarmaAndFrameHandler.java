@@ -4,8 +4,8 @@ import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.undertale.entity.boss.Sans;
-import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
-import com.sakpeipei.undertale.registry.MobEffectRegistry;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
+import com.sakpeipei.undertale.registry.MobEffectTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -26,7 +26,7 @@ import java.util.UUID;
  * @author Sakpeipei
  * @since 2025/9/9 13:17
  */
-@EventBusSubscriber(modid = Undertale.MODID)
+@EventBusSubscriber(modid = Undertale.MOD_ID)
 public class KarmaAndFrameHandler {
     /**
      * 被sans第一次攻击之后添加KR效果(只是一个表面,不做具体数据处理,数据处理在KarmaMobEffect里处理)，时间无限，
@@ -37,9 +37,9 @@ public class KarmaAndFrameHandler {
     public static void onLivingDamagePost(LivingDamageEvent.Post event){
         LivingEntity entity = event.getEntity();
         DamageSource source = event.getSource();
-        if(source.getEntity() instanceof Sans && entity.getEffect(MobEffectRegistry.KARMA) == null){
+        if(source.getEntity() instanceof Sans && entity.getEffect(MobEffectTypes.KARMA) == null){
             // 添加KR效果
-            entity.addEffect(new MobEffectInstance(MobEffectRegistry.KARMA,-1));
+            entity.addEffect(new MobEffectInstance(MobEffectTypes.KARMA,-1));
         }
     }
 
@@ -69,7 +69,7 @@ public class KarmaAndFrameHandler {
             if (removalReason != null && removalReason.shouldDestroy()) {
                 if(entity.level() instanceof ServerLevel level){
                     // 拥有者UUID字符串，攻击过的实体UUID字符串列表
-                    KaramAttackData data = entity.getData(AttachmentTypeRegistry.KARMA_ATTACK);
+                    KaramAttackData data = entity.getData(AttachmentTypes.KARMA_ATTACK);
                     HashSet<String> attackedEntities = data.getAttackedEntities();
                     if(attackedEntities != null && !attackedEntities.isEmpty()){
                         // 遍历
@@ -77,8 +77,8 @@ public class KarmaAndFrameHandler {
                             //如果攻击的实体是活体
                             if(level.getEntity(UUID.fromString(attackedStringUUID)) instanceof LivingEntity attackedEntity){
                                 //判断是否存在KR效果
-                                if(attackedEntity.hasEffect(MobEffectRegistry.KARMA)){
-                                    attackedEntity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).getAttacks().remove(owner.getStringUUID() + ':' + data.getUUID());
+                                if(attackedEntity.hasEffect(MobEffectTypes.KARMA)){
+                                    attackedEntity.getData(AttachmentTypes.KARMA_MOB_EFFECT).getAttacks().remove(owner.getStringUUID() + ':' + data.getUUID());
                                 }
                             }
                         });

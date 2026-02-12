@@ -16,7 +16,7 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
  * @author Sakqiongzi
  * @since 2026-01-08 22:13
  */
-@EventBusSubscriber(modid = Undertale.MODID)
+@EventBusSubscriber(modid = Undertale.MOD_ID)
 public class SansCommand {
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {

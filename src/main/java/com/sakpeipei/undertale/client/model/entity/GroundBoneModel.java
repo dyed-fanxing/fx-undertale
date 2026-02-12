@@ -12,7 +12,7 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class GroundBoneModel extends DefaultedEntityGeoModel<GroundBone> {
     public GroundBoneModel() {
-        super(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "bone"));
+        super(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "bone"));
     }
 
     @Override
@@ -35,6 +35,6 @@ public class GroundBoneModel extends DefaultedEntityGeoModel<GroundBone> {
     @Override
     public void applyMolangQueries(AnimationState<GroundBone> animationState, double animTime) {
         GroundBone animatable = animationState.getAnimatable();
-        MathParser.setVariable("query."+Undertale.MODID+"_grow_scale", animatable::getGrowScale);
+        MathParser.setVariable("query."+Undertale.MOD_ID+"_grow_scale", animatable::getGrowScale);
     }
 }

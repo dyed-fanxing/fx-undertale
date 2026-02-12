@@ -2,8 +2,7 @@ package com.sakpeipei.undertale.item;
 
 import com.sakpeipei.undertale.client.render.item.GasterBlasterItemRender;
 import com.sakpeipei.undertale.entity.summon.GasterBlaster;
-import com.sakpeipei.undertale.registry.EntityTypeRegistry;
-import com.sakpeipei.undertale.registry.ItemRegistry;
+import com.sakpeipei.undertale.registry.ItemTypes;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.network.chat.Component;
@@ -46,7 +45,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
     public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
         ItemStack itemStack = player.getItemInHand(hand);
         // 检查冷却
-        if (player.getCooldowns().isOnCooldown(ItemRegistry.GASTER_BLASTER.get())) {
+        if (player.getCooldowns().isOnCooldown(ItemTypes.GASTER_BLASTER.get())) {
             player.displayClientMessage(Component.literal("§c冷却中！"), true);
             System.out.println("冷却中!!!");
             return InteractionResultHolder.fail(itemStack);
@@ -75,7 +74,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
             // 6. 生成炮台
             level.addFreshEntity(blaster);
 
-            player.getCooldowns().addCooldown(ItemRegistry.GASTER_BLASTER.get(), CD_TICK);
+            player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER.get(), CD_TICK);
             return InteractionResultHolder.success(itemStack);
         }
         return InteractionResultHolder.consume(itemStack);

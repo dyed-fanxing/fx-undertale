@@ -2,7 +2,6 @@ package com.sakpeipei.undertale;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.registry.*;
-import com.sakpeipei.undertale.registry.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -22,10 +21,10 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.slf4j.Logger;
 
 // 此处值应与META-INF/neoforge.mods.toml文件中的条目匹配
-@Mod(Undertale.MODID)
+@Mod(Undertale.MOD_ID)
 public class Undertale {
     // 在公共位置定义mod id供所有内容引用
-    public static final String MODID = "undertale";
+    public static final String MOD_ID = "undertale";
     public static final Logger LOGGER = LogUtils.getLogger();
 
 
@@ -36,17 +35,14 @@ public class Undertale {
         modEventBus.addListener(this::commonSetup);
 
 
-        BlockRegistry.register(modEventBus);        // 方块注册
-        ItemRegistry.register(modEventBus);         // 物品注册
-        EntityTypeRegistry.register(modEventBus);   // 实体注册
-        MobEffectRegistry.registry(modEventBus);    // buff注册
-        SoundRegistry.register(modEventBus);        // 声音注册
-        ParticleRegistry.register(modEventBus);     // 粒子注册
-
-        //neo forge注册
-
-        AttachmentTypeRegistry.register(modEventBus);
-
+        BlockTypes.register(modEventBus);           // 方块注册
+        ItemTypes.register(modEventBus);            // 物品注册
+        EntityTypes.register(modEventBus);          // 实体注册
+        MobEffectTypes.registry(modEventBus);       // buff注册
+        SoundTypes.register(modEventBus);           // 声音注册
+        ParticleTypes.register(modEventBus);        // 粒子注册
+        MenuTypes.register(modEventBus);            // 菜单注册
+        AttachmentTypes.register(modEventBus);      // 附件注册
 
         // 注册当前类以响应游戏事件
         NeoForge.EVENT_BUS.register(this);
@@ -80,7 +76,7 @@ public class Undertale {
     }
 
     // 客户端模组事件订阅类
-    @EventBusSubscriber(modid = MODID, value = Dist.CLIENT)
+    @EventBusSubscriber(modid = MOD_ID, value = Dist.CLIENT)
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {

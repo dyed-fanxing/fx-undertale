@@ -18,12 +18,11 @@ import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import com.sakpeipei.undertale.entity.summon.GroundBone;
 import com.sakpeipei.undertale.entity.summon.LateralBone;
 import com.sakpeipei.undertale.entity.summon.MovingGroundBone;
-import com.sakpeipei.undertale.net.packet.GravityPacket;
 import com.sakpeipei.undertale.net.packet.TimeJumpTeleportPacket;
 import com.sakpeipei.undertale.net.packet.WarningTipPacket;
-import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
-import com.sakpeipei.undertale.registry.EntityTypeRegistry;
-import com.sakpeipei.undertale.registry.SoundRegistry;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
+import com.sakpeipei.undertale.registry.EntityTypes;
+import com.sakpeipei.undertale.registry.SoundTypes;
 import com.sakpeipei.undertale.utils.EntityUtils;
 import com.sakpeipei.undertale.utils.LevelUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
@@ -177,7 +176,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
                 gravityControl(target, LocalDirection.DOWN);
                 isAppendSpine = true;
             }
-            if (target.hasData(AttachmentTypeRegistry.GRAVITY) && target.onGround() && isAppendSpine) {
+            if (target.hasData(AttachmentTypes.GRAVITY) && target.onGround() && isAppendSpine) {
                 if (false) {
 
                 }
@@ -958,8 +957,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             float angle = -middleIndex * interval;
             for (int i = 0; i < count; i++, angle += interval) {
                 Vec3 worldOffsetPos = RotUtils.getWorldPos(Mth.sin(angle * Mth.DEG_TO_RAD), 0, 0.8f * Mth.cos(angle * Mth.DEG_TO_RAD), offsetAngle, this.getXRot(), this.getYHeadRot());
-                FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f, speed, worldOffsetPos);
-                bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
+                FlyingBone bone = new FlyingBone(EntityTypes.FLYING_BONE.get(), this.level(), this, 1f, speed, worldOffsetPos);
+                bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
                 LevelUtils.addFreshProjectileByVec3(this.level(), bone, center.add(worldOffsetPos), worldOffsetPos);
             }
         }
@@ -967,8 +966,8 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     }
 
     protected FlyingBone createFlyingBone(String attackTypeUUID, float speed, int delay) {
-        FlyingBone bone = new FlyingBone(EntityTypeRegistry.FLYING_BONE.get(), this.level(), this, 1f, speed, delay);
-        bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
+        FlyingBone bone = new FlyingBone(EntityTypes.FLYING_BONE.get(), this.level(), this, 1f, speed, delay);
+        bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
         return bone;
     }
 
@@ -1005,7 +1004,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         for (float x : offsetX) {
             for (int i = -12; i < 12; i++) {
                 GroundBone bone = new GroundBone(level, this, 3f, 3f, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), delay, 0, ColorAttack.AQUA, false, false);
-                bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
+                bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
                 Vec3 pos = target.position().add(RotUtils.yRot(new Vec3(x * halfX, 0, i * 0.3125 * 3f), this.getYHeadRot()));
                 bone.setPos(pos);
                 bone.setYRot(this.getYHeadRot() + 90f);
@@ -1044,7 +1043,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             // 计算每个骨砖的位置
             Vec3 finalPos = centerPos.add(RotUtils.yRot(new Vec3(xOffset, 0, 0), boneLookYRot));
             MovingGroundBone bone = new MovingGroundBone(level, this, 1.0f, growScale, delay, speed, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), color);
-            bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
+            bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
             // 设置位置和朝向
             bone.setPos(finalPos);
             RotUtils.lookVec(bone, lookVector);
@@ -1077,7 +1076,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             for (int c = 0; c < cols; c++) {
                 // 计算每个骨砖的位置
                 MovingGroundBone bone = new MovingGroundBone(level, this, scale, growScale * (r > rows * 0.5f ? 0.33333334f : 1f), speed, lookVector, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), ColorAttack.WHITE);
-                bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
+                bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramAttackData(attackTypeUUID, (byte) 6));
                 // 设置位置和朝向
                 bone.setPos(centerPos.add(RotUtils.yRot(new Vec3(xOffset + c * spacing, 0, -r * spacing), boneLookYRot)));
                 RotUtils.lookVec(bone, lookVector);
@@ -1114,12 +1113,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
             for (int c = 0; c < cols; c++) {
                 // 创建左侧骨头
                 LateralBone leftBone = new LateralBone(level, this, 1.0f, leftWidth, speed, calculateViewVector(0, yRot), (float) getAttributeValue(Attributes.ATTACK_DAMAGE), ColorAttack.WHITE);
-                leftBone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(id, (byte) 6));
+                leftBone.setData(AttachmentTypes.KARMA_ATTACK, new KaramAttackData(id, (byte) 6));
                 leftBone.setPos(RotUtils.yRot(new Vec3(-width + leftWidth * 0.5f, c * spacing, -r * spacing), yRot).add(this.position()));
                 level.addFreshEntity(leftBone);
                 // 创建右侧骨头
                 LateralBone rightBone = new LateralBone(level, this, 1.0f, rightWidth, speed, calculateViewVector(0, yRot), (float) getAttributeValue(Attributes.ATTACK_DAMAGE), ColorAttack.WHITE);
-                rightBone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(id, (byte) 6));
+                rightBone.setData(AttachmentTypes.KARMA_ATTACK, new KaramAttackData(id, (byte) 6));
                 rightBone.setPos(RotUtils.yRot(new Vec3(width - rightWidth * 0.5f, c * spacing, -r * spacing), yRot).add(this.position()));
                 level.addFreshEntity(rightBone);
             }
@@ -1212,7 +1211,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         float spacing = 0.7f;
         float growScale = 1.0f;
         double groundY = createGroundBone(attackTypeUUID, pos.x, pos.z, pos.y, pos.y, 1.0f, growScale, 20, delay, ColorAttack.WHITE, true);
-        this.level().playSound(null, pos.x, pos.y, pos.z, SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+        this.level().playSound(null, pos.x, pos.y, pos.z, SoundTypes.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
         PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket((float) pos.x, (float) groundY, (float) pos.z, layer * spacing, growScale, 20, Color.RED.getRGB()));
         for (int i = 0; i < layer; i++) {
             int count = 8 * (i + 1);
@@ -1255,7 +1254,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         double maxY = Math.max(target.getY(), this.getY()) + 1.0;
         float spacing = 0.7f;
         double groundY = createGroundBone(attackTypeUUID, x, z, minY, maxY, 1.0f, growScale, lifetime, delay, ColorAttack.WHITE, true);
-        this.level().playSound(null, x, getY(), z, SoundRegistry.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+        this.level().playSound(null, x, getY(), z, SoundTypes.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
         PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket((float) x, (float) groundY, (float) z, layer * spacing, growScale, lifetime, Color.RED.getRGB()));
         for (int i = 0; i < layer; i++) {
             int count = 8 * (i + 1);
@@ -1284,7 +1283,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
         if (spawnY != level.getMinBuildHeight()) {
             GroundBone bone = new GroundBone(level, this, scale, growScale, (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE), lifetime, delay, colorAttack, isPlaySound, true);
             bone.setPos(targetX, spawnY, targetZ);
-            bone.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(attackUUID, (byte) 6));
+            bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramAttackData(attackUUID, (byte) 6));
             // 设置旋转：骨刺指向圆心（目标位置）
             bone.setYRot(this.getYHeadRot());
             // 添加随机X旋转，看起来不规则
@@ -1398,13 +1397,12 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 
     public GasterBlaster createGasterBlaster(float size, int charge, int shot) {
         GasterBlaster gb = new GasterBlaster(this.level(), this, size, charge, shot);
-        gb.setData(AttachmentTypeRegistry.KARMA_ATTACK, new KaramAttackData(UUID.randomUUID().toString(), (byte) 10));
+        gb.setData(AttachmentTypes.KARMA_ATTACK, new KaramAttackData(UUID.randomUUID().toString(), (byte) 10));
         return gb;
     }
 
     public int gravityControl(LivingEntity target, LocalDirection direction) {
-        GravityData gravityData = GravityData.applyRelativeGravity(this, target, direction);
-        PacketDistributor.sendToPlayersTrackingEntity(this, new GravityPacket(this.getId(),target.getId(),gravityData.getGravity(),target.getDeltaMovement()));
+        GravityData.applyRelativeGravity(this, target, direction);
 //        this.isAppendSpine = true;
         return 0;
     }
@@ -1414,7 +1412,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
      */
     public int timeJumpTeleport(LivingEntity target) {
         PacketDistributor.sendToPlayersTrackingEntity(this, new TimeJumpTeleportPacket(target.getId(), 5));
-        this.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundRegistry.SANS_TELEPORT_TIME_JUMP.get(), SoundSource.HOSTILE);
+        this.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundTypes.SANS_TELEPORT_TIME_JUMP.get(), SoundSource.HOSTILE);
         Vec3 pos = this.position().add(RotUtils.getWorldPos(0f, 0f, 12f, 0, this.getYHeadRot()));
         target.teleportTo(pos.x, pos.y, pos.z);
         return 0;

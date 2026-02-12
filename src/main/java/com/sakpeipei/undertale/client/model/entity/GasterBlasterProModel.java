@@ -7,6 +7,6 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class GasterBlasterProModel extends DefaultedEntityGeoModel<GasterBlasterPro> {
     public GasterBlasterProModel() {
-        super(ResourceLocation.fromNamespaceAndPath(Undertale.MODID,"gaster_blaster"));
+        super(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID,"gaster_blaster"));
     }
 }

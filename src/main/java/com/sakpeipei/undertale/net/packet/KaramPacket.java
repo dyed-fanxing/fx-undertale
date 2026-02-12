@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.net.packet;
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.FriendlyByteBuf;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * @since 2025-09-13 22:52
  */
 public record KaramPacket(int entityId,byte value,float absorptionAmount) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<KaramPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "karam_packet"));
+    public static final CustomPacketPayload.Type<KaramPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "karam_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, KaramPacket> STREAM_CODEC = CustomPacketPayload.codec(KaramPacket::write, KaramPacket::new);
 
     public KaramPacket(FriendlyByteBuf buf) {
@@ -35,7 +35,7 @@ public record KaramPacket(int entityId,byte value,float absorptionAmount) implem
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null && level.getEntity(packet.entityId) instanceof LivingEntity entity) {
-                entity.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).setValue(packet.value);
+                entity.getData(AttachmentTypes.KARMA_MOB_EFFECT).setValue(packet.value);
                 if(packet.absorptionAmount != -1){
                     entity.setAbsorptionAmount(packet.absorptionAmount);
                 }

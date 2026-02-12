@@ -5,10 +5,9 @@ import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.common.phys.OBB;
 import com.sakpeipei.undertale.entity.IOBBCapability;
 import com.sakpeipei.undertale.entity.boss.Sans;
-import com.sakpeipei.undertale.registry.EntityTypeRegistry;
+import com.sakpeipei.undertale.registry.EntityTypes;
 import com.sakpeipei.undertale.utils.EntityCollisionUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
-import com.sakpeipei.undertale.utils.TimeOfImpactUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
@@ -20,10 +19,8 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.*;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -54,7 +51,7 @@ public class LateralBone extends Summons implements IOBBCapability,IEntityWithCo
      * 延迟移动，无需传递移动向量
      */
     public LateralBone(Level level, LivingEntity owner, float growScale, int delay, float speed, float damage, ColorAttack colorAttack) {
-        super(EntityTypeRegistry.LATERAL_BONE.get(), level,owner);
+        super(EntityTypes.LATERAL_BONE.get(), level,owner);
         this.setNoGravity(true);
         this.growScale = growScale;
         this.delay = delay;
@@ -68,7 +65,7 @@ public class LateralBone extends Summons implements IOBBCapability,IEntityWithCo
      * velocity 移动向量，单位化的
      */
     public LateralBone(Level level, LivingEntity owner,float scale, float growScale, float speed, Vec3 velocity, float damage, ColorAttack colorAttack) {
-        super(EntityTypeRegistry.LATERAL_BONE.get(), level,owner);
+        super(EntityTypes.LATERAL_BONE.get(), level,owner);
         this.setNoGravity(true);
         this.scale = scale;
         this.growScale = growScale;

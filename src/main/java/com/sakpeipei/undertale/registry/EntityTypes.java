@@ -13,14 +13,14 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
-public class EntityTypeRegistry {
-    private static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, Undertale.MODID);
+public class EntityTypes {
+    private static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, Undertale.MOD_ID);
     public static void register(IEventBus bus) {
         ENTITY_TYPES.register(bus);
     }
 
     public static <T extends Entity> DeferredHolder<EntityType<?>, EntityType<T>> register(String name, EntityType.Builder<T> builder){
-        return ENTITY_TYPES.register(name,() -> builder.build(ResourceLocation.fromNamespaceAndPath(Undertale.MODID,name).toString()));
+        return ENTITY_TYPES.register(name,() -> builder.build(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID,name).toString()));
     }
 
 
@@ -29,7 +29,7 @@ public class EntityTypeRegistry {
                     () -> EntityType.Builder.<GasterBlaster>of(GasterBlaster::new, MobCategory.MISC)
                             .sized(1.8f, 1.5f)  // 碰撞箱
                             .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
-                            .build(ResourceLocation.fromNamespaceAndPath(Undertale.MODID,"gaster_blaster").toString())
+                            .build(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID,"gaster_blaster").toString())
             );
 
     public static final DeferredHolder<EntityType<?>,EntityType<GasterBlasterPro>> GASTER_BLASTER_PRO =
@@ -37,7 +37,7 @@ public class EntityTypeRegistry {
                     () -> EntityType.Builder.<GasterBlasterPro>of(GasterBlasterPro::new, MobCategory.MISC)
                             .sized(7.5f, 5f)  // 碰撞箱
                             .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
-                            .build(ResourceLocation.fromNamespaceAndPath(Undertale.MODID,"gaster_blaster").toString())
+                            .build(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID,"gaster_blaster").toString())
             );
     public static final DeferredHolder<EntityType<?>, EntityType<Sans>> SANS = register("sans",
             EntityType.Builder.of(Sans::new, MobCategory.MONSTER)

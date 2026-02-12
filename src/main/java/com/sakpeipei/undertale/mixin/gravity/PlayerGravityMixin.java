@@ -1,8 +1,7 @@
 package com.sakpeipei.undertale.mixin.gravity;
 
 import com.sakpeipei.undertale.entity.attachment.GravityData;
-import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
-import com.sakpeipei.undertale.utils.CoordsUtils;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
@@ -24,19 +23,23 @@ public abstract class PlayerGravityMixin {
     @Inject(method = "canPlayerFitWithinBlocksAndEntitiesWhen", at = @At("HEAD"), cancellable = true)
     protected void canPlayerFitWithinBlocksAndEntitiesWhen(Pose pose, CallbackInfoReturnable<Boolean> cir) {
         Player self = (Player) (Object) (this);
-        GravityData data = self.getData(AttachmentTypeRegistry.GRAVITY);
-        if (data.getGravity() == Direction.DOWN) return;
-        cir.cancel();
-        Vec3 position = self.position();
-        EntityDimensions dimensions = self.getDimensions(pose);
-        cir.setReturnValue(switch (data.getGravity()) {
-            case DOWN -> null;
-            case UP -> self.level().noCollision(self, dimensions.makeBoundingBox(position.x, position.y - dimensions.height(), position.z).deflate(1.0E-7));
-            case NORTH -> null;
-            case SOUTH -> self.level().noCollision(self, dimensions.makeBoundingBox(position.x, position.y, position.z - dimensions.height()).deflate(1.0E-7));
-            case WEST -> null;
-            case EAST -> null;
-        });
+        Direction gravity = self.getData(AttachmentTypes.GRAVITY).getGravity();
+        if (gravity != Direction.DOWN) {
+            cir.cancel();
+            Vec3 position = self.position();
+            EntityDimensions dimensions = self.getDimensions(pose);
+            double halfWidth = dimensions.width()*0.5;
+            cir.setReturnValue(switch (gravity) {
+                case UP -> self.level().noCollision(self, dimensions.makeBoundingBox(position.x, position.y - dimensions.height(), position.z).deflate(1.0E-7));
+
+                case EAST -> self.level().noCollision(self,new AABB(position.x - dimensions.height(), position.y-halfWidth, position.z-halfWidth, position.x, position.y+halfWidth, position.z+halfWidth).deflate(1.0E-7));
+                case WEST -> self.level().noCollision(self,new AABB(position.x, position.y-halfWidth, position.z-halfWidth, position.x + dimensions.height(), position.y+halfWidth, position.z+halfWidth).deflate(1.0E-7));
+
+                case SOUTH -> self.level().noCollision(self,new AABB(position.x-halfWidth, position.y-halfWidth, position.z-dimensions.height(), position.x+halfWidth, position.y+halfWidth, position.z).deflate(1.0E-7));
+                case NORTH -> self.level().noCollision(self,new AABB(position.x-halfWidth, position.y-halfWidth, position.z, position.x+halfWidth, position.y+halfWidth, position.z + dimensions.height()).deflate(1.0E-7));
+                default -> throw new IllegalStateException("Unexpected value: " + gravity);
+            });
+        }
     }
 
 
@@ -47,11 +50,21 @@ public abstract class PlayerGravityMixin {
     @Inject(method = "canFallAtLeast", at = @At("HEAD"), cancellable = true)
     protected void canFallAtLeast(double dx, double dz, float maxUpStep, CallbackInfoReturnable<Boolean> cir) {
         Player self = (Player) (Object) (this);
-        GravityData data = self.getData(AttachmentTypeRegistry.GRAVITY);
-        if (data.getGravity() == Direction.DOWN) return;
-        cir.cancel();
-        Vec3 worldDD = CoordsUtils.transform(dx, -maxUpStep-1.0E-5F, dz, data.getLogicToWorld());
-        AABB aabb = self.getBoundingBox();
-        cir.setReturnValue(self.level().noCollision(self, new AABB(aabb.minX + worldDD.x, aabb.maxY + worldDD.y, aabb.minZ + worldDD.z, aabb.maxX + worldDD.x, aabb.maxY, aabb.maxZ + worldDD.z)));
-    }
+        GravityData data = self.getData(AttachmentTypes.GRAVITY);
+        Direction gravity = data.getGravity();
+        if (gravity != Direction.DOWN){
+            cir.cancel();
+            AABB aabb = self.getBoundingBox();
+            cir.setReturnValue(switch (gravity) {
+                case UP -> self.level().noCollision(self, new AABB(aabb.minX + dx, aabb.minY, aabb.minZ + dz, aabb.maxX + dx, aabb.maxY+maxUpStep+1.0E-5F, aabb.maxZ + dz));
+
+                case EAST -> self.level().noCollision(self,new AABB(aabb.minX, aabb.minY+dx, aabb.minZ+dz, aabb.maxX +maxUpStep+1.0E-5F, aabb.maxY+dx, aabb.maxZ+dz));
+                case WEST -> self.level().noCollision(self,new AABB(aabb.minX-maxUpStep-1.0E-5F, aabb.minY-dx, aabb.minZ+dz, aabb.maxX, aabb.maxY-dx, aabb.maxZ+dz));
+
+                case SOUTH -> self.level().noCollision(self,new AABB(aabb.minX + dx, aabb.minY+dz, aabb.minZ, aabb.maxX + dx, aabb.maxY+dz, aabb.maxZ+maxUpStep+1.0E-5F));
+                case NORTH -> self.level().noCollision(self,new AABB(aabb.minX + dx, aabb.minY-dz, aabb.minZ-maxUpStep-1.0E-5F, aabb.maxX + dx, aabb.maxY-dz, aabb.maxZ));
+                default -> throw new IllegalStateException("Unexpected value: " + gravity);
+            });
+        }
+   }
 }

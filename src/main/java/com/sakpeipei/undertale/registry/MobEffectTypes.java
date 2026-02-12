@@ -13,8 +13,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
  * @author Sakpeipei
  * @since 2025/9/9 13:50
  */
-public class MobEffectRegistry {
-    private static final DeferredRegister<MobEffect> MOB_EFFECTS = DeferredRegister.create(Registries.MOB_EFFECT, Undertale.MODID);
+public class MobEffectTypes {
+    private static final DeferredRegister<MobEffect> MOB_EFFECTS = DeferredRegister.create(Registries.MOB_EFFECT, Undertale.MOD_ID);
     public static void registry(IEventBus bus) {
         MOB_EFFECTS.register(bus);
     }

@@ -19,9 +19,9 @@ import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
  */
 public class SansFatigueLayer extends GeoRenderLayer<Sans>{
     private static final ResourceLocation[] TEXTURES = new ResourceLocation[]{
-            ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/sans_sweat_1.png"),
-            ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/sans_sweat_2.png"),
-            ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "textures/entity/sans_sweat_3.png"),
+            ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "textures/entity/sans_sweat_1.png"),
+            ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "textures/entity/sans_sweat_2.png"),
+            ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "textures/entity/sans_sweat_3.png"),
     };
     public SansFatigueLayer(GeoRenderer<Sans> entityRendererIn) {
         super(entityRendererIn);

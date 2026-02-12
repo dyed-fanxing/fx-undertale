@@ -11,7 +11,7 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class LateralBoneModel extends DefaultedEntityGeoModel<LateralBone> {
     public LateralBoneModel() {
-        super(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "bone"));
+        super(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "bone"));
     }
 
     @Override

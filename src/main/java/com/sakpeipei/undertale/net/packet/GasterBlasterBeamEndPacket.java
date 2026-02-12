@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * GB炮光束终点位置
  */
 public record GasterBlasterBeamEndPacket(int entityId, double x, double y, double z) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<GasterBlasterBeamEndPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "gaster_blaster_beam"));
+    public static final CustomPacketPayload.Type<GasterBlasterBeamEndPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "gaster_blaster_beam"));
     public static final StreamCodec<RegistryFriendlyByteBuf, GasterBlasterBeamEndPacket> STREAM_CODEC = CustomPacketPayload.codec(GasterBlasterBeamEndPacket::write, GasterBlasterBeamEndPacket::new);
 
     public GasterBlasterBeamEndPacket(int entityId, Vec3 vec3) {

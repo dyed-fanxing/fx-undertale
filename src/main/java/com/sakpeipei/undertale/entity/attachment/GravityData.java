@@ -3,13 +3,13 @@ package com.sakpeipei.undertale.entity.attachment;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.sakpeipei.undertale.common.phys.LocalDirection;
-import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
-import com.sakpeipei.undertale.utils.CoordsUtils;
+import com.sakpeipei.undertale.net.packet.GravityPacket;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Targeting;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -30,32 +30,102 @@ public class GravityData {
 
     // 控制方向
     private Direction gravity = Direction.DOWN;
-    private Quaternionf logicToWorld = new Quaternionf();
-    private Quaternionf worldToLogic = new Quaternionf();
+    private Quaternionf localToWorld = new Quaternionf();
+    private Quaternionf worldToLocal = new Quaternionf();
 
     public GravityData() {
     }
 
     public GravityData(Direction gravity) {
         this.gravity = gravity;
-        this.logicToWorld = getGravityQuaternionf(gravity);
-        this.worldToLogic = logicToWorld.invert(new Quaternionf());
+        this.localToWorld = getGravityQuaternionf(gravity);
+        this.worldToLocal = localToWorld.invert(new Quaternionf());
     }
-    public GravityData(Direction forward, Quaternionf oldWorldToLogic) {
+    public GravityData(Direction forward, Quaternionf oldWorldToLocal) {
         this.gravity = forward;
-        this.logicToWorld = getGravityQuaternionf(gravity);
-        this.worldToLogic = logicToWorld.invert(new Quaternionf());
+        this.localToWorld = getGravityQuaternionf(gravity);
+        this.worldToLocal = localToWorld.invert(new Quaternionf());
     }
+
+
+
+    /**
+     * 对目标实体应用攻击者的相对重力
+     */
+    public static void applyRelativeGravity(Entity attacker, Entity target, LocalDirection localGravity) {
+        Direction forward = Direction.fromYRot(attacker.getYHeadRot());
+        GravityData oldGravity = target.getData(AttachmentTypes.GRAVITY);
+        GravityData gravityData = new GravityData(calculateGravity(forward, localGravity),oldGravity.getWorldToLocal());
+        log.info("应用的重力坐标系：{},逻辑转世界矩阵：{},世界转逻辑矩阵：{}",gravityData,gravityData.getLocalToWorld(),gravityData.getWorldToLocal());
+        target.setData(AttachmentTypes.GRAVITY, gravityData);
+        gravityData.applyGravity(target,oldGravity);
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(),gravityData.getGravity(),target.getDeltaMovement()));
+    }
+
+
+    public void applyGravity(Entity target,GravityData oldGravity) {
+        Vec3 posOld = target.position();
+        Vec3 localPos = switch (oldGravity.getGravity()) {
+            case DOWN -> target.position();
+            case UP   -> target.position().add(0,-target.getBbHeight(),0);
+            case EAST -> null;
+            case WEST -> null;
+            case SOUTH -> target.position().add(0,-target.getBbWidth()*0.5f,-target.getBbHeight()*0.5f);
+            case NORTH -> target.position().add(0,-target.getBbWidth()*0.5f,target.getBbHeight()*0.5f);
+        };
+        switch (this.gravity) {
+            case UP   -> target.setPos(localPos.add(0,target.getBbHeight(),0));
+//            case EAST -> ppos.add(target.getBbHeight()*0.5f,target.getBbWidth(),0);
+//            case WEST -> ppos.add(-target.getBbHeight()*0.5f,target.getBbWidth(),0);
+            case SOUTH -> target.setPos(localPos.add(0,target.getBbWidth()*0.5f,target.getBbHeight()*0.5f));
+            case NORTH -> target.setPos(localPos.add(0,target.getBbWidth()*0.5f,-target.getBbHeight()*0.5f));
+        };
+        log.info("gravity：{},target之前世界坐标系的位置：{}，之后世界坐标系的位置：{}",gravity,posOld,target.position());
+    }
+
+
+    public Vec3 localToWorld(Vec3 vec) {
+        Vector3f out = this.localToWorld.transform(vec.toVector3f());
+        return new Vec3(out.x, out.y, out.z);
+    }
+    public Vec3 localToWorld(double x,double y,double z) {
+        Vector3f out = this.localToWorld.transform(new Vector3f((float) x, (float) y, (float) z));
+        return new Vec3(out.x, out.y, out.z);
+    }
+    public Vector3f localToWorld(Vector3f vector3f) {
+        return this.localToWorld.transform(vector3f);
+    }
+    public Vector3f localToWorld(float x,float y,float z) {
+        return this.localToWorld.transform(new Vector3f(x,y,z));
+    }
+
+
+    public Vec3 worldToLocal(double x,double y,double z) {
+        Vector3f out = this.worldToLocal.transform(new Vector3f((float) x, (float) y, (float) z));
+        return new Vec3(out.x, out.y, out.z);
+    }
+    public Vec3 worldToLocal(Vec3 vec) {
+        Vector3f out = this.worldToLocal.transform(vec.toVector3f());
+        return new Vec3(out.x, out.y, out.z);
+    }
+    public Vector3f worldToLocal(Vector3f vector3f) {
+        return this.worldToLocal.transform(vector3f);
+    }
+
+
+
+
     public Direction getGravity() {
         return gravity;
     }
+
     /**
      * 获取局部坐标系的右方向在世界坐标系中的向量
      * 局部右方向 = (1,0,0)，转换到世界坐标系
      */
     public Vector3f getRight() {
         // 局部右方向 (1,0,0) 转换到世界坐标系
-        return logicToWorld.transform(new Vector3f(1, 0, 0));
+        return localToWorld.transform(new Vector3f(1, 0, 0));
     }
 
     /**
@@ -63,7 +133,7 @@ public class GravityData {
      * 局部上方向 = (0,1,0)，转换到世界坐标系
      */
     public Vector3f getUp() {
-        return logicToWorld.transform(new Vector3f(0, 1, 0));
+        return localToWorld.transform(new Vector3f(0, 1, 0));
     }
 
     /**
@@ -71,18 +141,18 @@ public class GravityData {
      * 局部前方向 = (0,0,1)，转换到世界坐标系
      */
     public Vector3f getForward() {
-        return logicToWorld.transform(new Vector3f(0, 0, 1));
+        return localToWorld.transform(new Vector3f(0, 0, 1));
     }
 
 
 
-    public Quaternionf getLogicToWorld() {
-        return logicToWorld;
+    public Quaternionf getLocalToWorld() {
+        return localToWorld;
 
     }
 
-    public Quaternionf getWorldToLogic() {
-        return worldToLogic;
+    public Quaternionf getWorldToLocal() {
+        return worldToLocal;
     }
 
     @Override
@@ -96,48 +166,26 @@ public class GravityData {
                 '}';
     }
 
-    /**
-     * 对目标实体应用攻击者的相对重力
-     */
-    public static GravityData applyRelativeGravity(Entity attacker, Entity target, LocalDirection logicGravity) {
-        Direction forward = Direction.fromYRot(attacker.getYHeadRot());
-        GravityData oldGravity = target.getData(AttachmentTypeRegistry.GRAVITY);
-        GravityData gravityData = new GravityData(calculateGravity(forward, logicGravity),oldGravity.getWorldToLogic());
-        log.info("应用的重力坐标系：{},逻辑转世界矩阵：{},世界转逻辑矩阵：{}",gravityData,gravityData.getLogicToWorld(),gravityData.getWorldToLogic());
-        target.setData(AttachmentTypeRegistry.GRAVITY, gravityData);
-        gravityData.applyGravity(target,oldGravity);
-        return gravityData;
-    }
 
 
-    public void applyGravity(Entity target,GravityData oldGravity) {
-        Vec3 posOld = target.position();
-        Vec3 logicPos = switch (oldGravity.getGravity()) {
-            case DOWN -> target.position();
-            case UP   -> target.position().add(0,-target.getBbHeight(),0);
-            case EAST -> null;
-            case WEST -> null;
-            case SOUTH -> target.position().add(0,-target.getBbWidth()*0.5f,target.getBbHeight()*0.5f);
-            case NORTH -> target.position().add(0,-target.getBbWidth()*0.5f,-target.getBbHeight()*0.5f);
-        };
-        switch (this.gravity) {
-            case UP   -> target.setPos(logicPos.add(0,target.getBbHeight(),0));
-//            case EAST -> ppos.add(target.getBbHeight()*0.5f,target.getBbWidth(),0);
-//            case WEST -> ppos.add(-target.getBbHeight()*0.5f,target.getBbWidth(),0);
-            case SOUTH -> target.setPos(logicPos.add(0,target.getBbWidth()*0.5f,-target.getBbHeight()*0.5f));
-            case NORTH -> target.setPos(logicPos.add(0,target.getBbWidth()*0.5f,target.getBbHeight()*0.5f));
-        };
-            log.info("target之前世界坐标系的位置：{}，之后世界坐标系的位置：{}",posOld,target.position());
-    }
 
-    public static Direction calculateGravity(Direction forward, LocalDirection logicGravity) {
-        return switch (logicGravity) {
+
+
+
+
+
+
+
+
+
+    public static Direction calculateGravity(Direction forward, LocalDirection localGravity) {
+        return switch (localGravity) {
             case DOWN -> Direction.DOWN;
             case UP -> Direction.UP;
             case FRONT -> forward;
             case BACK -> forward.getOpposite();
 //            case LEFT -> forward.getCounterClockWise();
-            case LEFT -> Direction.SOUTH;
+            case LEFT -> Direction.NORTH;
             case RIGHT -> forward.getClockWise();
         };
     }
@@ -150,8 +198,8 @@ public class GravityData {
             case UP -> new Quaternionf().rotationZ(Mth.PI);
             case EAST -> new Quaternionf().rotationZ(-Mth.PI * 0.5f);
             case WEST -> new Quaternionf().rotationZ(Mth.PI * 0.5f);
-            case SOUTH -> new Quaternionf().rotationXYZ(Mth.PI * 0.5f,0,-Mth.PI*0.5f);
-            case NORTH -> new Quaternionf().rotationX(-Mth.PI * 0.5f);
+            case SOUTH ->new Quaternionf().rotateX(-Mth.HALF_PI);
+            case NORTH -> new Quaternionf().rotationX(Mth.HALF_PI);
         };
     }
 }

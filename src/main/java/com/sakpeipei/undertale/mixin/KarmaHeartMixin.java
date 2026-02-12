@@ -2,8 +2,8 @@ package com.sakpeipei.undertale.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.sakpeipei.undertale.client.gui.KaramHeartType;
-import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
-import com.sakpeipei.undertale.registry.MobEffectRegistry;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
+import com.sakpeipei.undertale.registry.MobEffectTypes;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -92,8 +92,8 @@ public abstract class KarmaHeartMixin {
             }
             // KARMA效果值
             byte karmaValue = 0;
-            if(player.hasEffect(MobEffectRegistry.KARMA)){
-                karmaValue = player.getData(AttachmentTypeRegistry.KARMA_MOB_EFFECT).getValue();
+            if(player.hasEffect(MobEffectTypes.KARMA)){
+                karmaValue = player.getData(AttachmentTypes.KARMA_MOB_EFFECT).getValue();
             }
             this.minecraft.getProfiler().push("health");
             this.undertale$renderHearts(p_283143_, player, l, j1, i2, k2, f, health, k, absorptionAmount,karmaValue, flag);

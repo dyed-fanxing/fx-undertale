@@ -7,6 +7,6 @@ import software.bernie.geckolib.model.DefaultedItemGeoModel;
 
 public class GasterBlasterItemModel extends DefaultedItemGeoModel<GasterBlasterItem> {
     public GasterBlasterItemModel() {
-        super(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "gaster_blaster"));
+        super(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "gaster_blaster"));
     }
 }

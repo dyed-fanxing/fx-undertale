@@ -2,22 +2,17 @@ package com.sakpeipei.undertale.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import com.sakpeipei.undertale.common.phys.OBB;
 import com.sakpeipei.undertale.entity.IOBBCapability;
 import com.sakpeipei.undertale.entity.attachment.GravityData;
-import com.sakpeipei.undertale.entity.projectile.FlyingBone;
-import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
 import com.sakpeipei.undertale.utils.RenderUtils;
 import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -122,7 +117,7 @@ public class EntityRenderDispatcherMixin {
             // 5. 渲染视线向量
             renderVector(poseStack, consumer,new Vector3f(0.0F, entity.getEyeHeight(), 0.0F),entity.getViewVector(partialTicks).scale(2.0F),-16776961);
         }
-        GravityData data = entity.getData(AttachmentTypeRegistry.GRAVITY);
+        GravityData data = entity.getData(AttachmentTypes.GRAVITY);
         Vec3i gravity = data.getGravity().getNormal();
         Vector3f up = data.getUp();
         Vector3f forward = data.getForward();

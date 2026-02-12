@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.data;
 
-import com.sakpeipei.undertale.registry.EntityTypeRegistry;
+import com.sakpeipei.undertale.registry.EntityTypes;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.tags.EntityTypeTags;
@@ -19,6 +19,6 @@ public class EntityTypeTagsProvider extends net.minecraft.data.tags.EntityTypeTa
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
         this.tag(EntityTypeTags.FALL_DAMAGE_IMMUNE)
-                .add(EntityTypeRegistry.GASTER_BLASTER.get(),EntityTypeRegistry.GASTER_BLASTER_PRO.get());
+                .add(EntityTypes.GASTER_BLASTER.get(), EntityTypes.GASTER_BLASTER_PRO.get());
     }
 }

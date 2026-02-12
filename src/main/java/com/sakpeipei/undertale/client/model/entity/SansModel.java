@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public class SansModel extends DefaultedEntityGeoModel<Sans> {
     public SansModel() {
-        super(ResourceLocation.fromNamespaceAndPath(Undertale.MODID, "sans"), true);
+        super(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "sans"), true);
     }
 
     @Override

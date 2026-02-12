@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.particle.options;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.sakpeipei.undertale.registry.ParticleRegistry;
+import com.sakpeipei.undertale.registry.ParticleTypes;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -32,6 +32,6 @@ public record GrowOption(float size, short lifetime) implements ParticleOptions 
 
     @Override
     public @NotNull ParticleType<GrowOption> getType() {
-        return ParticleRegistry.HALO_SCALE.get();
+        return ParticleTypes.HALO_SCALE.get();
     }
 }

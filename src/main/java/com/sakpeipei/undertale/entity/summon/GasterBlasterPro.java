@@ -1,13 +1,12 @@
 package com.sakpeipei.undertale.entity.summon;
 
 import com.sakpeipei.undertale.common.DamageTypes;
-import com.sakpeipei.undertale.registry.ParticleRegistry;
+import com.sakpeipei.undertale.registry.ParticleTypes;
 import com.sakpeipei.undertale.item.GasterBlasterProItem;
-import com.sakpeipei.undertale.registry.ItemRegistry;
-import com.sakpeipei.undertale.registry.SoundRegistry;
+import com.sakpeipei.undertale.registry.ItemTypes;
+import com.sakpeipei.undertale.registry.SoundTypes;
 import com.sakpeipei.undertale.utils.ParticleMoveUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -33,7 +32,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
@@ -229,7 +227,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
      */
     public void cooldown(){
         stop();
-        if(owner instanceof Player player) player.getCooldowns().addCooldown(ItemRegistry.GASTER_BLASTER_PRO.get(),DEFAULT_CD);
+        if(owner instanceof Player player) player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER_PRO.get(),DEFAULT_CD);
         cd = DEFAULT_CD;
     }
     @Override
@@ -252,7 +250,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
                 applyDamage(target);
             }
         }
-        level().addParticle(ParticleTypes.END_ROD,
+        level().addParticle(net.minecraft.core.particles.ParticleTypes.END_ROD,
                 (start.x + end.x)/2,
                 (start.y + end.y)/2,
                 (start.z + end.z)/2,
@@ -271,7 +269,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
         // 粒子效果（服务端发送给客户端）
         if (this.level() instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(
-                    ParticleTypes.SOUL_FIRE_FLAME,
+                    net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME,
                     target.getX(), target.getEyeY(), target.getZ(),
                     10, 0.2, 0.2, 0.2, 0.1
             );
@@ -289,7 +287,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
     public void remove(@NotNull RemovalReason reason) {
         if(reason.shouldDestroy()) {
             if(getOwner() instanceof Player player){
-                player.getCooldowns().addCooldown(ItemRegistry.GASTER_BLASTER_PRO.get(),40);
+                player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER_PRO.get(),40);
                 player.getPersistentData().remove(GasterBlasterProItem.GASTER_BLASTER_PRO_KEY);
             }
         }
@@ -312,19 +310,19 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
                     controller.setAnimation(CHARGE_ANIM);
                     controller.setAnimationSpeed(20f / MAX_CHARGE);
                     controller.setSoundKeyframeHandler(event -> {
-                        level().playLocalSound(this, SoundRegistry.GASTER_BLASTER_CHARGE.get(),
+                        level().playLocalSound(this, SoundTypes.GASTER_BLASTER_CHARGE.get(),
                         SoundSource.NEUTRAL, 1, 1);
                     });
                     // 生成向中心移动的粒子
-                    if(state.animationTick % 2 < 0.1) ParticleMoveUtils.ballIn(level(), 20, getWidth() + 1, ParticleRegistry.LIGHT_STREAK.get(), this.getX(), this.getY() + 1.5, this.getZ());
+                    if(state.animationTick % 2 < 0.1) ParticleMoveUtils.ballIn(level(), 20, getWidth() + 1, ParticleTypes.LIGHT_STREAK.get(), this.getX(), this.getY() + 1.5, this.getZ());
                 }
                 case PHASE_ANTICIPATION -> {
                     controller.setAnimation(GROW_ANIM);
                     controller.setAnimationSpeed(20.0);
                     controller.setSoundKeyframeHandler(event -> {
-                        level().playLocalSound(this, SoundRegistry.GASTER_BLASTER_FIRE.get(),
+                        level().playLocalSound(this, SoundTypes.GASTER_BLASTER_FIRE.get(),
                                 SoundSource.NEUTRAL,1,1);
-                        ParticleMoveUtils.circularOut(level(), 100, getWidth() * 2, ParticleTypes.SOUL_FIRE_FLAME,
+                        ParticleMoveUtils.circularOut(level(), 100, getWidth() * 2, net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME,
                                 getX(), getY(), getZ(), getYRot(), getXRot(), 3.0f);
                     });
                 }
