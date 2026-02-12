@@ -1,4 +1,4 @@
-package com.sakpeipei.undertale.network;
+package com.sakpeipei.undertale.net.packet;
 
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.render.effect.EffectRendererHandler;

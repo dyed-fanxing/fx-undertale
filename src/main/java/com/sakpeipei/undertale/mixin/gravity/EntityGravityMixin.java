@@ -1,5 +1,7 @@
 package com.sakpeipei.undertale.mixin.gravity;
 
+import com.llamalad7.mixinextras.sugar.Local;
+import com.sakpeipei.undertale.entity.IRollable;
 import com.sakpeipei.undertale.entity.attachment.GravityData;
 import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.undertale.utils.CoordsUtils;
@@ -11,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
@@ -43,7 +46,7 @@ import static net.minecraft.world.entity.Entity.collideBoundingBox;
  * Entity重力相关方法
  */
 @Mixin(Entity.class)
-public abstract class EntityGravityMixin {
+public abstract class EntityGravityMixin{
     private static final Logger log = LoggerFactory.getLogger(EntityGravityMixin.class);
 
     @Shadow
@@ -56,7 +59,6 @@ public abstract class EntityGravityMixin {
     private EntityDimensions dimensions;
     @Shadow
     private float xRot;
-
     @Shadow
     private float yRot;
 
@@ -89,15 +91,110 @@ public abstract class EntityGravityMixin {
     @Shadow
     private EntityInLevelCallback levelCallback;
 
-    @Shadow
-    private static List<VoxelShape> collectColliders(@org.jetbrains.annotations.Nullable Entity p_344804_, Level p_345583_, List<VoxelShape> p_345198_, AABB p_345837_) {
-        return null;
-    }
 
-    @Shadow
-    private static Vec3 collideWithShapes(Vec3 p_198901_, AABB p_198902_, List<VoxelShape> p_198903_) {
-        return null;
+    @Inject(method = "turn", at = @At("HEAD"), cancellable = true)
+    private void onTurn(double yawDelta, double pitchDelta, CallbackInfo ci) {
+        Entity self = (Entity) (Object) this;
+        Direction gravity = self.getData(AttachmentTypeRegistry.GRAVITY).getGravity();
+        if(gravity != Direction.DOWN){
+            ci.cancel();
+            switch(gravity) {
+                case UP -> {
+                    // 对于非默认重力，使用不同的限制或取消限制
+                    float pitch = (float)-pitchDelta * 0.15F;
+                    float yaw = (float)-yawDelta * 0.15F;
+                    self.setXRot(self.getXRot() + pitch);
+                    self.setYRot(self.getYRot() + yaw);
+                    self.setXRot(Mth.clamp(self.getXRot(), -90f, 90.0F));
+                    self.xRotO += pitch;
+                    self.yRotO += yaw;
+                    self.xRotO = Mth.clamp(self.xRotO, -90.0F, 90.0F);
+                }
+                case SOUTH -> {
+                    IRollable rollable = ((IRollable)self);
+                    // 鼠标左右移动 → roll（绕Z轴）
+                    float roll = (float)yawDelta * 0.15F;
+                    float pitch = (float)pitchDelta * 0.15F;
+                    rollable.undertale$setRoll(roll);
+                    self.setXRot(Mth.clamp(self.getXRot() + pitch, -90f, 90.0F));
+
+                    self.xRotO += pitch;
+                    rollable.undertale$setRollO(rollable.undertale$getRollO() + roll);
+                    self.xRotO = Mth.clamp(self.xRotO, -90.0F, 90.0F);
+                }
+                case NORTH -> {
+                }
+            }
+
+            if (this.vehicle != null) {
+                this.vehicle.onPassengerTurned(self);
+            }
+        }
     }
+    /**
+     * moveRelative 根据当前身体角度处理向前移动时的在X和Z轴上的速度增量
+     * 根据重力方向修正yRot角度：由于速度存储的是局部，所以需要yRot由世界转局部
+     */
+    @Redirect(method = "moveRelative", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getYRot()F"))
+    public float getInputVector(Entity instance) {
+        GravityData data = instance.getData(AttachmentTypeRegistry.GRAVITY);
+        Direction gravity = data.getGravity();
+
+        return switch (gravity) {
+            case DOWN -> yRot;
+            case UP -> -yRot;
+            case NORTH -> 0.0F;
+            case SOUTH -> ((IRollable)instance).undertale$getRoll();
+            case WEST -> 0.0F;
+            case EAST -> 0.0F;
+        };
+    }
+//
+//    @Inject(method = "lookAt", at = @At(value = "HEAD"), cancellable = true)
+//    private void onLookAt(EntityAnchorArgument.Anchor anchor, Vec3 target, CallbackInfo ci) {
+//        Entity self = (Entity)(Object)this;
+//        GravityData data = self.getData(AttachmentTypeRegistry.GRAVITY);
+//        Direction gravity = data.getGravity();
+//        if(gravity != Direction.DOWN){
+//            ci.cancel();
+//            Vec3 eyePos = anchor.apply(self);
+//            double dx = target.x - eyePos.x;
+//            double dy = target.y - eyePos.y;
+//            double dz = target.z - eyePos.z;
+//            double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+//            dx /= len; dy /= len; dz /= len;
+//            float yaw = (float) Math.toDegrees(Math.atan2(dx, dz));
+//            float pitch = (float) Math.toDegrees(Math.asin(-dy));
+//            float roll = (float) Math.toDegrees(Math.atan2(-dx * dy, Math.sqrt(1 - dy * dy)));
+//            // 设置角度
+//            self.setYRot(yaw);
+//            self.setXRot(pitch);
+//            GravityAccessor self1 = (GravityAccessor) self;
+//            self1.setRoll(roll);
+//            switch (gravity){
+//                case SOUTH -> self.setYHeadRot(roll);
+//            }
+//            self.xRotO = self.getXRot();
+//            self.yRotO = self.getYRot();
+//            self1.setRollO(self1.getRoll());
+//        }
+//    }
+//
+//    @Inject(method = "lerpHeadTo", at = @At("HEAD"), cancellable = true)
+//    private void onLerpHeadTo(float yHeadRot, int steps, CallbackInfo ci) {
+//        Entity self = (Entity)(Object)this;
+//        GravityData gravity = self.getData(AttachmentTypeRegistry.GRAVITY);
+//
+//        if (gravity.getGravity() == Direction.SOUTH) {
+//            // 网络同步来的头部旋转，直接设置给 roll
+//            ((GravityAccessor)self).setRoll(yHeadRot);
+//            ((GravityAccessor)self).setRollO(yHeadRot);
+//            self.setYHeadRot(yHeadRot);  // 同步回去
+//            ci.cancel();
+//        }
+//    }
+
+
 
 
     /**
@@ -130,8 +227,8 @@ public abstract class EntityGravityMixin {
             case UP -> this.dimensions.makeBoundingBox(position.x, position.y - self.getBbHeight(), position.z);
             case EAST -> this.dimensions.makeBoundingBox(position.x - halfWidth, position.y, position.z);
             case WEST -> this.dimensions.makeBoundingBox(position.x + halfWidth, position.y, position.z);
-            case SOUTH -> this.dimensions.makeBoundingBox(position.x, position.y, position.z - halfWidth);
-            case NORTH -> this.dimensions.makeBoundingBox(position.x, position.y, position.z + halfWidth);
+            case SOUTH -> new AABB(position.x-halfWidth, position.y-halfWidth, position.z, position.x+halfWidth, position.y+halfWidth, position.z - self.getBbHeight());
+            case NORTH -> new AABB(position.x-halfWidth, position.y-halfWidth, position.z, position.x+halfWidth, position.y+halfWidth, position.z + self.getBbHeight());
         });
     }
 
@@ -210,26 +307,6 @@ public abstract class EntityGravityMixin {
                     Mth.lerp(partialTick, self.zo, self.getZ()) + this.eyeHeight
             );
         });
-    }
-
-    /**
-     * moveRelative 根据当前身体角度处理向前移动时的在X和Z轴上的速度增量
-     * 根据重力方向修正yRot角度：由于速度存储的是局部，所以需要yRot由世界转局部
-     */
-    @ModifyArg(method = "moveRelative", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;getInputVector(Lnet/minecraft/world/phys/Vec3;FF)Lnet/minecraft/world/phys/Vec3;"),index = 2)
-    public float getInputVector(float yRot) {
-        Entity self = (Entity) (Object) this;
-        GravityData data = self.getData(AttachmentTypeRegistry.GRAVITY);
-        Direction gravity = data.getGravity();
-        if (gravity == Direction.DOWN) return yRot;
-        return switch (gravity) {
-            case DOWN -> 0.0F;
-            case UP -> -yRot;
-            case NORTH -> 0.0F;
-            case SOUTH -> 0.0F;
-            case WEST -> 0.0F;
-            case EAST -> 0.0F;
-        };
     }
 
     /**
@@ -357,7 +434,6 @@ public abstract class EntityGravityMixin {
         args.set(2, posZ+worldDD[2]);
     }
 
-
     /**
      * 根据重力方向重写碰撞检测
      */
@@ -426,6 +502,14 @@ public abstract class EntityGravityMixin {
             cir.setReturnValue(collidedLogicDD);
         }
     }
+    @Shadow
+    private static List<VoxelShape> collectColliders(@org.jetbrains.annotations.Nullable Entity p_344804_, Level p_345583_, List<VoxelShape> p_345198_, AABB p_345837_) {
+        return null;
+    }
+    @Shadow
+    private static Vec3 collideWithShapes(Vec3 p_198901_, AABB p_198902_, List<VoxelShape> p_198903_) {
+        return null;
+    }
 
     /**
      * 根据重力方向重收集可以走上 <=maxUpStep高度方块 的高度列表
@@ -459,4 +543,79 @@ public abstract class EntityGravityMixin {
         return afloat;
     }
 
+
+    @Inject(method = "absRotateTo", at = @At("HEAD"), cancellable = true)
+    private void absRotateTo(float p_348662_, float p_348500_, CallbackInfo ci) {
+        Entity self = (Entity) (Object) this;
+        Direction gravity = self.getData(AttachmentTypeRegistry.GRAVITY).getGravity();
+        if(gravity != Direction.DOWN){
+            ci.cancel();
+            switch(gravity) {
+            }
+        }
+    }
+
+
+    @Inject(method = "load", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setYBodyRot(F)V",shift = At.Shift.AFTER))
+    private void setHeadAndBodyRotInLoadAfterSetYBodyRot(CallbackInfo ci){
+        Entity self = (Entity)(Object)this;
+        Direction gravity = self.getData(AttachmentTypeRegistry.GRAVITY).getGravity();
+        if (gravity != Direction.DOWN) {
+            IRollable rollable = (IRollable)self;
+            switch (gravity) {
+                case SOUTH -> {
+                    self.setYHeadRot(rollable.undertale$getRoll());
+                    self.setYBodyRot(rollable.undertale$getRoll());
+                }
+            }
+        }
+    }
+
+
+    @Inject(method = "getViewVector", at = @At("HEAD"), cancellable = true)
+    public void getViewVector(float partialTicks, CallbackInfoReturnable<Vec3> cir) {
+        Entity self = (Entity)(Object)this;
+        GravityData data = self.getData(AttachmentTypeRegistry.GRAVITY);
+        Direction gravity = data.getGravity();
+        if(gravity != Direction.DOWN){
+            cir.cancel();
+            IRollable rollable = (IRollable)self;
+            cir.setReturnValue(undertale_calculateViewVector(rollable.undertale$getViewRoll(partialTicks),self.getViewXRot(partialTicks),self.getViewYRot(partialTicks)));
+        }
+    }
+
+
+    @Inject(method = "getUpVector", at = @At("HEAD"), cancellable = true)
+    public final void getUpVector(float partialTicks, CallbackInfoReturnable<Vec3> cir) {
+        Entity self = (Entity)(Object)this;
+        GravityData data = self.getData(AttachmentTypeRegistry.GRAVITY);
+        Direction gravity = data.getGravity();
+        if(gravity != Direction.DOWN){
+            cir.cancel();
+            IRollable rollable = (IRollable)self;
+            cir.setReturnValue(undertale_calculateUpVector(rollable.undertale$getViewRoll(partialTicks),self.getViewXRot(partialTicks),self.getViewYRot(partialTicks)));
+        }
+    }
+    @Unique
+    protected Vec3 undertale_calculateUpVector(float roll,float pitch, float yaw) {
+        return undertale_calculateViewVector(roll,pitch- 90f,yaw);
+    }
+    @Unique
+    protected Vec3 undertale_calculateViewVector(float roll,float pitch, float yaw) {
+        float rollRad = roll * Mth.DEG_TO_RAD;
+        float pitchRad = pitch * Mth.DEG_TO_RAD;
+        float yawRad = -yaw * Mth.DEG_TO_RAD;
+
+        float sinP = Mth.sin(pitchRad);
+        float cosP = Mth.cos(pitchRad);
+        float sinY = Mth.sin(yawRad);
+        float cosY = Mth.cos(yawRad);
+        float sinR = Mth.sin(rollRad);
+        float cosR = Mth.cos(rollRad);
+
+        float x = cosY * sinR * sinP + sinY * cosR;
+        float y = -cosP * sinR;
+        float z = cosY * cosR - sinY * sinR * sinP;
+        return new Vec3(x, y, z);
+    }
 }

@@ -4,7 +4,7 @@ import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.render.item.GasterBlasterProItemRender;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
-import com.sakpeipei.undertale.network.GasterBlasterProPacket;
+import com.sakpeipei.undertale.net.packet.GasterBlasterProPacket;
 import com.sakpeipei.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.undertale.registry.ItemRegistry;
 import com.sakpeipei.undertale.utils.RayUtils;

@@ -4,18 +4,12 @@ import com.sakpeipei.undertale.entity.attachment.GravityData;
 import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.undertale.utils.CoordsUtils;
 import net.minecraft.core.Direction;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.Vec3;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 /**
@@ -24,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
  * 服务端处理客户端的位移：世界转局部
  */
 @Mixin(ServerGamePacketListenerImpl.class)
-public abstract class ServerGamePacketListenerImplMixin {
+public abstract class ServerGamePacketListenerImplGravityMixin {
     @Shadow
     public ServerPlayer player;
 

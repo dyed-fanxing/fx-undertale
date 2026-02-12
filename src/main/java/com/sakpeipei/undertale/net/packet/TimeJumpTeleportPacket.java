@@ -1,4 +1,4 @@
-package com.sakpeipei.undertale.network;
+package com.sakpeipei.undertale.net.packet;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.Undertale;

@@ -33,7 +33,7 @@ public abstract class PlayerGravityMixin {
             case DOWN -> null;
             case UP -> self.level().noCollision(self, dimensions.makeBoundingBox(position.x, position.y - dimensions.height(), position.z).deflate(1.0E-7));
             case NORTH -> null;
-            case SOUTH -> null;
+            case SOUTH -> self.level().noCollision(self, dimensions.makeBoundingBox(position.x, position.y, position.z - dimensions.height()).deflate(1.0E-7));
             case WEST -> null;
             case EAST -> null;
         });
@@ -52,13 +52,6 @@ public abstract class PlayerGravityMixin {
         cir.cancel();
         Vec3 worldDD = CoordsUtils.transform(dx, -maxUpStep-1.0E-5F, dz, data.getLogicToWorld());
         AABB aabb = self.getBoundingBox();
-        cir.setReturnValue(switch (data.getGravity()) {
-            case DOWN -> false;
-            case UP -> self.level().noCollision(self, new AABB(aabb.minX + worldDD.x, aabb.maxY + worldDD.y, aabb.minZ + worldDD.z, aabb.maxX + worldDD.x, aabb.maxY, aabb.maxZ + worldDD.z));
-            case NORTH -> null;
-            case SOUTH -> null;
-            case WEST -> null;
-            case EAST -> null;
-        });
+        cir.setReturnValue(self.level().noCollision(self, new AABB(aabb.minX + worldDD.x, aabb.maxY + worldDD.y, aabb.minZ + worldDD.z, aabb.maxX + worldDD.x, aabb.maxY, aabb.maxZ + worldDD.z)));
     }
 }

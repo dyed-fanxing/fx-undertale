@@ -99,13 +99,10 @@ public abstract class LivingEntityRendererGravityMixin {
                 float height = entity.getBbHeight();
                 switch (gravity) {
                     case UP -> poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
-                    case NORTH -> {
-                        poseStack.translate(0.0F, 0.0F, (height + 0.1F) / scale);
-                        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
-                    }
+                    case NORTH -> poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
                     case SOUTH -> {
-                        poseStack.translate(0.0F, 0.0F, -(height + 0.1F) / scale);
                         poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+                        poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
                     }
                     case WEST -> {
                         poseStack.translate((height + 0.1F) / scale, 0.0F, 0.0F);

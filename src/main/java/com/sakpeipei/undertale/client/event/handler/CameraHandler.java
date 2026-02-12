@@ -1,5 +1,6 @@
 package com.sakpeipei.undertale.client.event.handler;
 
+import com.sakpeipei.undertale.entity.IRollable;
 import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
 import net.minecraft.client.Camera;
 import net.minecraft.core.Direction;
@@ -27,7 +28,23 @@ public class CameraHandler {
         }
         switch (gravity) {
             case UP -> event.setRoll(event.getRoll()+180);
+            case EAST -> event.setRoll(event.getRoll() - 90); // 站在东墙上：向左倾斜90度
+            case WEST -> {
+                // 站在西墙上：向右倾斜90度
+                event.setRoll(event.getRoll() + 90);
+            }
+            case SOUTH -> {
+//                event.setYaw(event.getRoll());      // 世界yaw = 局部roll
+//                event.setRoll(event.getYaw());      // 世界roll = 局部yaw
+                IRollable rollable = (IRollable)entity;
+                log.debug("roll：{}",rollable.undertale$getViewRoll((float) event.getPartialTick()));
+                event.setRoll(rollable.undertale$getViewRoll((float) event.getPartialTick()));      // 世界roll = 局部yaw
+            }
             case NORTH -> {
+                // 站在北墙上：向后倾斜90度
+                // 相机需要向后旋转90度
+//                event.setPitch(-event.getPitch());   // 反转俯仰
+                // yaw可能保持不变
             }
         }
     }

@@ -122,9 +122,6 @@ public class EntityRenderDispatcherMixin {
             // 5. 渲染视线向量
             renderVector(poseStack, consumer,new Vector3f(0.0F, entity.getEyeHeight(), 0.0F),entity.getViewVector(partialTicks).scale(2.0F),-16776961);
         }
-        if(entity instanceof Player && partialTicks > 0.99f){
-            log.info("眼睛高度：{},眼睛高Y：{}，眼睛位置：{},玩家位置：{},碰撞箱：{}",entity.getEyeHeight(),entity.getEyeY(),entity.getEyePosition(),entity.position(),entity.getBoundingBox());
-        }
         GravityData data = entity.getData(AttachmentTypeRegistry.GRAVITY);
         Vec3i gravity = data.getGravity().getNormal();
         Vector3f up = data.getUp();

@@ -1,10 +1,9 @@
 package com.sakpeipei.undertale.entity.ai.goal;
 
 import com.sakpeipei.undertale.common.anim.RoundSequenceAnim;
-import com.sakpeipei.undertale.common.anim.RoundSequenceGAnim;
 import com.sakpeipei.undertale.common.anim.SingleAnim;
 import com.sakpeipei.undertale.entity.IAnimatable;
-import com.sakpeipei.undertale.network.AnimPacket;
+import com.sakpeipei.undertale.net.packet.AnimPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;

@@ -22,11 +22,6 @@ import org.slf4j.LoggerFactory;
  */
 public class GravityData {
     private static final Logger log = LoggerFactory.getLogger(GravityData.class);
-    // 预定义的重力方向四元数
-    public static final Quaternionf QUAT_NORTH = new Quaternionf().rotationX(Mth.PI * 0.5f);  // 绕X转90度
-    public static final Quaternionf QUAT_SOUTH = new Quaternionf().rotationX(-Mth.PI * 0.5f); // 绕X转-90度
-    public static final Quaternionf QUAT_EAST = new Quaternionf().rotationZ(Mth.PI * 0.5f);   // 绕Z转90度
-    public static final Quaternionf QUAT_WEST = new Quaternionf().rotationZ(-Mth.PI * 0.5f);  // 绕Z转-90度
 
     // Codec用于序列化，支持网络同步
     public static final Codec<GravityData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -37,7 +32,6 @@ public class GravityData {
     private Direction gravity = Direction.DOWN;
     private Quaternionf logicToWorld = new Quaternionf();
     private Quaternionf worldToLogic = new Quaternionf();
-    private Quaternionf oldToNewWorld = new Quaternionf();
 
     public GravityData() {
     }
@@ -47,23 +41,10 @@ public class GravityData {
         this.logicToWorld = getGravityQuaternionf(gravity);
         this.worldToLogic = logicToWorld.invert(new Quaternionf());
     }
-    public GravityData(Direction forward, LocalDirection logicGravity) {
-        this.gravity = switch (logicGravity) {
-            case DOWN -> Direction.DOWN;
-            case UP -> Direction.UP;
-            case FRONT -> forward;
-            case BACK -> forward.getOpposite();
-            case LEFT -> forward.getCounterClockWise();
-            case RIGHT -> forward.getClockWise();
-        };
-        this.logicToWorld = getGravityQuaternionf(gravity);
-        this.worldToLogic = logicToWorld.invert(new Quaternionf());
-    }
     public GravityData(Direction forward, Quaternionf oldWorldToLogic) {
         this.gravity = forward;
         this.logicToWorld = getGravityQuaternionf(gravity);
         this.worldToLogic = logicToWorld.invert(new Quaternionf());
-        this.oldToNewWorld = logicToWorld.mul(oldWorldToLogic,new Quaternionf());
     }
     public Direction getGravity() {
         return gravity;
@@ -133,64 +114,30 @@ public class GravityData {
         Vec3 posOld = target.position();
         Vec3 logicPos = switch (oldGravity.getGravity()) {
             case DOWN -> target.position();
-            case UP   -> target.position().subtract(0,target.getBbHeight(),0);
-            case NORTH -> null;
-            case SOUTH -> null;
-            case WEST -> null;
+            case UP   -> target.position().add(0,-target.getBbHeight(),0);
             case EAST -> null;
+            case WEST -> null;
+            case SOUTH -> target.position().add(0,-target.getBbWidth()*0.5f,target.getBbHeight()*0.5f);
+            case NORTH -> target.position().add(0,-target.getBbWidth()*0.5f,-target.getBbHeight()*0.5f);
         };
-        float xRotOld = target.getXRot();
-        float yRotOld = target.getYRot();
         switch (this.gravity) {
-            case UP   -> {
-                target.setPos(logicPos.add(0,target.getBbHeight(),0));
-            }
+            case UP   -> target.setPos(logicPos.add(0,target.getBbHeight(),0));
 //            case EAST -> ppos.add(target.getBbHeight()*0.5f,target.getBbWidth(),0);
 //            case WEST -> ppos.add(-target.getBbHeight()*0.5f,target.getBbWidth(),0);
-//            case SOUTH -> ppos.add(0,target.getBbWidth(),target.getBbHeight()*0.5f);
-//            case NORTH -> ppos.add(0,target.getBbWidth(),-target.getBbHeight()*0.5f);
+            case SOUTH -> target.setPos(logicPos.add(0,target.getBbWidth()*0.5f,-target.getBbHeight()*0.5f));
+            case NORTH -> target.setPos(logicPos.add(0,target.getBbWidth()*0.5f,target.getBbHeight()*0.5f));
         };
-            log.info("target之前世界坐标系的角度：({},{})，位置：{}，之后世界坐标系的角度：({},{})，位置：{}",xRotOld,yRotOld, posOld,target.getXRot(),target.getYRot(),target.position());
+            log.info("target之前世界坐标系的位置：{}，之后世界坐标系的位置：{}",posOld,target.position());
     }
 
-    public void applyPos(Entity target,Direction gravity,Quaternionf oldWorldToLogic) {
-        Vec3 logicPos = CoordsUtils.transform(target.position(), oldWorldToLogic);
-        switch (this.gravity) {
-            case UP -> {
-                Quaternionf localRotation = new Quaternionf().rotationY(target.getYRot()).rotateX(target.getXRot());
-                Quaternionf re = localRotation.mul(this.logicToWorld, new Quaternionf());
-                Vector3f eulerAnglesXYZ = re.getEulerAnglesXYZ(new Vector3f());
-                target.setXRot(eulerAnglesXYZ.x);
-                target.setYRot(eulerAnglesXYZ.y);
-                target.setPos(logicPos.add(0, target.getBbHeight(), 0));
-            }
-        }
-    }
-    private static float[] getYawPitchFromQuaternion(Quaternionf q) {
-        // 从四元数计算前向向量
-        float x = 2 * (q.x * q.z - q.w * q.y);
-        float y = 2 * (q.y * q.z + q.w * q.x);
-        float z = 1 - 2 * (q.x * q.x + q.y * q.y);
-
-        // 标准化
-        float length = (float)Math.sqrt(x * x + y * y + z * z);
-        x /= length;
-        y /= length;
-        z /= length;
-
-        // 计算 yaw 和 pitch
-        float yaw = (float)Math.toDegrees(Math.atan2(x, z));
-        float pitch = (float)Math.toDegrees(-Math.asin(y));
-
-        return new float[]{yaw, pitch};
-    }
     public static Direction calculateGravity(Direction forward, LocalDirection logicGravity) {
         return switch (logicGravity) {
             case DOWN -> Direction.DOWN;
             case UP -> Direction.UP;
             case FRONT -> forward;
             case BACK -> forward.getOpposite();
-            case LEFT -> forward.getCounterClockWise();
+//            case LEFT -> forward.getCounterClockWise();
+            case LEFT -> Direction.SOUTH;
             case RIGHT -> forward.getClockWise();
         };
     }
@@ -201,10 +148,10 @@ public class GravityData {
         return switch (gravity) {
             case DOWN -> new Quaternionf();
             case UP -> new Quaternionf().rotationZ(Mth.PI);
-            case NORTH -> QUAT_NORTH;
-            case SOUTH -> QUAT_SOUTH;
-            case EAST -> QUAT_EAST;
-            case WEST -> QUAT_WEST;
+            case EAST -> new Quaternionf().rotationZ(-Mth.PI * 0.5f);
+            case WEST -> new Quaternionf().rotationZ(Mth.PI * 0.5f);
+            case SOUTH -> new Quaternionf().rotationXYZ(Mth.PI * 0.5f,0,-Mth.PI*0.5f);
+            case NORTH -> new Quaternionf().rotationX(-Mth.PI * 0.5f);
         };
     }
 }

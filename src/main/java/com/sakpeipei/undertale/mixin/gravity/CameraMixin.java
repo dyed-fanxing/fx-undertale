@@ -29,7 +29,8 @@ public abstract class CameraMixin {
         if (data.getGravity() != Direction.DOWN) {
             switch (data.getGravity()) {
                 case UP -> this.setPosition(Mth.lerp(partialTick, entity.xo, entity.getX()), Mth.lerp(partialTick, entity.yo, entity.getY()) - (double)Mth.lerp(partialTick, this.eyeHeightOld, this.eyeHeight), Mth.lerp(partialTick, entity.zo, entity.getZ()));
-                case EAST -> this.setPosition(Mth.lerp(partialTick, entity.xo, entity.getX()), Mth.lerp(partialTick, entity.yo, entity.getY()) - (double)Mth.lerp(partialTick, this.eyeHeightOld, this.eyeHeight), Mth.lerp(partialTick, entity.zo, entity.getZ()));
+                case SOUTH -> this.setPosition(Mth.lerp(partialTick, entity.xo, entity.getX()), Mth.lerp(partialTick, entity.yo, entity.getY()), Mth.lerp(partialTick, entity.zo, entity.getZ()) - (double)Mth.lerp(partialTick, this.eyeHeightOld, this.eyeHeight));
+                case NORTH -> this.setPosition(Mth.lerp(partialTick, entity.xo, entity.getX()), Mth.lerp(partialTick, entity.yo, entity.getY()), Mth.lerp(partialTick, entity.zo, entity.getZ()) + (double)Mth.lerp(partialTick, this.eyeHeightOld, this.eyeHeight));
             }
         }
     }

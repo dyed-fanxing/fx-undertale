@@ -8,7 +8,12 @@
     "gravity.EntityGravityMixin",
     "gravity.LivingEntityGravityMixin",
     "gravity.PlayerGravityMixin",
-    "gravity.ServerGamePacketListenerImplMixin"
+    "gravity.ServerGamePacketListenerImplGravityMixin",
+    "roll.EntityRollMixin",
+    "roll.ServerboundMovePlayerPacketRollMixin",
+    "roll.ServerboundMovePlayerPacketRollMixin$PosRot",
+    "roll.ServerboundMovePlayerPacketRollMixin$Rot",
+    "roll.ServerGamePacketListenerImplRollMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
@@ -17,7 +22,7 @@
     "gravity.CameraMixin",
     "gravity.EntityRenderDispatcherGravityMixin",
     "gravity.LivingEntityRendererGravityMixin",
-    "gravity.MouseHandlerGravityMixin"
+    "roll.LocalPlayerRollMixin"
   ],
   "injectors": {
     "defaultRequire": 1

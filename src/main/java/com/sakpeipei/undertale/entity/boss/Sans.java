@@ -18,9 +18,9 @@ import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import com.sakpeipei.undertale.entity.summon.GroundBone;
 import com.sakpeipei.undertale.entity.summon.LateralBone;
 import com.sakpeipei.undertale.entity.summon.MovingGroundBone;
-import com.sakpeipei.undertale.network.GravityPacket;
-import com.sakpeipei.undertale.network.TimeJumpTeleportPacket;
-import com.sakpeipei.undertale.network.WarningTipPacket;
+import com.sakpeipei.undertale.net.packet.GravityPacket;
+import com.sakpeipei.undertale.net.packet.TimeJumpTeleportPacket;
+import com.sakpeipei.undertale.net.packet.WarningTipPacket;
 import com.sakpeipei.undertale.registry.AttachmentTypeRegistry;
 import com.sakpeipei.undertale.registry.EntityTypeRegistry;
 import com.sakpeipei.undertale.registry.SoundRegistry;
@@ -776,7 +776,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
 //                return new SequenceAnim(timeJumpAttackCount == 0 ? 200 : 0, timeJumpAction(target));
 //            }
             List<SequenceAnim> availableAttacks = new ArrayList<>(attacks);
-            availableAttacks.add(new SequenceAnim((byte) 0, 4, (t) -> mob.gravityControl(t, LocalDirection.UP),20, 100));
+            availableAttacks.add(new SequenceAnim((byte) 0, 4, (t) -> mob.gravityControl(t, LocalDirection.LEFT),20, 100));
             if (target.onGround()) {
 //                availableAttacks.addAll(groundAttacks);
                 availableAttacks.addAll(List.of(
@@ -1405,7 +1405,7 @@ public class Sans extends Monster implements NeutralMob, GeoEntity, IAnimatable,
     public int gravityControl(LivingEntity target, LocalDirection direction) {
         GravityData gravityData = GravityData.applyRelativeGravity(this, target, direction);
         PacketDistributor.sendToPlayersTrackingEntity(this, new GravityPacket(this.getId(),target.getId(),gravityData.getGravity(),target.getDeltaMovement()));
-        this.isAppendSpine = true;
+//        this.isAppendSpine = true;
         return 0;
     }
 

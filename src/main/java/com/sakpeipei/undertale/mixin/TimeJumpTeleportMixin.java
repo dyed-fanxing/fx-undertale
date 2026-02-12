@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.mixin;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.sakpeipei.undertale.network.TimeJumpTeleportPacket;
+import com.sakpeipei.undertale.net.packet.TimeJumpTeleportPacket;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
