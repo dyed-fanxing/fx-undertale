@@ -44,7 +44,7 @@ public abstract class PlayerGravityMixin {
 
 
     /**
-     * 对于dx和dz位移以及高度大于maxUpStep的方块，会不会掉落下去，用于玩家shift在方块边缘时，高度大于maxUpStep的方块会不会掉落
+     * 对于局部dx和dz位移以及高度大于maxUpStep的方块，会不会掉落下去，用于玩家shift在方块边缘时，高度大于maxUpStep的方块会不会掉落
      * 根据重力方向重写需要进行碰撞检测的碰撞箱
      */
     @Inject(method = "canFallAtLeast", at = @At("HEAD"), cancellable = true)
@@ -56,13 +56,13 @@ public abstract class PlayerGravityMixin {
             cir.cancel();
             AABB aabb = self.getBoundingBox();
             cir.setReturnValue(switch (gravity) {
-                case UP -> self.level().noCollision(self, new AABB(aabb.minX + dx, aabb.minY, aabb.minZ + dz, aabb.maxX + dx, aabb.maxY+maxUpStep+1.0E-5F, aabb.maxZ + dz));
+                case UP -> self.level().noCollision(self, new AABB(aabb.minX + dx, aabb.minY, aabb.minZ + dz, aabb.maxX + dx, aabb.maxY + maxUpStep+1.0E-5F, aabb.maxZ + dz));
 
-                case EAST -> self.level().noCollision(self,new AABB(aabb.minX, aabb.minY+dx, aabb.minZ+dz, aabb.maxX +maxUpStep+1.0E-5F, aabb.maxY+dx, aabb.maxZ+dz));
-                case WEST -> self.level().noCollision(self,new AABB(aabb.minX-maxUpStep-1.0E-5F, aabb.minY-dx, aabb.minZ+dz, aabb.maxX, aabb.maxY-dx, aabb.maxZ+dz));
+                case EAST -> self.level().noCollision(self,new AABB(aabb.minX, aabb.minY+dz, aabb.minZ-dx, aabb.maxX + maxUpStep+1.0E-5F, aabb.maxY+dz, aabb.maxZ-dx));
+                case WEST -> self.level().noCollision(self,new AABB(aabb.minX - maxUpStep-1.0E-5F, aabb.minY+dz, aabb.minZ+dx, aabb.maxX, aabb.maxY+dz, aabb.maxZ+dx));
 
-                case SOUTH -> self.level().noCollision(self,new AABB(aabb.minX + dx, aabb.minY+dz, aabb.minZ, aabb.maxX + dx, aabb.maxY+dz, aabb.maxZ+maxUpStep+1.0E-5F));
-                case NORTH -> self.level().noCollision(self,new AABB(aabb.minX + dx, aabb.minY-dz, aabb.minZ-maxUpStep-1.0E-5F, aabb.maxX + dx, aabb.maxY-dz, aabb.maxZ));
+                case SOUTH -> self.level().noCollision(self,new AABB(aabb.minX + dx, aabb.minY+dz, aabb.minZ, aabb.maxX + dx, aabb.maxY+dz, aabb.maxZ + maxUpStep+1.0E-5F));
+                case NORTH -> self.level().noCollision(self,new AABB(aabb.minX + dx, aabb.minY-dz, aabb.minZ - maxUpStep-1.0E-5F, aabb.maxX + dx, aabb.maxY-dz, aabb.maxZ));
                 default -> throw new IllegalStateException("Unexpected value: " + gravity);
             });
         }

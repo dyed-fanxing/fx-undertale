@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 public class GravityData {
     private static final Logger log = LoggerFactory.getLogger(GravityData.class);
 
-    // Codec用于序列化，支持网络同步
+    // Codec用于序列化
     public static final Codec<GravityData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Direction.CODEC.fieldOf("gravity").forGetter(data -> data.gravity)
     ).apply(instance, GravityData::new));
@@ -68,15 +68,15 @@ public class GravityData {
         Vec3 localPos = switch (oldGravity.getGravity()) {
             case DOWN -> target.position();
             case UP   -> target.position().add(0,-target.getBbHeight(),0);
-            case EAST -> null;
-            case WEST -> null;
+            case EAST   -> target.position().add(-target.getBbHeight(),-target.getBbWidth()*0.5f,0);
+            case WEST   -> target.position().add(-target.getBbHeight()*0.5f,-target.getBbWidth()*0.5f,0);
             case SOUTH -> target.position().add(0,-target.getBbWidth()*0.5f,-target.getBbHeight()*0.5f);
             case NORTH -> target.position().add(0,-target.getBbWidth()*0.5f,target.getBbHeight()*0.5f);
         };
         switch (this.gravity) {
             case UP   -> target.setPos(localPos.add(0,target.getBbHeight(),0));
-//            case EAST -> ppos.add(target.getBbHeight()*0.5f,target.getBbWidth(),0);
-//            case WEST -> ppos.add(-target.getBbHeight()*0.5f,target.getBbWidth(),0);
+            case EAST   -> target.setPos(localPos.add(target.getBbHeight(),target.getBbWidth()*0.5f,0));
+            case WEST   -> target.setPos(localPos.add(-target.getBbHeight()*0.5f,target.getBbWidth()*0.5f,0));
             case SOUTH -> target.setPos(localPos.add(0,target.getBbWidth()*0.5f,target.getBbHeight()*0.5f));
             case NORTH -> target.setPos(localPos.add(0,target.getBbWidth()*0.5f,-target.getBbHeight()*0.5f));
         };
@@ -196,9 +196,9 @@ public class GravityData {
         return switch (gravity) {
             case DOWN -> new Quaternionf();
             case UP -> new Quaternionf().rotationZ(Mth.PI);
-            case EAST -> new Quaternionf().rotationZ(-Mth.PI * 0.5f);
-            case WEST -> new Quaternionf().rotationZ(Mth.PI * 0.5f);
-            case SOUTH ->new Quaternionf().rotateX(-Mth.HALF_PI);
+            case EAST -> new Quaternionf().rotationY(Mth.PI * 0.5f).rotateX(-Mth.HALF_PI);
+            case WEST -> new Quaternionf().rotationY(-Mth.PI * 0.5f).rotateX(-Mth.HALF_PI);
+            case SOUTH ->new Quaternionf().rotationX(-Mth.HALF_PI);
             case NORTH -> new Quaternionf().rotationX(Mth.HALF_PI);
         };
     }

@@ -122,8 +122,8 @@ public abstract class EntityGravityMixin{
             double halfWidth = this.dimensions.width() * 0.5f;
             cir.setReturnValue(switch (gravity) {
                 case UP -> this.dimensions.makeBoundingBox(position.x, position.y - self.getBbHeight(), position.z);
-                case EAST -> this.dimensions.makeBoundingBox(position.x - halfWidth, position.y, position.z);
-                case WEST -> this.dimensions.makeBoundingBox(position.x + halfWidth, position.y, position.z);
+                case EAST -> new AABB(position.x, position.y-halfWidth, position.z-halfWidth, position.x - self.getBbHeight(), position.y+halfWidth, position.z+halfWidth);
+                case WEST -> new AABB(position.x, position.y-halfWidth, position.z-halfWidth, position.x + self.getBbHeight(), position.y+halfWidth, position.z+halfWidth);
                 case SOUTH -> new AABB(position.x-halfWidth, position.y-halfWidth, position.z, position.x+halfWidth, position.y+halfWidth, position.z - self.getBbHeight());
                 case NORTH -> new AABB(position.x-halfWidth, position.y-halfWidth, position.z, position.x+halfWidth, position.y+halfWidth, position.z + self.getBbHeight());
                 default -> throw new IllegalStateException("Unexpected value: " + gravity);

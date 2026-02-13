@@ -47,8 +47,8 @@ public class EntityRenderDispatcherGravityMixin {
             ci.cancel();
             switch (data.getGravity()){
                 case UP -> LevelRenderer.renderLineBox(poseStack, consumer, aabb.minX, -entity.getEyeHeight() - 0.01F,aabb.minZ, aabb.maxX,-entity.getEyeHeight() + 0.01F, aabb.maxZ, 1.0F, 0.0F, 0.0F, 1.0F);
-//                case EAST -> LevelRenderer.renderLineBox(poseStack, consumer, minX, -maxY,minZ, maxX, -minY, maxZ, 1.0F, 0.0F, 0.0F, 1.0F);
-//                case WEST -> LevelRenderer.renderLineBox(poseStack, consumer, minX, -maxY,minZ, maxX, -minY, maxZ, 1.0F, 0.0F, 0.0F, 1.0F);
+                case EAST ->  LevelRenderer.renderLineBox(poseStack, consumer, -entity.getEyeHeight() - 0.01F, aabb.minY,aabb.minZ,-entity.getEyeHeight() + 0.01F,aabb.maxY, aabb.maxZ, 1.0F, 0.0F, 0.0F, 1.0F);
+                case WEST ->  LevelRenderer.renderLineBox(poseStack, consumer, entity.getEyeHeight() - 0.01F, aabb.minY,aabb.minZ,entity.getEyeHeight() + 0.01F,aabb.maxY, aabb.maxZ, 1.0F, 0.0F, 0.0F, 1.0F);
                 case SOUTH -> LevelRenderer.renderLineBox(poseStack, consumer, aabb.minX, aabb.minY,-entity.getEyeHeight() - 0.01F, aabb.maxX,aabb.maxY, -entity.getEyeHeight() + 0.01F, 1.0F, 0.0F, 0.0F, 1.0F);
                 case NORTH -> LevelRenderer.renderLineBox(poseStack, consumer, aabb.minX, aabb.minY,entity.getEyeHeight() - 0.01F, aabb.maxX,aabb.maxY, entity.getEyeHeight() + 0.01F, 1.0F, 0.0F, 0.0F, 1.0F);
             }
@@ -58,7 +58,7 @@ public class EntityRenderDispatcherGravityMixin {
 
     @ModifyArg(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V",
             at = @At(value = "INVOKE",target = "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;renderVector(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lorg/joml/Vector3f;Lnet/minecraft/world/phys/Vec3;I)V"),index = 2)
-    private static Vector3f modifyVector3fWithContext(Vector3f eyePosOffset, @Local(argsOnly = true, ordinal = 0) Entity entity) {
+    private static Vector3f viewVectorEyeHeightVector3f(Vector3f eyePosOffset, @Local(argsOnly = true, ordinal = 0) Entity entity) {
         GravityData data = entity.getData(AttachmentTypes.GRAVITY);
         if(data.getGravity() == Direction.DOWN) return eyePosOffset;
         else return data.localToWorld(eyePosOffset);
