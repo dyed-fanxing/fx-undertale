@@ -38,7 +38,6 @@ public class GravityTestItem extends Item {
             // 从物品NBT中读取保存的重力方向
             LocalDirection gravity = getGravityDirection(stack);
             GravityData.applyRelativeGravity(player, entity, gravity);
-
             // 发送提示消息
             player.sendSystemMessage(
                     Component.translatable("message.undertale.gravity_applied",

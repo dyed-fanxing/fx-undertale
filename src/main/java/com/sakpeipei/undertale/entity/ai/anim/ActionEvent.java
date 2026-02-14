@@ -1,4 +1,4 @@
-package com.sakpeipei.undertale.common.anim;
+package com.sakpeipei.undertale.entity.ai.anim;
 
 import net.minecraft.world.entity.LivingEntity;
 

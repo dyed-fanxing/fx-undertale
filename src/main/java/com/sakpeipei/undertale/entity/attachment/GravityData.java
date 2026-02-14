@@ -30,23 +30,24 @@ public class GravityData {
 
     // 控制方向
     private Direction gravity = Direction.DOWN;
-    private Quaternionf localToWorld = new Quaternionf();
-    private Quaternionf worldToLocal = new Quaternionf();
+    private Quaternionf localToWorld;
+    private Quaternionf worldToLocal;
 
     public GravityData() {
     }
 
     public GravityData(Direction gravity) {
         this.gravity = gravity;
-        this.localToWorld = getGravityQuaternionf(gravity);
+        this.localToWorld = switch (gravity) {
+            case DOWN -> new Quaternionf();
+            case UP -> new Quaternionf().rotationZ(Mth.PI);
+            case EAST -> new Quaternionf().rotationY(Mth.PI * 0.5f).rotateX(-Mth.HALF_PI);
+            case WEST -> new Quaternionf().rotationY(-Mth.PI * 0.5f).rotateX(-Mth.HALF_PI);
+            case SOUTH ->new Quaternionf().rotationX(-Mth.HALF_PI);
+            case NORTH -> new Quaternionf().rotationX(Mth.HALF_PI);
+        };
         this.worldToLocal = localToWorld.invert(new Quaternionf());
     }
-    public GravityData(Direction forward, Quaternionf oldWorldToLocal) {
-        this.gravity = forward;
-        this.localToWorld = getGravityQuaternionf(gravity);
-        this.worldToLocal = localToWorld.invert(new Quaternionf());
-    }
-
 
 
     /**
@@ -55,32 +56,34 @@ public class GravityData {
     public static void applyRelativeGravity(Entity attacker, Entity target, LocalDirection localGravity) {
         Direction forward = Direction.fromYRot(attacker.getYHeadRot());
         GravityData oldGravity = target.getData(AttachmentTypes.GRAVITY);
-        GravityData gravityData = new GravityData(calculateGravity(forward, localGravity),oldGravity.getWorldToLocal());
-        log.info("应用的重力坐标系：{},逻辑转世界矩阵：{},世界转逻辑矩阵：{}",gravityData,gravityData.getLocalToWorld(),gravityData.getWorldToLocal());
+        GravityData gravityData = new GravityData(calculateGravity(forward, localGravity));
+        log.info("level:{},target：{},应用的重力坐标系：{}",target.level(),target,gravityData);
         target.setData(AttachmentTypes.GRAVITY, gravityData);
-        gravityData.applyGravity(target,oldGravity);
+        gravityData.applyGravityPos(target,oldGravity);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(),gravityData.getGravity(),target.getDeltaMovement()));
     }
 
 
-    public void applyGravity(Entity target,GravityData oldGravity) {
+    public void applyGravityPos(Entity target,GravityData oldGravity) {
         Vec3 posOld = target.position();
         Vec3 localPos = switch (oldGravity.getGravity()) {
             case DOWN -> target.position();
             case UP   -> target.position().add(0,-target.getBbHeight(),0);
-            case EAST   -> target.position().add(-target.getBbHeight(),-target.getBbWidth()*0.5f,0);
-            case WEST   -> target.position().add(-target.getBbHeight()*0.5f,-target.getBbWidth()*0.5f,0);
+            case EAST   -> target.position().add(-target.getBbHeight()*0.5f,-target.getBbWidth()*0.5f,0);
+            case WEST   -> target.position().add(target.getBbHeight()*0.5f,-target.getBbWidth()*0.5f,0);
             case SOUTH -> target.position().add(0,-target.getBbWidth()*0.5f,-target.getBbHeight()*0.5f);
             case NORTH -> target.position().add(0,-target.getBbWidth()*0.5f,target.getBbHeight()*0.5f);
         };
         switch (this.gravity) {
+            case DOWN -> target.setPos(localPos);
             case UP   -> target.setPos(localPos.add(0,target.getBbHeight(),0));
-            case EAST   -> target.setPos(localPos.add(target.getBbHeight(),target.getBbWidth()*0.5f,0));
+            case EAST   -> target.setPos(localPos.add(target.getBbHeight()*0.5f,target.getBbWidth()*0.5f,0));
             case WEST   -> target.setPos(localPos.add(-target.getBbHeight()*0.5f,target.getBbWidth()*0.5f,0));
             case SOUTH -> target.setPos(localPos.add(0,target.getBbWidth()*0.5f,target.getBbHeight()*0.5f));
             case NORTH -> target.setPos(localPos.add(0,target.getBbWidth()*0.5f,-target.getBbHeight()*0.5f));
         };
-        log.info("gravity：{},target之前世界坐标系的位置：{}，之后世界坐标系的位置：{}",gravity,posOld,target.position());
+        target.setOnGroundWithMovement(false,target.getDeltaMovement());  // 让下一帧重新检测
+        log.debug("gravity：{},target之前世界坐标系的位置：{}，之后世界坐标系的位置：{}",gravity,posOld,target.position());
     }
 
 
@@ -168,38 +171,14 @@ public class GravityData {
 
 
 
-
-
-
-
-
-
-
-
-
-
     public static Direction calculateGravity(Direction forward, LocalDirection localGravity) {
         return switch (localGravity) {
             case DOWN -> Direction.DOWN;
             case UP -> Direction.UP;
             case FRONT -> forward;
             case BACK -> forward.getOpposite();
-//            case LEFT -> forward.getCounterClockWise();
-            case LEFT -> Direction.NORTH;
+            case LEFT -> forward.getCounterClockWise();
             case RIGHT -> forward.getClockWise();
-        };
-    }
-    /**
-     * 根据重力方向获取局部→世界变换矩阵
-     */
-    public static Quaternionf getGravityQuaternionf(Direction gravity) {
-        return switch (gravity) {
-            case DOWN -> new Quaternionf();
-            case UP -> new Quaternionf().rotationZ(Mth.PI);
-            case EAST -> new Quaternionf().rotationY(Mth.PI * 0.5f).rotateX(-Mth.HALF_PI);
-            case WEST -> new Quaternionf().rotationY(-Mth.PI * 0.5f).rotateX(-Mth.HALF_PI);
-            case SOUTH ->new Quaternionf().rotationX(-Mth.HALF_PI);
-            case NORTH -> new Quaternionf().rotationX(Mth.HALF_PI);
         };
     }
 }

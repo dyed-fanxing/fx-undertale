@@ -3,16 +3,23 @@ package com.sakpeipei.undertale.mixin.gravity;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.sakpeipei.undertale.common.phys.OBB;
+import com.sakpeipei.undertale.entity.IOBBCapability;
 import com.sakpeipei.undertale.entity.attachment.GravityData;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
+import com.sakpeipei.undertale.utils.RenderUtils;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.entity.PartEntity;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.*;
@@ -55,13 +62,32 @@ public class EntityRenderDispatcherGravityMixin {
         }
     }
 
-
     @ModifyArg(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V",
             at = @At(value = "INVOKE",target = "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;renderVector(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lorg/joml/Vector3f;Lnet/minecraft/world/phys/Vec3;I)V"),index = 2)
     private static Vector3f viewVectorEyeHeightVector3f(Vector3f eyePosOffset, @Local(argsOnly = true, ordinal = 0) Entity entity) {
         GravityData data = entity.getData(AttachmentTypes.GRAVITY);
         if(data.getGravity() == Direction.DOWN) return eyePosOffset;
         else return data.localToWorld(eyePosOffset);
+    }
+
+
+    /**
+     * 拦截原版的renderHitbox方法调用
+     * 如果实体实现了OBBProvider，就渲染OBB而不是原版AABB
+     */
+    @Inject(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V", at = @At("TAIL"))
+    private static void onRenderHitbox(PoseStack poseStack, VertexConsumer consumer, Entity entity, float partialTicks, float r, float g, float b, CallbackInfo ci) {
+        GravityData data = entity.getData(AttachmentTypes.GRAVITY);
+        if(data.getGravity() != Direction.DOWN) {
+            Vec3i gravity = data.getGravity().getNormal();
+            Vector3f up = data.getUp();
+            Vector3f forward = data.getForward();
+            Vector3f right = data.getRight();
+            LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,right.x, right.y, right.z,1.0F, 0, 0, 1.0F);
+            LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,up.x, up.y, up.z,0, 1.0F, 0, 1.0F);
+            LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,forward.x, forward.y, forward.z,0, 0, 1.0F, 1.0F);
+            LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,gravity.getX(), gravity.getY(), gravity.getZ(),0, 0, 0F, 1.0F);
+        }
     }
 
 }

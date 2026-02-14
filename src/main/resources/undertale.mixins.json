@@ -6,7 +6,12 @@
   "mixins": [
     "AbstractArrowMixin",
     "gravity.EntityGravityMixin",
+    "gravity.GroundPathNavigationMixin",
     "gravity.LivingEntityGravityMixin",
+    "gravity.LookControlGravityMixin",
+    "gravity.MobGravityMixin",
+    "gravity.MoveControlGravityMixin",
+    "gravity.PathNavigationGravityMixin",
     "gravity.PlayerGravityMixin",
     "gravity.ServerGamePacketListenerImplGravityMixin",
     "gravity.projectile.FishingHookGravityMixin",

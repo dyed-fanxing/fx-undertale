@@ -1,4 +1,4 @@
-package com.sakpeipei.undertale.common.anim;
+package com.sakpeipei.undertale.entity.ai.anim;
 
 import com.sakpeipei.undertale.common.function.FloatSupplier;
 import net.minecraft.sounds.SoundEvent;
