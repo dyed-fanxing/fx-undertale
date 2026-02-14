@@ -13,6 +13,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -103,6 +104,8 @@ public abstract class EntityGravityMixin {
     }
 
 
+    @Shadow public abstract EntityDimensions getDimensions(Pose p_19975_);
+
     @Inject(method = "calculateViewVector", at = @At("RETURN"), cancellable = true)
     public void calculateViewVector(float xRot, float yRot, CallbackInfoReturnable<Vec3> cir) {
         Entity self = (Entity) (Object) this;
@@ -122,7 +125,8 @@ public abstract class EntityGravityMixin {
         Direction gravity = self.getData(AttachmentTypes.GRAVITY).getGravity();
         if (gravity != Direction.DOWN) {
             cir.cancel();
-            double halfWidth = this.dimensions.width() * 0.5f;
+            EntityDimensions dimensions = getDimensions(null);
+            double halfWidth = dimensions.width() * 0.5f;
             cir.setReturnValue(switch (gravity) {
                 case UP ->
                         new AABB(position.x - halfWidth, position.y - self.getBbHeight(), position.z - halfWidth, position.x + halfWidth, position.y, position.z + halfWidth);
@@ -338,10 +342,10 @@ public abstract class EntityGravityMixin {
         double posY = self.getY();
         double posZ = self.getZ();
         // 减出增量，对增量进行转换
-        Vector3f vector3f = data.localToWorld((float) ((double) args.get(0) - posX), (float) ((double) args.get(1) - posY), (float) ((double) args.get(2) - posZ));
-        args.set(0, posX + vector3f.x);
-        args.set(1, posY + vector3f.y);
-        args.set(2, posZ + vector3f.z);
+        Vec3 vec3 = data.localToWorld((double) args.get(0) - posX, (double) args.get(1) - posY, (double) args.get(2) - posZ);
+        args.set(0, posX + vec3.x);
+        args.set(1, posY + vec3.y);
+        args.set(2, posZ + vec3.z);
     }
 
     /**

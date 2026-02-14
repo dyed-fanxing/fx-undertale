@@ -1,7 +1,6 @@
-package com.sakpeipei.undertale.client.render.entity;
+package com.sakpeipei.undertale.client.render.entity.summon;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.logging.LogUtils;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.common.Config;

@@ -1,17 +1,18 @@
 package com.sakpeipei.undertale.entity.ai.goal;
 
-import com.sakpeipei.undertale.entity.ai.anim.CastStep;
 import com.sakpeipei.undertale.entity.IAnimatable;
+import com.sakpeipei.undertale.entity.ai.anim.CastStep;
+import com.sakpeipei.undertale.net.packet.AnimPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,7 +30,6 @@ public abstract class CastComboGoal<T extends Mob & IAnimatable> extends Goal {
 
     public CastComboGoal(T mob) {
         this.mob = mob;
-        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
@@ -40,7 +40,7 @@ public abstract class CastComboGoal<T extends Mob & IAnimatable> extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return step < steps.size();
+        return canUse() && step < steps.size();
     }
 
     @Override
@@ -67,17 +67,17 @@ public abstract class CastComboGoal<T extends Mob & IAnimatable> extends Goal {
 
         if(tick == 0){
             if(curr.id() != null){
-                mob.setAnimID(curr.id());
+                mob.sendAnimPacket(curr.id());
                 // 只在开发环境（IDE运行）中显示消息
                 if (!FMLEnvironment.production) {
                     log.debug("触发动画ID：{}，判定点：{}，默认动画时长：{}，冷却时间：{}", curr.id(),curr.hitTicks(), curr.duration(),curr.cooldown());
-                    Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("触发动画ID：%d，判定点：%s，默认动画时长：%d，冷却时间：%d", curr.id(), Arrays.toString(curr.hitTicks()), curr.duration(),curr.cooldown())), false);
+//                    Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("触发动画ID：%d，判定点：%s，默认动画时长：%d，冷却时间：%d", curr.id(), Arrays.toString(curr.hitTicks()), curr.duration(),curr.cooldown())), false);
                 }
             }
             // 只在开发环境（IDE运行）中显示消息
             if (!FMLEnvironment.production) {
                 log.debug("无动画，判定点：{}，默认动画时长：{}，冷却时间：{}",curr.hitTicks(), curr.duration(),curr.cooldown());
-                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("无动画，判定点：%s，默认动画时长：%d，冷却时间：%d", Arrays.toString(curr.hitTicks()), curr.duration(),curr.cooldown())), false);
+//                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("无动画，判定点：%s，默认动画时长：%d，冷却时间：%d", Arrays.toString(curr.hitTicks()), curr.duration(),curr.cooldown())), false);
             }
             duration = curr.duration();
         }
@@ -87,12 +87,16 @@ public abstract class CastComboGoal<T extends Mob & IAnimatable> extends Goal {
             if(tick == hit){
                 // 施法返回的额外冷却
                 duration += Math.max(curr.onHit().applyAsInt(target) - duration + tick,0);
+                log.debug("执行判定，当前tick：{}",tick);
+                Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("执行判定，当前tick：%d", tick)), false);
             }
         }
         this.tick++;
 
         if(curr.canNext().apply(tick,duration)){
             curr.onNext().accept(step);
+            log.debug("下一步，当前tick：{}",tick);
+            Objects.requireNonNull(mob.level().getServer()).getPlayerList().broadcastSystemMessage(Component.literal(String.format("下一步，当前tick：%d", tick)), false);
             step++;
             tick = 0;
             cooldownEndTick += curr.cooldown();
@@ -103,6 +107,7 @@ public abstract class CastComboGoal<T extends Mob & IAnimatable> extends Goal {
     @Override
     public void stop() {
         cooldownEndTick += mob.tickCount;
+        resetAnim();
     }
 
     @Override
@@ -116,4 +121,8 @@ public abstract class CastComboGoal<T extends Mob & IAnimatable> extends Goal {
     }
 
     protected abstract List<CastStep> select(LivingEntity target);
+
+    protected void resetAnim(){
+        PacketDistributor.sendToPlayersTrackingEntity(mob,new AnimPacket(mob.getId(),(byte) -1,1f));
+    }
 }

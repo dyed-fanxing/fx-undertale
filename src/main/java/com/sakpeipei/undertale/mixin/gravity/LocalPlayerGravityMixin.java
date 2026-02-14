@@ -29,7 +29,6 @@ public abstract class LocalPlayerGravityMixin {
         if (data.getGravity() == Direction.DOWN) {
             return player.noPhysics;  // 原版逻辑
         }
-        // 你的重力版本水平检测
         double w = player.getBbWidth() * 0.35;
         switch (data.getGravity()) {
             case SOUTH, NORTH -> {
@@ -48,15 +47,12 @@ public abstract class LocalPlayerGravityMixin {
         return true;
     }
 
-    // 2. 重写 moveTowardsClosestSpace 方法
     @Inject(method = "moveTowardsClosestSpace", at = @At("HEAD"), cancellable = true)
     private void onMoveTowardsClosestSpace(double x, double z, CallbackInfo ci) {
         LocalPlayer player = (LocalPlayer)(Object)this;
         GravityData data = player.getData(AttachmentTypes.GRAVITY);
         if (data.getGravity() == Direction.DOWN) return;
-
         ci.cancel();
-
         switch (data.getGravity()) {
             case SOUTH, NORTH -> {
                 // 水平面是 XY，高度是 Z

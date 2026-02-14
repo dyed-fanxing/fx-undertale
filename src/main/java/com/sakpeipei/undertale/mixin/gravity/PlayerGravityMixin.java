@@ -62,7 +62,7 @@ public abstract class PlayerGravityMixin {
                 case WEST -> self.level().noCollision(self,new AABB(aabb.minX - maxUpStep-1.0E-5F, aabb.minY+dz, aabb.minZ+dx, aabb.maxX, aabb.maxY+dz, aabb.maxZ+dx));
 
                 case SOUTH -> self.level().noCollision(self,new AABB(aabb.minX + dx, aabb.minY+dz, aabb.minZ, aabb.maxX + dx, aabb.maxY+dz, aabb.maxZ + maxUpStep+1.0E-5F));
-                case NORTH -> self.level().noCollision(self,new AABB(aabb.minX + dx, aabb.minY-dz, aabb.minZ - maxUpStep-1.0E-5F, aabb.maxX + dx, aabb.maxY-dz, aabb.maxZ));
+                case NORTH -> self.level().noCollision(self,new AABB(aabb.minX - dx, aabb.minY+dz, aabb.minZ - maxUpStep-1.0E-5F, aabb.maxX - dx, aabb.maxY+dz, aabb.maxZ));
                 default -> throw new IllegalStateException("Unexpected value: " + gravity);
             });
         }

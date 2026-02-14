@@ -28,7 +28,7 @@ import java.util.function.Supplier;
  * @author Sakqiongzi
  * @since 2025-09-13 22:07
  */
-//@EventBusSubscriber
+@EventBusSubscriber
 public class AttachmentTypes {
     private static final Logger log = LoggerFactory.getLogger(AttachmentTypes.class);
     public static DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Undertale.MOD_ID);
@@ -48,22 +48,22 @@ public class AttachmentTypes {
     }
 
 
-//    @SubscribeEvent
-//    public static void onStartTracking(PlayerEvent.StartTracking event) {
-//        Entity target = event.getTarget();
-//        ServerPlayer player = (ServerPlayer) event.getEntity();
-//        GravityData data = target.getData(AttachmentTypes.GRAVITY);
-//        if(data.getGravity() != Direction.DOWN){
-//            PacketDistributor.sendToPlayer(player,new GravityPacket(target.getId(), data.getGravity(), target.getDeltaMovement()));
-//        }
-//    }
-//
-//    @SubscribeEvent
-//    public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-//        ServerPlayer player = (ServerPlayer) event.getEntity();
-//        GravityData data = player.getData(AttachmentTypes.GRAVITY);
-//        if (data.getGravity() != Direction.DOWN) {
-//            PacketDistributor.sendToPlayer(player,new GravityPacket(player.getId(), data.getGravity(), player.getDeltaMovement()));
-//        }
-//    }
+    @SubscribeEvent
+    public static void onStartTracking(PlayerEvent.StartTracking event) {
+        Entity target = event.getTarget();
+        ServerPlayer player = (ServerPlayer) event.getEntity();
+        GravityData data = target.getData(AttachmentTypes.GRAVITY);
+        if(data.getGravity() != Direction.DOWN){
+            PacketDistributor.sendToPlayer(player,new GravityPacket(target.getId(), data.getGravity()));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
+        ServerPlayer player = (ServerPlayer) event.getEntity();
+        GravityData data = player.getData(AttachmentTypes.GRAVITY);
+        if (data.getGravity() != Direction.DOWN) {
+            PacketDistributor.sendToPlayer(player,new GravityPacket(player.getId(), data.getGravity()));
+        }
+    }
 }
