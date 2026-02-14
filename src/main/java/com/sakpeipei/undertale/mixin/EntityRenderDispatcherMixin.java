@@ -117,15 +117,6 @@ public class EntityRenderDispatcherMixin {
             // 5. 渲染视线向量
             renderVector(poseStack, consumer,new Vector3f(0.0F, entity.getEyeHeight(), 0.0F),entity.getViewVector(partialTicks).scale(2.0F),-16776961);
         }
-        GravityData data = entity.getData(AttachmentTypes.GRAVITY);
-        Vec3i gravity = data.getGravity().getNormal();
-        Vector3f up = data.getUp();
-        Vector3f forward = data.getForward();
-        Vector3f right = data.getRight();
-        LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,right.x, right.y, right.z,1.0F, 0, 0, 1.0F);
-        LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,up.x, up.y, up.z,0, 1.0F, 0, 1.0F);
-        LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,forward.x, forward.y, forward.z,0, 0, 1.0F, 1.0F);
-        LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,gravity.getX(), gravity.getY(), gravity.getZ(),0, 0, 0F, 1.0F);
     }
 
 

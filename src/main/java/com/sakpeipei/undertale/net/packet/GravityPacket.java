@@ -46,7 +46,7 @@ public record GravityPacket(int entityId, Direction gravity,Vec3 deltaMovement) 
                     GravityData oldGravity = entity.getData(AttachmentTypes.GRAVITY);
                     GravityData gravityData = new GravityData(packet.gravity);
                     entity.setData(AttachmentTypes.GRAVITY,new GravityData(packet.gravity));
-                    gravityData.applyGravity(entity,oldGravity);
+                    gravityData.applyGravityPos(entity,oldGravity);
                 }
             }
         });

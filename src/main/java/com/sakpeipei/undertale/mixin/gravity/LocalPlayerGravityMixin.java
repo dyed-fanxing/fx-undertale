@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -20,11 +21,8 @@ public abstract class LocalPlayerGravityMixin {
 
     @Shadow protected abstract void moveTowardsClosestSpace(double p_108705_, double p_108706_);
 
-    @Redirect(
-            method = "aiStep",
-            at = @At(value = "FIELD",
-                    target = "Lnet/minecraft/client/player/LocalPlayer;noPhysics:Z",
-                    ordinal = 0)
+    @Redirect(method = "aiStep",at = @At(value = "FIELD",target = "Lnet/minecraft/client/player/LocalPlayer;noPhysics:Z",
+                    ordinal = 0, opcode = Opcodes.GETFIELD)
     )
     private boolean redirectNoPhysics(LocalPlayer player) {
         GravityData data = player.getData(AttachmentTypes.GRAVITY);
@@ -47,7 +45,7 @@ public abstract class LocalPlayerGravityMixin {
                 this.moveTowardsClosestSpace(player.getY() + w, player.getZ() + w);
             }
         }
-        return true;  // 让原版 if(!noPhysics) 不执行
+        return true;
     }
 
     // 2. 重写 moveTowardsClosestSpace 方法

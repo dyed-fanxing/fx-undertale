@@ -1,6 +1,5 @@
-package com.sakpeipei.undertale.common.anim;
+package com.sakpeipei.undertale.entity.ai.anim;
 
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.function.ToIntFunction;

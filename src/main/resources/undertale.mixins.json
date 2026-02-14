@@ -6,19 +6,18 @@
   "mixins": [
     "AbstractArrowMixin",
     "gravity.EntityGravityMixin",
+    "gravity.GroundPathNavigationMixin",
     "gravity.LivingEntityGravityMixin",
+    "gravity.LookControlGravityMixin",
+    "gravity.MobGravityMixin",
+    "gravity.MoveControlGravityMixin",
+    "gravity.PathNavigationGravityMixin",
     "gravity.PlayerGravityMixin",
     "gravity.ServerGamePacketListenerImplGravityMixin",
     "gravity.projectile.FishingHookGravityMixin",
     "gravity.projectile.ProjectileGravityMixin",
     "gravity.projectile.ThrowableProjectileGravityMixin",
-    "gravity.projectile.WindChargeItemGravityMixin",
-    "roll.EntityRollMixin",
-    "roll.LivingEntityRollMixin",
-    "roll.ServerboundMovePlayerPacketRollMixin",
-    "roll.ServerboundMovePlayerPacketRollMixin$PosRot",
-    "roll.ServerboundMovePlayerPacketRollMixin$Rot",
-    "roll.ServerGamePacketListenerImplRollMixin"
+    "gravity.projectile.WindChargeItemGravityMixin"
   ],
   "client": [
     "EntityRenderDispatcherMixin",
@@ -29,8 +28,7 @@
     "gravity.LivingEntityRendererGravityMixin",
     "gravity.LocalPlayerGravityMixin",
     "gravity.ScreenEffectRendererGravityMixin",
-    "gravity.projectile.AbstractArrowGravityMixin",
-    "roll.LocalPlayerRollMixin"
+    "gravity.projectile.AbstractArrowGravityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

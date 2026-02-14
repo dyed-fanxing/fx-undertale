@@ -13,6 +13,8 @@ import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Sakqiongzi
@@ -20,6 +22,8 @@ import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
  */
 @EventBusSubscriber(modid = Undertale.MOD_ID)
 public class LivingEntityHandler {
+    private static final Logger log = LoggerFactory.getLogger(LivingEntityHandler.class);
+
     /**
      * 注册需要属性的实体，即继承自LivingEntity
      */
@@ -48,15 +52,6 @@ public class LivingEntityHandler {
 //        );
     }
 
-
-    @SubscribeEvent
-    public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
-        Entity entity = event.getEntity();
-        if(entity instanceof FlyingBone){
-//            entity.discard();
-//            event.setCanceled(true);
-        }
-    }
 
     @SubscribeEvent
     public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {

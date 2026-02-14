@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.entity.ai.goal;
 
-import com.sakpeipei.undertale.common.anim.SingleAnim;
+import com.sakpeipei.undertale.entity.ai.anim.SingleAnim;
 import com.sakpeipei.undertale.entity.IAnimatable;
 import com.sakpeipei.undertale.net.packet.AnimPacket;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,12 +14,12 @@ import org.jetbrains.annotations.NotNull;
  * @since 2025-11-22 21:46
  * 单个动画执行GOAL，需要维护服务端动画Tick
  */
-public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal {
+public abstract class SingleAnimGoal<R extends Mob & IAnimatable> extends Goal {
     protected final R mob;
     protected int tick;             // 动画Tick
     protected int cooldownEndTick;  // 动画冷却结束Tick点
     protected int length;           // 动画长度
-    protected SingleAnim<T> anim;
+    protected SingleAnim anim;
 
     public SingleAnimGoal(R mob) {
         this.mob = mob;
@@ -66,7 +66,7 @@ public abstract class SingleAnimGoal<T,R extends Mob & IAnimatable> extends Goal
      * 选择动画anim
      */
     @NotNull
-    protected abstract SingleAnim<T> select(LivingEntity target);
+    protected abstract SingleAnim select(LivingEntity target);
 
     /**
      * @param target 目标

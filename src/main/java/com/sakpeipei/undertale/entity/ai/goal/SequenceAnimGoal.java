@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.entity.ai.goal;
 
-import com.sakpeipei.undertale.common.anim.AnimStep;
-import com.sakpeipei.undertale.common.anim.SequenceAnim;
+import com.sakpeipei.undertale.entity.ai.anim.AnimStep;
+import com.sakpeipei.undertale.entity.ai.anim.SequenceAnim;
 import com.sakpeipei.undertale.entity.IAnimatable;
 import com.sakpeipei.undertale.net.packet.AnimPacket;
 import net.minecraft.network.chat.Component;

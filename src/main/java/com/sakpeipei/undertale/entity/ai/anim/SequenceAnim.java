@@ -1,10 +1,9 @@
-package com.sakpeipei.undertale.common.anim;
+package com.sakpeipei.undertale.entity.ai.anim;
 
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.IntSupplier;
 import java.util.function.ToIntFunction;
 
 /**

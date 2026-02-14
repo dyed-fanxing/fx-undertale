@@ -1,9 +1,11 @@
-package com.sakpeipei.undertale.common.anim;
+package com.sakpeipei.undertale.entity.ai.anim;
 
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.function.ToIntFunction;
 
 /**
  * @param id       动画id
@@ -15,13 +17,14 @@ import java.util.Arrays;
  * @since 2025-11-15 15:39
  * 单次动画
  */
-public record SingleAnim<T>(byte id, int[] hitTicks, int length, int cd, T action) {
+public record SingleAnim(byte id, int[] hitTicks, int length, int cd, ToIntFunction<LivingEntity> action) {
     /**
      * 单判定
      */
-    public SingleAnim(byte id, int hitTick, int length, int cd, T action) {
+    public SingleAnim(byte id, int hitTick, int length, int cd, ToIntFunction<LivingEntity> action) {
         this(id, new int[]{hitTick}, length, cd, action);
     }
+
     // 在该tick是否判定
     public boolean shouldHitAt(int currentTick) {
         for (int hitTick : hitTicks) {
