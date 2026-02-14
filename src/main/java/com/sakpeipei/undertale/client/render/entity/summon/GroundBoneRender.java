@@ -1,13 +1,11 @@
-package com.sakpeipei.undertale.client.render.entity;
+package com.sakpeipei.undertale.client.render.entity.summon;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.client.model.entity.GroundBoneModel;
+import com.sakpeipei.undertale.client.render.entity.ColorAttackRenderer;
 import com.sakpeipei.undertale.entity.summon.GroundBone;
-import com.sakpeipei.undertale.entity.summon.LateralBone;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.core.BlockPos;
-import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 
 /**
@@ -29,6 +27,7 @@ public class GroundBoneRender extends ColorAttackRenderer<GroundBone> {
         poseStack.translate(0,-0.01f,0);
         poseStack.mulPose(Axis.YP.rotationDegrees(-animatable.getYRot()));
         poseStack.mulPose(Axis.XP.rotationDegrees(animatable.getXRot()));
+
         super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
     }
 

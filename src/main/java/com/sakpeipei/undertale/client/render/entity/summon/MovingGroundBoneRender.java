@@ -1,8 +1,9 @@
-package com.sakpeipei.undertale.client.render.entity;
+package com.sakpeipei.undertale.client.render.entity.summon;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.client.model.entity.MovingBoneModel;
+import com.sakpeipei.undertale.client.render.entity.ColorAttackRenderer;
 import com.sakpeipei.undertale.entity.summon.MovingGroundBone;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.apache.logging.log4j.LogManager;

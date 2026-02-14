@@ -3,9 +3,12 @@ package com.sakpeipei.undertale.entity.summon;
 import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.AttackColored;
+import com.sakpeipei.undertale.entity.attachment.GravityData;
 import com.sakpeipei.undertale.entity.boss.Sans;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
 import com.sakpeipei.undertale.registry.EntityTypes;
 import com.sakpeipei.undertale.registry.SoundTypes;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -13,6 +16,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
@@ -54,9 +58,8 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
     }
 
     public GroundBone(Level level, LivingEntity owner, float damage,int delay) {
-        this(level, owner,1.0f,1.0f,damage,10,delay, ColorAttack.WHITE,false,false);
+        this(level, owner,1.0f,1.0f,damage,10,delay, ColorAttack.WHITE,false,false,Direction.DOWN);
     }
-
     public GroundBone(Level level, LivingEntity owner,float scale,float growScale,float damage,int lifetime,int delay,ColorAttack colorAttack,boolean isPlaySound,boolean isCurve) {
         super(EntityTypes.GROUND_BONE.get(), level,owner);
         this.setNoGravity(true);
@@ -70,6 +73,21 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
         this.isPlaySound = isPlaySound;
         this.isCurve = isCurve;
     }
+    public GroundBone(Level level, LivingEntity owner,float scale,float growScale,float damage,int lifetime,int delay,ColorAttack colorAttack,boolean isPlaySound,boolean isCurve,Direction gravity) {
+        super(EntityTypes.GROUND_BONE.get(), level,owner);
+        this.setNoGravity(true);
+        this.scale = scale;
+        this.growScale = growScale;
+
+        this.lifetime = lifetime;
+        this.delay = delay;
+        this.damage = damage;
+        this.colorAttack = colorAttack;
+        this.isPlaySound = isPlaySound;
+        this.isCurve = isCurve;
+        this.setData(AttachmentTypes.GRAVITY,GravityData.applyGravity(this,gravity));
+    }
+
 
     @Override
     public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
@@ -248,6 +266,8 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
         buf.writeInt(this.colorAttack.getColor().getRGB());
         buf.writeBoolean(this.isPlaySound);
         buf.writeBoolean(this.isCurve);
+
+        buf.writeEnum(this.getData(AttachmentTypes.GRAVITY).getGravity());
     }
 
     @Override
@@ -261,8 +281,8 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
         this.colorAttack = ColorAttack.getInstance(buf.readInt());
         this.isPlaySound = buf.readBoolean();
         this.isCurve = buf.readBoolean();
+        this.setData(AttachmentTypes.GRAVITY,GravityData.applyGravity(this,buf.readEnum(Direction.class)));
         refreshDimensions();
-
     }
 
     @Override

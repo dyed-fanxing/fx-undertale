@@ -4,6 +4,8 @@ import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.particle.BallGrowParticle;
 import com.sakpeipei.undertale.client.particle.LightStreakParticle;
 import com.sakpeipei.undertale.client.render.entity.*;
+import com.sakpeipei.undertale.client.render.entity.boss.SansRender;
+import com.sakpeipei.undertale.client.render.entity.summon.*;
 import com.sakpeipei.undertale.client.screen.GravitySelectionScreen;
 import com.sakpeipei.undertale.net.packet.*;
 import com.sakpeipei.undertale.registry.EntityTypes;

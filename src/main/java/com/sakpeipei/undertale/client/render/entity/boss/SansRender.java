@@ -1,4 +1,4 @@
-package com.sakpeipei.undertale.client.render.entity;
+package com.sakpeipei.undertale.client.render.entity.boss;
 
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.model.entity.SansModel;

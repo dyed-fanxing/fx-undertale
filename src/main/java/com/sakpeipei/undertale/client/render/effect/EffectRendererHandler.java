@@ -48,7 +48,6 @@ public class EffectRendererHandler {
             // 创建统一的 BufferSource
             MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(new ByteBufferBuilder(512));
             poseStack.pushPose();
-
             // 统一的相机偏移（每个装饰物都需要）
             Vec3 cameraPos = camera.getPosition();
             poseStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);

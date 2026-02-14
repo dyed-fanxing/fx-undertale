@@ -45,20 +45,18 @@ public class EntityRenderDispatcherGravityMixin {
         else return data.localToWorld(offset);
     }
 
-    @Inject(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V",
+    @Redirect(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;renderLineBox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;DDDDDDFFFF)V",
-                    ordinal = 0), cancellable = true)
-    private static void onRenderEyeLineBox(PoseStack poseStack, VertexConsumer consumer, Entity entity, float p_114445_, float p_353064_, float p_353059_, float p_353042_, CallbackInfo ci, @Local(ordinal = 0) AABB aabb){
+                    ordinal = 0))
+    private static void onRenderEyeLineBox(PoseStack poseStack, VertexConsumer consumer, double minX, double minY, double minZ, double maxX, double maxY, double maxZ, float r, float g, float b, float a, @Local(ordinal = 0, argsOnly = true) Entity entity,@Local(ordinal = 0) AABB aabb){
         GravityData data = entity.getData(AttachmentTypes.GRAVITY);
-        if(data.getGravity() != Direction.DOWN){
-            ci.cancel();
-            switch (data.getGravity()){
-                case UP -> LevelRenderer.renderLineBox(poseStack, consumer, aabb.minX, -entity.getEyeHeight() - 0.01F,aabb.minZ, aabb.maxX,-entity.getEyeHeight() + 0.01F, aabb.maxZ, 1.0F, 0.0F, 0.0F, 1.0F);
-                case EAST ->  LevelRenderer.renderLineBox(poseStack, consumer, -entity.getEyeHeight() - 0.01F, aabb.minY,aabb.minZ,-entity.getEyeHeight() + 0.01F,aabb.maxY, aabb.maxZ, 1.0F, 0.0F, 0.0F, 1.0F);
-                case WEST ->  LevelRenderer.renderLineBox(poseStack, consumer, entity.getEyeHeight() - 0.01F, aabb.minY,aabb.minZ,entity.getEyeHeight() + 0.01F,aabb.maxY, aabb.maxZ, 1.0F, 0.0F, 0.0F, 1.0F);
-                case SOUTH -> LevelRenderer.renderLineBox(poseStack, consumer, aabb.minX, aabb.minY,-entity.getEyeHeight() - 0.01F, aabb.maxX,aabb.maxY, -entity.getEyeHeight() + 0.01F, 1.0F, 0.0F, 0.0F, 1.0F);
-                case NORTH -> LevelRenderer.renderLineBox(poseStack, consumer, aabb.minX, aabb.minY,entity.getEyeHeight() - 0.01F, aabb.maxX,aabb.maxY, entity.getEyeHeight() + 0.01F, 1.0F, 0.0F, 0.0F, 1.0F);
-            }
+        switch (data.getGravity()){
+            case DOWN -> LevelRenderer.renderLineBox(poseStack, consumer, minX, minY,minZ, maxX,maxY, maxZ, r, g, b, a);
+            case UP -> LevelRenderer.renderLineBox(poseStack, consumer, minX, -maxY,minZ, maxX,-minY, maxZ,  r, g, b, a);
+            case EAST ->  LevelRenderer.renderLineBox(poseStack, consumer, -maxY, aabb.minY,minZ,-minY,aabb.maxY, maxZ,  r, g, b, a);
+            case WEST ->  LevelRenderer.renderLineBox(poseStack, consumer, minY, aabb.minY,minZ,maxY,aabb.maxY, maxZ,  r, g, b, a);
+            case SOUTH -> LevelRenderer.renderLineBox(poseStack, consumer, minX, aabb.minY,-maxY, maxX,aabb.maxY, -minY,  r, g, b, a);
+            case NORTH -> LevelRenderer.renderLineBox(poseStack, consumer, minX, aabb.minY,minY, maxX,aabb.maxY, maxY,  r, g, b, a);
         }
     }
 
@@ -71,10 +69,6 @@ public class EntityRenderDispatcherGravityMixin {
     }
 
 
-    /**
-     * 拦截原版的renderHitbox方法调用
-     * 如果实体实现了OBBProvider，就渲染OBB而不是原版AABB
-     */
     @Inject(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V", at = @At("TAIL"))
     private static void onRenderHitbox(PoseStack poseStack, VertexConsumer consumer, Entity entity, float partialTicks, float r, float g, float b, CallbackInfo ci) {
         GravityData data = entity.getData(AttachmentTypes.GRAVITY);

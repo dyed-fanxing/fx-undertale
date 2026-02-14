@@ -22,18 +22,17 @@ import org.slf4j.LoggerFactory;
  * @author Sakqiongzi
  * @since 2025-09-13 22:52
  */
-public record GravityPacket(int entityId, Direction gravity,Vec3 deltaMovement) implements CustomPacketPayload {
+public record GravityPacket(int entityId, Direction gravity) implements CustomPacketPayload {
     public static final Type<GravityPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "gravity_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, GravityPacket> STREAM_CODEC = CustomPacketPayload.codec(GravityPacket::write, GravityPacket::new);
 
     public GravityPacket(FriendlyByteBuf buf) {
-        this(buf.readVarInt(), buf.readEnum(Direction.class),buf.readVec3());
+        this(buf.readVarInt(), buf.readEnum(Direction.class));
     }
 
     public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(entityId);
         buf.writeEnum(gravity);
-        buf.writeVec3(deltaMovement);
     }
 
     public static void handle(GravityPacket packet, IPayloadContext context) {
@@ -42,11 +41,7 @@ public record GravityPacket(int entityId, Direction gravity,Vec3 deltaMovement) 
             if (level != null) {
                 Entity entity = level.getEntity(packet.entityId);
                 if (entity != null) {
-                    entity.setDeltaMovement(packet.deltaMovement);
-                    GravityData oldGravity = entity.getData(AttachmentTypes.GRAVITY);
-                    GravityData gravityData = new GravityData(packet.gravity);
-                    entity.setData(AttachmentTypes.GRAVITY,new GravityData(packet.gravity));
-                    gravityData.applyGravityPos(entity,oldGravity);
+                    GravityData.applyGravity(entity, packet.gravity);
                 }
             }
         });

@@ -28,7 +28,7 @@ public record CastStep(Byte id, int[] hitTicks, ToIntFunction<LivingEntity> onHi
 
 
 
-
+    // 单次
     public CastStep(Byte id, int hitTick, ToIntFunction<LivingEntity> onHit,BiFunction<Integer,Integer,Boolean> next, int duration, int cooldown){
         this(id,new int[]{hitTick},onHit,next,DEFAULT_ON_NEXT,duration,cooldown,0,null);
     }
@@ -48,21 +48,21 @@ public record CastStep(Byte id, int[] hitTicks, ToIntFunction<LivingEntity> onHi
         this(null,new int[]{hitTick},onHit,DEFAULT_CAN_NEXT,DEFAULT_ON_NEXT,duration,cooldown,0,null);
     }
     public CastStep(int hitTick, ToIntFunction<LivingEntity> onHit,Consumer<Integer> onNext, int duration, int cooldown){
-        this(null,new int[]{hitTick},onHit,DEFAULT_CAN_NEXT,DEFAULT_ON_NEXT,duration,cooldown,0,null);
+        this(null,new int[]{hitTick},onHit,DEFAULT_CAN_NEXT,onNext,duration,cooldown,0,null);
     }
     public CastStep(int hitTick, ToIntFunction<LivingEntity> onHit,Consumer<Integer> onNext, int duration){
-        this(null,new int[]{hitTick},onHit,DEFAULT_CAN_NEXT,DEFAULT_ON_NEXT,duration,0,0,null);
+        this(null,new int[]{hitTick},onHit,DEFAULT_CAN_NEXT,onNext,duration,0,0,null);
     }
     public CastStep(int hitTick, ToIntFunction<LivingEntity> onHit, int duration){
         this(null,new int[]{hitTick},onHit,DEFAULT_CAN_NEXT,DEFAULT_ON_NEXT,duration,0,0,null);
     }
 
 
-    public static List<CastStep> create(int round,byte id,int hitTick, ToIntFunction<LivingEntity> onHit, int duration){
+    public static List<CastStep> create(int round,byte id,int hitTick, ToIntFunction<LivingEntity> onHit, int duration,int cooldown){
         List<CastStep>  steps = new ArrayList<>();
         steps.add(new CastStep(id,hitTick,onHit,duration));
         for (int i = 0; i < round-1; i++) {
-            steps.add(new CastStep(null,hitTick,onHit,duration));
+            steps.add(new CastStep(null,hitTick,onHit,duration,cooldown));
         }
         return steps;
     }
