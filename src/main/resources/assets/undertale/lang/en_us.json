@@ -1,6 +1,19 @@
 {
-  "itemGroup.undertale": "传说之下",
+  "itemGroup.undertale": "undertale",
   "item.undertale.gaster_blaster": "龙骨炮",
   "item.undertale.gaster_blaster_pro": "超级龙骨炮",
-  "item.undertale.gravity_debug_stick": "重力调试棍"
+  "item.undertale.gravity_debug_stick": "重力调试棍",
+
+  "entity.undertale.sans": "杉斯",
+
+
+  "direction.undertale.up":"上",
+  "direction.undertale.down":"下",
+  "direction.undertale.left":"左",
+  "direction.undertale.right":"右",
+  "direction.undertale.front":"前",
+  "direction.undertale.back":"后",
+  "menu.undertale.gravity_selection": "重力方向选择",
+  "gui.undertale.select_direction": "请选择重力方向：",
+  "gui.undertale.close": "关闭"
 }

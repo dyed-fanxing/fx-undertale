@@ -1,17 +1,34 @@
 package com.sakpeipei.undertale.mixin.gravity;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.PersistentDataDict;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityGravityMixin {
 
+    private static final Logger log = LoggerFactory.getLogger(LivingEntityGravityMixin.class);
+    @Shadow protected boolean jumping;
+
+    @Shadow protected abstract float getJumpPower();
+
+    @Unique
+    private boolean undertale$wasJumping;
     /**
      * 修改移动时控制身体旋转的计算用dx硬编码
      */
@@ -54,5 +71,16 @@ public abstract class LivingEntityGravityMixin {
             case SOUTH, NORTH -> (float) Mth.length(self.getX() - self.xo, self.getY() - self.yo, flying ? self.getZ() - self.zo : 0);  // XY平面
             case EAST, WEST -> (float) Mth.length(flying ? self.getX() - self.xo : 0, self.getY() - self.yo, self.getZ() - self.zo);  // YZ平面
         };
+    }
+
+
+
+    @Inject(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;onGround()Z",ordinal = 3))
+    private void afterJumpFromGround(CallbackInfo ci) {
+        LivingEntity self = (LivingEntity)(Object)this;
+        if (self.getPersistentData().getByte(PersistentDataDict.SOUL_STATE) ==PersistentDataDict.GRAVITY && !self.onGround() && this.jumping && self.getDeltaMovement().y > 0) {
+            Vec3 motion = self.getDeltaMovement();
+            self.setDeltaMovement(motion.x, motion.y + 0.065, motion.z);
+        }
     }
 }

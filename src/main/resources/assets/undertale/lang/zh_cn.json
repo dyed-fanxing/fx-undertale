@@ -3,6 +3,10 @@
   "item.undertale.gaster_blaster": "龙骨炮",
   "item.undertale.gaster_blaster_pro": "超级龙骨炮",
   "item.undertale.gravity_debug_stick": "重力调试棍",
+
+  "entity.undertale.sans": "杉斯",
+
+
   "direction.undertale.up":"上",
   "direction.undertale.down":"下",
   "direction.undertale.left":"左",
