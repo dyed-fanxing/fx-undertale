@@ -64,9 +64,9 @@ public class Setup {
         registrar.playToClient(WarningTipPacket.TYPE, WarningTipPacket.STREAM_CODEC, WarningTipPacket::handle);
 //        registrar.playToClient(WarningTipAABBPacket.TYPE, WarningTipAABBPacket.STREAM_CODEC, WarningTipAABBPacket::handle);
         registrar.playToClient(AnimPacket.TYPE, AnimPacket.STREAM_CODEC, AnimPacket::handle);
-//        registrar.playToClient(GasterBlasterBeamEndPacket.TYPE,GasterBlasterBeamEndPacket.STREAM_CODEC, GasterBlasterBeamEndPacket::handle);
         registrar.playToClient(TimeJumpTeleportPacket.TYPE,TimeJumpTeleportPacket.STREAM_CODEC, TimeJumpTeleportPacket::handle);
         registrar.playToClient(GravityPacket.TYPE,GravityPacket.STREAM_CODEC, GravityPacket::handle);
+        registrar.playToClient(SoulStatePacket.TYPE,SoulStatePacket.STREAM_CODEC, SoulStatePacket::handle);
         registrar.playToServer(GravitySelectionPacket.TYPE,GravitySelectionPacket.STREAM_CODEC, GravitySelectionPacket::handle);
     }
 

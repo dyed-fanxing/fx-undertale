@@ -29,13 +29,13 @@ public class SansFatigueLayer extends GeoRenderLayer<Sans>{
 
     @Override
     public void render(PoseStack poseStack, Sans animatable, BakedGeoModel bakedModel, @Nullable RenderType renderType, MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
-        int stamina = animatable.getStamina();
+        float stamina = animatable.getStamina();
         int sweat = -1;
         if(stamina == 0){
             sweat = 2;
-        } else if(stamina <= animatable.getMaxStamina()/10){
+        } else if(stamina <= animatable.getMaxStamina()*0.1f){
             sweat = 1;
-        } else if(stamina <= animatable.getMaxStamina()/2){
+        } else if(stamina <= animatable.getMaxStamina()*0.5f){
             sweat = 0;
         }
         if(sweat != -1){
