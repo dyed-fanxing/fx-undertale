@@ -27,8 +27,7 @@ public abstract class LivingEntityGravityMixin {
 
     @Shadow protected abstract float getJumpPower();
 
-    @Unique
-    private boolean undertale$wasJumping;
+    @Shadow private int noJumpDelay;
     /**
      * 修改移动时控制身体旋转的计算用dx硬编码
      */
@@ -73,14 +72,15 @@ public abstract class LivingEntityGravityMixin {
         };
     }
 
-
-
-    @Inject(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;onGround()Z",ordinal = 3))
+    @Inject(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;onGround()Z", ordinal = 3))
     private void afterJumpFromGround(CallbackInfo ci) {
         LivingEntity self = (LivingEntity)(Object)this;
-        if (self.getPersistentData().getByte(PersistentDataDict.SOUL_STATE) ==PersistentDataDict.GRAVITY && !self.onGround() && this.jumping && self.getDeltaMovement().y > 0) {
-            Vec3 motion = self.getDeltaMovement();
-            self.setDeltaMovement(motion.x, motion.y + 0.065, motion.z);
+        if (self.getPersistentData().getByte(PersistentDataDict.SOUL_PATTERN) == PersistentDataDict.GRAVITY) {
+            if (!self.onGround() && this.jumping && self.getDeltaMovement().y > 0) {
+                double accel = 0.3 * this.noJumpDelay/20;
+                Vec3 motion = self.getDeltaMovement();
+                self.setDeltaMovement(motion.x, motion.y + accel, motion.z);
+            }
         }
     }
 }

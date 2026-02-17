@@ -39,7 +39,7 @@ public class Undertale {
         ItemTypes.register(modEventBus);            // 物品注册
         EntityTypes.register(modEventBus);          // 实体注册
         MobEffectTypes.registry(modEventBus);       // buff注册
-        SoundTypes.register(modEventBus);           // 声音注册
+        SoundEvnets.register(modEventBus);           // 声音注册
         ParticleTypes.register(modEventBus);        // 粒子注册
         MenuTypes.register(modEventBus);            // 菜单注册
         AttachmentTypes.register(modEventBus);      // 附件注册

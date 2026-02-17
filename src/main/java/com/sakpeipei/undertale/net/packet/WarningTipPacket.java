@@ -16,32 +16,104 @@ import org.jetbrains.annotations.NotNull;
  * @author Sakpeipei
  * @since 2025/11/18 14:10
  */
-public record WarningTipPacket(float x, float y, float z, float r, float h, int lifetime, int color, Direction gravity) implements CustomPacketPayload {
-    public static final Type<WarningTipPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "warning_tip_packet"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, WarningTipPacket> STREAM_CODEC = CustomPacketPayload.codec(WarningTipPacket::write, WarningTipPacket::new);
-    public WarningTipPacket(float x, float y, float z, float r, float h, int lifetime, int color) {
-        this(x,y,z,r,h,lifetime,color,Direction.DOWN);
+public abstract class WarningTipPacket implements CustomPacketPayload {
+    protected float x;
+    protected float y;
+    protected float z;
+    protected int lifetime;
+    protected int color;
+
+    public WarningTipPacket(float x, float y, float z,int lifetime, int color) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.lifetime = lifetime;
+        this.color = color;
     }
 
-    public WarningTipPacket(FriendlyByteBuf buf) {
-        this(buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readVarInt(),buf.readInt(),buf.readEnum(Direction.class));
+    public static class Circle extends WarningTipPacket {
+        public static final Type<Circle> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "warning_tip_circle_packet"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Circle> STREAM_CODEC = CustomPacketPayload.codec(Circle::write, Circle::new);
+
+        private final float h;
+        private final float r;
+        private final Direction gravity;
+
+        public Circle(float x, float y, float z,float r, float h,int lifetime, int color) {
+            super(x, y, z,lifetime, color);
+            this.h = h;
+            this.r = r;
+            this.gravity = Direction.DOWN;
+        }
+
+        public Circle(float x, float y, float z,float r, float h,int lifetime, int color,Direction gravity) {
+            super(x, y, z,lifetime, color);
+            this.h = h;
+            this.r = r;
+            this.gravity = gravity;
+        }
+        public Circle(FriendlyByteBuf buf) {
+            this(buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readVarInt(),buf.readInt(),buf.readEnum(Direction.class));
+        }
+
+        public void write(FriendlyByteBuf buf) {
+            buf.writeFloat(x);
+            buf.writeFloat(y);
+            buf.writeFloat(z);
+            buf.writeFloat(this.r);
+            buf.writeFloat(this.h);
+            buf.writeVarInt(this.lifetime);
+            buf.writeInt(this.color);
+            buf.writeEnum(this.gravity);
+        }
+
+        public static void handle(Circle packet, IPayloadContext context) {
+            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.Circle(packet.x, packet.y, packet.z, packet.r, packet.h, packet.lifetime, packet.color,packet.gravity)));
+        }
+
+        @Override
+        public @NotNull Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
     }
 
-    public void write(FriendlyByteBuf buf) {
-        buf.writeFloat(x);
-        buf.writeFloat(y);
-        buf.writeFloat(z);
-        buf.writeFloat(this.r);
-        buf.writeFloat(this.h);
-        buf.writeVarInt(this.lifetime);
-        buf.writeInt(this.color);
-        buf.writeEnum(this.gravity);
-    }
-    @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
-        return TYPE;
-    }
-    public static void handle(WarningTipPacket packet, IPayloadContext context) {
-        context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip(packet.x, packet.y, packet.z, packet.r, packet.h, packet.lifetime, packet.color,packet.gravity)));
+    public static class Cube extends WarningTipPacket {
+        public static final Type<Cube> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "warning_tip_cube_packet"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Cube> STREAM_CODEC = CustomPacketPayload.codec(Cube::write, Cube::new);
+
+
+        private final float length;
+        private final float width;
+        private final float height;
+        private final float yaw;
+        public Cube(float x, float y, float z,float length,float width,float height,float yaw, int lifetime, int color) {
+            super(x, y, z, lifetime, color);
+            this.length = length;
+            this.width = width;
+            this.height = height;
+            this.yaw = yaw;
+        }
+        public Cube(FriendlyByteBuf buf) {
+            this(buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readVarInt(),buf.readInt());
+        }
+
+        public void write(FriendlyByteBuf buf) {
+            buf.writeFloat(x);
+            buf.writeFloat(y);
+            buf.writeFloat(z);
+            buf.writeFloat(length);
+            buf.writeFloat(width);
+            buf.writeFloat(height);
+            buf.writeFloat(yaw);
+            buf.writeVarInt(this.lifetime);
+            buf.writeInt(this.color);
+        }
+        public static void handle(Cube packet, IPayloadContext context) {
+            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.Cube(packet.x, packet.y, packet.z, packet.length, packet.width,packet.height,packet.yaw, packet.lifetime, packet.color)));
+        }
+        @Override
+        public @NotNull Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
     }
 }

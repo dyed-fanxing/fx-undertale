@@ -82,7 +82,6 @@ public class GravityUtils {
         Vec3i normal = gravity.getNormal();
         Vec3 g = new Vec3(normal.getX(), normal.getY(), normal.getZ());
         BlockPos searchPos = getContaining(pos,gravity);
-        log.info("开始搜索方块的位置：{}",searchPos);
         int step = gravity.getAxisDirection().getStep();
         int height = searchPos.get(gravity.getAxis())+step*256;
         double collisionHeight = 0.0;

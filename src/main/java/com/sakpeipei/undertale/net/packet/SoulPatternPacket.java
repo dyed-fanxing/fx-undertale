@@ -18,11 +18,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * 灵魂状态
  */
-public record SoulStatePacket(int entityId, byte state) implements CustomPacketPayload {
-    public static final Type<SoulStatePacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "soul_state_packet"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, SoulStatePacket> STREAM_CODEC = CustomPacketPayload.codec(SoulStatePacket::write, SoulStatePacket::new);
+public record SoulPatternPacket(int entityId, byte state) implements CustomPacketPayload {
+    public static final Type<SoulPatternPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "soul_state_packet"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, SoulPatternPacket> STREAM_CODEC = CustomPacketPayload.codec(SoulPatternPacket::write, SoulPatternPacket::new);
 
-    public SoulStatePacket(FriendlyByteBuf buf) {
+    public SoulPatternPacket(FriendlyByteBuf buf) {
         this(buf.readVarInt(), buf.readByte());
     }
 
@@ -31,20 +31,20 @@ public record SoulStatePacket(int entityId, byte state) implements CustomPacketP
         buf.writeByte(state);
     }
 
-    public static void handle(SoulStatePacket packet, IPayloadContext context) {
+    public static void handle(SoulPatternPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null) {
                 Entity entity = level.getEntity(packet.entityId);
                 if (entity != null) {
-                    entity.getPersistentData().putByte(PersistentDataDict.SOUL_STATE, packet.state);
+                    entity.getPersistentData().putByte(PersistentDataDict.SOUL_PATTERN, packet.state);
                 }
             }
         });
     }
 
     @Override
-    public @NotNull CustomPacketPayload.Type<SoulStatePacket> type() {
+    public @NotNull CustomPacketPayload.Type<SoulPatternPacket> type() {
         return TYPE;
     }
 }

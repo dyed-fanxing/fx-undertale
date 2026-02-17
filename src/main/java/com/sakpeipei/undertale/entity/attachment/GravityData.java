@@ -31,8 +31,8 @@ public class GravityData {
 
     // 控制方向
     private Direction gravity = Direction.DOWN;
-    private Quaternionf localToWorld;
-    private Quaternionf worldToLocal;
+    private Quaternionf localToWorld = new Quaternionf();
+    private Quaternionf worldToLocal = new Quaternionf();
 
     public GravityData() {
     }
@@ -42,7 +42,6 @@ public class GravityData {
         this.localToWorld = getRotation(gravity);
         this.worldToLocal = localToWorld.invert(new Quaternionf());
     }
-
 
     /**
      * 对目标实体应用攻击者的相对重力

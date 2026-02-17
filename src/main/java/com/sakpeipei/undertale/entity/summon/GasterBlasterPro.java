@@ -4,7 +4,7 @@ import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.registry.ParticleTypes;
 import com.sakpeipei.undertale.item.GasterBlasterProItem;
 import com.sakpeipei.undertale.registry.ItemTypes;
-import com.sakpeipei.undertale.registry.SoundTypes;
+import com.sakpeipei.undertale.registry.SoundEvnets;
 import com.sakpeipei.undertale.utils.ParticleMoveUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
 import net.minecraft.nbt.CompoundTag;
@@ -310,7 +310,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
                     controller.setAnimation(CHARGE_ANIM);
                     controller.setAnimationSpeed(20f / MAX_CHARGE);
                     controller.setSoundKeyframeHandler(event -> {
-                        level().playLocalSound(this, SoundTypes.GASTER_BLASTER_CHARGE.get(),
+                        level().playLocalSound(this, SoundEvnets.GASTER_BLASTER_CHARGE.get(),
                         SoundSource.NEUTRAL, 1, 1);
                     });
                     // 生成向中心移动的粒子
@@ -320,7 +320,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
                     controller.setAnimation(GROW_ANIM);
                     controller.setAnimationSpeed(20.0);
                     controller.setSoundKeyframeHandler(event -> {
-                        level().playLocalSound(this, SoundTypes.GASTER_BLASTER_FIRE.get(),
+                        level().playLocalSound(this, SoundEvnets.GASTER_BLASTER_FIRE.get(),
                                 SoundSource.NEUTRAL,1,1);
                         ParticleMoveUtils.circularOut(level(), 100, getWidth() * 2, net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME,
                                 getX(), getY(), getZ(), getYRot(), getXRot(), 3.0f);

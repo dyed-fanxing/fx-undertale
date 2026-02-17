@@ -21,18 +21,24 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Sakqiongzi
  * @since 2025-09-13 22:52
+ * @param a 局部重力方向上的初始速度
  */
-public record GravityPacket(int entityId, Direction gravity) implements CustomPacketPayload {
+public record GravityPacket(int entityId, Direction gravity,float a) implements CustomPacketPayload {
     public static final Type<GravityPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "gravity_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, GravityPacket> STREAM_CODEC = CustomPacketPayload.codec(GravityPacket::write, GravityPacket::new);
 
+    public GravityPacket(int entityId, Direction gravity) {
+        this(entityId, gravity, 0f);
+    }
+
     public GravityPacket(FriendlyByteBuf buf) {
-        this(buf.readVarInt(), buf.readEnum(Direction.class));
+        this(buf.readVarInt(), buf.readEnum(Direction.class),buf.readFloat());
     }
 
     public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(entityId);
         buf.writeEnum(gravity);
+        buf.writeFloat(a);
     }
 
     public static void handle(GravityPacket packet, IPayloadContext context) {
@@ -42,6 +48,7 @@ public record GravityPacket(int entityId, Direction gravity) implements CustomPa
                 Entity entity = level.getEntity(packet.entityId);
                 if (entity != null) {
                     GravityData.applyGravity(entity, packet.gravity);
+                    entity.addDeltaMovement(new Vec3(0,-packet.a,0));
                 }
             }
         });
@@ -51,4 +58,5 @@ public record GravityPacket(int entityId, Direction gravity) implements CustomPa
     public @NotNull CustomPacketPayload.Type<GravityPacket> type() {
         return TYPE;
     }
+
 }

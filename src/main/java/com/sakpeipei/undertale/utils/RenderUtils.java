@@ -18,14 +18,14 @@ public class RenderUtils {
     /**
      * 简易正方体
      */
-    public static void renderCube(VertexConsumer builder, float size, PoseStack.Pose pose, int r, int g, int b, int a, int overlay, int light) {
-        renderCube(builder, size, size, size, pose, r, g, b, a, overlay, light);
+    public static void renderCube( PoseStack.Pose pose,VertexConsumer builder, float size, int r, int g, int b, int a, int overlay, int light) {
+        renderCube( pose,builder, size, size, size, r, g, b, a, overlay, light);
     }
 
     /**
      * 简易立方体
      */
-    public static void renderCube(VertexConsumer builder, float length, float width, float height, PoseStack.Pose pose, int r, int g, int b, int a, int overlay, int light) {
+    public static void renderCube(PoseStack.Pose pose,VertexConsumer builder, float length, float width, float height,  int r, int g, int b, int a, int overlay, int light) {
         Matrix4f matrix = pose.pose();
         length = length * 0.5f;
         width = width * 0.5f;
@@ -65,6 +65,86 @@ public class RenderUtils {
         builder.addVertex(matrix, length, -width, -height).setColor(r, g, b, a).setUv(1, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
         builder.addVertex(matrix, length, -width, height).setColor(r, g, b, a).setUv(1, 1).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
         builder.addVertex(matrix, -length, -width, height).setColor(r, g, b, a).setUv(0, 1).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
+    }
+
+    /**
+     * 渲染立方体轮廓，通过最小顶点渲染
+     * @param pose      当前变换矩阵
+     * @param consumer  顶点构建器
+     * @param length    X轴方向长度
+     * @param width     Z轴方向宽度（注意：根据实际渲染效果调整，此处保持与传入一致）
+     * @param height    Y轴方向高度
+     * @param r, g, b, a 颜色分量（0-255）
+     * @param overlay   叠加纹理（线条渲染无需，保留占位）
+     * @param light     光照（线条渲染无需，保留占位）
+     */
+    public static void renderCubeOutlineByVertex(PoseStack.Pose pose, VertexConsumer consumer,
+                                         float length, float width, float height,
+                                         int r, int g, int b, int a,
+                                         int overlay, int light) {
+        // 局部顶点（角点为原点）
+        Vec3[] vertices = new Vec3[8];
+        vertices[0] = new Vec3(0, 0, 0); // 左下后
+        vertices[1] = new Vec3(length, 0, 0); // 右下后
+        vertices[2] = new Vec3(length, 0, width); // 右下前
+        vertices[3] = new Vec3(0, 0, width); // 左下前
+        vertices[4] = new Vec3(0, height, 0); // 左上后
+        vertices[5] = new Vec3(length, height, 0); // 右上后
+        vertices[6] = new Vec3(length, height, width); // 右上前
+        vertices[7] = new Vec3(0, height, width); // 左上前
+        // 绘制12条边（法线参数仅占位）
+        RenderUtils.renderLine(pose, consumer, vertices[0], vertices[1], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[1], vertices[2], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[2], vertices[3], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[3], vertices[0], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[4], vertices[5], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[5], vertices[6], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[6], vertices[7], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[7], vertices[4], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[0], vertices[4], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[1], vertices[5], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[2], vertices[6], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[3], vertices[7], 0, 0, 1, r, g, b, a);
+    }
+
+
+    /**
+     * 渲染立方体轮廓，通过端面的底部中心点向着局部z轴渲染
+     */
+    public static void renderCubeOutline(PoseStack.Pose pose, VertexConsumer consumer,
+                                                 float length, float width, float height,
+                                                 int r, int g, int b, int a,
+                                                 int overlay, int light) {
+        float halfW = width * 0.5f;
+        // 顶点定义：原点在端面中心底部，Z正向为长度方向，X轴对称，Y向上
+        Vec3[] vertices = new Vec3[8];
+        vertices[0] = new Vec3(-halfW, 0, 0);        // 左下后 (Z=0)
+        vertices[1] = new Vec3( halfW, 0, 0);        // 右下后
+        vertices[2] = new Vec3( halfW, 0, length);   // 右下前 (Z=length)
+        vertices[3] = new Vec3(-halfW, 0, length);   // 左下前
+        vertices[4] = new Vec3(-halfW, height, 0);   // 左上后
+        vertices[5] = new Vec3( halfW, height, 0);   // 右上后
+        vertices[6] = new Vec3( halfW, height, length); // 右上前
+        vertices[7] = new Vec3(-halfW, height, length); // 左上前
+
+        // 底部四边形（法线向上）
+        RenderUtils.renderLine(pose, consumer, vertices[0], vertices[1], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[1], vertices[2], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[2], vertices[3], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[3], vertices[0], 0, 1, 0, r, g, b, a);
+
+        // 顶部四边形
+        RenderUtils.renderLine(pose, consumer, vertices[4], vertices[5], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[5], vertices[6], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[6], vertices[7], 0, 1, 0, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[7], vertices[4], 0, 1, 0, r, g, b, a);
+
+        // 垂直边（法线方向任意）
+        RenderUtils.renderLine(pose, consumer, vertices[0], vertices[4], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[1], vertices[5], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[2], vertices[6], 0, 0, 1, r, g, b, a);
+        RenderUtils.renderLine(pose, consumer, vertices[3], vertices[7], 0, 0, 1, r, g, b, a);
+
     }
 
     /**
@@ -513,7 +593,7 @@ public class RenderUtils {
         pose = poseStack.last();
 
         // 直接渲染立方体
-        RenderUtils.renderCube(consumer, length, width, height, pose, r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
+        RenderUtils.renderCube( pose,consumer, length, width, height, r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
 
         poseStack.popPose();
     }

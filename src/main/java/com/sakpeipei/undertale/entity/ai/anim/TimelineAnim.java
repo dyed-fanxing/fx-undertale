@@ -1,10 +1,8 @@
 package com.sakpeipei.undertale.entity.ai.anim;
 
-import com.ibm.icu.impl.Pair;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.ToIntFunction;
 
@@ -44,36 +42,5 @@ public record TimelineAnim(int length, int cd, Map<Integer, Byte> anims, Map<Int
             offsetHitTick+=interval;
         }
         return new TimelineAnim( offsetHitTick,cd,Map.of(0,id), Map.copyOf(acts) );
-    }
-    /**
-     * 多回合，单动画，多动作，单判定
-     * 动画总长度 = 最后一次判定的位置 + 最后执行行动后的长度
-     * 最后执行行动后的长度 = 间隔 - 回合内的第一个行动的判定Tick = interval - actions的第一个的key
-     * @param round 回合数
-     * @param interval 间隔
-     */
-    public static TimelineAnim create(int round,int interval,int cd, byte id, List<Pair<Integer,ToIntFunction<LivingEntity>>> actions) {
-        Map<Integer, ToIntFunction<LivingEntity>> acts = new HashMap<>(round * actions.size());
-        int offsetHitTick = 0;
-        for (int i = 0; i < round; i++) {
-            int hitTick = 0;
-            for (Pair<Integer, ToIntFunction<LivingEntity>> action : actions) {
-                hitTick = offsetHitTick + action.first;
-                acts.put(hitTick, action.second);
-            }
-            offsetHitTick = hitTick + interval;
-        }
-        return new TimelineAnim(offsetHitTick + actions.getFirst().first,cd,Map.of(0,id), Map.copyOf(acts) );
-    }
-
-    // 多动画，多动作，多判定
-    public static TimelineAnim create(int length,int cd,  Map<Integer, Byte> anims, Map<int[], ToIntFunction<LivingEntity>> actions) {
-        Map<Integer, ToIntFunction<LivingEntity>> acts = new HashMap<>();
-        for (Map.Entry<int[], ToIntFunction<LivingEntity>> entry : actions.entrySet()) {
-            for (int hitTick : entry.getKey()) {
-                acts.put(hitTick, entry.getValue());
-            }
-        }
-        return new TimelineAnim(length,cd,anims, Map.copyOf(acts));
     }
 }

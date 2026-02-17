@@ -7,7 +7,7 @@ import com.sakpeipei.undertale.entity.attachment.GravityData;
 import com.sakpeipei.undertale.entity.boss.Sans;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import com.sakpeipei.undertale.registry.EntityTypes;
-import com.sakpeipei.undertale.registry.SoundTypes;
+import com.sakpeipei.undertale.registry.SoundEvnets;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -16,7 +16,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
@@ -114,7 +113,7 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
         }
         if(this.level().isClientSide){
             if(delay == 0 && isPlaySound){
-                this.level().playLocalSound(this, SoundTypes.SANS_BONE_SPINE.get(), SoundSource.HOSTILE,1,1);
+                this.level().playLocalSound(this, SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE,1,1);
             }
         }
         if (delay >= -lifetime && delay < 0) {

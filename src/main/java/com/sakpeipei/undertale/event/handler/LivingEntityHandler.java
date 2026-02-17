@@ -60,7 +60,7 @@ public class LivingEntityHandler {
     @SubscribeEvent
     public static void onLivingFall(LivingFallEvent event) {
         LivingEntity entity = event.getEntity();
-        if(entity.getPersistentData().getByte(PersistentDataDict.SOUL_STATE) == PersistentDataDict.GRAVITY && !entity.getPersistentData().getBoolean(PersistentDataDict.SANS_FORCED_SLAM)) {
+        if(entity.getPersistentData().getByte(PersistentDataDict.SOUL_PATTERN) == PersistentDataDict.GRAVITY && !entity.getPersistentData().getBoolean(PersistentDataDict.SANS_FORCED_SLAM)) {
             event.setCanceled(true);
         }
     }

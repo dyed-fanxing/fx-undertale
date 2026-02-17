@@ -9,10 +9,10 @@ import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
 
-public record CastStep(Byte id, int[] hitTicks, ToIntFunction<LivingEntity> onHit, BiFunction<Integer,Integer,Boolean> canNext,Consumer<Integer> onNext,int duration, int cooldown, int timeout,
+public record CastStep(Byte id, int[] hitTicks, ToIntFunction<LivingEntity> onHit, CanNext canNext,Consumer<Integer> onNext,int duration, int cooldown, int timeout,
                        Consumer<LivingEntity> timeoutHandler) {
     
-    public static final BiFunction<Integer,Integer,Boolean> DEFAULT_CAN_NEXT = (tick,d) -> tick>=d;
+    public static final CanNext DEFAULT_CAN_NEXT = (tick,hitTick,duration) -> tick>=duration;
     public static final Consumer<Integer> DEFAULT_ON_NEXT = (step)->{};
     
     public CastStep(Byte id, int[] hitTicks, ToIntFunction<LivingEntity> onHit, int duration, int cooldown, int timeout, Consumer<LivingEntity> timeoutHandler){
@@ -27,13 +27,16 @@ public record CastStep(Byte id, int[] hitTicks, ToIntFunction<LivingEntity> onHi
 
 
 
-
     // 单次
-    public CastStep(Byte id, int hitTick, ToIntFunction<LivingEntity> onHit,BiFunction<Integer,Integer,Boolean> next, int duration, int cooldown){
-        this(id,new int[]{hitTick},onHit,next,DEFAULT_ON_NEXT,duration,cooldown,0,null);
+    public CastStep(Byte id, int hitTick, ToIntFunction<LivingEntity> onHit,CanNext canNext,Consumer<Integer> onNext, int duration, int cooldown){
+        this(id,new int[]{hitTick},onHit,canNext,onNext,duration,cooldown,0,null);
     }
-    public CastStep(int hitTick, ToIntFunction<LivingEntity> onHit,BiFunction<Integer,Integer,Boolean> next, int duration, int cooldown){
-        this(null,new int[]{hitTick},onHit,next,DEFAULT_ON_NEXT,duration,cooldown,0,null);
+    // 单次
+    public CastStep(Byte id, int hitTick, ToIntFunction<LivingEntity> onHit,CanNext canNext, int duration, int cooldown){
+        this(id,new int[]{hitTick},onHit,canNext,DEFAULT_ON_NEXT,duration,cooldown,0,null);
+    }
+    public CastStep(int hitTick, ToIntFunction<LivingEntity> onHit,CanNext canNext, int duration, int cooldown){
+        this(null,new int[]{hitTick},onHit,canNext,DEFAULT_ON_NEXT,duration,cooldown,0,null);
     }
     public CastStep(Byte id, int hitTick, ToIntFunction<LivingEntity> onHit, int duration, int cooldown){
         this(id,new int[]{hitTick},onHit,DEFAULT_CAN_NEXT,DEFAULT_ON_NEXT,duration,cooldown,0,null);
