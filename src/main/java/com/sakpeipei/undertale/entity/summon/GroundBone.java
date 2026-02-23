@@ -4,7 +4,7 @@ import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.AttackColored;
 import com.sakpeipei.undertale.entity.attachment.GravityData;
-import com.sakpeipei.undertale.entity.boss.Sans;
+import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import com.sakpeipei.undertale.registry.EntityTypes;
 import com.sakpeipei.undertale.registry.SoundEvnets;

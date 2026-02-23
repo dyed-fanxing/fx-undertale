@@ -80,7 +80,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
     }
     public GasterBlasterPro(EntityType<? extends LivingEntity> type, Level level, LivingEntity owner) {
         this(type,level);
-        setOwner(owner);
+//        setOwner(owner);
         super.setNoGravity(true);
     }
 
@@ -100,7 +100,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
 
         if(!level().isClientSide){
             LivingEntity target = getTarget();
-            LivingEntity owner = getOwner();
+//            LivingEntity owner = getOwner();
             Vec3 selfPos = this.position();
             float bbWidth = getBbWidth();
             // 有目标时
@@ -166,16 +166,6 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
         return 0;
     }
 
-    @Override
-    public float getMonthHeight() {
-        return 0;
-    }
-
-    @Override
-    public Vec3 getEnd() {
-        return end;
-    }
-
     /**
      * 阶段处理
      */
@@ -188,7 +178,7 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
                 if(timer >= shot) setPhase(PHASE_DECAY);
                 if(!level().isClientSide){
                     // 每2tick应用一次伤害
-                    if(timer % 2 == 0) checkHit();
+//                    if(timer % 2 == 0) checkHit();
                 }
             }
             case PHASE_DECAY -> {
@@ -230,51 +220,48 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
         if(owner instanceof Player player) player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER_PRO.get(),DEFAULT_CD);
         cd = DEFAULT_CD;
     }
-    @Override
-    public void checkHit() {
-        Vec3 start = this.position();
-        // 新的攻击终点
-        Vec3 newEnd = start.add(this.getLookAngle().scale(DEFAULT_LENGTH));
-        // 光束的射线检测，如果路径上被方块阻挡，则最终位置替换成该方块位置
-        BlockHitResult clip = level().clip(new ClipContext(start, newEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-        // 攻击终点若为null 或 碰撞的攻击终点位置和上一次的攻击终点位置发生变化，则进行更新
-        if(end == null || end.distanceToSqr(clip.getLocation()) > 0.01 ){
-            end = clip.getLocation();
-            this.entityData.set(LENGTH, (float) start.distanceTo(end));
-        }
-        // 检测光束路径上的所有活体
-        for (LivingEntity target : level().getEntitiesOfClass(LivingEntity.class,
-                new AABB(start, end).inflate(0.5 * getWidth()), // 适当扩大检测范围
-                this::canHitTarget)) {
-            if(target.getBoundingBox().inflate(0.5 * getWidth()).clip(start,end).isPresent()){
-                applyDamage(target);
-            }
-        }
-        level().addParticle(net.minecraft.core.particles.ParticleTypes.END_ROD,
-                (start.x + end.x)/2,
-                (start.y + end.y)/2,
-                (start.z + end.z)/2,
-                end.x - start.x,
-                end.y - start.y,
-                end.z - start.z);
-    }
-    void applyDamage(LivingEntity target) {
-        Vec3 deltaMovement = target.getDeltaMovement();
-        DamageSource source = damageSources().source(
-                DamageTypes.GASTER_BLASTER_BEAM, this, owner
-        );
-        target.hurt(source, damage);
-        target.invulnerableTime = 0; // 破解无敌帧
-        target.setDeltaMovement(deltaMovement); //不击退
-        // 粒子效果（服务端发送给客户端）
-        if (this.level() instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(
-                    net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME,
-                    target.getX(), target.getEyeY(), target.getZ(),
-                    10, 0.2, 0.2, 0.2, 0.1
-            );
-        }
-    }
+//    void applyDamage(LivingEntity target) {
+//        Vec3 start = this.position();
+//        // 新的攻击终点
+//        Vec3 newEnd = start.add(this.getLookAngle().scale(DEFAULT_LENGTH));
+//        // 光束的射线检测，如果路径上被方块阻挡，则最终位置替换成该方块位置
+//        BlockHitResult clip = level().clip(new ClipContext(start, newEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+//        // 攻击终点若为null 或 碰撞的攻击终点位置和上一次的攻击终点位置发生变化，则进行更新
+//        if(end == null || end.distanceToSqr(clip.getLocation()) > 0.01 ){
+//            end = clip.getLocation();
+//            this.entityData.set(LENGTH, (float) start.distanceTo(end));
+//        }
+//        // 检测光束路径上的所有活体
+//        for (LivingEntity target : level().getEntitiesOfClass(LivingEntity.class,
+//                new AABB(start, end).inflate(0.5 * getWidth()), // 适当扩大检测范围
+//                this::canHitTarget)) {
+//            if(target.getBoundingBox().inflate(0.5 * getWidth()).clip(start,end).isPresent()){
+//                applyDamage(target);
+//            }
+//        }
+//        level().addParticle(net.minecraft.core.particles.ParticleTypes.END_ROD,
+//                (start.x + end.x)/2,
+//                (start.y + end.y)/2,
+//                (start.z + end.z)/2,
+//                end.x - start.x,
+//                end.y - start.y,
+//                end.z - start.z);
+//        Vec3 deltaMovement = target.getDeltaMovement();
+//        DamageSource source = damageSources().source(
+//                DamageTypes.GASTER_BLASTER_BEAM, this, owner
+//        );
+//        target.hurt(source, damage);
+//        target.invulnerableTime = 0; // 破解无敌帧
+//        target.setDeltaMovement(deltaMovement); //不击退
+//        // 粒子效果（服务端发送给客户端）
+//        if (this.level() instanceof ServerLevel serverLevel) {
+//            serverLevel.sendParticles(
+//                    net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME,
+//                    target.getX(), target.getEyeY(), target.getZ(),
+//                    10, 0.2, 0.2, 0.2, 0.1
+//            );
+//        }
+//    }
 
 
     @Override
@@ -285,12 +272,12 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
 
     @Override
     public void remove(@NotNull RemovalReason reason) {
-        if(reason.shouldDestroy()) {
-            if(getOwner() instanceof Player player){
-                player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER_PRO.get(),40);
-                player.getPersistentData().remove(GasterBlasterProItem.GASTER_BLASTER_PRO_KEY);
-            }
-        }
+//        if(reason.shouldDestroy()) {
+//            if(getOwner() instanceof Player player){
+//                player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER_PRO.get(),40);
+//                player.getPersistentData().remove(GasterBlasterProItem.GASTER_BLASTER_PRO_KEY);
+//            }
+//        }
         super.remove(reason);
     }
 
@@ -350,31 +337,6 @@ public class GasterBlasterPro extends LivingEntity implements IGasterBlaster, Ge
             log.info("目标死亡，清除目标{}",event.getEntity());
             clearTarget();
         }
-    }
-
-    @Override
-    public @Nullable UUID getOwnerUUID() {
-        return null;
-    }
-
-    @Override
-    public LivingEntity getOwner() {
-        if(owner != null ) {
-            return owner;
-        }
-        if (ownerUUID != null) {
-            LivingEntity entity = (LivingEntity) ((ServerLevel) level()).getEntity(ownerUUID);
-            if(entity != null) {
-                owner =  entity;
-                return owner;
-            }
-        }
-        return null;
-    }
-    @Override
-    public void setOwner(LivingEntity owner) {
-        this.ownerUUID = owner.getUUID();
-        this.owner = owner;
     }
     public LivingEntity getTarget() {
         if(target != null && target.isAlive()) return target;

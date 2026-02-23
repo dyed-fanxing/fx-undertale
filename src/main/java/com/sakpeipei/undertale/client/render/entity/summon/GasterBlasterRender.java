@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,10 +25,9 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     }
 
     @Override
-    protected void applyRotations(GasterBlaster animatable, PoseStack poseStack,
-                                  float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(-animatable.getYRot()));
-        poseStack.mulPose(Axis.XP.rotationDegrees(animatable.getXRot()));
+    protected void applyRotations(GasterBlaster animatable, PoseStack poseStack,float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
+        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(partialTick,-animatable.yRotO,-animatable.getYRot())));
+        poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTick,animatable.xRotO,animatable.getXRot())));
         super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
     }
 
@@ -37,13 +37,10 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     }
 
     @Override
-    public void render(@NotNull GasterBlaster animatable, float entityYaw, float partialTick, @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
-        super.render(animatable, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-        GasterBlasterBeamRenderer.render(animatable, partialTick, poseStack, bufferSource, packedLight);
-    }
-
-    @Override
     public void preRender(PoseStack poseStack, GasterBlaster animatable, BakedGeoModel model, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
+        if(!isReRender) {
+            GasterBlasterBeamRenderer.render(animatable, partialTick, poseStack, bufferSource, packedLight);
+        }
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
     }
 
@@ -53,7 +50,7 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
         if (super.shouldRender(animatable, frustum, cameraX, cameraY, cameraZ)) {
             return true;
         }
-        if(frustum.isVisible( new AABB(animatable.getStart(), animatable.getEnd()))) {
+        if(frustum.isVisible( new AABB(animatable.getEyePosition(), animatable.getLookAngle().scale(animatable.getLength())))) {
             return true;
         }
         return animatable.position().subtract(cameraX, cameraY, cameraZ).lengthSqr() < 1024;

@@ -11,8 +11,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public interface IAnimatable {
     byte getAnimID();
     void setAnimID(byte id);
-    float getAnimSpeed();
-    void setAnimSpeed(float speed);
     default void sendAnimPacket(byte id){
         Entity entity = (Entity) this;
         PacketDistributor.sendToPlayersTrackingEntity(entity,new AnimPacket(entity.getId(),id,1f));

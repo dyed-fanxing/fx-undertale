@@ -2,6 +2,10 @@ package com.sakpeipei.undertale.entity.summon;
 
 import com.google.common.base.MoreObjects;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -10,7 +14,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -23,13 +26,15 @@ public abstract class Summons extends Entity implements TraceableEntity {
     }
     public Summons(EntityType<?> entityType, Level level,Entity owner) {
         super(entityType, level);
-        this.ownerUUID = owner.getUUID();
-        this.owner = owner;
+        if(owner != null){
+            this.ownerUUID = owner.getUUID();
+            this.owner = owner;
+        }
     }
 
     protected boolean canHitEntity(Entity entity) {
         Entity owner = getOwner();
-        return entity!=owner && !entity.isRemoved() && !(entity instanceof TraceableEntity traceable && traceable.getOwner() != owner);
+        return entity!=owner && !entity.isRemoved() && !(entity instanceof TraceableEntity traceable && traceable.getOwner() == owner);
     }
 
     protected abstract void onHitBlock(BlockHitResult hitResult);
@@ -50,7 +55,7 @@ public abstract class Summons extends Entity implements TraceableEntity {
     }
 
     @Override
-    public @Nullable Entity getOwner() {
+    public Entity getOwner() {
         if(owner != null && !owner.isRemoved()){
             return owner;
         } else if( ownerUUID != null && this.level() instanceof ServerLevel level) {
@@ -59,6 +64,32 @@ public abstract class Summons extends Entity implements TraceableEntity {
         return owner;
     }
 
+    public void setOwner(Entity owner) {
+        this.owner = owner;
+    }
+
+    /**
+     * 获取添加实体数据包，用于服务端发送给客户端，进行加入世界同步数据
+     * 同步拥有者
+     */
+    @Override
+    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket(@NotNull ServerEntity serverEntity) {
+        Entity owner = this.getOwner();
+        return new ClientboundAddEntityPacket(this, serverEntity, owner == null ? 0 : owner.getId());
+    }
+
+    /**
+     * 客户端解析服务端发送的添加实体数据包
+     * 设置拥有者
+     */
+    @Override
+    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        Entity owner = this.level().getEntity(packet.getData());
+        if (owner != null) {
+            this.setOwner(owner);
+        }
+    }
 
     @Override
     public void restoreFrom(@NotNull Entity entity) {

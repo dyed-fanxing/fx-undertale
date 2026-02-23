@@ -20,6 +20,9 @@ public record AnimPacket(int entityId, byte id,float speed) implements CustomPac
     public static final CustomPacketPayload.Type<AnimPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "anim_id_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, AnimPacket> STREAM_CODEC = CustomPacketPayload.codec(AnimPacket::write, AnimPacket::new);
 
+    public AnimPacket(int entityId, byte id) {
+        this(entityId, id, 1.0f);
+    }
     public AnimPacket(FriendlyByteBuf buf) {
         this(buf.readVarInt(),buf.readByte(),buf.readFloat());
     }
@@ -34,7 +37,6 @@ public record AnimPacket(int entityId, byte id,float speed) implements CustomPac
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null && level.getEntity(packet.entityId) instanceof IAnimatable entity) {
                 entity.setAnimID(packet.id);
-                entity.setAnimSpeed(packet.speed);
             }
         });
     }

@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.registry;
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.entity.boss.Sans;
+import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.entity.projectile.FlyingBone;
 import com.sakpeipei.undertale.entity.summon.*;
 import net.minecraft.core.registries.Registries;
@@ -28,6 +28,7 @@ public class EntityTypes {
             ENTITY_TYPES.register("gaster_blaster",
                     () -> EntityType.Builder.<GasterBlaster>of(GasterBlaster::new, MobCategory.MISC)
                             .sized(1.8f, 1.5f)  // 碰撞箱
+                            .eyeHeight(0.4f)
                             .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
                             .build(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID,"gaster_blaster").toString())
             );
@@ -37,7 +38,7 @@ public class EntityTypes {
                     () -> EntityType.Builder.<GasterBlasterPro>of(GasterBlasterPro::new, MobCategory.MISC)
                             .sized(7.5f, 5f)  // 碰撞箱
                             .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
-                            .build(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID,"gaster_blaster").toString())
+                            .build(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID,"gaster_blaster_pro").toString())
             );
     public static final DeferredHolder<EntityType<?>, EntityType<Sans>> SANS = register("sans",
             EntityType.Builder.of(Sans::new, MobCategory.MONSTER)

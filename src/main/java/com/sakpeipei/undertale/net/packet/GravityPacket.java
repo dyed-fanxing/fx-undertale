@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
  * @since 2025-09-13 22:52
  * @param a 局部重力方向上的初始速度
  */
-public record GravityPacket(int entityId, Direction gravity,float a) implements CustomPacketPayload {
+public record GravityPacket(int entityId, Direction gravity,float acceleration) implements CustomPacketPayload {
     public static final Type<GravityPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "gravity_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, GravityPacket> STREAM_CODEC = CustomPacketPayload.codec(GravityPacket::write, GravityPacket::new);
 
@@ -38,7 +38,7 @@ public record GravityPacket(int entityId, Direction gravity,float a) implements 
     public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(entityId);
         buf.writeEnum(gravity);
-        buf.writeFloat(a);
+        buf.writeFloat(acceleration);
     }
 
     public static void handle(GravityPacket packet, IPayloadContext context) {
@@ -48,7 +48,7 @@ public record GravityPacket(int entityId, Direction gravity,float a) implements 
                 Entity entity = level.getEntity(packet.entityId);
                 if (entity != null) {
                     GravityData.applyGravity(entity, packet.gravity);
-                    entity.addDeltaMovement(new Vec3(0,-packet.a,0));
+                    entity.addDeltaMovement(new Vec3(0,-packet.acceleration,0));
                 }
             }
         });

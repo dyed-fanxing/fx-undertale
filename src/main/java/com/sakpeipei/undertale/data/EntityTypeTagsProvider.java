@@ -16,9 +16,4 @@ public class EntityTypeTagsProvider extends net.minecraft.data.tags.EntityTypeTa
         super(output, provider, modId, existingFileHelper);
     }
 
-    @Override
-    protected void addTags(HolderLookup.@NotNull Provider provider) {
-        this.tag(EntityTypeTags.FALL_DAMAGE_IMMUNE)
-                .add(EntityTypes.GASTER_BLASTER.get(), EntityTypes.GASTER_BLASTER_PRO.get());
-    }
 }

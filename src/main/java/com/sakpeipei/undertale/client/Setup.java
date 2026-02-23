@@ -32,7 +32,7 @@ public class Setup {
     @SubscribeEvent
     public static void registerRendererHandler(final EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(EntityTypes.GASTER_BLASTER.get(), GasterBlasterRender::new);
-        event.registerEntityRenderer(EntityTypes.GASTER_BLASTER_PRO.get(), GasterBlasterProRender::new);
+//        event.registerEntityRenderer(EntityTypes.GASTER_BLASTER_PRO.get(), GasterBlasterProRender::new);
         event.registerEntityRenderer(EntityTypes.SANS.get(), SansRender::new);
         event.registerEntityRenderer(EntityTypes.GROUND_BONE.get(), GroundBoneRender::new);
         event.registerEntityRenderer(EntityTypes.MOVING_GROUND_BONE.get(), MovingGroundBoneRender::new);

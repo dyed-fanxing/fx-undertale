@@ -2,17 +2,13 @@ package com.sakpeipei.undertale.event.handler;
 
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.entity.attachment.PersistentDataDict;
-import com.sakpeipei.undertale.entity.boss.Sans;
-import com.sakpeipei.undertale.entity.projectile.FlyingBone;
+import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.undertale.registry.EntityTypes;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;

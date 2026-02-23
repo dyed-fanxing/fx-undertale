@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.entity.projectile;
 
 import com.sakpeipei.undertale.common.DamageTypes;
-import com.sakpeipei.undertale.entity.boss.Sans;
+import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.utils.RotUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;

@@ -128,7 +128,7 @@ public class GasterBlasterProItem extends GasterBlasterItem {
                 level.addFreshEntity(blaster);
             }
 
-            LogUtils.getLogger().info("右键地面，放置Pro {} , 主人{}",player.getPersistentData(),blaster.getOwner());
+//            LogUtils.getLogger().info("右键地面，放置Pro {} , 主人{}",player.getPersistentData(),blaster.getOwner());
 
         }
         return InteractionResult.SUCCESS;

@@ -43,6 +43,7 @@ public class Undertale {
         ParticleTypes.register(modEventBus);        // 粒子注册
         MenuTypes.register(modEventBus);            // 菜单注册
         AttachmentTypes.register(modEventBus);      // 附件注册
+        MemoryModuleTypes.register(modEventBus);      // 记忆注册
 
         // 注册当前类以响应游戏事件
         NeoForge.EVENT_BUS.register(this);

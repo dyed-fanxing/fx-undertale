@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.mobEffect;
 import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.entity.attachment.KaramAttackData;
 import com.sakpeipei.undertale.entity.attachment.KaramMobEffectData;
-import com.sakpeipei.undertale.entity.boss.Sans;
+import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import com.sakpeipei.undertale.registry.MobEffectTypes;
 import net.minecraft.world.damagesource.DamageSource;

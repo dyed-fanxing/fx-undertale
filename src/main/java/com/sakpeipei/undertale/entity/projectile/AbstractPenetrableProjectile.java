@@ -156,24 +156,25 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
     }
 
     /**
-     * 获取实体添加进世界的数据包，将服务端实体的速度也加入
+     * 获取实体添加进世界的数据包，将服务端实体的速度和拥有者也加入
      */
     @Override
     public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity serverEntity) {
-        Entity entity = this.getOwner();
-        int i = entity == null ? 0 : entity.getId();
+        Entity owner = this.getOwner();
+        int ownerId = owner == null ? 0 : owner.getId();
         Vec3 vec3 = serverEntity.getPositionBase();
-        return new ClientboundAddEntityPacket(this.getId(), this.getUUID(), vec3.x(), vec3.y(), vec3.z(), serverEntity.getLastSentXRot(), serverEntity.getLastSentYRot(), this.getType(), i, serverEntity.getLastSentMovement(), 0.0F);
+        return new ClientboundAddEntityPacket(this.getId(), this.getUUID(), vec3.x(), vec3.y(), vec3.z(), serverEntity.getLastSentXRot(), serverEntity.getLastSentYRot(), this.getType(), ownerId, serverEntity.getLastSentMovement(), 0.0F);
     }
 
     /**
-     * 客户端添加实体，进行额外的速度设置
+     * 客户端添加实体包，速度和拥有者设置
      */
     @Override
     public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
         super.recreateFromPacket(packet);
         Vec3 vec3 = new Vec3(packet.getXa(), packet.getYa(), packet.getZa());
         this.setDeltaMovement(vec3);
+
     }
 
 

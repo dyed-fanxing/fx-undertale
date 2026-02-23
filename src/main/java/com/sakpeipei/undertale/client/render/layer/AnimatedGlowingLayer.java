@@ -30,12 +30,8 @@ public abstract class AnimatedGlowingLayer<T extends GeoAnimatable> extends GeoR
     @Override
     public void render(PoseStack poseStack, T animatable, BakedGeoModel bakedModel, @Nullable RenderType renderType, MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
         AnimatableTexture.setAndUpdate(texture);
-        RenderType glowType = RenderType.entityTranslucentEmissive(texture);
-        this.getRenderer().reRender(
-                bakedModel, poseStack, bufferSource, animatable,
-                glowType, bufferSource.getBuffer(glowType), partialTick,
-                LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, -1
-        );
+        RenderType glowType = RenderType.eyes(texture);
+        this.getRenderer().reRender(bakedModel, poseStack, bufferSource, animatable,glowType, bufferSource.getBuffer(glowType), partialTick,LightTexture.FULL_SKY, packedOverlay, -1);
     }
 
 

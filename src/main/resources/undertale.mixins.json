@@ -7,6 +7,7 @@
     "AbstractArrowMixin",
     "gravity.EntityGravityMixin",
     "gravity.LivingEntityGravityMixin",
+    "gravity.MoveControlTestMixin",
     "gravity.PlayerGravityMixin",
     "gravity.ServerGamePacketListenerImplGravityMixin",
     "gravity.projectile.FishingHookGravityMixin",

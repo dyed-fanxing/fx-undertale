@@ -4,14 +4,13 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.entity.attachment.GravityData;
-import com.sakpeipei.undertale.entity.boss.Sans;
+import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -41,7 +40,7 @@ public class SansCommand {
                                         Sans sans = player.level().getNearestEntity(Sans.class, TargetingConditions.forNonCombat(), player, pos.x, pos.y, pos.z,
                                                 new AABB(pos.x-viewDis,pos.y-viewDis,pos.z-viewDis,pos.x+viewDis,pos.y+viewDis,pos.z+viewDis));
                                         if(sans != null) {
-                                            sans.setPersistentAngerTarget(player.getUUID());
+//                                            sans.setPersistentAngerTarget(player.getUUID());
                                             int function = IntegerArgumentType.getInteger(cc, "function");
                                             switch (function) {
                                                 case 1 -> sans.shootBoneRingVolley(player);

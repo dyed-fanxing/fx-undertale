@@ -4,7 +4,7 @@ import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.common.phys.OBB;
 import com.sakpeipei.undertale.entity.IOBBCapability;
-import com.sakpeipei.undertale.entity.boss.Sans;
+import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.registry.EntityTypes;
 import com.sakpeipei.undertale.utils.EntityCollisionUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
@@ -236,7 +236,7 @@ public class LateralBone extends Summons implements IOBBCapability,IEntityWithCo
      * 获取实体添加进世界的数据包，将服务端实体的速度也加入
      */
     @Override
-    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity serverEntity) {
+    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket(@NotNull ServerEntity serverEntity) {
         Entity entity = this.getOwner();
         int i = entity == null ? 0 : entity.getId();
         Vec3 velocity = serverEntity.getPositionBase();

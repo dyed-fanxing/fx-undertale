@@ -1,28 +1,34 @@
 package com.sakpeipei.undertale.entity.summon;
 
-import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.registry.EntityTypes;
 import com.sakpeipei.undertale.registry.SoundEvnets;
 import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
+import com.sakpeipei.undertale.utils.RotUtils;
+import net.minecraft.client.gui.screens.worldselection.OptimizeWorldScreen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.*;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Comparator;
@@ -32,51 +38,78 @@ import java.util.UUID;
 /**
  * 固定动画时间GB
  */
-public class GasterBlaster extends Entity implements IGasterBlaster, IEntityWithComplexSpawn, GeoEntity {
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private static final RawAnimation CHARGE_ANIM = RawAnimation.begin().thenPlay("charge");
-    private static final RawAnimation FIRE_ANIM = RawAnimation.begin().thenPlayAndHold("fire");
-    private static final RawAnimation SHOT_ANIM = RawAnimation.begin().thenPlayAndHold("shot");
-    private static final RawAnimation DECAY_ANIM = RawAnimation.begin().thenPlay("decay");
-    public static final float DEFAULT_LENGTH = 16f;    // 默认长度
+public class GasterBlaster extends FollowableSummons implements IGasterBlaster, IEntityWithComplexSpawn, GeoEntity {
+    public static final float DEFAULT_LENGTH = 32f;
+    public static final int DECAY = 2;
+    private static final Logger log = LoggerFactory.getLogger(GasterBlaster.class);
 
-    protected float size = 1.0f;            // 大小，基础1.0f，以这个为基准，进行缩放
-    protected float mouthHeight = 0.4f;     // 嘴部高度（炮口位置）
+    private float maxLength = DEFAULT_LENGTH;
+    private float length;
+
+    protected float size = 1.0f;            // 大小
+    public int timer;                      // 计时器，代替tickCount进行序列化
     protected float damage = 1f;            // 攻击伤害
-    protected UUID ownerUUID;               // 召唤者UUID
-    protected LivingEntity owner;           // 召唤者缓存，用于追踪伤害来源仇恨
+    protected float aimSmoothSpeed;         // 瞄准追踪的平滑移动速度
 
-    protected Vec3 end;                     // 攻击终点
+    protected int fireTick = 17;            // 开火Tick点
+    protected int shotTick = 19;            // 发射Tick点
+    protected int decayTick = 47;           // 开始衰退Tick点
 
-    protected int fireTick = 17;        // 开火Tick点
-    protected int shotTick = 19;        // 发射Tick点
-    protected int decayTick = 47;       // 开始衰退Tick点
+
     public GasterBlaster(EntityType<? extends Entity> type, Level level) {
         super(type, level);
     }
 
+    public GasterBlaster(EntityType<?> entityType, Level level, Entity owner) {
+        super(entityType, level, owner);
+    }
+
     public GasterBlaster(Level level, LivingEntity owner) {
-        this(level, owner, 1.0f, 17,  28);
+        this(level, owner,1.0f, 1.0f, 17,  28);
     }
-    public GasterBlaster(Level level, LivingEntity owner, float size) {
-        this(level, owner, size,17,28);
+    public GasterBlaster(Level level, LivingEntity owner,float damage, float size) {
+        this(level, owner,damage, size,17,28);
     }
-    public GasterBlaster(Level level, LivingEntity owner, float size,int shot) {
-        this(level, owner, size,17,shot);
+    public GasterBlaster(Level level, LivingEntity owner,float damage, float size,int shot) {
+        this(level, owner,damage, size,17,shot);
     }
-    public GasterBlaster(Level level, LivingEntity owner, float size,int charge, int shot) {
-        super(EntityTypes.GASTER_BLASTER.get(), level);
+    public GasterBlaster(Level level, LivingEntity owner,float damage, float size,int charge, int shot) {
+        super(EntityTypes.GASTER_BLASTER.get(), level,owner);
         super.setNoGravity(true);
-        if (owner != null) {
-            setOwner(owner);
-        }
+        this.damage = damage;
         this.size = size;
-        this.mouthHeight = 0.4f * size;
-        this.end = this.position().add(0,mouthHeight,0);
         this.fireTick = charge;
         this.shotTick = fireTick + 2;
         this.decayTick =  (fireTick + shot);
         refreshDimensions();
+    }
+
+    public void aim(Entity target) {
+        aim(new Vec3(target.getX(), target.getY(0.5f), target.getZ()));
+    }
+    public void aim(Vec3 targetPos) {
+        Vec3 dir = targetPos.subtract(this.getEyePosition());
+        RotUtils.lookVec(this,dir);
+        this.maxLength = (float) Math.max(dir.length()+5,DEFAULT_LENGTH);
+        this.length = maxLength;
+    }
+    public GasterBlaster follow(Vec3 relativePos) {
+        this.isFollow = true;
+        this.relativePos = relativePos;
+        setPos(owner.position().add(RotUtils.getWorldPos(relativePos,owner.getViewXRot(1.0f), owner.getViewYRot(1.0f))));
+        return this;
+    }
+    public GasterBlaster aimSmoothSpeed(float speed){
+        this.aimSmoothSpeed = speed;
+        return this;
+    }
+    /**
+     * 平滑瞄准目标，旋转速度由 speed 控制（0~1，值越小越慢）
+     */
+    protected void aimSmoothly(Entity target) {
+        Vec3 dir = new Vec3(target.getX(), target.getY(0.5f), target.getZ()).subtract(this.getEyePosition());
+        this.setYRot(Mth.rotLerp(aimSmoothSpeed,this.getYRot(), RotUtils.yRotD(dir)));
+        this.setXRot(Mth.rotLerp(aimSmoothSpeed,this.getXRot(), RotUtils.xRotD(dir)));
     }
 
     @Override
@@ -86,77 +119,57 @@ public class GasterBlaster extends Entity implements IGasterBlaster, IEntityWith
 
     @Override
     public void tick() {
+        timer++;
         super.tick();
-        List<VoxelShape> entityCollisions = this.level().getEntityCollisions(this, this.getBoundingBox());
-
-        if(!entityCollisions.isEmpty()){
-            LogUtils.getLogger().warn("发生碰撞,大小{}，碰撞箱大小{}",size,this.getBoundingBox().getSize());
+        if(isFollow){
+            Entity owner = getOwner();
+            if(owner != null){
+                setPos(owner.position().add(RotUtils.getWorldPos(relativePos,owner.getViewXRot(1.0f), owner.getViewYRot(1.0f))));
+                if(owner instanceof Targeting targeting){
+                    LivingEntity target = targeting.getTarget();
+                    if(target != null){
+                        aimSmoothly(target);
+                    }
+                }
+            }
         }
-        // 必须直接算出END，同步至客户端，因为背身判断是否渲染的光束条件是通过END判断的
-        Vec3 start = this.getStart();
-        // 新的攻击终点
-        Vec3 newEnd = start.add(this.getLookAngle().scale(DEFAULT_LENGTH));
-        // 光束的射线检测，如果路径上被方块阻挡，则最终位置替换成该方块位置
-        BlockHitResult clip = level().clip(new ClipContext(start, newEnd, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-        // 攻击终点若为null 或 碰撞的攻击终点位置和上一次的攻击终点位置发生变化，则进行更新
-        if (end == null || end.distanceToSqr(clip.getLocation()) > 0.001) {
-            end = clip.getLocation();
-        }
-        if(tickCount < fireTick){
-            return;
-        }
-        if(tickCount > decayTick){
-            // 固定回收是3Tick时间
-            if(tickCount > decayTick + 3){
+        if(timer > decayTick){
+            if(timer >= decayTick + DECAY){
                 this.discard();
             }
             return;
         }
-        //只在服务端执行攻击逻辑
-        if (!this.level().isClientSide) {
-            List<LivingEntity> livingEntities = level().getEntitiesOfClass(LivingEntity.class, new AABB(start, end).inflate(mouthHeight), this::canHitTarget)
-                    .stream().filter(target -> CollisionDetectionUtils.capsuleIntersectsAABB(start, end, size * 0.5f, target.getBoundingBox()))
+        Vec3 start = this.getEyePosition();
+        Vec3 end = start.add(this.getLookAngle().scale(maxLength));
+        // 光束的射线检测，如果路径上被方块阻挡，则最终位置替换成该方块位置
+        BlockHitResult clip = level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        // 攻击终点若为null 或 碰撞的攻击终点位置和上一次的攻击终点位置发生变化，则进行更新
+        double disSqr = start.distanceToSqr(clip.getLocation());
+        if (maxLength*maxLength - disSqr >= Mth.EPSILON) {
+            end = clip.getLocation();
+            length = (float) Math.sqrt(disSqr);
+        }
+        if(timer < fireTick){
+            return;
+        }
+        if(!this.level().isClientSide){
+            Vec3 finalEnd = end;
+            List<LivingEntity> livingEntities = level().getEntitiesOfClass(LivingEntity.class, new AABB(start, end).inflate(size), this::canHitEntity)
+                    .stream().filter(target -> CollisionDetectionUtils.capsuleIntersectsAABB(start, finalEnd, size * 0.5f, target.getBoundingBox()))
                     .sorted(Comparator.comparingDouble(e -> e.distanceToSqr(start))).toList();
             for (LivingEntity target : livingEntities) {
                 target.hurt(damageSources().source(DamageTypes.FRAME, this, getOwner() == null ? this : owner), damage);
             }
         }
-    }
-
-    @Override
-    public void checkHit() {
 
     }
 
     @Override
-    public LivingEntity getOwner() {
-        if (owner != null && !owner.isRemoved()) {
-            return owner;
-        }
-        if (ownerUUID != null && level() instanceof ServerLevel serverLevel) {
-            LivingEntity entity = (LivingEntity) serverLevel.getEntity(ownerUUID);
-            if (entity != null) {
-                owner = entity;
-                return entity;
-            }
-        }
-        return null;
+    protected void onHitBlock(BlockHitResult hitResult) {
     }
 
     @Override
-    public void setOwner(LivingEntity owner) {
-        this.ownerUUID = owner.getUUID();
-        this.owner = owner;
-    }
-
-    @Override
-    public @Nullable UUID getOwnerUUID() {
-        return ownerUUID;
-    }
-
-    @Override
-    public float getMonthHeight() {
-        return mouthHeight;
+    protected void onHitEntity(Entity entity, Vec3 location) {
     }
 
     @Override
@@ -164,13 +177,8 @@ public class GasterBlaster extends Entity implements IGasterBlaster, IEntityWith
         return size;
     }
 
-    @Override
-    public Vec3 getEnd() {
-        return end;
-    }
-
-    public void setEnd(Vec3 end) {
-        this.end = end;
+    public float getLength() {
+        return length;
     }
 
     public int getFireTick() {
@@ -185,7 +193,7 @@ public class GasterBlaster extends Entity implements IGasterBlaster, IEntityWith
 
     @Override
     public boolean isFire() {
-        return this.tickCount > fireTick;
+        return this.timer > fireTick;
     }
 
     @Override
@@ -193,15 +201,29 @@ public class GasterBlaster extends Entity implements IGasterBlaster, IEntityWith
     }
 
     @Override
+    protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        if (ownerUUID != null) {
+            tag.putUUID("ownerUUID", ownerUUID);
+        }
+        tag.putFloat("size", size);
+        tag.putInt("fireTick", fireTick);
+        tag.putInt("shotTick", shotTick);
+        tag.putInt("decayTick", decayTick);
+        tag.putFloat("maxLength", maxLength);
+        tag.putFloat("aimSmoothSpeed", aimSmoothSpeed);
+        tag.putFloat("aimSmoothSpeed", aimSmoothSpeed);
+        tag.putFloat("timer", timer);
+    }
+
+    @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
         if (tag.hasUUID("ownerUUID")) {
             ownerUUID = tag.getUUID("ownerUUID");
         }
         if (tag.contains("size")) {
             size = tag.getFloat("size");
-            mouthHeight = size * 0.4f;
-            this.end = this.position().add(0,mouthHeight,0);
-            refreshDimensions();
         }
         if (tag.contains("fireTick")) {
             fireTick = tag.getInt("fireTick");
@@ -212,55 +234,67 @@ public class GasterBlaster extends Entity implements IGasterBlaster, IEntityWith
         if (tag.contains("decayTick")) {
             decayTick = tag.getInt("decayTick");
         }
-    }
-
-    @Override
-    protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        if (ownerUUID != null) {
-            tag.putUUID("ownerUUID", ownerUUID);
+        if(tag.contains("maxLength")){
+            maxLength = tag.getFloat("maxLength");
         }
-        tag.putFloat("size", size);
-        tag.putInt("fireTick", fireTick);
-        tag.putInt("shotTick", shotTick);
-        tag.putInt("decayTick", decayTick);
+        if(tag.contains("aimSmoothSpeed")){
+            aimSmoothSpeed = tag.getFloat("aimSmoothSpeed");
+        }
+        if(tag.contains("timer")){
+            timer = tag.getInt("timer");
+        }
     }
 
     @Override
-    public void writeSpawnData(RegistryFriendlyByteBuf buffer) {
+    public void writeSpawnData(@NotNull RegistryFriendlyByteBuf buffer) {
+        super.writeSpawnData(buffer);
         buffer.writeFloat(size);
         buffer.writeInt(fireTick);
         buffer.writeInt(shotTick);
         buffer.writeInt(decayTick);
+        buffer.writeFloat(maxLength);
+        buffer.writeFloat(aimSmoothSpeed);
+        buffer.writeInt(timer);
     }
 
     @Override
-    public void readSpawnData(RegistryFriendlyByteBuf buffer) {
+    public void readSpawnData(@NotNull RegistryFriendlyByteBuf buffer) {
+        super.readSpawnData(buffer);
         this.size = buffer.readFloat();
-        this.mouthHeight = size * 0.4f;
-        this.end = this.position().add(0,mouthHeight,0);
         this.fireTick = buffer.readInt();
         this.shotTick = buffer.readInt();
         this.decayTick = buffer.readInt();
-        this.refreshDimensions();  // 重要！
+        this.maxLength = buffer.readFloat();
+        this.aimSmoothSpeed = buffer.readFloat();
+        this.timer = buffer.readInt();
+        this.refreshDimensions();
     }
+
+
+
+
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
     }
-
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private static final RawAnimation CHARGE_ANIM = RawAnimation.begin().thenPlay("charge");
+    private static final RawAnimation FIRE_ANIM = RawAnimation.begin().thenPlayAndHold("fire");
+    private static final RawAnimation SHOT_ANIM = RawAnimation.begin().thenPlayAndHold("shot");
+    private static final RawAnimation DECAY_ANIM = RawAnimation.begin().thenPlay("decay");
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "attack", state -> {
             AnimationController<GasterBlaster> controller = state.getController();
-            if(this.tickCount < fireTick) {
+            if(this.timer < fireTick) {
                 controller.setAnimation(CHARGE_ANIM);
                 controller.setAnimationSpeed(20.0/fireTick);
                 controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundEvnets.GASTER_BLASTER_CHARGE.get(), SoundSource.NEUTRAL, 1, 1));
-            }else if (this.tickCount < shotTick) {
+            }else if (this.timer < shotTick) {
                 controller.setAnimation(FIRE_ANIM);
                 controller.setAnimationSpeed(20.0/(shotTick-fireTick));
-            }else if (this.tickCount < decayTick) {
+            }else if (this.timer < decayTick) {
                 controller.setAnimation(SHOT_ANIM);
                 controller.setAnimationSpeed(20.0 / (decayTick - shotTick));
                 controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundEvnets.GASTER_BLASTER_FIRE.get(), SoundSource.NEUTRAL, 1, 1));

@@ -18,12 +18,12 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AbstractMovingEntity extends Summons {
+public abstract class AbstractMovingSummons extends Summons {
 
-    public AbstractMovingEntity(EntityType<?> entityType, Level level) {
+    public AbstractMovingSummons(EntityType<?> entityType, Level level) {
         super(entityType, level);
     }
-    public AbstractMovingEntity(EntityType<?> entityType, Level level, Entity owner) {
+    public AbstractMovingSummons(EntityType<?> entityType, Level level, Entity owner) {
         super(entityType, level,owner);
     }
 
@@ -66,7 +66,7 @@ public abstract class AbstractMovingEntity extends Summons {
      * 获取实体添加进世界的数据包，将服务端实体的速度也加入
      */
     @Override
-    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity serverEntity) {
+    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket(@NotNull ServerEntity serverEntity) {
         Entity entity = this.getOwner();
         int i = entity == null ? 0 : entity.getId();
         Vec3 velocity = serverEntity.getPositionBase();

@@ -119,7 +119,7 @@ public abstract class AbstractArrowMixin extends Projectile {
         }
 
         // 修改这里：用自定义闪避弹射物标签替换硬编码的末影人判断
-        boolean flag = entity.getType().is( EntityTypeTags.DODGE_PROJECTILE);
+        boolean flag = entity.getType().is(EntityTypeTags.DODGE_PROJECTILE);
 
         int i = entity.getRemainingFireTicks();
         if (this.isOnFire() && !flag) {

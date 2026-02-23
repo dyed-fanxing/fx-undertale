@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.entity.summon;
 import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.common.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.AttackColored;
-import com.sakpeipei.undertale.entity.boss.Sans;
+import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.registry.EntityTypes;
 import com.sakpeipei.undertale.utils.RotUtils;
 import net.minecraft.nbt.CompoundTag;
@@ -31,8 +31,7 @@ import java.awt.*;
  * @author Sakqiongzi
  * @since 2025-10-06 21:18
  */
-public class MovingGroundBone extends AbstractMovingEntity implements IEntityWithComplexSpawn, AttackColored,GeoEntity {
-    private static final Logger log = LoggerFactory.getLogger(MovingGroundBone.class);
+public class MovingGroundBone extends AbstractMovingSummons implements IEntityWithComplexSpawn, AttackColored,GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private float scale = 1.0f; // 整体缩放
     private float growScale = 1.0f; // 在基于整体缩放的基础上的高度缩放
