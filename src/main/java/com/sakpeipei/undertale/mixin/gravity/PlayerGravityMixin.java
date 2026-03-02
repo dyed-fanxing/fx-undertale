@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.mixin.gravity;
 
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityDimensions;
@@ -50,7 +50,7 @@ public abstract class PlayerGravityMixin {
     @Inject(method = "canFallAtLeast", at = @At("HEAD"), cancellable = true)
     protected void canFallAtLeast(double dx, double dz, float maxUpStep, CallbackInfoReturnable<Boolean> cir) {
         Player self = (Player) (Object) (this);
-        GravityData data = self.getData(AttachmentTypes.GRAVITY);
+        Gravity data = self.getData(AttachmentTypes.GRAVITY);
         Direction gravity = data.getGravity();
         if (gravity != Direction.DOWN){
             cir.cancel();

@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.util.Color;
 
 /**
  * @author Sakqiongzi
@@ -32,5 +33,11 @@ public class MovingGroundBoneRender extends ColorAttackRenderer<MovingGroundBone
         poseStack.mulPose(Axis.YP.rotationDegrees(-animatable.getYRot()));
         poseStack.mulPose(Axis.XP.rotationDegrees(animatable.getXRot()));
         super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
+    }
+
+    @Override
+    public Color getRenderColor(MovingGroundBone animatable, float partialTick, int packedLight) {
+        Color original = super.getRenderColor(animatable, partialTick, packedLight);
+        return Color.ofARGB((int)(original.getAlpha() * 0.75f),original.getRed(),original.getGreen(),original.getBlue());
     }
 }

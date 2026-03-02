@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.level.pathfinder;
 
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -36,7 +36,7 @@ public class GravityAwareNodeEvaluator extends NodeEvaluator {
     private Mob mob;
 
     public GravityAwareNodeEvaluator(Mob mob) {
-        GravityData data = mob.getData(AttachmentTypes.GRAVITY.get());
+        Gravity data = mob.getData(AttachmentTypes.GRAVITY.get());
         this.gravityDir = data.getGravity();
         this.down = gravityDir.getNormal();
         this.up = gravityDir.getOpposite().getNormal();

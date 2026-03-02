@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.mixin.gravity;
 
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.client.renderer.ScreenEffectRenderer;
 import net.minecraft.core.BlockPos;
@@ -23,7 +23,7 @@ public abstract class ScreenEffectRendererGravityMixin {
      */
     @Inject(method = "getOverlayBlock", at = @At("HEAD"), cancellable = true)
     private static void onGetOverlayBlock(Player player, CallbackInfoReturnable<Pair<BlockState, BlockPos>> cir) {
-        GravityData data = player.getData(AttachmentTypes.GRAVITY);
+        Gravity data = player.getData(AttachmentTypes.GRAVITY);
         if (data.getGravity() == Direction.DOWN) return;
         cir.cancel();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();

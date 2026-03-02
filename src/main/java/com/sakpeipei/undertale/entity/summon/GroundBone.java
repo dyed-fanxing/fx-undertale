@@ -1,9 +1,9 @@
 package com.sakpeipei.undertale.entity.summon;
 
 import com.sakpeipei.undertale.common.DamageTypes;
-import com.sakpeipei.undertale.common.mechanism.ColorAttack;
-import com.sakpeipei.undertale.entity.AttackColored;
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.mechanism.ColorAttack;
+import com.sakpeipei.undertale.entity.ColoredAttacker;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import com.sakpeipei.undertale.registry.EntityTypes;
@@ -25,13 +25,11 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import java.awt.*;
-
 /**
  * @author Sakqiongzi
  * @since 2025-08-18 18:44
  */
-public class GroundBone extends Summons implements GeoEntity, IEntityWithComplexSpawn, AttackColored {
+public class GroundBone extends Summons implements GeoEntity, IEntityWithComplexSpawn, ColoredAttacker {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private ColorAttack colorAttack = ColorAttack.WHITE;
     private float damage = 1.0f;
@@ -84,7 +82,7 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
         this.colorAttack = colorAttack;
         this.isPlaySound = isPlaySound;
         this.isCurve = isCurve;
-        this.setData(AttachmentTypes.GRAVITY,GravityData.applyGravity(this,gravity));
+        this.setData(AttachmentTypes.GRAVITY, Gravity.applyGravity(this,gravity));
     }
 
 
@@ -168,7 +166,7 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
     }
 
     @Override
-    public Color getColor() {
+    public int getColor() {
         return colorAttack.getColor();
     }
 
@@ -223,7 +221,7 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
 
         tag.putInt("lifetime",this.lifetime);
         tag.putInt("delay",this.delay);
-        tag.putInt("color",this.colorAttack.getColor().getRGB());
+        tag.putInt("color",this.colorAttack.getColor());
         tag.putBoolean("isPlaySound",this.isPlaySound);
         tag.putBoolean("isCurve",this.isCurve);
     }
@@ -244,7 +242,7 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
             this.delay = tag.getInt("delay");
         }
         if (tag.contains("color")) {
-            this.colorAttack = ColorAttack.getInstance(tag.getInt("color"));
+            this.colorAttack = ColorAttack.of(tag.getInt("color"));
         }
         if(tag.contains("isPlaySound")){
             this.isPlaySound = tag.getBoolean("isPlaySound");
@@ -262,7 +260,7 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
         buf.writeInt(this.lifetime);
         buf.writeInt(this.delay);
 
-        buf.writeInt(this.colorAttack.getColor().getRGB());
+        buf.writeInt(this.colorAttack.getColor());
         buf.writeBoolean(this.isPlaySound);
         buf.writeBoolean(this.isCurve);
 
@@ -277,10 +275,10 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
         this.lifetime = buf.readInt();
         this.delay = buf.readInt();
 
-        this.colorAttack = ColorAttack.getInstance(buf.readInt());
+        this.colorAttack = ColorAttack.of(buf.readInt());
         this.isPlaySound = buf.readBoolean();
         this.isCurve = buf.readBoolean();
-        this.setData(AttachmentTypes.GRAVITY,GravityData.applyGravity(this,buf.readEnum(Direction.class)));
+        this.setData(AttachmentTypes.GRAVITY, Gravity.applyGravity(this,buf.readEnum(Direction.class)));
         refreshDimensions();
     }
 

@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.mixin.gravity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.core.Direction;
@@ -18,7 +18,7 @@ public abstract class LivingEntityRendererGravityMixin {
      */
     @Inject(method = "setupRotations", at = @At("HEAD"))
     private void onSetupRotations(LivingEntity entity, PoseStack poseStack,float ageInTicks, float rotationYaw,float partialTicks, float scale, CallbackInfo ci) {
-        GravityData data = entity.getData(AttachmentTypes.GRAVITY);
+        Gravity data = entity.getData(AttachmentTypes.GRAVITY);
         Direction gravity = data.getGravity();
         if (gravity != Direction.DOWN) {
             poseStack.mulPose(data.getLocalToWorld());

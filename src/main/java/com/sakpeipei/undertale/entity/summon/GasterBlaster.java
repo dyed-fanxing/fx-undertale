@@ -1,6 +1,7 @@
 package com.sakpeipei.undertale.entity.summon;
 
 import com.sakpeipei.undertale.common.DamageTypes;
+import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.registry.EntityTypes;
 import com.sakpeipei.undertale.registry.SoundEvnets;
 import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
@@ -14,6 +15,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -33,28 +35,23 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-/**
- * 固定动画时间GB
- */
-public class GasterBlaster extends FollowableSummons implements IGasterBlaster, IEntityWithComplexSpawn, GeoEntity {
+public class GasterBlaster extends FollowableSummons implements IGasterBlaster,GeoEntity {
     public static final float DEFAULT_LENGTH = 32f;
     public static final int DECAY = 2;
     private static final Logger log = LoggerFactory.getLogger(GasterBlaster.class);
-
     private float maxLength = DEFAULT_LENGTH;
-    private float length;
+    private float length = DEFAULT_LENGTH;
 
     protected float size = 1.0f;            // 大小
-    public int timer;                      // 计时器，代替tickCount进行序列化
     protected float damage = 1f;            // 攻击伤害
     protected float aimSmoothSpeed;         // 瞄准追踪的平滑移动速度
 
     protected int fireTick = 17;            // 开火Tick点
     protected int shotTick = 19;            // 发射Tick点
     protected int decayTick = 47;           // 开始衰退Tick点
-
 
     public GasterBlaster(EntityType<? extends Entity> type, Level level) {
         super(type, level);
@@ -108,6 +105,8 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster, 
      */
     protected void aimSmoothly(Entity target) {
         Vec3 dir = new Vec3(target.getX(), target.getY(0.5f), target.getZ()).subtract(this.getEyePosition());
+        this.maxLength = (float) Math.max(dir.length()+5,DEFAULT_LENGTH);
+        this.length = maxLength;
         this.setYRot(Mth.rotLerp(aimSmoothSpeed,this.getYRot(), RotUtils.yRotD(dir)));
         this.setXRot(Mth.rotLerp(aimSmoothSpeed,this.getXRot(), RotUtils.xRotD(dir)));
     }
@@ -117,24 +116,49 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster, 
         return this.getType().getDimensions().scale(size);
     }
 
+    /**
+     * 瞄准发射时不保存，应该跟随SansAi重启会立刻发射一个新的
+     */
+    @Override
+    public boolean shouldBeSaved() {
+        return !isFollow && super.shouldBeSaved();
+    }
+
     @Override
     public void tick() {
-        timer++;
         super.tick();
         if(isFollow){
+            if(this.level().isClientSide && owner == null && ownerId != -1){
+                Entity owner = this.level().getEntity(ownerId);
+                if(owner != null){
+                    setOwner(owner);
+                }
+            }
             Entity owner = getOwner();
             if(owner != null){
-                setPos(owner.position().add(RotUtils.getWorldPos(relativePos,owner.getViewXRot(1.0f), owner.getViewYRot(1.0f))));
+                float viewXRot = owner.getViewXRot(1.0f);
+                float viewYRot = owner.getViewYRot(1.0f);
+                setPos(owner.position().add(RotUtils.getWorldPos(relativePos,viewXRot, viewYRot)));
                 if(owner instanceof Targeting targeting){
                     LivingEntity target = targeting.getTarget();
                     if(target != null){
                         aimSmoothly(target);
+                    }else if(!this.level().isClientSide){
+                        this.discard();
+                        return;
                     }
+                } else if(!this.level().isClientSide){
+                    // 必须服务端，在重新进入游戏时，服务端同步targetId，客户端接受有延迟
+                    this.discard();
+                    return;
                 }
+            }else if(!this.level().isClientSide){
+                this.discard();
+                return;
             }
         }
-        if(timer > decayTick){
-            if(timer >= decayTick + DECAY){
+        if(tickCount > decayTick){
+            if(tickCount >= decayTick + DECAY){
                 this.discard();
             }
             return;
@@ -149,7 +173,7 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster, 
             end = clip.getLocation();
             length = (float) Math.sqrt(disSqr);
         }
-        if(timer < fireTick){
+        if(tickCount < fireTick){
             return;
         }
         if(!this.level().isClientSide){
@@ -193,7 +217,10 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster, 
 
     @Override
     public boolean isFire() {
-        return this.timer > fireTick;
+        return this.tickCount > fireTick;
+    }
+    public boolean isFollow(){
+        return isFollow;
     }
 
     @Override
@@ -212,8 +239,6 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster, 
         tag.putInt("decayTick", decayTick);
         tag.putFloat("maxLength", maxLength);
         tag.putFloat("aimSmoothSpeed", aimSmoothSpeed);
-        tag.putFloat("aimSmoothSpeed", aimSmoothSpeed);
-        tag.putFloat("timer", timer);
     }
 
     @Override
@@ -240,9 +265,6 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster, 
         if(tag.contains("aimSmoothSpeed")){
             aimSmoothSpeed = tag.getFloat("aimSmoothSpeed");
         }
-        if(tag.contains("timer")){
-            timer = tag.getInt("timer");
-        }
     }
 
     @Override
@@ -254,7 +276,6 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster, 
         buffer.writeInt(decayTick);
         buffer.writeFloat(maxLength);
         buffer.writeFloat(aimSmoothSpeed);
-        buffer.writeInt(timer);
     }
 
     @Override
@@ -266,7 +287,6 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster, 
         this.decayTick = buffer.readInt();
         this.maxLength = buffer.readFloat();
         this.aimSmoothSpeed = buffer.readFloat();
-        this.timer = buffer.readInt();
         this.refreshDimensions();
     }
 
@@ -287,14 +307,14 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster, 
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "attack", state -> {
             AnimationController<GasterBlaster> controller = state.getController();
-            if(this.timer < fireTick) {
+            if(this.tickCount < fireTick) {
                 controller.setAnimation(CHARGE_ANIM);
                 controller.setAnimationSpeed(20.0/fireTick);
                 controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundEvnets.GASTER_BLASTER_CHARGE.get(), SoundSource.NEUTRAL, 1, 1));
-            }else if (this.timer < shotTick) {
+            }else if (this.tickCount < shotTick) {
                 controller.setAnimation(FIRE_ANIM);
                 controller.setAnimationSpeed(20.0/(shotTick-fireTick));
-            }else if (this.timer < decayTick) {
+            }else if (this.tickCount < decayTick) {
                 controller.setAnimation(SHOT_ANIM);
                 controller.setAnimationSpeed(20.0 / (decayTick - shotTick));
                 controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundEvnets.GASTER_BLASTER_FIRE.get(), SoundSource.NEUTRAL, 1, 1));

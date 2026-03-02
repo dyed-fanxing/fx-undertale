@@ -128,7 +128,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         if (target instanceof LivingEntity livingTarget) {
             DamageSource damageSource;
             if (owner instanceof Sans) {
-                damageSource = damageSources().source(DamageTypes.FRAME, this, owner);
+                damageSource = damageSources().source(DamageTypes.KARMA_BLOCKABLE, this, owner);
             } else {
                 damageSource = this.damageSources().mobProjectile(this, (LivingEntity) owner);
             }

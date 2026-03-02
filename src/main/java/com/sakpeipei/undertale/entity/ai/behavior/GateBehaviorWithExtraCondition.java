@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class GateBehaviorWithExtraCondition<T extends LivingEntity> implements BehaviorControl<T> {
+    private static final Logger log = LoggerFactory.getLogger(GateBehaviorWithExtraCondition.class);
     private final Map<MemoryModuleType<?>, MemoryStatus> entryCondition;
     private final Set<MemoryModuleType<?>> exitErasedMemories;
     private final GateBehavior.OrderPolicy orderPolicy;

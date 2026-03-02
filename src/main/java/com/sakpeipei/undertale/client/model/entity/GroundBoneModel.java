@@ -2,8 +2,10 @@ package com.sakpeipei.undertale.client.model.entity;
 
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.entity.summon.GroundBone;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.animation.state.BoneSnapshot;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -36,5 +38,10 @@ public class GroundBoneModel extends DefaultedEntityGeoModel<GroundBone> {
     public void applyMolangQueries(AnimationState<GroundBone> animationState, double animTime) {
         GroundBone animatable = animationState.getAnimatable();
         MathParser.setVariable("query."+Undertale.MOD_ID+"_grow_scale", animatable::getGrowScale);
+    }
+
+    @Override
+    public @Nullable RenderType getRenderType(GroundBone animatable, ResourceLocation texture) {
+        return RenderType.entityTranslucentEmissive(texture);
     }
 }

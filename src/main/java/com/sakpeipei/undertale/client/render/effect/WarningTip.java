@@ -1,27 +1,24 @@
 package com.sakpeipei.undertale.client.render.effect;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import com.sakpeipei.undertale.common.Config;
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.Config;
+import com.sakpeipei.undertale.common.RenderTypes;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.utils.RenderUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.util.FastColor;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-
-import java.awt.*;
 
 
 /**
@@ -31,36 +28,50 @@ import java.awt.*;
  */
 @OnlyIn(Dist.CLIENT)
 public abstract class WarningTip extends Effect {
+
+    public static int RED = FastColor.ARGB32.color(200, 255, 80, 80);
+
     protected final float x,y,z;
-    protected final int r, g, b, a;
-    public WarningTip(float x,float y,float z,int lifetime, int r, int g, int b, int a) {
+    protected final int r, g, b, baseAlpha;
+    public WarningTip(float x,float y,float z,int lifetime, int r, int g, int b, int baseAlpha) {
         super(lifetime);
         this.x=x; this.y=y; this.z=z;
-        this.r = r;this.g = g;this.b = b;this.a = a;
+        this.r = r;this.g = g;this.b = b;this.baseAlpha = baseAlpha;
     }
 
-    public static class Circle extends WarningTip {
+
+    /**
+     * 获取当前透明度（基于 age 和 partialTick 插值）
+     * @param partialTick 帧间插值因子
+     * @return 0-255 的透明度值
+     */
+    protected int getAlpha(float partialTick) {
+        float currentTime = age + partialTick;          // 浮点时间
+        float progress = currentTime / lifetime;        // 已完成比例 (0~1)
+        return (int) (Mth.lerp(progress, 1.0f, 0)*baseAlpha);
+    }
+
+    public static class Cylinder extends WarningTip {
         private final float radius, height;
         private final Quaternionf localToWorld;
 
-        public Circle(float x, float y, float z, float radius, float height, int lifetime, int r, int g, int b, int a, Direction gravity) {
-            super(x, y, z, lifetime, r, g, b, a);
+        public Cylinder(float x, float y, float z, float radius, float height, int lifetime, int r, int g, int b, int baseAlpha, Direction gravity) {
+            super(x, y, z, lifetime, r, g, b, baseAlpha);
             this.radius = radius;
             this.height = height;
-            this.localToWorld = GravityData.getRotation(gravity);
+            this.localToWorld = Gravity.getRotation(gravity);
         }
 
-        public Circle(float x, float y, float z, float radius, float height, int lifetime, int color, Direction gravity) {
+        public Cylinder(float x, float y, float z, float radius, float height, int lifetime, int color, Direction gravity) {
             this(x,y,z,radius, height, lifetime, FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), FastColor.ARGB32.alpha(color),gravity);
         }
 
         @Override
         protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {
-            VertexConsumer consumer = bufferSource.getBuffer(RenderType.LINES);
             poseStack.pushPose();
-            poseStack.translate(x, y, z);
+            poseStack.translate(x, y+0.01f, z);
             poseStack.mulPose(localToWorld);
-            RenderUtils.renderCylinderOutline(poseStack.last(), consumer,radius,height, Config.segments(radius),r,g,b,a, OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
+            RenderUtils.renderCylinder(poseStack.last(), bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_WHITE),radius, height, Config.COMMON.segments.getAsInt(),r, g, b,getAlpha(partialTick), OverlayTexture.NO_OVERLAY, LightTexture.FULL_SKY);
             poseStack.popPose();
         }
 
@@ -92,11 +103,10 @@ public abstract class WarningTip extends Effect {
 
         @Override
         protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {
-            VertexConsumer consumer = bufferSource.getBuffer(RenderType.LINES);
             poseStack.pushPose();
-            poseStack.translate(x, y, z);
+            poseStack.translate(x, y+0.01f, z);
             poseStack.mulPose(Axis.YP.rotationDegrees(-yaw));
-            RenderUtils.renderCubeOutline(poseStack.last(),consumer,length,width,height,r,g,b,a, OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
+            RenderUtils.renderCubeFromBackCenter(poseStack.last(), bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_WHITE),length,width,height,r, g, b, getAlpha(partialTick), OverlayTexture.NO_OVERLAY, LightTexture.FULL_SKY);
             poseStack.popPose();
         }
 

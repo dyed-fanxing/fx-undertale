@@ -2,13 +2,16 @@ package com.sakpeipei.undertale.event.handler;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.entity.attachment.GravityData;
-import com.sakpeipei.undertale.registry.AttachmentTypes;
-import net.minecraft.world.entity.player.Player;
+import com.sakpeipei.undertale.entity.boss.sans.Sans;
+import com.sakpeipei.undertale.entity.boss.sans.SansAi;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Sakqiongzi
@@ -16,6 +19,8 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
  */
 @EventBusSubscriber(modid = Undertale.MOD_ID)
 public class PlayerHandler {
+    private static final Logger log = LoggerFactory.getLogger(PlayerHandler.class);
+
     @SubscribeEvent
     public static void onPlayerTickPre(PlayerTickEvent.Pre event) {
     }
@@ -24,15 +29,17 @@ public class PlayerHandler {
     }
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {
-    }
-    @SubscribeEvent
-    public static void onPlayer(PlayerEvent.PlayerLoggedInEvent event) {
-        Player entity = event.getEntity();
-        GravityData data = entity.setData(AttachmentTypes.GRAVITY,new GravityData());
-        entity.die(entity.damageSources().dryOut());
-//        event.getEntity().getPersistentData().remove(GasterBlasterProItem.GASTER_BLASTER_PRO_KEY);
-//        LOGGER.info("玩家数据移除Pro后{}",event.getEntity().getPersistentData());
-        LogUtils.getLogger().info("玩家数据{}",event.getEntity().getPersistentData());
 
     }
+    @SubscribeEvent
+    public static void onStopTracking(PlayerEvent.StopTracking event) {
+    }
+
+
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        LogUtils.getLogger().info("玩家数据{}",event.getEntity().getPersistentData());
+    }
+
+
 }

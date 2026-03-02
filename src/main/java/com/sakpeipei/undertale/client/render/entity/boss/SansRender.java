@@ -46,26 +46,14 @@ public class SansRender extends GeoEntityRenderer<Sans> {
         Vec3 phantomPos = startPos.lerp(animatable.position(), progress);
         float alpha = Mth.lerp(progress,1,0);
         // 渲染残影
-        renderPhantom(animatable, phantomPos, alpha, partialTick, poseStack, bufferSource, packedLight);
-    }
-
-    /**
-     * 渲染单个残影
-     */
-    private void renderPhantom(Sans entity, Vec3 pos, float alpha, float partialTick,PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
         poseStack.pushPose();
-        Vec3 offset = pos.subtract(entity.getX(), entity.getY(), entity.getZ());
+        Vec3 offset = phantomPos.subtract(animatable.getX(), animatable.getY(), animatable.getZ());
         poseStack.translate(offset.x, offset.y, offset.z);
-        BakedGeoModel model = this.getGeoModel().getBakedModel(this.getGeoModel().getModelResource(entity));
         if (model != null) {
-            RenderType renderType = RenderType.beaconBeam(PHANTOM_TEXTURE,true);
-            VertexConsumer buffer = bufferSource.getBuffer(renderType);
-
-            // 构建带透明度的颜色（ARGB）
+            RenderType renderType = RenderType.entityTranslucentEmissive(PHANTOM_TEXTURE,true);
+            VertexConsumer buffer1 = bufferSource.getBuffer(renderType);
             int color = (0xFFFFFF) | ((int)(alpha * 255) << 24);
-
-            actuallyRender(poseStack, entity, model, renderType, bufferSource, buffer,
-                    true, partialTick, packedLight, OverlayTexture.NO_OVERLAY, color);
+            actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer1,true, partialTick, packedLight, OverlayTexture.NO_OVERLAY, color);
         }
         poseStack.popPose();
     }

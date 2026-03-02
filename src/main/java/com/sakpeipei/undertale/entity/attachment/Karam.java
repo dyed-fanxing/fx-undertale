@@ -13,25 +13,25 @@ import java.util.HashSet;
 /**
  * @author Sakqiongzi
  * @since 2025-09-13 22:12
- * KR buff，附着在被KR攻击物攻击的实体身上
+ * KR 数据，附着在被KR攻击物攻击的实体身上
  */
-public class KaramMobEffectData {
-    public static final Codec<KaramMobEffectData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.BYTE.fieldOf("value").forGetter(KaramMobEffectData::getValue),
-            Codec.STRING.listOf().xmap(HashSet::new, ArrayList::new).fieldOf("attacks").forGetter(KaramMobEffectData::getAttacks)
-    ).apply(instance, KaramMobEffectData::new));
+public class Karam {
+    public static final Codec<Karam> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.BYTE.fieldOf("value").forGetter(Karam::getValue),
+            Codec.STRING.listOf().xmap(HashSet::new, ArrayList::new).fieldOf("attacks").forGetter(Karam::getAttacks)
+    ).apply(instance, Karam::new));
 
 
     public static final byte MAX = 40;
     private byte value;
     private final HashSet<String> attacks;
 
-    public KaramMobEffectData() {
+    public Karam() {
         this.value = 0;
         this.attacks = new HashSet<>();
     }
 
-    public KaramMobEffectData(byte value, HashSet<String> attacks) {
+    public Karam(byte value, HashSet<String> attacks) {
         this.value = value;
         this.attacks = attacks;
     }
@@ -41,7 +41,7 @@ public class KaramMobEffectData {
         return value;
     }
 
-    public void addValue(LivingEntity entity, int value) {
+    public void addValue(int value) {
         if(this.value + value >= MAX) {
             this.value = MAX;
         }else if(this.value < MAX) {

@@ -5,8 +5,16 @@ import com.mojang.math.Axis;
 import com.sakpeipei.undertale.client.model.entity.GroundBoneModel;
 import com.sakpeipei.undertale.client.render.entity.ColorAttackRenderer;
 import com.sakpeipei.undertale.entity.summon.GroundBone;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.renderer.GeoRenderer;
+import software.bernie.geckolib.util.ClientUtil;
+import software.bernie.geckolib.util.Color;
 
 /**
  * @author Sakqiongzi
@@ -31,4 +39,9 @@ public class GroundBoneRender extends ColorAttackRenderer<GroundBone> {
         super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
     }
 
+    @Override
+    public Color getRenderColor(GroundBone animatable, float partialTick, int packedLight) {
+        Color original = super.getRenderColor(animatable, partialTick, packedLight);
+        return Color.ofARGB((int)(original.getAlpha() * 0.75f),original.getRed(),original.getGreen(),original.getBlue());
+    }
 }

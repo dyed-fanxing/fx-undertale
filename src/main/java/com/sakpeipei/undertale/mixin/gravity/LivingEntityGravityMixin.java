@@ -1,19 +1,17 @@
 package com.sakpeipei.undertale.mixin.gravity;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.sakpeipei.undertale.entity.attachment.GravityData;
-import com.sakpeipei.undertale.entity.attachment.PersistentDataDict;
+import com.sakpeipei.undertale.entity.persistentData.PersistentDataDict;
+import com.sakpeipei.undertale.entity.persistentData.SoulMode;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -75,9 +73,9 @@ public abstract class LivingEntityGravityMixin {
     @Inject(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;onGround()Z", ordinal = 3))
     private void afterJumpFromGround(CallbackInfo ci) {
         LivingEntity self = (LivingEntity)(Object)this;
-        if (self.getPersistentData().getByte(PersistentDataDict.SOUL_PATTERN) == PersistentDataDict.GRAVITY) {
+        if(self.getData(AttachmentTypes.SOUL_MODE) == SoulMode.GRAVITY) {
             if (!self.onGround() && this.jumping && self.getDeltaMovement().y > 0) {
-                double accel = 0.3 * this.noJumpDelay/20;
+                double accel = 0.6 * this.noJumpDelay/20;
                 Vec3 motion = self.getDeltaMovement();
                 self.setDeltaMovement(motion.x, motion.y + accel, motion.z);
             }

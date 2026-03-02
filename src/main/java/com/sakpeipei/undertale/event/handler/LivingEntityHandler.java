@@ -1,9 +1,11 @@
 package com.sakpeipei.undertale.event.handler;
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.entity.attachment.PersistentDataDict;
+import com.sakpeipei.undertale.entity.persistentData.PersistentDataDict;
 import com.sakpeipei.undertale.entity.boss.sans.Sans;
+import com.sakpeipei.undertale.entity.persistentData.SoulMode;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
 import com.sakpeipei.undertale.registry.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -12,6 +14,8 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.level.ChunkTicketLevelUpdatedEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,13 +56,5 @@ public class LivingEntityHandler {
     }
 
 
-
-    @SubscribeEvent
-    public static void onLivingFall(LivingFallEvent event) {
-        LivingEntity entity = event.getEntity();
-        if(entity.getPersistentData().getByte(PersistentDataDict.SOUL_PATTERN) == PersistentDataDict.GRAVITY && !entity.getPersistentData().getBoolean(PersistentDataDict.SANS_FORCED_SLAM)) {
-            event.setCanceled(true);
-        }
-    }
 
 }

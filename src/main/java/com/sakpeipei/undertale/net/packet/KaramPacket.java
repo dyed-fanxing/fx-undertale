@@ -35,7 +35,7 @@ public record KaramPacket(int entityId,byte value,float absorptionAmount) implem
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null && level.getEntity(packet.entityId) instanceof LivingEntity entity) {
-                entity.getData(AttachmentTypes.KARMA_MOB_EFFECT).setValue(packet.value);
+                entity.getData(AttachmentTypes.KARMA).setValue(packet.value);
                 if(packet.absorptionAmount != -1){
                     entity.setAbsorptionAmount(packet.absorptionAmount);
                 }

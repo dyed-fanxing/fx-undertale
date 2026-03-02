@@ -26,4 +26,11 @@ public interface SensorTargeting {
                 TargetingConditions.forCombat().range(range).ignoreLineOfSight().ignoreInvisibilityTesting().test(attacker, target) :
                 TargetingConditions.forCombat().range(range).ignoreLineOfSight().test(attacker, target);
     }
+
+    static boolean isEntityAttackableIgnoringLineOfSightByFollowRangeIgnoreHeight(LivingEntity attacker, LivingEntity target) {
+        double range = attacker.getAttributeValue(Attributes.FOLLOW_RANGE);
+        return attacker.getBrain().isMemoryValue(MemoryModuleType.ATTACK_TARGET, target) ?
+                TargetingConditions.forCombat().range(range).ignoreLineOfSight().ignoreInvisibilityTesting().test(attacker, target) :
+                TargetingConditions.forCombat().range(range).ignoreLineOfSight().test(attacker, target);
+    }
 }

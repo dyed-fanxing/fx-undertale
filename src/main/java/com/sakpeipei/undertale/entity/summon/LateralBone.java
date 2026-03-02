@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.entity.summon;
 
 import com.sakpeipei.undertale.common.DamageTypes;
-import com.sakpeipei.undertale.common.mechanism.ColorAttack;
+import com.sakpeipei.undertale.entity.mechanism.ColorAttack;
 import com.sakpeipei.undertale.common.phys.OBB;
 import com.sakpeipei.undertale.entity.IOBBCapability;
 import com.sakpeipei.undertale.entity.boss.sans.Sans;
@@ -190,7 +190,7 @@ public class LateralBone extends Summons implements IOBBCapability,IEntityWithCo
         tag.putFloat("growScale", growScale);
         tag.putInt("delay", delay);
         tag.putFloat("speed", speed);
-        tag.putInt("color", this.colorAttack.getColor().getRGB());
+        tag.putInt("color", this.colorAttack.getColor());
     }
 
     @Override
@@ -210,7 +210,7 @@ public class LateralBone extends Summons implements IOBBCapability,IEntityWithCo
             this.speed = tag.getFloat("speed");
         }
         if (tag.contains("color")) {
-            this.colorAttack = ColorAttack.getInstance(tag.getInt("color"));
+            this.colorAttack = ColorAttack.of(tag.getInt("color"));
         }
     }
 
@@ -220,7 +220,7 @@ public class LateralBone extends Summons implements IOBBCapability,IEntityWithCo
         buf.writeInt(this.delay);
         buf.writeFloat(scale);
         buf.writeFloat(this.growScale);
-        buf.writeInt(this.colorAttack.getColor().getRGB());
+        buf.writeInt(this.colorAttack.getColor());
     }
 
     @Override
@@ -229,7 +229,7 @@ public class LateralBone extends Summons implements IOBBCapability,IEntityWithCo
         this.delay = buf.readInt();
         this.scale  = buf.readFloat();
         this.growScale = buf.readFloat();
-        this.colorAttack = ColorAttack.getInstance(buf.readInt());
+        this.colorAttack = ColorAttack.of(buf.readInt());
         updateOBB();
     }
     /**

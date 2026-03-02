@@ -58,7 +58,7 @@ public class AttackSchedulerBehavior<T extends LivingEntity> extends Behavior<T>
     }
 
     public AttackSchedulerBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory, float attackCoolingDownFactor) {
-        super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryStatus.VALUE_ABSENT, cooldownMemory, MemoryStatus.VALUE_ABSENT),Integer.MAX_VALUE);
+        super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryStatus.VALUE_ABSENT,MemoryModuleTypes.ATTACKING.get(),MemoryStatus.REGISTERED, cooldownMemory, MemoryStatus.VALUE_ABSENT),Integer.MAX_VALUE);
         this.nodes = nodes;
         this.dynamicFactory = dynamicFactory;
         this.cooldownMemory = cooldownMemory;
@@ -94,6 +94,7 @@ public class AttackSchedulerBehavior<T extends LivingEntity> extends Behavior<T>
             }
             if (candidates.isEmpty()) return;
             currentNode = selectNodeByWeight(candidates, mob, target, mob.getRandom());
+            mob.getBrain().setMemory(MemoryModuleTypes.ATTACKING.get(),Unit.INSTANCE);
         });
     }
 
@@ -107,12 +108,12 @@ public class AttackSchedulerBehavior<T extends LivingEntity> extends Behavior<T>
         if (targetOptional.isPresent()) {
             LivingEntity target = targetOptional.get();
             if (tick == 0) {
+                totalCooldown += currentNode.getCooldown();
                 if (currentNode.getAnimId() != null) {
                     PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimPacket(mob.getId(), currentNode.getAnimId()));
                 }
             }
             if (currentNode.tick(mob, target, tick)) {
-                totalCooldown += currentNode.getCooldown();
                 // 尝试派生
                 if (!currentNode.getChildren().isEmpty()) {
                     List<AttackNode<T>> available = new ArrayList<>();
@@ -149,6 +150,7 @@ public class AttackSchedulerBehavior<T extends LivingEntity> extends Behavior<T>
     protected void stop(@NotNull ServerLevel level, @NotNull T mob, long gameTime) {
         mob.getBrain().setMemoryWithExpiry(cooldownMemory, Unit.INSTANCE, totalCooldown);
         mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ATTACK_COOLING_DOWN,true, (int) (totalCooldown * attackCoolingDownFactor));
+        mob.getBrain().eraseMemory(MemoryModuleTypes.ATTACKING.get());
 
         PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimPacket(mob.getId(), (byte) -1));
         currentNode = null;

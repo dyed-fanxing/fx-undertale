@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.mixin.gravity;
 
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
@@ -14,7 +14,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -23,7 +22,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
@@ -109,7 +107,7 @@ public abstract class EntityGravityMixin {
     @Inject(method = "calculateViewVector", at = @At("RETURN"), cancellable = true)
     public void calculateViewVector(float xRot, float yRot, CallbackInfoReturnable<Vec3> cir) {
         Entity self = (Entity) (Object) this;
-        GravityData data = self.getData(AttachmentTypes.GRAVITY);
+        Gravity data = self.getData(AttachmentTypes.GRAVITY);
         if (data.getGravity() != Direction.DOWN) {
             cir.setReturnValue(data.localToWorld(cir.getReturnValue()));
         }
@@ -227,7 +225,7 @@ public abstract class EntityGravityMixin {
     @Inject(method = "setPosRaw", at = @At("HEAD"), cancellable = true)
     public final void setPosRaw(double x, double y, double z, CallbackInfo ci) {
         Entity self = (Entity) (Object) this;
-        GravityData data = self.getData(AttachmentTypes.GRAVITY);
+        Gravity data = self.getData(AttachmentTypes.GRAVITY);
         Direction gravity = data.getGravity();
         if (gravity == Direction.DOWN) return;
         ci.cancel();
@@ -261,7 +259,7 @@ public abstract class EntityGravityMixin {
     @Inject(method = "checkSupportingBlock", at = @At("HEAD"), cancellable = true)
     private void checkSupportingBlock(boolean verticalCollisionBelow, Vec3 deltaMovement, CallbackInfo ci) {
         Entity self = (Entity) (Object) this;
-        GravityData gravityData = self.getData(AttachmentTypes.GRAVITY);
+        Gravity gravityData = self.getData(AttachmentTypes.GRAVITY);
         Direction gravity = gravityData.getGravity();
         if (gravity == Direction.DOWN) return;
         if (verticalCollisionBelow) {
@@ -297,7 +295,7 @@ public abstract class EntityGravityMixin {
     @Inject(method = "getOnPos(F)Lnet/minecraft/core/BlockPos;", at = @At("HEAD"), cancellable = true)
     private void BlockPos(float dy, CallbackInfoReturnable<BlockPos> cir) {
         Entity self = (Entity) (Object) this;
-        GravityData gravityData = self.getData(AttachmentTypes.GRAVITY);
+        Gravity gravityData = self.getData(AttachmentTypes.GRAVITY);
         Direction gravity = gravityData.getGravity();
         if (gravity == Direction.DOWN) return;
         cir.cancel();
@@ -332,7 +330,7 @@ public abstract class EntityGravityMixin {
     @ModifyArgs(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setPos(DDD)V"), remap = false)
     private void setPos(Args args) {
         Entity self = (Entity) (Object) this;
-        GravityData data = self.getData(AttachmentTypes.GRAVITY);
+        Gravity data = self.getData(AttachmentTypes.GRAVITY);
         Direction gravity = data.getGravity();
         if (gravity == Direction.DOWN) return;
         double posX = self.getX();
@@ -351,7 +349,7 @@ public abstract class EntityGravityMixin {
     @Inject(method = "collide", at = @At("HEAD"), cancellable = true)
     private void collide(Vec3 logicDD, CallbackInfoReturnable<Vec3> cir) {
         Entity self = (Entity) (Object) this;
-        GravityData gravityData = self.getData(AttachmentTypes.GRAVITY.get());
+        Gravity gravityData = self.getData(AttachmentTypes.GRAVITY.get());
         Direction gravity = gravityData.getGravity();
         if (gravity == Direction.DOWN) return; // 标准重力
         cir.cancel();

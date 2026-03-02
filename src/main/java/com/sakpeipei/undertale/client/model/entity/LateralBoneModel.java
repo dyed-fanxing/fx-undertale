@@ -1,9 +1,12 @@
 package com.sakpeipei.undertale.client.model.entity;
 
 import com.sakpeipei.undertale.Undertale;
+import com.sakpeipei.undertale.entity.summon.GroundBone;
 import com.sakpeipei.undertale.entity.summon.LateralBone;
 import com.sakpeipei.undertale.entity.summon.MovingGroundBone;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.animation.state.BoneSnapshot;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -22,5 +25,10 @@ public class LateralBoneModel extends DefaultedEntityGeoModel<LateralBone> {
         float heightScale = animatable.getGrowScale();
         body.setScaleY((heightScale - 0.1875f) / 0.8125f);
         up.setPosY(upInitial.getOffsetY() + (heightScale - 1) * 16);
+    }
+
+    @Override
+    public @Nullable RenderType getRenderType(LateralBone animatable, ResourceLocation texture) {
+        return RenderType.entityTranslucentEmissive(texture);
     }
 }

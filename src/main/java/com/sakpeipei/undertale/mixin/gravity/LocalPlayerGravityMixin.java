@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.mixin.gravity;
 
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -25,7 +25,7 @@ public abstract class LocalPlayerGravityMixin {
                     ordinal = 0, opcode = Opcodes.GETFIELD)
     )
     private boolean redirectNoPhysics(LocalPlayer player) {
-        GravityData data = player.getData(AttachmentTypes.GRAVITY);
+        Gravity data = player.getData(AttachmentTypes.GRAVITY);
         if (data.getGravity() == Direction.DOWN) {
             return player.noPhysics;  // 原版逻辑
         }
@@ -50,7 +50,7 @@ public abstract class LocalPlayerGravityMixin {
     @Inject(method = "moveTowardsClosestSpace", at = @At("HEAD"), cancellable = true)
     private void onMoveTowardsClosestSpace(double x, double z, CallbackInfo ci) {
         LocalPlayer player = (LocalPlayer)(Object)this;
-        GravityData data = player.getData(AttachmentTypes.GRAVITY);
+        Gravity data = player.getData(AttachmentTypes.GRAVITY);
         if (data.getGravity() == Direction.DOWN) return;
         ci.cancel();
         switch (data.getGravity()) {

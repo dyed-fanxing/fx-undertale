@@ -3,14 +3,11 @@ package com.sakpeipei.undertale.entity.attachment;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.sakpeipei.undertale.common.phys.LocalDirection;
-import com.sakpeipei.undertale.net.packet.GravityPacket;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -21,23 +18,23 @@ import org.slf4j.LoggerFactory;
  * @since 2025/11/14 10:17
  * 重力方向数据 - 存储实体的重力状态
  */
-public class GravityData {
-    private static final Logger log = LoggerFactory.getLogger(GravityData.class);
+public class Gravity {
+    private static final Logger log = LoggerFactory.getLogger(Gravity.class);
 
     // Codec用于序列化
-    public static final Codec<GravityData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+    public static final Codec<Gravity> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Direction.CODEC.fieldOf("gravity").forGetter(data -> data.gravity)
-    ).apply(instance, GravityData::new));
+    ).apply(instance, Gravity::new));
 
     // 控制方向
     private Direction gravity = Direction.DOWN;
     private Quaternionf localToWorld = new Quaternionf();
     private Quaternionf worldToLocal = new Quaternionf();
 
-    public GravityData() {
+    public Gravity() {
     }
 
-    public GravityData(Direction gravity) {
+    public Gravity(Direction gravity) {
         this.gravity = gravity;
         this.localToWorld = getRotation(gravity);
         this.worldToLocal = localToWorld.invert(new Quaternionf());
@@ -46,7 +43,7 @@ public class GravityData {
     /**
      * 对目标实体应用攻击者的相对重力
      */
-    public static GravityData applyRelativeGravity(Entity attacker, Entity target, LocalDirection localGravity) {
+    public static Gravity applyRelativeGravity(Entity attacker, Entity target, LocalDirection localGravity) {
         Direction forward = Direction.fromYRot(attacker.getYHeadRot());
         return applyGravity(target, switch (localGravity) {
             case DOWN -> Direction.DOWN;
@@ -61,16 +58,11 @@ public class GravityData {
     /**
      * 对目标实体应用攻击者的相对重力
      */
-    public static GravityData applyGravity(Entity target, Direction gravity) {
-        GravityData gravityData = new GravityData(gravity);
-        GravityData oldGravity = target.getData(AttachmentTypes.GRAVITY);
+    public static Gravity applyGravity(Entity target, Direction gravity) {
+        Gravity gravityData = new Gravity(gravity);
+        Gravity oldGravity = target.getData(AttachmentTypes.GRAVITY);
         target.setData(AttachmentTypes.GRAVITY, gravityData);
-        gravityData.applyGravityPos(target, oldGravity.getGravity());
-        return gravityData;
-    }
-
-    public void applyGravityPos(Entity target, Direction oldGravity) {
-        Vec3 localPos = switch (oldGravity) {
+        Vec3 localPos = switch (oldGravity.getGravity()) {
             case DOWN -> target.position();
             case UP -> target.position().add(0, -target.getBbHeight(), 0);
             case EAST -> target.position().add(-target.getBbHeight() * 0.5f, -target.getBbWidth() * 0.5f, 0);
@@ -78,7 +70,7 @@ public class GravityData {
             case SOUTH -> target.position().add(0, -target.getBbWidth() * 0.5f, -target.getBbHeight() * 0.5f);
             case NORTH -> target.position().add(0, -target.getBbWidth() * 0.5f, target.getBbHeight() * 0.5f);
         };
-        switch (this.gravity) {
+        switch (gravityData.gravity) {
             case DOWN -> target.setPos(localPos);
             case UP -> target.setPos(localPos.add(0, target.getBbHeight(), 0));
             case EAST -> target.setPos(localPos.add(target.getBbHeight() * 0.5f, target.getBbWidth() * 0.5f, 0));
@@ -86,7 +78,8 @@ public class GravityData {
             case SOUTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, target.getBbHeight() * 0.5f));
             case NORTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, -target.getBbHeight() * 0.5f));
         }
-//        log.debug("gravity：{},target之前世界坐标系的位置：{}，之后世界坐标系的位置：{}", gravity, posOld, target.position());
+        log.debug("gravity：{},target之前世界坐标系的位置：{}，之后世界坐标系的位置：{}", gravity, localPos, target.position());
+        return gravityData;
     }
 
 

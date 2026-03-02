@@ -1,5 +1,7 @@
 {
   "values": [
-    "undertale:karma"
+    "undertale:karma",
+    "undertale:frame",
+    "undertale:frame_blockable"
   ]
 }

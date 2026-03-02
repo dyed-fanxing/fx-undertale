@@ -38,7 +38,7 @@ public class BackUpAndStrafeInCloseRange<T extends Mob> extends Behavior<T> {
     protected int unableMoveTime = 0;
 
     public BackUpAndStrafeInCloseRange(double rangeFactor) {
-        super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT),Integer.MAX_VALUE);
+        super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT,MemoryModuleType.WALK_TARGET,MemoryStatus.REGISTERED,MemoryModuleType.LOOK_TARGET,MemoryStatus.REGISTERED),Integer.MAX_VALUE);
         this.rangeFactor = rangeFactor;
     }
 
@@ -72,7 +72,7 @@ public class BackUpAndStrafeInCloseRange<T extends Mob> extends Behavior<T> {
     @Override
     protected boolean canStillUse(@NotNull ServerLevel level, @NotNull T mob, long gameTime) {
         Optional<LivingEntity> optional = mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET);
-        return optional.isPresent()&&mob.distanceToSqr(optional.get()) <= rangeSqr;
+        return optional.isPresent()&&mob.distanceToSqr(optional.get()) <= rangeSqr && mob.hasLineOfSight(optional.get());
     }
 
     @Override

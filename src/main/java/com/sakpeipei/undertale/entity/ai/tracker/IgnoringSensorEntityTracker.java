@@ -1,9 +1,11 @@
 package com.sakpeipei.undertale.entity.ai.tracker;
 
+import com.sakpeipei.undertale.entity.ai.sensing.SensorTargeting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.behavior.PositionTracker;
+import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,8 +27,11 @@ public class IgnoringSensorEntityTracker implements PositionTracker {
     }
 
     public boolean isVisibleBy(@NotNull LivingEntity entity) {
-        if (this.entity instanceof LivingEntity livingentity) {
-            return livingentity.isAlive();
+        if (this.entity instanceof LivingEntity target) {
+            if(target.isAlive()) {
+                return true;
+            }
+            return false;
         } else {
             return true;
         }

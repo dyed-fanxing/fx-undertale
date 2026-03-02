@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.mixin.gravity;
 
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.client.Camera;
 import net.minecraft.core.Direction;
@@ -43,7 +43,7 @@ public abstract class CameraGravityMixin {
      */
     @Inject(method = "setup", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Camera;setPosition(DDD)V", shift = At.Shift.AFTER))
     private void setPositionInSetUp(BlockGetter blockGetter, Entity entity, boolean detached, boolean thirdPersonReverse, float partialTick, CallbackInfo ci) {
-        GravityData data = entity.getData(AttachmentTypes.GRAVITY);
+        Gravity data = entity.getData(AttachmentTypes.GRAVITY);
         if (data.getGravity() != Direction.DOWN) {
             switch (data.getGravity()) {
                 case UP -> this.setPosition(Mth.lerp(partialTick, entity.xo, entity.getX()), Mth.lerp(partialTick, entity.yo, entity.getY()) - (double)Mth.lerp(partialTick, this.eyeHeightOld, this.eyeHeight), Mth.lerp(partialTick, entity.zo, entity.getZ()));
@@ -57,7 +57,7 @@ public abstract class CameraGravityMixin {
 
     @Inject(method = "setRotation(FFF)V", at = @At(value = "HEAD"), cancellable = true)
     public void setRotation(float yRot, float xRot, float roll, CallbackInfo ci) {
-        GravityData data = this.entity.getData(AttachmentTypes.GRAVITY);
+        Gravity data = this.entity.getData(AttachmentTypes.GRAVITY);
         if(data.getGravity() != Direction.DOWN) {
             ci.cancel();
             this.xRot = xRot;
