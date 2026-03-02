@@ -1,7 +1,7 @@
 package com.sakpeipei.undertale.mixin.gravity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
@@ -16,7 +16,7 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 public abstract class GeoEntityRendererGravityMixin {
     @Inject(method = "applyRotations(Lnet/minecraft/world/entity/Entity;Lcom/mojang/blaze3d/vertex/PoseStack;FFFF)V",at = @At("HEAD"))
     private static  <T extends Entity & GeoAnimatable> void applyRotations(T animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale, CallbackInfo ci) {
-        GravityData data = animatable.getData(AttachmentTypes.GRAVITY);
+        Gravity data = animatable.getData(AttachmentTypes.GRAVITY);
         if(data.getGravity() != Direction.DOWN){
             poseStack.mulPose(data.getLocalToWorld());
         }

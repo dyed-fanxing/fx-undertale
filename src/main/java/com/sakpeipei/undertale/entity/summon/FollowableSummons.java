@@ -15,8 +15,6 @@ public abstract class FollowableSummons extends Summons implements IEntityWithCo
     protected boolean isFollow;
 
 
-
-
     // 核心插值属性
     protected int lerpSteps;
     protected double lerpX;

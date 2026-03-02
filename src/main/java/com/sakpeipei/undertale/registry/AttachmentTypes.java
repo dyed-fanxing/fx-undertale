@@ -1,20 +1,19 @@
 package com.sakpeipei.undertale.registry;
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.entity.attachment.GravityData;
-import com.sakpeipei.undertale.entity.attachment.KaramAttackData;
-import com.sakpeipei.undertale.entity.attachment.KaramMobEffectData;
-import com.sakpeipei.undertale.entity.projectile.FlyingBone;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
+import com.sakpeipei.undertale.entity.attachment.KaramJudge;
+import com.sakpeipei.undertale.entity.attachment.Karam;
+import com.sakpeipei.undertale.entity.attachment.PlayerSoul;
+import com.sakpeipei.undertale.entity.persistentData.SoulMode;
 import com.sakpeipei.undertale.net.packet.GravityPacket;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -33,16 +32,24 @@ public class AttachmentTypes {
     private static final Logger log = LoggerFactory.getLogger(AttachmentTypes.class);
     public static DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Undertale.MOD_ID);
 
-    public static final Supplier<AttachmentType<KaramMobEffectData>> KARMA_MOB_EFFECT = ATTACHMENT_TYPES.register(
-            "karma_mob_effect", () -> AttachmentType.builder(KaramMobEffectData::new).serialize(KaramMobEffectData.CODEC).build()
+    public static final Supplier<AttachmentType<PlayerSoul>> PLAYER_SOUL = ATTACHMENT_TYPES.register("player_soul",
+                    () -> AttachmentType.builder(PlayerSoul::new).serialize(PlayerSoul.PLAYER_SOUL_DATA).copyOnDeath().build()
     );
-    public static final Supplier<AttachmentType<KaramAttackData>> KARMA_ATTACK = ATTACHMENT_TYPES.register(
-            "karma_attack", () -> AttachmentType.builder(KaramAttackData::new).serialize(KaramAttackData.CODEC).build()
+    public static final Supplier<AttachmentType<Karam>> KARMA = ATTACHMENT_TYPES.register(
+            "karma", () -> AttachmentType.builder(Karam::new).serialize(Karam.CODEC).build()
     );
-    public static final Supplier<AttachmentType<GravityData>> GRAVITY = ATTACHMENT_TYPES.register(
-            "gravity", () -> AttachmentType.builder(()->new GravityData()).serialize(GravityData.CODEC).build()
+    public static final Supplier<AttachmentType<KaramJudge>> KARMA_ATTACK = ATTACHMENT_TYPES.register(
+            "karma_judge", () -> AttachmentType.builder(KaramJudge::new).serialize(KaramJudge.CODEC).build()
     );
-
+    public static final Supplier<AttachmentType<Gravity>> GRAVITY = ATTACHMENT_TYPES.register(
+            "gravity", () -> AttachmentType.builder(()->new Gravity()).serialize(Gravity.CODEC).build()
+    );
+    public static final Supplier<AttachmentType<Boolean>> KARMA_TAG = ATTACHMENT_TYPES.register(
+            "karma_tag", () -> AttachmentType.builder(()->false).build()
+    );
+    public static final Supplier<AttachmentType<Byte>> SOUL_MODE = ATTACHMENT_TYPES.register(
+            "soul_mode", () -> AttachmentType.builder(()-> SoulMode.DEFAULT).build()
+    );
     public static void register(IEventBus bus) {
         ATTACHMENT_TYPES.register(bus);
     }
@@ -52,7 +59,7 @@ public class AttachmentTypes {
     public static void onStartTracking(PlayerEvent.StartTracking event) {
         Entity target = event.getTarget();
         ServerPlayer player = (ServerPlayer) event.getEntity();
-        GravityData data = target.getData(AttachmentTypes.GRAVITY);
+        Gravity data = target.getData(AttachmentTypes.GRAVITY);
         if(data.getGravity() != Direction.DOWN){
             PacketDistributor.sendToPlayer(player,new GravityPacket(target.getId(), data.getGravity()));
         }
@@ -61,7 +68,7 @@ public class AttachmentTypes {
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         ServerPlayer player = (ServerPlayer) event.getEntity();
-        GravityData data = player.getData(AttachmentTypes.GRAVITY);
+        Gravity data = player.getData(AttachmentTypes.GRAVITY);
         if (data.getGravity() != Direction.DOWN) {
             PacketDistributor.sendToPlayer(player,new GravityPacket(player.getId(), data.getGravity()));
         }

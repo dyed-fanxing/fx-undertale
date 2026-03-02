@@ -3,7 +3,6 @@ package com.sakpeipei.undertale.mixin;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.sakpeipei.undertale.client.gui.KaramHeartType;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
-import com.sakpeipei.undertale.registry.MobEffectTypes;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -15,6 +14,9 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.EventHooks;
 import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 
 @Mixin(Gui.class)
@@ -53,10 +55,11 @@ public abstract class KarmaHeartMixin {
      * @author Sakpeipei
      * @reason 复制原版渲染逻辑，添加自定义的渲染KR心（包括右半心）
      */
-    @Overwrite
-    private void renderHealthLevel(GuiGraphics p_283143_) {
+    @Inject(method = "renderHealthLevel",at= @At("HEAD"), cancellable = true)
+    private void renderHealthLevel(GuiGraphics guiGraphics, CallbackInfo ci) {
         Player player = this.getCameraPlayer();
-        if (player != null) {
+        if (player != null && player.hasData(AttachmentTypes.KARMA)) {
+            ci.cancel();
             int health = Mth.ceil(player.getHealth());
             boolean flag = this.healthBlinkTime > (long)this.tickCount && (this.healthBlinkTime - (long)this.tickCount) / 3L % 2L == 1L;
             long j = Util.getMillis();
@@ -77,9 +80,9 @@ public abstract class KarmaHeartMixin {
             this.lastHealth = health;
             int k = this.displayHealth;
             this.random.setSeed(this.tickCount * 312871L);
-            int l = p_283143_.guiWidth() / 2 - 91;
-            int i1 = p_283143_.guiWidth() / 2 + 91;
-            int j1 = p_283143_.guiHeight() - this.leftHeight;
+            int l = guiGraphics.guiWidth() / 2 - 91;
+            int i1 = guiGraphics.guiWidth() / 2 + 91;
+            int j1 = guiGraphics.guiHeight() - this.leftHeight;
             float f = Math.max((float)player.getAttributeValue(Attributes.MAX_HEALTH), (float)Math.max(k, health));
             int absorptionAmount = Mth.ceil(player.getAbsorptionAmount());
             int l1 = Mth.ceil((f + (float)absorptionAmount) / 2.0F / 10.0F);
@@ -91,15 +94,11 @@ public abstract class KarmaHeartMixin {
                 k2 = this.tickCount % Mth.ceil(f + 5.0F);
             }
             // KARMA效果值
-            byte karmaValue = 0;
-            if(player.hasEffect(MobEffectTypes.KARMA)){
-                karmaValue = player.getData(AttachmentTypes.KARMA_MOB_EFFECT).getValue();
-            }
+            byte value = player.getData(AttachmentTypes.KARMA).getValue();
             this.minecraft.getProfiler().push("health");
-            this.undertale$renderHearts(p_283143_, player, l, j1, i2, k2, f, health, k, absorptionAmount,karmaValue, flag);
+            this.undertale$renderHearts(guiGraphics, player, l, j1, i2, k2, f, health, k, absorptionAmount,value, flag);
             this.minecraft.getProfiler().pop();
         }
-
     }
     /**
      * 重载renderHearts方法，添加KARMA效果支持

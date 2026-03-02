@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.util.Mth;
 import org.apache.logging.log4j.LogManager;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
+import software.bernie.geckolib.util.Color;
 
 /**
  * @author Sakqiongzi
@@ -28,5 +29,11 @@ public class FlyingBoneRender extends GeoEntityRenderer<FlyingBone> {
 //         由于先旋转，绕X轴旋转90度，导致实体的局部+Y轴对齐到了世界+Z轴，+Z轴则对齐到了世界-Y轴，
 //         所以下方的变换需要按照该实体目前在世界坐标系中的局部坐标系来变换（+x，+z，-y）
         poseStack.translate(0,-0.75f,-0.25f);
+    }
+
+    @Override
+    public Color getRenderColor(FlyingBone animatable, float partialTick, int packedLight) {
+        Color original = super.getRenderColor(animatable, partialTick, packedLight);
+        return Color.ofARGB((int)(original.getAlpha() * 0.75f),original.getRed(),original.getGreen(),original.getBlue());
     }
 }

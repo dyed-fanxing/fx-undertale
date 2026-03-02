@@ -3,7 +3,7 @@ package com.sakpeipei.undertale.commands;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -78,7 +78,7 @@ public class SansCommand {
 
                                                             Direction direction = Direction.valueOf(directionStr.toUpperCase());
                                                             for (Entity target : targets) {
-                                                                GravityData.applyGravity(target, direction);
+                                                                Gravity.applyGravity(target, direction);
                                                             }
                                                             ctx.getSource().sendSuccess(() ->
                                                                             Component.literal("应用重力方向 " + directionStr + " 到 " + targets.size() + " 个实体"),
@@ -96,7 +96,7 @@ public class SansCommand {
                                                         .executes(ctx -> {
                                                             Collection<? extends Entity> targets = EntityArgument.getEntities(ctx, "targets");
                                                             for (Entity target : targets) {
-                                                                GravityData.applyGravity(target,Direction.DOWN);
+                                                                Gravity.applyGravity(target,Direction.DOWN);
                                                             }
                                                             return 1;
                                                         })
@@ -110,7 +110,7 @@ public class SansCommand {
                                                         .executes(ctx -> {
                                                             Collection<? extends Entity> targets = EntityArgument.getEntities(ctx, "targets");
                                                             for (Entity target : targets) {
-                                                                GravityData.applyGravity(target,Direction.UP);
+                                                                Gravity.applyGravity(target,Direction.UP);
                                                             }
                                                             return 1;
                                                         })

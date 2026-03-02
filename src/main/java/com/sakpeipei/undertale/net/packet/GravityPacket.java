@@ -1,8 +1,7 @@
 package com.sakpeipei.undertale.net.packet;
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.entity.attachment.GravityData;
-import com.sakpeipei.undertale.registry.AttachmentTypes;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.Direction;
@@ -15,8 +14,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Sakqiongzi
@@ -47,7 +44,7 @@ public record GravityPacket(int entityId, Direction gravity,float acceleration) 
             if (level != null) {
                 Entity entity = level.getEntity(packet.entityId);
                 if (entity != null) {
-                    GravityData.applyGravity(entity, packet.gravity);
+                    Gravity.applyGravity(entity, packet.gravity);
                     entity.addDeltaMovement(new Vec3(0,-packet.acceleration,0));
                 }
             }

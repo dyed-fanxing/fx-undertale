@@ -31,28 +31,28 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
         this.color = color;
     }
 
-    public static class Circle extends WarningTipPacket {
-        public static final Type<Circle> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "warning_tip_circle_packet"));
-        public static final StreamCodec<RegistryFriendlyByteBuf, Circle> STREAM_CODEC = CustomPacketPayload.codec(Circle::write, Circle::new);
+    public static class Cylinder extends WarningTipPacket {
+        public static final Type<Cylinder> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "warning_tip_circle_packet"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Cylinder> STREAM_CODEC = CustomPacketPayload.codec(Cylinder::write, Cylinder::new);
 
         private final float h;
         private final float r;
         private final Direction gravity;
 
-        public Circle(float x, float y, float z,float r, float h,int lifetime, int color) {
+        public Cylinder(float x, float y, float z,float r, float h,int lifetime, int color) {
             super(x, y, z,lifetime, color);
             this.h = h;
             this.r = r;
             this.gravity = Direction.DOWN;
         }
 
-        public Circle(float x, float y, float z,float r, float h,int lifetime, int color,Direction gravity) {
+        public Cylinder(float x, float y, float z,float r, float h,int lifetime, int color,Direction gravity) {
             super(x, y, z,lifetime, color);
             this.h = h;
             this.r = r;
             this.gravity = gravity;
         }
-        public Circle(FriendlyByteBuf buf) {
+        public Cylinder(FriendlyByteBuf buf) {
             this(buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readVarInt(),buf.readInt(),buf.readEnum(Direction.class));
         }
 
@@ -67,8 +67,8 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
             buf.writeEnum(this.gravity);
         }
 
-        public static void handle(Circle packet, IPayloadContext context) {
-            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.Circle(packet.x, packet.y, packet.z, packet.r, packet.h, packet.lifetime, packet.color,packet.gravity)));
+        public static void handle(Cylinder packet, IPayloadContext context) {
+            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.Cylinder(packet.x, packet.y, packet.z, packet.r, packet.h, packet.lifetime, packet.color,packet.gravity)));
         }
 
         @Override

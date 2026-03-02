@@ -1,6 +1,6 @@
 package com.sakpeipei.undertale.mixin.gravity.projectile;
 
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class FishingHookGravityMixin {
     @Inject(method = "<init>(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;II)V", at = @At("RETURN"))
     private void setPosAndDeltaMovementByOwnerEyePosAndRot(Player player, Level level, int p_37108_, int p_37109_, CallbackInfo ci) {
-        GravityData data = player.getData(AttachmentTypes.GRAVITY);
+        Gravity data = player.getData(AttachmentTypes.GRAVITY);
         if (data.getGravity() != Direction.DOWN) {
             FishingHook hook = (FishingHook) (Object) this;
             // 1. 世界空间的视线和眼睛位置

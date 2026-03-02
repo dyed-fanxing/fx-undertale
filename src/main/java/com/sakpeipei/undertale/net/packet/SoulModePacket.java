@@ -2,7 +2,8 @@ package com.sakpeipei.undertale.net.packet;
 
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.entity.attachment.PersistentDataDict;
+import com.sakpeipei.undertale.entity.persistentData.SoulMode;
+import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.FriendlyByteBuf;
@@ -18,33 +19,33 @@ import org.jetbrains.annotations.NotNull;
 /**
  * 灵魂状态
  */
-public record SoulPatternPacket(int entityId, byte state) implements CustomPacketPayload {
-    public static final Type<SoulPatternPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "soul_state_packet"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, SoulPatternPacket> STREAM_CODEC = CustomPacketPayload.codec(SoulPatternPacket::write, SoulPatternPacket::new);
+public record SoulModePacket(int entityId, byte mode) implements CustomPacketPayload {
+    public static final Type<SoulModePacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "soul_state_packet"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, SoulModePacket> STREAM_CODEC = CustomPacketPayload.codec(SoulModePacket::write, SoulModePacket::new);
 
-    public SoulPatternPacket(FriendlyByteBuf buf) {
+    public SoulModePacket(FriendlyByteBuf buf) {
         this(buf.readVarInt(), buf.readByte());
     }
 
     public void write(FriendlyByteBuf buf) {
         buf.writeVarInt(entityId);
-        buf.writeByte(state);
+        buf.writeByte(mode);
     }
 
-    public static void handle(SoulPatternPacket packet, IPayloadContext context) {
+    public static void handle(SoulModePacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null) {
                 Entity entity = level.getEntity(packet.entityId);
                 if (entity != null) {
-                    entity.getPersistentData().putByte(PersistentDataDict.SOUL_PATTERN, packet.state);
+                    entity.setData(AttachmentTypes.SOUL_MODE, packet.mode);
                 }
             }
         });
     }
 
     @Override
-    public @NotNull CustomPacketPayload.Type<SoulPatternPacket> type() {
+    public @NotNull CustomPacketPayload.Type<SoulModePacket> type() {
         return TYPE;
     }
 }

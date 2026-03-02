@@ -1,12 +1,9 @@
 package com.sakpeipei.undertale.registry;
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.mobEffect.KarmaMobEffect;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectCategory;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
@@ -19,5 +16,4 @@ public class MobEffectTypes {
         MOB_EFFECTS.register(bus);
     }
 
-    public static DeferredHolder<MobEffect,MobEffect> KARMA = MOB_EFFECTS.register("karma",() -> new KarmaMobEffect(MobEffectCategory.HARMFUL,9154528));
 }

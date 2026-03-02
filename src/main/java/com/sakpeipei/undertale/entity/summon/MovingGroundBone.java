@@ -1,8 +1,8 @@
 package com.sakpeipei.undertale.entity.summon;
 
 import com.sakpeipei.undertale.common.DamageTypes;
-import com.sakpeipei.undertale.common.mechanism.ColorAttack;
-import com.sakpeipei.undertale.entity.AttackColored;
+import com.sakpeipei.undertale.entity.mechanism.ColorAttack;
+import com.sakpeipei.undertale.entity.ColoredAttacker;
 import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.registry.EntityTypes;
 import com.sakpeipei.undertale.utils.RotUtils;
@@ -16,8 +16,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -31,7 +29,7 @@ import java.awt.*;
  * @author Sakqiongzi
  * @since 2025-10-06 21:18
  */
-public class MovingGroundBone extends AbstractMovingSummons implements IEntityWithComplexSpawn, AttackColored,GeoEntity {
+public class MovingGroundBone extends AbstractMovingSummons implements IEntityWithComplexSpawn, ColoredAttacker,GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private float scale = 1.0f; // 整体缩放
     private float growScale = 1.0f; // 在基于整体缩放的基础上的高度缩放
@@ -135,7 +133,7 @@ public class MovingGroundBone extends AbstractMovingSummons implements IEntityWi
         tag.putFloat("growScale", growScale);
         tag.putInt("delay", delay);
         tag.putFloat("speed", speed);
-        tag.putInt("color", this.colorAttack.getColor().getRGB());
+        tag.putInt("color", this.colorAttack.getColor());
     }
 
     @Override
@@ -153,7 +151,7 @@ public class MovingGroundBone extends AbstractMovingSummons implements IEntityWi
             this.growScale = tag.getFloat("growScale");
         }
         if (tag.contains("color")) {
-            this.colorAttack = ColorAttack.getInstance(tag.getInt("color"));
+            this.colorAttack = ColorAttack.of(tag.getInt("color"));
         }
     }
 
@@ -163,7 +161,7 @@ public class MovingGroundBone extends AbstractMovingSummons implements IEntityWi
         buf.writeInt(this.delay);
         buf.writeFloat(scale);
         buf.writeFloat(this.growScale);
-        buf.writeInt(this.colorAttack.getColor().getRGB());
+        buf.writeInt(this.colorAttack.getColor());
     }
 
     @Override
@@ -172,7 +170,7 @@ public class MovingGroundBone extends AbstractMovingSummons implements IEntityWi
         this.delay = buf.readInt();
         this.scale  = buf.readFloat();
         this.growScale = buf.readFloat();
-        this.colorAttack = ColorAttack.getInstance(buf.readInt());
+        this.colorAttack = ColorAttack.of(buf.readInt());
         refreshDimensions();
     }
 
@@ -189,7 +187,7 @@ public class MovingGroundBone extends AbstractMovingSummons implements IEntityWi
     }
 
     @Override
-    public Color getColor() {
+    public int getColor() {
         return colorAttack.getColor();
     }
 

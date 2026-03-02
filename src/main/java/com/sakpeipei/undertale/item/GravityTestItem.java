@@ -2,7 +2,7 @@ package com.sakpeipei.undertale.item;
 
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.common.phys.LocalDirection;
-import com.sakpeipei.undertale.entity.attachment.GravityData;
+import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.menu.GravitySelectionMenu;
 import com.sakpeipei.undertale.net.packet.GravityPacket;
 import net.minecraft.core.component.DataComponents;
@@ -10,25 +10,19 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
 import java.util.List;
 
 public class GravityTestItem extends Item {
@@ -44,7 +38,7 @@ public class GravityTestItem extends Item {
         if (!player.level().isClientSide) {
             // 从物品NBT中读取保存的重力方向
             LocalDirection gravity = getGravityDirection(stack);
-            GravityData gravityData = GravityData.applyRelativeGravity(player, entity, gravity);
+            Gravity gravityData = Gravity.applyRelativeGravity(player, entity, gravity);
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new GravityPacket(player.getId(), gravityData.getGravity()));
             // 发送提示消息
             player.sendSystemMessage(
@@ -72,7 +66,7 @@ public class GravityTestItem extends Item {
                         Component.translatable("menu." + Undertale.MOD_ID + ".gravity_selection")
                 ));
             }else{
-                GravityData gravityData = GravityData.applyRelativeGravity(player, player, getGravityDirection(player.getItemInHand(hand)));
+                Gravity gravityData = Gravity.applyRelativeGravity(player, player, getGravityDirection(player.getItemInHand(hand)));
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new GravityPacket(player.getId(), gravityData.getGravity()));
             }
         }

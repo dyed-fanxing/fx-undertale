@@ -6,9 +6,7 @@ import com.sakpeipei.undertale.item.GravityTestItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.Item;
+import net.minecraft.world.item.*;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -37,7 +35,7 @@ public class ItemTypes {
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS.register("undertale_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.undertale")) // 标签页标题
-                    .withTabsImage(ResourceLocation.fromNamespaceAndPath(MOD_ID, "textures/gui/determination.png"))
+                    .icon(() -> new ItemStack(GASTER_BLASTER.get()))
                     .withTabsBefore(CreativeModeTabs.COMBAT) // 定位在战斗标签页前
                     .displayItems((parameters, output) -> {
                         output.accept(GASTER_BLASTER.get());

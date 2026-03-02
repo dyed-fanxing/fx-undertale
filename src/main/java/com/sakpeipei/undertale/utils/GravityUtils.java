@@ -1,7 +1,5 @@
 package com.sakpeipei.undertale.utils;
 
-import com.sakpeipei.undertale.entity.attachment.GravityData;
-import com.sakpeipei.undertale.registry.AttachmentTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;

@@ -11,6 +11,8 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Sakqiongzi
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 public record AnimPacket(int entityId, byte id,float speed) implements CustomPacketPayload{
     public static final CustomPacketPayload.Type<AnimPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "anim_id_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, AnimPacket> STREAM_CODEC = CustomPacketPayload.codec(AnimPacket::write, AnimPacket::new);
+    private static final Logger log = LoggerFactory.getLogger(AnimPacket.class);
 
     public AnimPacket(int entityId, byte id) {
         this(entityId, id, 1.0f);
@@ -36,6 +39,7 @@ public record AnimPacket(int entityId, byte id,float speed) implements CustomPac
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null && level.getEntity(packet.entityId) instanceof IAnimatable entity) {
+                log.info("当前动画ID：{},客户端接收到动画ID：{}",entity.getAnimID(),packet.id);
                 entity.setAnimID(packet.id);
             }
         });
