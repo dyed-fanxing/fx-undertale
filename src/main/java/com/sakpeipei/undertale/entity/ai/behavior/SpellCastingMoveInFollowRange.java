@@ -106,7 +106,6 @@ public class SpellCastingMoveInFollowRange<T extends Mob> extends Behavior<T> {
             if (isDirectionClear(mob, backDir, backDis)) {
                 isBack = true;
                 // 方向切换计时
-                if(right == 0) right = 1;
                 if (strafeRightTime-- <= 0) {
                     right = -right;
                     strafeRightTime = 5 + mob.getRandom().nextInt(5);
@@ -150,7 +149,7 @@ public class SpellCastingMoveInFollowRange<T extends Mob> extends Behavior<T> {
         mob.setYRot(mob.yHeadRot);
         if (strafeRightTime-- <= 0) {
             strafeRightTime = 5 + mob.getRandom().nextInt(25);
-            right = mob.getRandom().nextInt(3)-1;
+            right = mob.getRandom().nextBoolean() ? 1 : -1;
         }
         if (strafeFrontTime-- <= 0) {
             strafeFrontTime = 5 + mob.getRandom().nextInt(25);

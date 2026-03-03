@@ -6,6 +6,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Quaternionf;
 
 /**
  * 向量旋转工具
@@ -197,5 +198,13 @@ public class RotUtils {
     public static void lookVecShoot(Entity entity,Vec3 vec){
         entity.setXRot((float)(Mth.atan2(vec.y, vec.horizontalDistance())  * Mth.RAD_TO_DEG));
         entity.setYRot((float)(Mth.atan2(vec.x, vec.z) * Mth.RAD_TO_DEG));
+    }
+
+
+    /**
+     * 返回从from向量旋转到to向量的四元数，常用于渲染矩阵旋转
+     */
+    public static Quaternionf rotation(Vec3 from, Vec3 to) {
+        return new Quaternionf().fromAxisAngleRad(from.cross(to).toVector3f(), (float) Math.acos(from.dot(to)));
     }
 }

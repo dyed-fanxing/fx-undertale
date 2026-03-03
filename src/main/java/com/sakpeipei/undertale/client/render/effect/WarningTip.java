@@ -1,14 +1,17 @@
 package com.sakpeipei.undertale.client.render.effect;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.Config;
 import com.sakpeipei.undertale.common.RenderTypes;
+import com.sakpeipei.undertale.common.ResourceLocations;
 import com.sakpeipei.undertale.entity.attachment.Gravity;
 import com.sakpeipei.undertale.utils.RenderUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
@@ -71,7 +74,13 @@ public abstract class WarningTip extends Effect {
             poseStack.pushPose();
             poseStack.translate(x, y+0.01f, z);
             poseStack.mulPose(localToWorld);
-            RenderUtils.renderCylinder(poseStack.last(), bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_WHITE),radius, height, Config.COMMON.segments.getAsInt(),r, g, b,getAlpha(partialTick), OverlayTexture.NO_OVERLAY, LightTexture.FULL_SKY);
+            
+            VertexConsumer sideConsumer = bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_STRIP_WHITE);
+            VertexConsumer capConsumer = bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_WHITE);
+            
+            RenderUtils.renderCylinder(poseStack.last(), sideConsumer, capConsumer,
+                    radius, height, Config.COMMON.segments.getAsInt(), r, g, b, getAlpha(partialTick), 
+                    OverlayTexture.NO_OVERLAY, LightTexture.FULL_SKY);
             poseStack.popPose();
         }
 

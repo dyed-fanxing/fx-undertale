@@ -1,9 +1,9 @@
 package com.sakpeipei.undertale.client.render.effect;
 
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.sakpeipei.undertale.Undertale;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.world.phys.Vec3;
@@ -24,7 +24,6 @@ import java.util.List;
 @EventBusSubscriber(modid = Undertale.MOD_ID, value = Dist.CLIENT)
 public class EffectRendererHandler {
     private final static List<Effect> EFFECTS = new ArrayList<>();
-
     @SubscribeEvent
     private static void onClientTick(ClientTickEvent.Post event) {
         if (EFFECTS.isEmpty()) {
@@ -44,15 +43,13 @@ public class EffectRendererHandler {
             PoseStack poseStack = event.getPoseStack();
             Camera camera = event.getCamera();
             Frustum frustum = event.getFrustum();
+            MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
 
-            // 创建统一的 BufferSource
-            MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(new ByteBufferBuilder(512));
             poseStack.pushPose();
-            // 统一的相机偏移（每个装饰物都需要）
             Vec3 cameraPos = camera.getPosition();
             poseStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
             float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-            // 遍历所有装饰物
+
             for (Effect effect : EFFECTS) {
                 if (!effect.isRemoved()) {
                     if (effect.shouldRender(frustum,cameraPos.x, cameraPos.y, cameraPos.z)) {
@@ -60,8 +57,9 @@ public class EffectRendererHandler {
                     }
                 }
             }
+
+            bufferSource.endBatch();
             poseStack.popPose();
-            bufferSource.endBatch(); // 统一的批处理提交
         }
     }
 

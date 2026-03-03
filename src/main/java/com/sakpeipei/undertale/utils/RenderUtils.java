@@ -6,6 +6,8 @@ import com.mojang.logging.LogUtils;
 import com.mojang.math.Axis;
 import com.sakpeipei.undertale.common.phys.OBB;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
@@ -18,6 +20,7 @@ import java.awt.*;
 public class RenderUtils {
 
     // ========== 立方体 ==========
+
     /**
      * 立方体：中心点渲染，带UV缩放，与 renderCubeOutline 的顶点定义一致
      */
@@ -32,43 +35,46 @@ public class RenderUtils {
         // 每个面的 UV 坐标乘以缩放系数
         // 前面 (Z-)
         builder.addVertex(matrix, -l, -w, -h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
-        builder.addVertex(matrix, -l,  w, -h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
-        builder.addVertex(matrix,  l,  w, -h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
-        builder.addVertex(matrix,  l, -w, -h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
+        builder.addVertex(matrix, -l, w, -h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
+        builder.addVertex(matrix, l, w, -h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
+        builder.addVertex(matrix, l, -w, -h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
         // 后面 (Z+)
-        builder.addVertex(matrix, -l, -w,  h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
-        builder.addVertex(matrix,  l, -w,  h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
-        builder.addVertex(matrix,  l,  w,  h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
-        builder.addVertex(matrix, -l,  w,  h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
+        builder.addVertex(matrix, -l, -w, h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
+        builder.addVertex(matrix, l, -w, h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
+        builder.addVertex(matrix, l, w, h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
+        builder.addVertex(matrix, -l, w, h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
         // 左面 (X-)
         builder.addVertex(matrix, -l, -w, -h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
-        builder.addVertex(matrix, -l, -w,  h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
-        builder.addVertex(matrix, -l,  w,  h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
-        builder.addVertex(matrix, -l,  w, -h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
+        builder.addVertex(matrix, -l, -w, h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
+        builder.addVertex(matrix, -l, w, h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
+        builder.addVertex(matrix, -l, w, -h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
         // 右面 (X+)
-        builder.addVertex(matrix,  l, -w, -h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
-        builder.addVertex(matrix,  l,  w, -h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
-        builder.addVertex(matrix,  l,  w,  h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
-        builder.addVertex(matrix,  l, -w,  h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
+        builder.addVertex(matrix, l, -w, -h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
+        builder.addVertex(matrix, l, w, -h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
+        builder.addVertex(matrix, l, w, h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
+        builder.addVertex(matrix, l, -w, h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
         // 上面 (Y+)
-        builder.addVertex(matrix, -l,  w, -h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
-        builder.addVertex(matrix, -l,  w,  h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
-        builder.addVertex(matrix,  l,  w,  h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
-        builder.addVertex(matrix,  l,  w, -h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
+        builder.addVertex(matrix, -l, w, -h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
+        builder.addVertex(matrix, -l, w, h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
+        builder.addVertex(matrix, l, w, h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
+        builder.addVertex(matrix, l, w, -h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
         // 下面 (Y-)
         builder.addVertex(matrix, -l, -w, -h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
-        builder.addVertex(matrix,  l, -w, -h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
-        builder.addVertex(matrix,  l, -w,  h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
-        builder.addVertex(matrix, -l, -w,  h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
+        builder.addVertex(matrix, l, -w, -h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
+        builder.addVertex(matrix, l, -w, h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
+        builder.addVertex(matrix, -l, -w, h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
     }
-    public static void renderCube(PoseStack.Pose pose, VertexConsumer builder,float length, float width, float height,
+
+    public static void renderCube(PoseStack.Pose pose, VertexConsumer builder, float length, float width, float height,
                                   int r, int g, int b, int a, int overlay, int light) {
         renderCube(pose, builder, length, width, height, r, g, b, a, overlay, light, 1f, 1f);
     }
+
     public static void renderCube(PoseStack.Pose pose, VertexConsumer builder, float size,
                                   int r, int g, int b, int a, int overlay, int light) {
         renderCube(pose, builder, size, size, size, r, g, b, a, overlay, light, 1f, 1f);
     }
+
     /**
      * 立方体：端面中心向前渲染，带UV缩放，与 renderCubeOutline 的顶点定义一致
      */
@@ -79,12 +85,12 @@ public class RenderUtils {
         float halfW = width * 0.5f;
         Vec3[] v = new Vec3[8];
         v[0] = new Vec3(-halfW, 0, 0);        // 左下后
-        v[1] = new Vec3( halfW, 0, 0);        // 右下后
-        v[2] = new Vec3( halfW, 0, length);   // 右下前
+        v[1] = new Vec3(halfW, 0, 0);        // 右下后
+        v[2] = new Vec3(halfW, 0, length);   // 右下前
         v[3] = new Vec3(-halfW, 0, length);   // 左下前
         v[4] = new Vec3(-halfW, height, 0);   // 左上后
-        v[5] = new Vec3( halfW, height, 0);   // 右上后
-        v[6] = new Vec3( halfW, height, length); // 右上前
+        v[5] = new Vec3(halfW, height, 0);   // 右上后
+        v[6] = new Vec3(halfW, height, length); // 右上前
         v[7] = new Vec3(-halfW, height, length); // 左上前
 
         // 绘制6个面（每个面使用统一法线），UV 乘以缩放
@@ -101,6 +107,7 @@ public class RenderUtils {
         // 下 (Y-)
         drawQuad(pose, consumer, v[0], v[3], v[2], v[1], 0, -1, 0, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
     }
+
     public static void renderCubeFromBackCenter(PoseStack.Pose pose, VertexConsumer consumer,
                                                 float length, float width, float height,
                                                 int r, int g, int b, int a, int overlay, int light) {
@@ -141,12 +148,12 @@ public class RenderUtils {
         float halfW = width * 0.5f;
         Vec3[] vertices = new Vec3[8];
         vertices[0] = new Vec3(-halfW, 0, 0);
-        vertices[1] = new Vec3( halfW, 0, 0);
-        vertices[2] = new Vec3( halfW, 0, length);
+        vertices[1] = new Vec3(halfW, 0, 0);
+        vertices[2] = new Vec3(halfW, 0, length);
         vertices[3] = new Vec3(-halfW, 0, length);
         vertices[4] = new Vec3(-halfW, height, 0);
-        vertices[5] = new Vec3( halfW, height, 0);
-        vertices[6] = new Vec3( halfW, height, length);
+        vertices[5] = new Vec3(halfW, height, 0);
+        vertices[6] = new Vec3(halfW, height, length);
         vertices[7] = new Vec3(-halfW, height, length);
         renderLine(pose, consumer, vertices[0], vertices[1], 0, 1, 0, r, g, b, a);
         renderLine(pose, consumer, vertices[1], vertices[2], 0, 1, 0, r, g, b, a);
@@ -162,15 +169,22 @@ public class RenderUtils {
         renderLine(pose, consumer, vertices[3], vertices[7], 0, 0, 1, r, g, b, a);
     }
 
+
+
+
+
     /**
-     * 胶囊体：竖向，带UV缩放
+     * 胶囊体：竖向，带UV缩放 *********************************************************************************************
+     *
+     * @param pose               姿态
+     * @param sideConsumer       圆柱侧面渲染器（TRIANGLE_STRIP）
+     * @param hemisphereConsumer 半球渲染器（QUAD）
      */
-    public static void renderCapsule(PoseStack poseStack, VertexConsumer consumer,
+    public static void renderCapsule(PoseStack.Pose pose, VertexConsumer sideConsumer, VertexConsumer hemisphereConsumer,
                                      float radius, float length, int segments,
                                      int r, int g, int b, int a,
                                      int overlay, int light,
                                      float uScale, float vScale) {
-        PoseStack.Pose pose = poseStack.last();
         int latSegments = segments / 2;
         int hemiLatSegments = latSegments / 2;
         if (hemiLatSegments < 1) hemiLatSegments = 1;
@@ -190,269 +204,59 @@ public class RenderUtils {
         ringY[latSegments / 2] = 0;
         ringRadius[latSegments / 2] = radius;
 
-        // 下半球
-        for (int i = 0; i < latSegments / 2; i++) {
-            float r1 = ringRadius[i];
-            float r2 = ringRadius[i + 1];
-            float y1 = ringY[i];
-            float y2 = ringY[i + 1];
-            float v1 = 0.5f * i / hemiLatSegments * vScale;
-            float v2 = 0.5f * (i + 1) / hemiLatSegments * vScale;
+        // 渲染下半球（使用 QUADS 模式）
+        renderHemisphere(pose, hemisphereConsumer, radius, ringRadius, ringY, latSegments, hemiLatSegments,
+                segments, deltaTheta, deltaPhi, 0, 0, r, g, b, a, overlay, light, uScale, vScale);
 
-            for (int j = 0; j < segments; j++) {
-                float theta1 = j * deltaTheta;
-                float theta2 = (j + 1) * deltaTheta;
-                float cos1 = Mth.cos(theta1), sin1 = Mth.sin(theta1);
-                float cos2 = Mth.cos(theta2), sin2 = Mth.sin(theta2);
-                float u1 = (float) j / segments * uScale;
-                float u2 = (float) (j + 1) / segments * uScale;
+        // 渲染圆柱侧面（使用 TRIANGLE_STRIP）
+        renderCylinderSide(pose, sideConsumer, radius, length, segments, r, g, b, a, overlay, light, uScale,vScale);
 
-                float x1 = r1 * cos1, z1 = r1 * sin1;
-                float x2 = r2 * cos1, z2 = r2 * sin1;
-                float x3 = r2 * cos2, z3 = r2 * sin2;
-                float x4 = r1 * cos2, z4 = r1 * sin2;
-                float y3 = y2, y4 = y1;
-
-                float nx1 = cos1 * (r1 / radius), ny1 = y1 / radius, nz1 = sin1 * (r1 / radius);
-                float nx2 = cos1 * (r2 / radius), ny2 = y2 / radius, nz2 = sin1 * (r2 / radius);
-                float nx3 = cos2 * (r2 / radius), ny3 = y2 / radius, nz3 = sin2 * (r2 / radius);
-                float nx4 = cos2 * (r1 / radius), ny4 = y1 / radius, nz4 = sin2 * (r1 / radius);
-
-                drawQuad(pose, consumer,
-                        x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4,
-                        nx1, ny1, nz1, nx2, ny2, nz2, nx3, ny3, nz3, nx4, ny4, nz4,
-                        u1, v1, u1, v2, u2, v2, u2, v1,
-                        r, g, b, a, overlay, light);
-            }
-        }
-
-        // 圆柱侧面
-        for (int j = 0; j < segments; j++) {
-            float theta1 = j * deltaTheta;
-            float theta2 = (j + 1) * deltaTheta;
-            float cos1 = Mth.cos(theta1), sin1 = Mth.sin(theta1);
-            float cos2 = Mth.cos(theta2), sin2 = Mth.sin(theta2);
-            float u1 = (float) j / segments * uScale;
-            float u2 = (float) (j + 1) / segments * uScale;
-
-            float x1b = radius * cos1, z1b = radius * sin1;
-            float x2b = radius * cos2, z2b = radius * sin2;
-            float x1t = x1b, z1t = z1b;
-            float x2t = x2b, z2t = z2b;
-
-            float vBottom = 0.5f * vScale;
-            float vTop = 1.0f * vScale;
-
-            float nx1 = cos1, nz1 = sin1;
-            float nx2 = cos2, nz2 = sin2;
-
-            drawQuad(pose, consumer,
-                    x1b, 0, z1b,
-                    x2b, 0, z2b,
-                    x2t, length, z2t,
-                    x1t, length, z1t,
-                    nx1, 0, nz1, nx2, 0, nz2, nx2, 0, nz2, nx1, 0, nz1,
-                    u1, vBottom, u2, vBottom, u2, vTop, u1, vTop,
-                    r, g, b, a, overlay, light);
-        }
-
-        // 上半球
-        for (int i = latSegments / 2; i < latSegments; i++) {
-            float r1 = ringRadius[i];
-            float r2 = ringRadius[i + 1];
-            float y1 = ringY[i] + length;
-            float y2 = ringY[i + 1] + length;
-            float v1 = (0.5f + 0.5f * (i - latSegments / 2) / hemiLatSegments) * vScale;
-            float v2 = (0.5f + 0.5f * (i + 1 - latSegments / 2) / hemiLatSegments) * vScale;
-
-            for (int j = 0; j < segments; j++) {
-                float theta1 = j * deltaTheta;
-                float theta2 = (j + 1) * deltaTheta;
-                float cos1 = Mth.cos(theta1), sin1 = Mth.sin(theta1);
-                float cos2 = Mth.cos(theta2), sin2 = Mth.sin(theta2);
-                float u1 = (float) j / segments * uScale;
-                float u2 = (float) (j + 1) / segments * uScale;
-
-                float x1 = r1 * cos1, z1 = r1 * sin1;
-                float x2 = r2 * cos1, z2 = r2 * sin1;
-                float x3 = r2 * cos2, z3 = r2 * sin2;
-                float x4 = r1 * cos2, z4 = r1 * sin2;
-                float y3 = y2, y4 = y1;
-
-                float nx1 = cos1 * (r1 / radius), ny1 = (y1 - length) / radius, nz1 = sin1 * (r1 / radius);
-                float nx2 = cos1 * (r2 / radius), ny2 = (y2 - length) / radius, nz2 = sin1 * (r2 / radius);
-                float nx3 = cos2 * (r2 / radius), ny3 = (y2 - length) / radius, nz3 = sin2 * (r2 / radius);
-                float nx4 = cos2 * (r1 / radius), ny4 = (y1 - length) / radius, nz4 = sin2 * (r1 / radius);
-
-                drawQuad(pose, consumer,
-                        x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4,
-                        nx1, ny1, nz1, nx2, ny2, nz2, nx3, ny3, nz3, nx4, ny4, nz4,
-                        u1, v1, u1, v2, u2, v2, u2, v1,
-                        r, g, b, a, overlay, light);
-            }
-        }
+        // 渲染上半球（使用 QUADS 模式）
+        renderHemisphere(pose, hemisphereConsumer, radius, ringRadius, ringY, latSegments, hemiLatSegments,
+                segments, deltaTheta, deltaPhi, length, 0.5f, r, g, b, a, overlay, light, uScale, vScale);
     }
-    public static void renderCapsule(PoseStack poseStack, VertexConsumer consumer,
+    /**
+     * 胶囊体：竖向（使用默认 UV 缩放 1.0）
+     */
+    public static void renderCapsule(PoseStack.Pose pose, VertexConsumer sideConsumer, VertexConsumer hemisphereConsumer,
                                      float radius, float length, int segments,
                                      int r, int g, int b, int a,
                                      int overlay, int light) {
-        renderCapsule(poseStack, consumer, radius, length, segments, r, g, b, a, overlay, light, 1f, 1f);
+        renderCapsule(pose, sideConsumer, hemisphereConsumer,
+                radius, length, segments, r, g, b, a, overlay, light, 1f, 1f);
     }
-    public static void renderCapsuleOffset(PoseStack poseStack, VertexConsumer consumer,
-                                     float radius, float length, int segments,
-                                     int r, int g, int b, int a,
-                                     int overlay, int light,
-                                     float uScale, float vScale,
-                                     float flowOffset) {  // 新增参数，用于流动
-        PoseStack.Pose pose = poseStack.last();
-        int latSegments = segments / 2;
-        int hemiLatSegments = latSegments / 2;
-        if (hemiLatSegments < 1) hemiLatSegments = 1;
 
-        float deltaTheta = Mth.TWO_PI / segments;
-        float deltaPhi = Mth.PI / latSegments;
 
-        float[] ringRadius = new float[latSegments + 1];
-        float[] ringY = new float[latSegments + 1];
-        for (int i = 0; i <= latSegments; i++) {
-            float phi = i * deltaPhi - Mth.HALF_PI;
-            float cosPhi = Mth.cos(phi);
-            float sinPhi = Mth.sin(phi);
-            ringRadius[i] = radius * cosPhi;
-            ringY[i] = radius * sinPhi;
-        }
-        ringY[latSegments / 2] = 0;
-        ringRadius[latSegments / 2] = radius;
 
-        // 下半球
-        for (int i = 0; i < latSegments / 2; i++) {
-            float r1 = ringRadius[i];
-            float r2 = ringRadius[i + 1];
-            float y1 = ringY[i];
-            float y2 = ringY[i + 1];
-            // 计算基础 V，加上 flowOffset 并缩放
-            float vBase1 = 0.5f * i / hemiLatSegments;
-            float vBase2 = 0.5f * (i + 1) / hemiLatSegments;
-            float v1 = vBase1 * vScale + flowOffset;
-            float v2 = vBase2 * vScale + flowOffset;
 
-            for (int j = 0; j < segments; j++) {
-                float theta1 = j * deltaTheta;
-                float theta2 = (j + 1) * deltaTheta;
-                float cos1 = Mth.cos(theta1), sin1 = Mth.sin(theta1);
-                float cos2 = Mth.cos(theta2), sin2 = Mth.sin(theta2);
-                float u1 = (float) j / segments * uScale;
-                float u2 = (float) (j + 1) / segments * uScale;
-
-                float x1 = r1 * cos1, z1 = r1 * sin1;
-                float x2 = r2 * cos1, z2 = r2 * sin1;
-                float x3 = r2 * cos2, z3 = r2 * sin2;
-                float x4 = r1 * cos2, z4 = r1 * sin2;
-                float y3 = y2, y4 = y1;
-
-                float nx1 = cos1 * (r1 / radius), ny1 = y1 / radius, nz1 = sin1 * (r1 / radius);
-                float nx2 = cos1 * (r2 / radius), ny2 = y2 / radius, nz2 = sin1 * (r2 / radius);
-                float nx3 = cos2 * (r2 / radius), ny3 = y2 / radius, nz3 = sin2 * (r2 / radius);
-                float nx4 = cos2 * (r1 / radius), ny4 = y1 / radius, nz4 = sin2 * (r1 / radius);
-
-                drawQuad(pose, consumer,
-                        x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4,
-                        nx1, ny1, nz1, nx2, ny2, nz2, nx3, ny3, nz3, nx4, ny4, nz4,
-                        u1, v1, u1, v2, u2, v2, u2, v1,
-                        r, g, b, a, overlay, light);
-            }
-        }
-
-        // 圆柱侧面
-        for (int j = 0; j < segments; j++) {
-            float theta1 = j * deltaTheta;
-            float theta2 = (j + 1) * deltaTheta;
-            float cos1 = Mth.cos(theta1), sin1 = Mth.sin(theta1);
-            float cos2 = Mth.cos(theta2), sin2 = Mth.sin(theta2);
-            float u1 = (float) j / segments * uScale;
-            float u2 = (float) (j + 1) / segments * uScale;
-
-            float x1b = radius * cos1, z1b = radius * sin1;
-            float x2b = radius * cos2, z2b = radius * sin2;
-            float x1t = x1b, z1t = z1b;
-            float x2t = x2b, z2t = z2b;
-
-            float vBottom = 0.5f * vScale + flowOffset;
-            float vTop = 1.0f * vScale + flowOffset;
-
-            float nx1 = cos1, nz1 = sin1;
-            float nx2 = cos2, nz2 = sin2;
-
-            drawQuad(pose, consumer,
-                    x1b, 0, z1b,
-                    x2b, 0, z2b,
-                    x2t, length, z2t,
-                    x1t, length, z1t,
-                    nx1, 0, nz1, nx2, 0, nz2, nx2, 0, nz2, nx1, 0, nz1,
-                    u1, vBottom, u2, vBottom, u2, vTop, u1, vTop,
-                    r, g, b, a, overlay, light);
-        }
-
-        // 上半球
-        for (int i = latSegments / 2; i < latSegments; i++) {
-            float r1 = ringRadius[i];
-            float r2 = ringRadius[i + 1];
-            float y1 = ringY[i] + length;
-            float y2 = ringY[i + 1] + length;
-            float vBase1 = 0.5f + 0.5f * (i - latSegments / 2) / hemiLatSegments;
-            float vBase2 = 0.5f + 0.5f * (i + 1 - latSegments / 2) / hemiLatSegments;
-            float v1 = vBase1 * vScale + flowOffset;
-            float v2 = vBase2 * vScale + flowOffset;
-
-            for (int j = 0; j < segments; j++) {
-                float theta1 = j * deltaTheta;
-                float theta2 = (j + 1) * deltaTheta;
-                float cos1 = Mth.cos(theta1), sin1 = Mth.sin(theta1);
-                float cos2 = Mth.cos(theta2), sin2 = Mth.sin(theta2);
-                float u1 = (float) j / segments * uScale;
-                float u2 = (float) (j + 1) / segments * uScale;
-
-                float x1 = r1 * cos1, z1 = r1 * sin1;
-                float x2 = r2 * cos1, z2 = r2 * sin1;
-                float x3 = r2 * cos2, z3 = r2 * sin2;
-                float x4 = r1 * cos2, z4 = r1 * sin2;
-                float y3 = y2, y4 = y1;
-
-                float nx1 = cos1 * (r1 / radius), ny1 = (y1 - length) / radius, nz1 = sin1 * (r1 / radius);
-                float nx2 = cos1 * (r2 / radius), ny2 = (y2 - length) / radius, nz2 = sin1 * (r2 / radius);
-                float nx3 = cos2 * (r2 / radius), ny3 = (y2 - length) / radius, nz3 = sin2 * (r2 / radius);
-                float nx4 = cos2 * (r1 / radius), ny4 = (y1 - length) / radius, nz4 = sin2 * (r1 / radius);
-
-                drawQuad(pose, consumer,
-                        x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4,
-                        nx1, ny1, nz1, nx2, ny2, nz2, nx3, ny3, nz3, nx4, ny4, nz4,
-                        u1, v1, u1, v2, u2, v2, u2, v1,
-                        r, g, b, a, overlay, light);
-            }
-        }
-    }
 
 
     /**
-     * 圆柱体：竖向，带UV缩放
+     * 圆柱体：竖向，带UV缩放 *********************************************************************************************
+     *
+     * @param pose         姿态
+     * @param sideConsumer 侧面渲染器（TRIANGLE_STRIP）
+     * @param capConsumer  顶底面渲染器（TRIANGLE）
      */
-    public static void renderCylinder(PoseStack.Pose pose, VertexConsumer consumer,
+    public static void renderCylinder(PoseStack.Pose pose, VertexConsumer sideConsumer, VertexConsumer capConsumer,
                                       float radius, float height, int segments,
                                       int r, int g, int b, int a, int overlay, int light,
                                       float uScale, float vScale) {
-        // 侧面
-        renderCylinderSide(pose, consumer, radius, height, segments, r, g, b, a, overlay, light, uScale, vScale);
-        // 底面
-        drawCircle(pose, consumer, new Vec3(0, 0, 0), radius, segments, new Vec3(0, -1, 0),
+        // 侧面（使用 TRIANGLE_STRIP）
+        renderCylinderSide(pose, sideConsumer, radius, height, segments, r, g, b, a, overlay, light, uScale, vScale);
+        // 顶底面（使用 TRIANGLES）
+        drawCircle(pose, capConsumer, new Vec3(0, 0, 0), radius, segments, new Vec3(0, -1, 0),
                 r, g, b, a, overlay, light, uScale, vScale);
-        // 顶面
-        drawCircle(pose, consumer, new Vec3(0, height, 0), radius, segments, new Vec3(0, 1, 0),
+        drawCircle(pose, capConsumer, new Vec3(0, height, 0), radius, segments, new Vec3(0, 1, 0),
                 r, g, b, a, overlay, light, uScale, vScale);
     }
-    public static void renderCylinder(PoseStack.Pose pose, VertexConsumer consumer,
+    /**
+     * 圆柱体：竖向，带UV缩放（使用默认 UV 缩放 1.0）
+     */
+    public static void renderCylinder(PoseStack.Pose pose, VertexConsumer sideConsumer, VertexConsumer capConsumer,
                                       float radius, float height, int segments,
                                       int r, int g, int b, int a, int overlay, int light) {
-        renderCylinder(pose, consumer, radius, height, segments, r, g, b, a, overlay, light, 1f, 1f);
+        renderCylinder(pose, sideConsumer, capConsumer, radius, height, segments, r, g, b, a, overlay, light, 1f, 1f);
     }
     public static void renderCylinderOutline(PoseStack.Pose pose, VertexConsumer consumer,
                                              float radius, float height, int segments,
@@ -471,52 +275,56 @@ public class RenderUtils {
             renderLine(pose, consumer, down1, down2, (float) normal.x, (float) normal.y, (float) normal.z, r, g, b, a);
         }
     }
-
     /**
-     * 圆柱侧面：竖向，带UV缩放
+     * 圆柱侧面：竖向，带UV缩放（使用 TRIANGLE_STRIP 模式，最优）
      */
     public static void renderCylinderSide(PoseStack.Pose pose, VertexConsumer consumer,
                                           float radius, float height, int segments,
                                           int r, int g, int b, int a, int overlay, int light,
                                           float uScale, float vScale) {
         float step = Mth.TWO_PI / segments;
-        for (int i = 0; i < segments; i++) {
-            float theta1 = i * step;
-            float theta2 = (i + 1) * step;
-
-            float cos1 = Mth.cos(theta1), sin1 = Mth.sin(theta1);
-            float cos2 = Mth.cos(theta2), sin2 = Mth.sin(theta2);
-
-            float x1b = radius * cos1, z1b = radius * sin1;
-            float x2b = radius * cos2, z2b = radius * sin2;
-            float x1t = x1b, z1t = z1b;
-            float x2t = x2b, z2t = z2b;
-
-            float u1 = i / (float) segments * uScale;
-            float u2 = (i + 1) / (float) segments * uScale;
-            float vBottom = 0;
-            float vTop = height * vScale; // 注意：如果希望纹理在高度方向重复，应使用 vScale，但这里高度方向是0~1，乘以vScale
-
-            float nx1 = cos1, nz1 = sin1;
-            float nx2 = cos2, nz2 = sin2;
-
-            Matrix4f matrix = pose.pose();
-            consumer.addVertex(matrix, x1b, 0, z1b).setNormal(pose, nx1, 0, nz1).setUv(u1, vBottom).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
-            consumer.addVertex(matrix, x2b, 0, z2b).setNormal(pose, nx2, 0, nz2).setUv(u2, vBottom).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
-            consumer.addVertex(matrix, x2t, height, z2t).setNormal(pose, nx2, 0, nz2).setUv(u2, vTop).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
-            consumer.addVertex(matrix, x1t, height, z1t).setNormal(pose, nx1, 0, nz1).setUv(u1, vTop).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
+        Matrix4f matrix = pose.pose();
+        float vBottom = 0.5f * vScale;
+        // 交替排列：底、顶、底、顶、...
+        for (int i = 0; i <= segments; i++) {
+            float theta = i * step;
+            float cos = Mth.cos(theta), sin = Mth.sin(theta);
+            float u = i / (float) segments * uScale;
+            // 底部点
+            consumer.addVertex(matrix, radius * cos, 0, radius * sin)
+                    .setNormal(pose, cos, 0, sin)
+                    .setUv(u, vBottom)
+                    .setColor(r, g, b, a)
+                    .setOverlay(overlay)
+                    .setLight(light);
+            // 顶部点
+            consumer.addVertex(matrix, radius * cos, height, radius * sin)
+                    .setNormal(pose, cos, 0, sin)
+                    .setUv(u, vScale)
+                    .setColor(r, g, b, a)
+                    .setOverlay(overlay)
+                    .setLight(light);
         }
     }
+
     public static void renderCylinderSide(PoseStack.Pose pose, VertexConsumer consumer,
                                           float radius, float height, int segments,
                                           int r, int g, int b, int a, int overlay, int light) {
         renderCylinderSide(pose, consumer, radius, height, segments, r, g, b, a, overlay, light, 1f, 1f);
     }
 
+
+
+
+
     /**
-     * 球体：带UV缩放（使用 QUADS 模式，最优实现）
+     * 球体：带UV缩放（使用 QUADS 模式，最优实现） *********************************************************************************************
+     *
+     * @param pose     姿态
+     * @param consumer 渲染器（QUADS 或 TRIANGLES）
      */
-    public static void renderSphere(PoseStack.Pose pose, VertexConsumer consumer, float radius, int segments,
+    public static void renderSphere(PoseStack.Pose pose, VertexConsumer consumer,
+                                    float radius, int segments,
                                     int r, int g, int b, int a, int overlay, int light,
                                     float uScale, float vScale) {
         int latSegments = segments / 2;
@@ -559,16 +367,94 @@ public class RenderUtils {
             }
         }
     }
+
     /**
-     * 球体：无UV缩放
+     * 球体：带UV缩放（使用默认 UV 缩放 1.0）
      */
-    public static void renderSphere(PoseStack.Pose pose, VertexConsumer consumer, float radius, int segments,
+    public static void renderSphere(PoseStack.Pose pose, VertexConsumer consumer,
+                                    float radius, int segments,
                                     int r, int g, int b, int a, int overlay, int light) {
         renderSphere(pose, consumer, radius, segments, r, g, b, a, overlay, light, 1f, 1f);
     }
+    /**
+     * 渲染半球（辅助方法，使用 QUADS 模式）
+     */
+    private static void renderHemisphere(PoseStack.Pose pose, VertexConsumer consumer,
+                                         float radius, float[] ringRadius, float[] ringY,
+                                         int latSegments, int hemiLatSegments,
+                                         int segments, float deltaTheta, float deltaPhi,
+                                         float yOffset, float vOffset,
+                                         int r, int g, int b, int a, int overlay, int light,
+                                         float uScale, float vScale) {
+        int startIndex = vOffset < 0.5f ? 0 : latSegments / 2;
+        int endIndex = vOffset < 0.5f ? latSegments / 2 : latSegments;
+
+        Matrix4f matrix = pose.pose();
+
+        // 使用 QUADS 模式渲染每一层
+        for (int i = startIndex; i < endIndex; i++) {
+            float r1 = ringRadius[i];
+            float r2 = ringRadius[i + 1];
+            float y1 = ringY[i] + yOffset;
+            float y2 = ringY[i + 1] + yOffset;
+            float v1 = (vOffset < 0.5f ?
+                    (float) i / hemiLatSegments * 0.5f :
+                    (0.5f + 0.5f * (i - latSegments / 2) / hemiLatSegments)) * vScale;
+            float v2 = (vOffset < 0.5f ?
+                    (float) (i + 1) / hemiLatSegments * 0.5f :
+                    (0.5f + 0.5f * (i + 1 - latSegments / 2) / hemiLatSegments)) * vScale;
+
+            for (int j = 0; j < segments; j++) {
+                float theta1 = j * deltaTheta;
+                float theta2 = (j + 1) * deltaTheta;
+                float cos1 = Mth.cos(theta1), sin1 = Mth.sin(theta1);
+                float cos2 = Mth.cos(theta2), sin2 = Mth.sin(theta2);
+                float u1 = (float) j / segments * uScale;
+                float u2 = (float) (j + 1) / segments * uScale;
+
+                float x1 = r1 * cos1, z1 = r1 * sin1;
+                float x2 = r2 * cos1, z2 = r2 * sin1;
+                float x3 = r2 * cos2, z3 = r2 * sin2;
+                float x4 = r1 * cos2, z4 = r1 * sin2;
+                float y3 = y2, y4 = y1;
+
+                float nx1 = cos1 * (r1 / radius), ny1 = (y1 - yOffset) / radius, nz1 = sin1 * (r1 / radius);
+                float nx2 = cos1 * (r2 / radius), ny2 = (y2 - yOffset) / radius, nz2 = sin1 * (r2 / radius);
+                float nx3 = cos2 * (r2 / radius), ny3 = (y2 - yOffset) / radius, nz3 = sin2 * (r2 / radius);
+                float nx4 = cos2 * (r1 / radius), ny4 = (y1 - yOffset) / radius, nz4 = sin2 * (r1 / radius);
+
+                consumer.addVertex(matrix, x1, y1, z1)
+                        .setNormal(pose, nx1, ny1, nz1)
+                        .setUv(u1, v1)
+                        .setColor(r, g, b, a)
+                        .setOverlay(overlay)
+                        .setLight(light);
+                consumer.addVertex(matrix, x2, y2, z2)
+                        .setNormal(pose, nx2, ny2, nz2)
+                        .setUv(u1, v2)
+                        .setColor(r, g, b, a)
+                        .setOverlay(overlay)
+                        .setLight(light);
+                consumer.addVertex(matrix, x3, y3, z3)
+                        .setNormal(pose, nx3, ny3, nz3)
+                        .setUv(u2, v2)
+                        .setColor(r, g, b, a)
+                        .setOverlay(overlay)
+                        .setLight(light);
+                consumer.addVertex(matrix, x4, y4, z4)
+                        .setNormal(pose, nx4, ny4, nz4)
+                        .setUv(u2, v1)
+                        .setColor(r, g, b, a)
+                        .setOverlay(overlay)
+                        .setLight(light);
+            }
+        }
+    }
 
 
-    // ========== OBB ==========
+
+
+    // ========== OBB ========== *********************************************************************************************
     public static void renderOBB(PoseStack poseStack, VertexConsumer consumer, OBB obb,
                                  int r, int g, int b, int a, int packedLight) {
         poseStack.pushPose();
@@ -604,17 +490,7 @@ public class RenderUtils {
         renderLine(pose, consumer, verts[3], verts[7], 0, 0, 1, r, g, b, a);
     }
 
-
-    // ========== 四边形绘制（世界坐标） ==========
-    // 新增带UV缩放的 drawQuad 重载
-    public static void drawQuad(PoseStack.Pose pose, VertexConsumer consumer,
-                                Vec3 p1, Vec3 p2, Vec3 p3, Vec3 p4,
-                                float normalX, float normalY, float normalZ,
-                                float uMin, float vMin, float uMax, float vMax,
-                                int r, int g, int b, int a, int overlay, int light) {
-        drawQuad(pose, consumer, p1, p2, p3, p4, normalX, normalY, normalZ, uMin, vMin, uMax, vMax, r, g, b, a, overlay, light, 1f, 1f);
-    }
-
+    // ******************************************************2D平面***************************************************************//
     /**
      * 四边形：UV缩放
      */
@@ -650,6 +526,14 @@ public class RenderUtils {
                 .setOverlay(overlay)
                 .setLight(light);
     }
+    // 新增带UV缩放的 drawQuad 重载
+    public static void drawQuad(PoseStack.Pose pose, VertexConsumer consumer,
+                                Vec3 p1, Vec3 p2, Vec3 p3, Vec3 p4,
+                                float normalX, float normalY, float normalZ,
+                                float uMin, float vMin, float uMax, float vMax,
+                                int r, int g, int b, int a, int overlay, int light) {
+        drawQuad(pose, consumer, p1, p2, p3, p4, normalX, normalY, normalZ, uMin, vMin, uMax, vMax, r, g, b, a, overlay, light, 1f, 1f);
+    }
 
     public static void renderBillboardQuad(Vec3 from, Vec3 to, float halfWidth, float halfHeight,
                                            PoseStack.Pose pose, VertexConsumer consumer,
@@ -665,10 +549,10 @@ public class RenderUtils {
                                       int overlay, int light,
                                       float normalX, float normalY, float normalZ) {
         drawQuad(pose, consumer,
-                from.add( halfWidth,  halfHeight, 0),
+                from.add(halfWidth, halfHeight, 0),
                 from.add(-halfWidth, -halfHeight, 0),
                 to.add(-halfWidth, -halfHeight, 0),
-                to.add( halfWidth,  halfHeight, 0),
+                to.add(halfWidth, halfHeight, 0),
                 normalX, normalY, normalZ,
                 0, 0, v, v,
                 r, g, b, a, overlay, light);
@@ -680,18 +564,18 @@ public class RenderUtils {
                                   float normalX, float normalY, float normalZ) {
         float halfWidth = width * 0.5f, halfHeight = height * 0.5f;
         drawQuad(pose, consumer,
-                center.add( halfWidth,  halfHeight, 0),
-                center.add(-halfWidth,  halfHeight, 0),
+                center.add(halfWidth, halfHeight, 0),
+                center.add(-halfWidth, halfHeight, 0),
                 center.add(-halfWidth, -halfHeight, 0),
-                center.add( halfWidth, -halfHeight, 0),
+                center.add(halfWidth, -halfHeight, 0),
                 normalX, normalY, normalZ,
                 0, 0, v, v,
                 r, g, b, a, overlay, light);
     }
 
 
-    // ========== 私有辅助：带逐顶点法线的四边形 ==========
 
+    // ========== 私有辅助：带逐顶点法线的四边形 ==========
     private static void drawQuad(PoseStack.Pose pose, VertexConsumer consumer,
                                  float x1, float y1, float z1,
                                  float x2, float y2, float z2,
@@ -711,52 +595,87 @@ public class RenderUtils {
     }
 
 
-
-
-    // ========== 圆形 ==========
-
-    public static void drawCircle(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments, Vec3 normal,
-                                  int r, int g, int b, int a, int overlay, int light) {
-        drawCircle(pose, consumer, center, radius, segments, normal, r, g, b, a, overlay, light, 1f, 1f);
-    }
-
     /**
-     * 圆形：带UV缩放
+     * 圆形：带UV缩放（使用 TRIANGLE_FAN 模式，最优）  *********************************************************************************************
      */
-    public static void drawCircle(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments, Vec3 normal,
+    public static void drawCircleTriangleFan(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments, Vec3 normal,
                                   int r, int g, int b, int a, int overlay, int light,
                                   float uScale, float vScale) {
         float delta = Mth.TWO_PI / segments;
-        float rad1 = 0, rad2 = delta;
-        for (int i = 0; i < segments; i++, rad1 += delta, rad2 += delta) {
-            Vec3 e1 = center.add(radius * Mth.cos(rad1), 0, radius * Mth.sin(rad1));
-            Vec3 e2 = center.add(radius * Mth.cos(rad2), 0, radius * Mth.sin(rad2));
-            // 三角形使用简单的UV，可以自行设计，这里简单用0,0
-            drawTriangle(pose, consumer, center, e2, e1,
-                    (float) normal.x, (float) normal.y, (float) normal.z,
-                    0, 0, 0, 1, 1, 1,
-                    r, g, b, a, overlay, light);
+        Matrix4f matrix = pose.pose();
+        // 中心点
+        consumer.addVertex(matrix, (float) center.x, (float) center.y, (float) center.z)
+                .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z)
+                .setUv(0.5f * uScale, 0.5f * vScale)
+                .setColor(r, g, b, a)
+                .setOverlay(overlay)
+                .setLight(light);
+        // 圆周上的点
+        for (int i = 0; i <= segments; i++) {
+            float angle = i * delta;
+            Vec3 point = center.add(radius * Mth.cos(angle), 0, radius * Mth.sin(angle));
+            float u = 0.5f + 0.5f * Mth.cos(angle);
+            float v = 0.5f + 0.5f * Mth.sin(angle);
+
+            consumer.addVertex(matrix, (float) point.x, (float) point.y, (float) point.z)
+                    .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z)
+                    .setUv(u * uScale, v * vScale)
+                    .setColor(r, g, b, a)
+                    .setOverlay(overlay)
+                    .setLight(light);
         }
+    }
+    public static void drawCircleTriangleFan(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments, Vec3 normal,
+                                  int r, int g, int b, int a, int overlay, int light) {
+        drawCircleTriangleFan(pose, consumer, center, radius, segments, normal, r, g, b, a, overlay, light, 1f, 1f);
     }
 
     /**
-     * 绘制单个三角形，非连续
+     * 用 TRIANGLES 模式绘制圆（每个三角形独立，适合多实例渲染）
      */
-    public static void drawTriangle(PoseStack.Pose pose, VertexConsumer consumer,
-                                    Vec3 p1, Vec3 p2, Vec3 p3,
-                                    float normalX, float normalY, float normalZ,
-                                    float u1, float v1, float u2, float v2, float u3, float v3,
-                                    int r, int g, int b, int a, int overlay, int light) {
+    public static void drawCircle(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments, Vec3 normal,
+                                           int r, int g, int b, int a, int overlay, int light,
+                                           float uScale, float vScale) {
+        float delta = Mth.TWO_PI / segments;
         Matrix4f matrix = pose.pose();
-        consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z)
-                .setNormal(pose, normalX, normalY, normalZ).setUv(u1, v1).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
-        consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z)
-                .setNormal(pose, normalX, normalY, normalZ).setUv(u2, v2).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
-        consumer.addVertex(matrix, (float) p3.x, (float) p3.y, (float) p3.z)
-                .setNormal(pose, normalX, normalY, normalZ).setUv(u3, v3).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
-        consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z)
-                .setNormal(pose, normalX, normalY, normalZ).setUv(u1, v1).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
+        for (int i = 0; i < segments; i++) {
+            float angle1 = i * delta;
+            float angle2 = (i + 1) * delta;
+
+            Vec3 p1 = center;
+            Vec3 p2 = center.add(radius * Mth.cos(angle1), 0, radius * Mth.sin(angle1));
+            Vec3 p3 = center.add(radius * Mth.cos(angle2), 0, radius * Mth.sin(angle2));
+
+            // 三角形1: center → p2 → p3
+            consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z)
+                    .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z)
+                    .setUv(0.5f * uScale, 0.5f * vScale)
+                    .setColor(r, g, b, a)
+                    .setOverlay(overlay)
+                    .setLight(light);
+            consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z)
+                    .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z)
+                    .setUv((0.5f + 0.5f * Mth.cos(angle1)) * uScale, (0.5f + 0.5f * Mth.sin(angle1)) * vScale)
+                    .setColor(r, g, b, a)
+                    .setOverlay(overlay)
+                    .setLight(light);
+            consumer.addVertex(matrix, (float) p3.x, (float) p3.y, (float) p3.z)
+                    .setNormal(pose, (float) normal.x, (float) normal.y, (float) normal.z)
+                    .setUv((0.5f + 0.5f * Mth.cos(angle2)) * uScale, (0.5f + 0.5f * Mth.sin(angle2)) * vScale)
+                    .setColor(r, g, b, a)
+                    .setOverlay(overlay)
+                    .setLight(light);
+        }
     }
+    /**
+     * 用 TRIANGLES 模式绘制圆（每个三角形独立，适合多实例渲染）
+     */
+    public static void drawCircle(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments, Vec3 normal,
+                                           int r, int g, int b, int a, int overlay, int light) {
+        drawCircle(pose,consumer, center, radius, segments, normal, r, g, b, a, overlay, light,1f, 1f);
+    }
+
+
     /**
      * 绘制单个三角形，连续
      */
@@ -786,14 +705,9 @@ public class RenderUtils {
                 .setLight(light);
     }
 
-    // ========== 线段 ==========
-
-    public static void renderLine(PoseStack.Pose pose, VertexConsumer consumer, Vec3 p1, Vec3 p2,
-                                  float normalX, float normalY, float normalZ,
-                                  int r, int g, int b, int a) {
-        renderLine(pose, consumer, p1, p2, normalX, normalY, normalZ, r / 255f, g / 255f, b / 255f, a / 255f);
-    }
-
+    /**
+     * 线段  *********************************************************************************************
+     */
     public static void renderLine(PoseStack.Pose pose, VertexConsumer consumer, Vec3 p1, Vec3 p2,
                                   float normalX, float normalY, float normalZ,
                                   float r, float g, float b, float a) {
@@ -802,5 +716,10 @@ public class RenderUtils {
                 .setNormal(pose, normalX, normalY, normalZ).setColor(r, g, b, a);
         consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z)
                 .setNormal(pose, normalX, normalY, normalZ).setColor(r, g, b, a);
+    }
+    public static void renderLine(PoseStack.Pose pose, VertexConsumer consumer, Vec3 p1, Vec3 p2,
+                                  float normalX, float normalY, float normalZ,
+                                  int r, int g, int b, int a) {
+        renderLine(pose, consumer, p1, p2, normalX, normalY, normalZ, r / 255f, g / 255f, b / 255f, a / 255f);
     }
 }
