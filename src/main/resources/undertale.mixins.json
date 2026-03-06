@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "AbstractArrowMixin",
+    "MixinGeoRenderer",
     "gravity.EntityGravityMixin",
     "gravity.LivingEntityGravityMixin",
     "gravity.MoveControlTestMixin",
@@ -18,6 +19,7 @@
   "client": [
     "EntityRenderDispatcherMixin",
     "KarmaHeartMixin",
+    "MixinGeoEntityRenderer",
     "TimeJumpTeleportMixin",
     "gravity.CameraGravityMixin",
     "gravity.EntityRenderDispatcherGravityMixin",

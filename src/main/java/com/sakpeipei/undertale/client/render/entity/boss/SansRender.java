@@ -4,8 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.model.entity.SansModel;
+import com.sakpeipei.undertale.client.render.entity.AbstractDeadUTMonsterDustRenderer;
 import com.sakpeipei.undertale.client.render.layer.SansEyesLayer;
 import com.sakpeipei.undertale.client.render.layer.SansFatigueLayer;
+import com.sakpeipei.undertale.common.RenderTypes;
 import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -16,16 +18,13 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
-import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
-public class SansRender extends GeoEntityRenderer<Sans> {
-
-    private static final ResourceLocation PHANTOM_TEXTURE = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "textures/entity/sans_phantom.png");
-
+public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
+    RenderType whiteEntityType = RenderTypes.WHITE_ENTITY_TRANSLUCENT.apply(getTextureLocation(animatable), true);
     public SansRender(EntityRendererProvider.Context renderManager) {
         super(renderManager, new SansModel());
-        this.renderLayers.addLayer(new SansEyesLayer(this, ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "textures/entity/sans_eyes.png")));
-        this.renderLayers.addLayer(new SansFatigueLayer(this));
+        addRenderLayer(new SansEyesLayer(this, ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "textures/entity/sans_eyes.png")));
+        addRenderLayer(new SansFatigueLayer(this));
     }
 
     @Override
@@ -36,26 +35,23 @@ public class SansRender extends GeoEntityRenderer<Sans> {
         Vec3 startPos = animatable.getPhantomStartPos();
         int startTick = animatable.getPhantomStartTick();
         if (startPos == null) return;
-        float currentTime = animatable.tickCount + partialTick;
-        float age = currentTime - startTick;
+        float animTick = animatable.tickCount + partialTick;
+        float age = animTick - startTick;
         if (age >= Sans.PHANTOM_DURATION) {
             return;
         }
         float progress = age / Sans.PHANTOM_DURATION;
         progress = Math.max(0, Math.min(1, progress));
         Vec3 phantomPos = startPos.lerp(animatable.position(), progress);
-        float alpha = Mth.lerp(progress,1,0);
+        float alpha = Mth.lerp(progress,0.8f,0);
         // 渲染残影
         poseStack.pushPose();
         Vec3 offset = phantomPos.subtract(animatable.getX(), animatable.getY(), animatable.getZ());
         poseStack.translate(offset.x, offset.y, offset.z);
         if (model != null) {
-            RenderType renderType = RenderType.entityTranslucentEmissive(PHANTOM_TEXTURE,true);
-            VertexConsumer buffer1 = bufferSource.getBuffer(renderType);
             int color = (0xFFFFFF) | ((int)(alpha * 255) << 24);
-            actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer1,true, partialTick, packedLight, OverlayTexture.NO_OVERLAY, color);
+            actuallyRender(poseStack, animatable, model, whiteEntityType, bufferSource, bufferSource.getBuffer(whiteEntityType),true, partialTick, packedLight, OverlayTexture.NO_OVERLAY, color);
         }
         poseStack.popPose();
     }
-
 }

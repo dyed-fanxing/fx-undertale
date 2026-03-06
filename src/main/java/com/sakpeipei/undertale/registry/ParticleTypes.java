@@ -2,6 +2,7 @@ package com.sakpeipei.undertale.registry;
 
 import com.mojang.serialization.MapCodec;
 import com.sakpeipei.undertale.Undertale;
+import com.sakpeipei.undertale.client.particle.CustomWhiteAshParticle;
 import com.sakpeipei.undertale.particle.options.GrowOption;
 import com.sakpeipei.undertale.particle.options.GrowTrackEntityOption;
 import net.minecraft.core.particles.ParticleOptions;
@@ -16,6 +17,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ParticleTypes {
     public static final DeferredRegister<ParticleType<?>> PARTICLE_TYPES = DeferredRegister.create(Registries.PARTICLE_TYPE,Undertale.MOD_ID);
@@ -51,4 +53,5 @@ public class ParticleTypes {
     // 光束拖尾
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> LIGHT_STREAK = register("light_streak",false);
 
+    public static final Supplier<SimpleParticleType> CUSTOM_WHITE_ASH = register("custom_white_ash",false);
 }

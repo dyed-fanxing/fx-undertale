@@ -4,6 +4,8 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.sakpeipei.undertale.client.Setup;
+import com.sakpeipei.undertale.client.Shaders;
 import net.minecraft.Util;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
@@ -205,4 +207,76 @@ public interface RenderTypes {
         );
     }
 
+
+    /**
+     * ENERGY_SWIRL_TRIANGLE_STRIP - 能量漩涡效果（带偏移，条带模式）
+     */
+    static RenderType energySwirlTriangleStrip(ResourceLocation resourceLocation) {
+        return RenderType.create(
+                "white_entity_translucent",
+                DefaultVertexFormat.NEW_ENTITY,
+                VertexFormat.Mode.QUADS,
+                256,
+                true,  // affects transparency
+                true,  // sort on upload
+                RenderType.CompositeState.builder()
+                        .setShaderState(new RenderStateShard.ShaderStateShard(Shaders::getWhiteEntityShader))
+                        .setTextureState(new RenderStateShard.TextureStateShard(resourceLocation, false, false))
+                        .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
+                        .setLightmapState(RenderStateShard.LIGHTMAP)
+                        .setOverlayState(RenderStateShard.OVERLAY)
+                        .setCullState(RenderStateShard.NO_CULL)
+                        .createCompositeState(true)
+        );
+    }
+
+
+
+
+
+
+    /**
+     * 渲染可透明白色实体类型：将有色部分替换为白色，透明部分不动
+     */
+    BiFunction<ResourceLocation, Boolean, RenderType> WHITE_ENTITY_TRANSLUCENT = Util.memoize((texture, translucent) -> RenderType.create(
+            "white_entity_translucent", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, translucent,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(Shaders::getWhiteEntityShader))
+                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setTransparencyState(translucent ? TRANSLUCENT_TRANSPARENCY : NO_TRANSPARENCY)
+                    .setLightmapState(RenderStateShard.LIGHTMAP)
+                    .setOverlayState(RenderStateShard.OVERLAY)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .createCompositeState(true)
+    ));
+    /**
+     * 模型顶底偏移消散
+     */
+    BiFunction<ResourceLocation, Boolean, RenderType> FLY_BASIC = Util.memoize((texture, translucent) -> RenderType.create(
+            "fly_basic", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, true,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(Shaders::getFlyBasicShader))
+                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setTransparencyState(translucent ? TRANSLUCENT_TRANSPARENCY : NO_TRANSPARENCY)
+                    .setLightmapState(RenderStateShard.LIGHTMAP)
+                    .setOverlayState(RenderStateShard.OVERLAY)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .createCompositeState(true)
+    ));
+
+    /**
+     * 从顶部开始向下，淡出（消失）
+     * 使用了自定义的getTopFadeShader着色器，详细参数看着色器
+     */
+    BiFunction<ResourceLocation, Boolean, RenderType> TOP_FADE = Util.memoize((texture, translucent) -> RenderType.create(
+            "top_fade", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, true,
+            RenderType.CompositeState.builder()
+                    .setShaderState(new RenderStateShard.ShaderStateShard(Shaders::getTopFadeShader))
+                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setTransparencyState(translucent ? TRANSLUCENT_TRANSPARENCY : NO_TRANSPARENCY)
+                    .setLightmapState(RenderStateShard.LIGHTMAP)
+                    .setOverlayState(RenderStateShard.OVERLAY)
+                    .setCullState(RenderStateShard.NO_CULL)
+                    .createCompositeState(true)
+    ));
 }
