@@ -2,10 +2,14 @@ package com.sakpeipei.undertale.client;
 
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.particle.BallGrowParticle;
+import com.sakpeipei.undertale.client.particle.CustomWhiteAshParticle;
 import com.sakpeipei.undertale.client.particle.LightStreakParticle;
-import com.sakpeipei.undertale.client.render.entity.*;
+import com.sakpeipei.undertale.client.render.entity.FlyingBoneRender;
 import com.sakpeipei.undertale.client.render.entity.boss.SansRender;
-import com.sakpeipei.undertale.client.render.entity.summon.*;
+import com.sakpeipei.undertale.client.render.entity.summon.GasterBlasterRender;
+import com.sakpeipei.undertale.client.render.entity.summon.GroundBoneRender;
+import com.sakpeipei.undertale.client.render.entity.summon.LateralBoneRender;
+import com.sakpeipei.undertale.client.render.entity.summon.MovingGroundBoneRender;
 import com.sakpeipei.undertale.client.screen.GravitySelectionScreen;
 import com.sakpeipei.undertale.net.packet.*;
 import com.sakpeipei.undertale.registry.EntityTypes;
@@ -48,6 +52,7 @@ public class Setup {
     public static void registerParticleProviderHandler(final RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(ParticleTypes.BALL_GROW.get(), BallGrowParticle.Provider::new);
         event.registerSpriteSet(ParticleTypes.LIGHT_STREAK.get(), LightStreakParticle.Provider::new);
+        event.registerSpriteSet(ParticleTypes.CUSTOM_WHITE_ASH.get(), CustomWhiteAshParticle.Provider::new);
     }
 
     /**
@@ -82,5 +87,6 @@ public class Setup {
     public static void onRegisterMenuScreens(final RegisterMenuScreensEvent event) {
         event.register(MenuTypes.GRAVITY_SELECTION_MENU.get(), GravitySelectionScreen::new);
     }
+
 }
 

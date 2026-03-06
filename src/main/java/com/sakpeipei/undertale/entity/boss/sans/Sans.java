@@ -3,6 +3,7 @@ package com.sakpeipei.undertale.entity.boss.sans;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Dynamic;
 import com.sakpeipei.undertale.client.render.effect.WarningTip;
+import com.sakpeipei.undertale.entity.AbstractUTMonster;
 import com.sakpeipei.undertale.entity.mechanism.ColorAttack;
 import com.sakpeipei.undertale.common.phys.LocalDirection;
 import com.sakpeipei.undertale.entity.IAnimatable;
@@ -80,7 +81,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.*;
 import java.util.List;
 
-public class Sans extends Monster implements GeoEntity, IAnimatable, IEntityWithComplexSpawn {
+public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, IEntityWithComplexSpawn {
     private static final Logger log = LogManager.getLogger(Sans.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
@@ -135,6 +136,7 @@ public class Sans extends Monster implements GeoEntity, IAnimatable, IEntityWith
         this.bossEvent = new ServerBossEvent(this.getDisplayName(),BossEvent.BossBarColor.WHITE,BossEvent.BossBarOverlay.PROGRESS);
         this.bossEvent.setPlayBossMusic(true).setDarkenScreen(false);
     }
+
     @Override
     protected Brain.@NotNull Provider<Sans> brainProvider() {
         return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
@@ -284,8 +286,13 @@ public class Sans extends Monster implements GeoEntity, IAnimatable, IEntityWith
     }
 
     @Override
-    public void die(DamageSource source) {
+    public void die(@NotNull DamageSource source) {
         super.die(source);
+    }
+
+    @Override
+    public int getDeathTime() {
+        return 40;
     }
 
     @Override

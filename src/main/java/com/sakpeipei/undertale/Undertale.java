@@ -3,10 +3,7 @@ package com.sakpeipei.undertale;
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.registry.*;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.level.block.Blocks;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -22,7 +19,6 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 // 此处值应与META-INF/neoforge.mods.toml文件中的条目匹配
@@ -48,7 +44,6 @@ public class Undertale {
         MenuTypes.register(modEventBus);            // 菜单注册
         AttachmentTypes.register(modEventBus);      // 附件注册
         MemoryModuleTypes.register(modEventBus);      // 记忆注册
-
 
         // 注册当前类以响应游戏事件
         NeoForge.EVENT_BUS.register(this);
