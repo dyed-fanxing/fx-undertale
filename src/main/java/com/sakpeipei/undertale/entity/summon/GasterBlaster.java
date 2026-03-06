@@ -3,6 +3,7 @@ package com.sakpeipei.undertale.entity.summon;
 import com.sakpeipei.undertale.common.DamageTypes;
 import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.registry.EntityTypes;
+import com.sakpeipei.undertale.registry.ItemTypes;
 import com.sakpeipei.undertale.registry.SoundEvnets;
 import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
@@ -16,6 +17,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -110,6 +113,14 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
         this.setYRot(Mth.rotLerp(aimSmoothSpeed,this.getYRot(), RotUtils.yRotD(dir)));
         this.setXRot(Mth.rotLerp(aimSmoothSpeed,this.getXRot(), RotUtils.xRotD(dir)));
     }
+    /**
+     * 平滑瞄准目标，旋转速度由 speed 控制（0~1，值越小越慢）
+     */
+    protected void aimSmoothlyByPlayer(Player player) {
+        this.length = maxLength;
+        this.setYRot(owner.getViewYRot(1.0f));
+        this.setXRot(owner.getViewXRot(1.0f));
+    }
 
     @Override
     public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
@@ -146,6 +157,13 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
                     }else if(!this.level().isClientSide){
                         this.discard();
                         return;
+                    }
+                }else if(owner instanceof Player player){
+                    if(player.isUsingItem() && player.getUseItem().getItem() == ItemTypes.GASTER_BLASTER.get()){
+                        log.info("正在使用GB");
+                        log.info("设置前视角：（{},{}）",this.getXRot(),this.getYRot());
+                        aimSmoothlyByPlayer(player);
+                        log.info("设置后视角：（{},{}）",this.getXRot(),this.getYRot());
                     }
                 } else if(!this.level().isClientSide){
                     // 必须服务端，在重新进入游戏时，服务端同步targetId，客户端接受有延迟

@@ -96,4 +96,34 @@ public class ProjectileUtils {
     }
 
 
+    /**
+     * 获取弹射物在视线向量上的最近实体碰撞检测结果
+     * @param rayDis 射线距离
+     */
+    public static HitResult getHitResultOnViewVector(Entity entity, Predicate<Entity> validFilter, double rayDis) {
+        Vec3 viewVectorScale = entity.getViewVector(0.0F).scale(rayDis);
+        Level level = entity.level();
+        Vec3 from = entity.getEyePosition();
+        Vec3 to = from.add(viewVectorScale);
+        HitResult hitresult = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity));
+        if (hitresult.getType() != HitResult.Type.MISS) {
+            to = hitresult.getLocation();
+        }
+
+        List<Entity> entities = level.getEntities(entity, entity.getBoundingBox().expandTowards(viewVectorScale).inflate(1.0), validFilter);
+        double minDisSqr = Double.MAX_VALUE;
+        for (Entity target : entities) {
+            AABB aabb = target.getBoundingBox().inflate(0.3F); //这里不使用自身实体的宽度和高度膨胀的原因是 不是实体移动的碰撞检测
+            Optional<Vec3> hitPosOptional = aabb.clip(from, to);
+            if (hitPosOptional.isPresent()) {
+                double disSqr = entity.distanceToSqr(hitPosOptional.get());
+                if (disSqr < minDisSqr) {
+                    minDisSqr = disSqr;
+                    hitresult = new EntityHitResult(target, hitPosOptional.get());
+                }
+            }
+        }
+
+        return hitresult;
+    }
 }

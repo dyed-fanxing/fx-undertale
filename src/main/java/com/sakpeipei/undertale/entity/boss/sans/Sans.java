@@ -44,6 +44,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.BossEvent;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -247,19 +248,29 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
         }
         if(sourceEntity != null) {
             if(source.isDirect()){
+                log.info("攻击伤害来源实体和直接实体相等，触发近战传送，距离：{}",sourceEntity.distanceTo(this));
                 meleeTeleport(sourceEntity);
             }else{
                 if(sourceEntity.distanceToSqr(this) <= 25){
+                    log.info("攻击伤害来源实体和直接实体不相等，触发近战传送，攻击来源距离：{}",sourceEntity.distanceTo(this));
                     meleeTeleport(sourceEntity);
                 }else if(directEntity != null){
-                    rangedTeleport(directEntity);
+                    if(directEntity instanceof LivingEntity){
+                        meleeTeleport(directEntity);
+                        log.info("攻击伤害来源实体和直接实体不相等，且与攻击来源实体距离超出近战范围，且直接实体是活体，触发近战传送，攻击来源距离：{}",sourceEntity.distanceTo(this));
+                    }else{
+                        log.info("攻击伤害来源实体和直接实体不相等，且与攻击来源实体距离超出近战范围，且直接实体不是活体，触发范围传送，攻击来源距离：{}",sourceEntity.distanceTo(this));
+                        rangedTeleport(directEntity);
+                    }
                 }
             }
         }else{
             if(directEntity != null){
                 if (directEntity.distanceToSqr(this) <= 25) {
+                    log.info("没有伤害来源实体，但是有直接实体，距离：{}，触发近身传送",directEntity.distanceTo(this));
                     meleeTeleport(directEntity);
                 } else{
+                    log.info("没有伤害来源实体，但是有直接实体，距离：{}，触发范围传送",directEntity.distanceTo(this));
                     rangedTeleport(directEntity);
                 }
             }else{
@@ -285,10 +296,6 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
         return true;
     }
 
-    @Override
-    public void die(@NotNull DamageSource source) {
-        super.die(source);
-    }
 
     @Override
     public int getDeathTime() {
@@ -302,8 +309,6 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
         });
         super.remove(removalReason);
     }
-
-
     @Override
     public void onRemovedFromLevel() {
         this.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> {

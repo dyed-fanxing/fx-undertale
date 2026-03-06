@@ -59,6 +59,9 @@ public class RotUtils {
                 z1 * cosYaw - x * sinYaw
         );
     }
+    public static Vec3 getWorldPos(Vec3 pos,float roll,float pitch,float yaw){
+        return getWorldPos((float) pos.x, (float) pos.y, (float) pos.z,roll,pitch,yaw);
+    }
     /**
      * 根据 相对坐标和仰俯、航偏 获取世界坐标，先翻滚，再仰俯，后航偏
      * @param x,y,z 相对坐标
