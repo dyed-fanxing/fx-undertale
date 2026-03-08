@@ -1,8 +1,7 @@
 package com.sakpeipei.undertale.item;
 
-import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.client.render.item.GasterBlasterProItemRender;
+import com.sakpeipei.undertale.client.item.GasterBlasterProItemRender;
 import com.sakpeipei.undertale.entity.summon.GasterBlasterPro;
 import com.sakpeipei.undertale.net.packet.GasterBlasterProPacket;
 import com.sakpeipei.undertale.registry.EntityTypes;

@@ -7,7 +7,10 @@ import com.sakpeipei.undertale.registry.ItemTypes;
 import com.sakpeipei.undertale.registry.SoundEvnets;
 import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
+import dev.kosmx.playerAnim.api.layered.AnimationStack;
+import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
 import net.minecraft.client.gui.screens.worldselection.OptimizeWorldScreen;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -15,6 +18,8 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.player.Player;
@@ -55,6 +60,14 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
     protected int fireTick = 17;            // 开火Tick点
     protected int shotTick = 19;            // 发射Tick点
     protected int decayTick = 47;           // 开始衰退Tick点
+    // 骑乘相关数据同步
+    private static final EntityDataAccessor<Boolean> DATA_RIDEABLE = SynchedEntityData.defineId(GasterBlaster.class, EntityDataSerializers.BOOLEAN);
+
+    // 控制参数（可根据平衡调整）
+    private static final double RIDING_SPEED = 0.5;       // 水平移动速度系数
+    private static final double RIDING_VERTICAL_SPEED = 0.5; // 垂直上升/下降速度
+    private static final float RIDING_PITCH_FACTOR = 0.5F; // 俯仰角度限制因子
+
 
     public GasterBlaster(EntityType<? extends Entity> type, Level level) {
         super(type, level);
@@ -118,8 +131,8 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
      */
     protected void aimSmoothlyByPlayer(Player player) {
         this.length = maxLength;
-        this.setYRot(owner.getViewYRot(1.0f));
-        this.setXRot(owner.getViewXRot(1.0f));
+        this.setYRot(player.getViewYRot(1.0f));
+        this.setXRot(player.getViewXRot(1.0f));
     }
 
     @Override
@@ -138,6 +151,36 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
     @Override
     public void tick() {
         super.tick();
+        // 如果当前有乘客且为玩家，处理骑乘移动
+//        if (this.isVehicle() && getFirstPassenger() instanceof Player player) {
+//            // 获取玩家输入
+//            float forward = player.zza;      // W/S：正向前
+//            float strafe = player.xxa;       // A/D：正向右
+//            boolean jump = true;
+//            boolean shift = player.isShiftKeyDown();
+//
+//            // 计算水平移动向量（基于玩家朝向）
+//            Vec3 moveVec = new Vec3(strafe, 0, forward).normalize().scale(RIDING_SPEED);
+//            // 将向量绕 Y 轴旋转，使其与玩家视线方向对齐
+//            moveVec = moveVec.yRot(-player.getYRot() * ((float)Math.PI / 180F));
+//
+//            // 垂直移动
+//            double ySpeed = 0;
+//            if (jump) ySpeed = RIDING_VERTICAL_SPEED;
+//            else if (shift) ySpeed = -RIDING_VERTICAL_SPEED;
+//
+//            // 应用速度
+//            this.setDeltaMovement(moveVec.x, ySpeed, moveVec.z);
+//
+//            // 可选：让实体朝向跟随玩家视角（增强沉浸感）
+//            this.setYRot(player.getYRot());
+//            this.setXRot(player.getXRot() * RIDING_PITCH_FACTOR); // 限制俯仰角度
+//            this.setRot(this.getYRot(), this.getXRot());
+//            // 注意：骑乘时我们不想执行原有的跟随/攻击逻辑，所以在此直接返回
+//            // 但 super.tick() 已经执行了必要的动画，我们可以返回以避免重复逻辑
+//            return;
+//        }
+
         if(isFollow){
             if(this.level().isClientSide && owner == null && ownerId != -1){
                 Entity owner = this.level().getEntity(ownerId);
@@ -160,10 +203,7 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
                     }
                 }else if(owner instanceof Player player){
                     if(player.isUsingItem() && player.getUseItem().getItem() == ItemTypes.GASTER_BLASTER.get()){
-                        log.info("正在使用GB");
-                        log.info("设置前视角：（{},{}）",this.getXRot(),this.getYRot());
                         aimSmoothlyByPlayer(player);
-                        log.info("设置后视角：（{},{}）",this.getXRot(),this.getYRot());
                     }
                 } else if(!this.level().isClientSide){
                     // 必须服务端，在重新进入游戏时，服务端同步targetId，客户端接受有延迟
@@ -207,6 +247,25 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
     }
 
     @Override
+    public InteractionResult interact(@NotNull Player player, @NotNull InteractionHand hand) {
+//        if (!this.isRideable()) {
+//            return super.interact(player, hand);
+//        }
+        if (!this.level().isClientSide && this.getPassengers().isEmpty()) {
+            player.startRiding(this);
+            return InteractionResult.CONSUME;
+        }
+        return InteractionResult.PASS;
+    }
+
+
+
+    @Override
+    public boolean startRiding(Entity p_20330_) {
+        return super.startRiding(p_20330_);
+    }
+
+    @Override
     protected void onHitBlock(BlockHitResult hitResult) {
     }
 
@@ -243,6 +302,7 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
 
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
+        builder.define(DATA_RIDEABLE,false);
     }
 
     @Override

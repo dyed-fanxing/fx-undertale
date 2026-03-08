@@ -4,20 +4,24 @@ import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.particle.BallGrowParticle;
 import com.sakpeipei.undertale.client.particle.CustomWhiteAshParticle;
 import com.sakpeipei.undertale.client.particle.LightStreakParticle;
-import com.sakpeipei.undertale.client.render.entity.FlyingBoneRender;
-import com.sakpeipei.undertale.client.render.entity.boss.SansRender;
-import com.sakpeipei.undertale.client.render.entity.summon.GasterBlasterRender;
-import com.sakpeipei.undertale.client.render.entity.summon.GroundBoneRender;
-import com.sakpeipei.undertale.client.render.entity.summon.LateralBoneRender;
-import com.sakpeipei.undertale.client.render.entity.summon.MovingGroundBoneRender;
+import com.sakpeipei.undertale.client.entity.FlyingBoneRender;
+import com.sakpeipei.undertale.client.entity.boss.SansRender;
+import com.sakpeipei.undertale.client.entity.summon.GasterBlasterRender;
+import com.sakpeipei.undertale.client.entity.summon.GroundBoneRender;
+import com.sakpeipei.undertale.client.entity.summon.LateralBoneRender;
+import com.sakpeipei.undertale.client.entity.summon.MovingGroundBoneRender;
 import com.sakpeipei.undertale.client.screen.GravitySelectionScreen;
 import com.sakpeipei.undertale.net.packet.*;
 import com.sakpeipei.undertale.registry.EntityTypes;
 import com.sakpeipei.undertale.registry.MenuTypes;
 import com.sakpeipei.undertale.registry.ParticleTypes;
+import com.zigythebird.playeranim.animation.PlayerAnimationController;
+import com.zigythebird.playeranim.api.PlayerAnimationFactory;
+import com.zigythebird.playeranimcore.enums.PlayState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
@@ -88,5 +92,20 @@ public class Setup {
         event.register(MenuTypes.GRAVITY_SELECTION_MENU.get(), GravitySelectionScreen::new);
     }
 
+
+    /**
+     * PLA API的注册玩家动画控制器，类似gecklib的动画控制器
+     */
+    @SubscribeEvent
+    public static void onClientSetup(FMLClientSetupEvent event) {
+        event.enqueueWork(() -> {
+            // 注册动画层。1000 是优先级，你可以根据需要调整（文档建议重要动画用 1500+）
+            PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(PlayerAnimations.ATTACK, 1500,
+                    player -> new PlayerAnimationController(player,
+                            (controller, state, animSetter) -> PlayState.STOP
+                    )
+            );
+        });
+    }
 }
 

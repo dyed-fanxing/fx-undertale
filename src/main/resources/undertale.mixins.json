@@ -20,6 +20,7 @@
     "EntityRenderDispatcherMixin",
     "KarmaHeartMixin",
     "MixinGeoEntityRenderer",
+    "MountCrosshairGuiMixin",
     "TimeJumpTeleportMixin",
     "gravity.CameraGravityMixin",
     "gravity.EntityRenderDispatcherGravityMixin",

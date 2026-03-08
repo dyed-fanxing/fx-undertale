@@ -107,6 +107,10 @@ repositories {
         name = "KosmX's maven"
         url = 'https://maven.kosmx.dev/'
     }
+    maven {
+        name = "RedlanceMinecraft"
+        url = "https://repo.redlance.org/public"
+    }
     // Curios API
     maven { // TOP
         url "https://cursemaven.com"
@@ -130,11 +134,17 @@ dependencies {
      runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
     // GECKOLIB ***************************************************************************************************
     implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
-
     // PLAYER ANIMATOR ********************************************************************************************
     //compileOnly "dev.kosmx.player-anim:player-animation-lib-forge:${player_animator_version}"
     implementation "dev.kosmx.player-anim:player-animation-lib-forge:${player_animator_version}"
 
+    implementation("com.zigythebird.playeranim:PlayerAnimationLibNeo:$pal_version") {
+        //  排除gson的版本配置，使用neoforge的
+        exclude group: 'com.google.code.gson'
+        exclude group: 'org.slf4j'
+        exclude group: 'it.unimi.dsi', module: 'fastutil'
+        exclude group: 'io.netty', module: 'netty-buffer'
+    }
     // CURIOS *****************************************************************************************************
     implementation "top.theillusivec4.curios:curios-neoforge:${curios_version}+${minecraft_version}"
 

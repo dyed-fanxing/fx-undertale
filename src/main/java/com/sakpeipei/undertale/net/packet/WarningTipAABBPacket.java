@@ -1,8 +1,8 @@
 package com.sakpeipei.undertale.net.packet;
 
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.client.render.effect.EffectRendererHandler;
-import com.sakpeipei.undertale.client.render.effect.WarningTipAABB;
+import com.sakpeipei.undertale.client.effect.EffectRendererHandler;
+import com.sakpeipei.undertale.client.effect.WarningTipAABB;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
