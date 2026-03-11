@@ -54,4 +54,5 @@ public class ParticleTypes {
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> LIGHT_STREAK = register("light_streak",false);
 
     public static final Supplier<SimpleParticleType> CUSTOM_WHITE_ASH = register("custom_white_ash",false);
+    public static final Supplier<SimpleParticleType> CUSTOM_NO_GRAVITY_WHITE_ASH = register("custom_no_gravity_white_ash",false);
 }

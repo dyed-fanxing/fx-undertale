@@ -3,6 +3,7 @@ package com.sakpeipei.undertale.client;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.client.entity.summon.*;
 import com.sakpeipei.undertale.client.particle.BallGrowParticle;
+import com.sakpeipei.undertale.client.particle.CustomWhiteAshNoGravityParticle;
 import com.sakpeipei.undertale.client.particle.CustomWhiteAshParticle;
 import com.sakpeipei.undertale.client.particle.LightStreakParticle;
 import com.sakpeipei.undertale.client.entity.FlyingBoneRender;
@@ -53,6 +54,7 @@ public class Setup {
         event.registerSpriteSet(ParticleTypes.BALL_GROW.get(), BallGrowParticle.Provider::new);
         event.registerSpriteSet(ParticleTypes.LIGHT_STREAK.get(), LightStreakParticle.Provider::new);
         event.registerSpriteSet(ParticleTypes.CUSTOM_WHITE_ASH.get(), CustomWhiteAshParticle.Provider::new);
+        event.registerSpriteSet(ParticleTypes.CUSTOM_NO_GRAVITY_WHITE_ASH.get(), CustomWhiteAshNoGravityParticle.Provider::new);
     }
 
     /**

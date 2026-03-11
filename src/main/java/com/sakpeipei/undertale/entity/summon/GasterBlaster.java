@@ -9,6 +9,7 @@ import com.sakpeipei.undertale.registry.ItemTypes;
 import com.sakpeipei.undertale.registry.SoundEvnets;
 import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -16,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
@@ -300,6 +302,18 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     public boolean hurt(@NotNull DamageSource damageSource, float damage) {
         if(damageSource.is(Tags.DamageTypes.IS_ENVIRONMENT)){
             return false;
+        }
+        if (!level().isClientSide) {
+            // 生成粒子
+            double halfWidth = this.getBbWidth()*0.5;
+            double halfHeight = this.getBbHeight()*0.5;
+            ((ServerLevel)level()).sendParticles(
+                    ParticleTypes.END_ROD,
+                    this.getX(), this.getY() + this.getBbHeight() * 0.5, this.getZ(),
+                    10, // 数量
+                    halfWidth, halfHeight, halfWidth, // 偏移
+                    0.05 // 速度
+            );
         }
         return super.hurt(damageSource, damage);
     }
