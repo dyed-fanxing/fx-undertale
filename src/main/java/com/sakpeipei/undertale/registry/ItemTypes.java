@@ -1,15 +1,12 @@
 package com.sakpeipei.undertale.registry;
 
 import com.sakpeipei.undertale.item.GasterBlasterItem;
-import com.sakpeipei.undertale.item.GasterBlasterProItem;
 import com.sakpeipei.undertale.item.GravityTestItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.function.Supplier;
@@ -28,7 +25,6 @@ public class ItemTypes {
     }
 
     public static final Supplier<GasterBlasterItem> GASTER_BLASTER = ITEMS.registerItem("gaster_blaster", GasterBlasterItem::new);//使用注册器注册物品，并返回注册的物品
-    public static final Supplier<GasterBlasterProItem> GASTER_BLASTER_PRO = ITEMS.registerItem("gaster_blaster_pro", GasterBlasterProItem::new);//使用注册器注册物品，并返回注册的物品
     public static final Supplier<GravityTestItem> GRAVITY_DEBUG_STICK = ITEMS.registerItem("gravity_debug_stick", GravityTestItem::new);//使用注册器注册物品，并返回注册的物品
 
     // 创建创造标签页，并添加物品，放置在战斗标签页之后
@@ -39,7 +35,6 @@ public class ItemTypes {
                     .withTabsBefore(CreativeModeTabs.COMBAT) // 定位在战斗标签页前
                     .displayItems((parameters, output) -> {
                         output.accept(GASTER_BLASTER.get());
-                        output.accept(GASTER_BLASTER_PRO.get());
                         output.accept(GRAVITY_DEBUG_STICK.get());
                     }).build());
 }

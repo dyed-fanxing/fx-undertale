@@ -15,15 +15,23 @@ import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonConfiguration;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -40,9 +48,9 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.function.Consumer;
 
 public class GasterBlasterItem extends Item implements GeoItem {
-    private static final ResourceLocation WIND_UP =  ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "attack.cast.gb.windup");
-    private static final ResourceLocation ATTACK =  ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "attack.cast.gb");
-//    private static final ResourceLocation ALL =  ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "attack.cast.gb.all");
+    private static final ResourceLocation WIND_UP = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "attack.cast.gb.windup");
+    private static final ResourceLocation ATTACK = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "attack.cast.gb");
+    //    private static final ResourceLocation ALL =  ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "attack.cast.gb.all");
     private static final Logger log = LoggerFactory.getLogger(GasterBlasterItem.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
@@ -58,11 +66,6 @@ public class GasterBlasterItem extends Item implements GeoItem {
         return 200; // 足够长的时间，实现无限按住
     }
 
-    @Override
-    public void onStopUsing(ItemStack stack, LivingEntity entity, int count) {
-        super.onStopUsing(stack, entity, count);
-    }
-
     /**
      * 物品使用交互逻辑（右键触发动画）
      */
@@ -71,36 +74,38 @@ public class GasterBlasterItem extends Item implements GeoItem {
         ItemStack itemStack = player.getItemInHand(hand);
         // 检查冷却
         if (player.getCooldowns().isOnCooldown(ItemTypes.GASTER_BLASTER.get())) {
-            player.displayClientMessage(Component.literal("§c冷却中！"), true);
             return InteractionResultHolder.fail(itemStack);
         }
 
         if (!level.isClientSide()) {
-            if(player.isShiftKeyDown()) {
+            if (player.isShiftKeyDown()) {
                 Vec3 relativePos = new Vec3(0, player.getEyeHeight(), 2f); // 玩家前方2格
-                GasterBlaster blaster = new GasterBlaster(level, player).follow(relativePos);
+                GasterBlaster blaster = new GasterBlaster(level, player,1f,1f,17,1).follow(relativePos);
+                RotUtils.lookVec(blaster, player.getViewVector(1.0f));
                 level.addFreshEntity(blaster);
+                itemStack.set(DataComponents.CUSTOM_DATA, CustomData.of(new CompoundTag() {{
+                    putInt("entityId", blaster.getId());
+                }}));
                 player.startUsingItem(hand);
-                log.info("服务端 startUsingItem 调用，isUsingItem：{}",player.isUsingItem());
                 return InteractionResultHolder.consume(itemStack);
-            }else{
-                HitResult hitResult = ProjectileUtils.getHitResultOnViewVector(player, Entity::isPickable, GasterBlaster.DEFAULT_LENGTH);
+            } else {
+                HitResult hitResult = ProjectileUtils.getHitResultOnViewVector(player, entity -> entity.isPickable() && entity != player.getVehicle(), GasterBlaster.DEFAULT_LENGTH);
                 GasterBlaster blaster = new GasterBlaster(level, player);
                 double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
-                blaster.setPos(player.position().add(RotUtils.getWorldPos(new Vec3(0,safeDistance,0),player.getRandom().nextFloat() * 180f - 90f, player.getXRot(), player.getYRot())));
-                if(hitResult instanceof EntityHitResult entityHitResult) {
+                blaster.setPos(player.position().add(RotUtils.getWorldPos(new Vec3(0, safeDistance, 0), player.getRandom().nextFloat() * 180f - 90f, player.getXRot(), player.getYRot())));
+                if (hitResult instanceof EntityHitResult entityHitResult) {
                     Entity target = entityHitResult.getEntity();
-                    blaster.aim(new Vec3(target.getX(),target.getY(0.5f),target.getZ()));
-                }else{
+                    blaster.aim(new Vec3(target.getX(), target.getY(0.5f), target.getZ()));
+                } else {
                     blaster.aim(hitResult.getLocation());
                 }
                 level.addFreshEntity(blaster);
                 player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER.get(), CD_TICK);
                 return InteractionResultHolder.success(itemStack);
             }
-        }else{
-            if(player.isShiftKeyDown()) {
-                if(player instanceof AbstractClientPlayer clientPlayer) {
+        } else {
+            if (player.isShiftKeyDown()) {
+                if (player instanceof AbstractClientPlayer clientPlayer) {
                     PlayerAnimationController controller = (PlayerAnimationController) PlayerAnimationAccess.getPlayerAnimationLayer(clientPlayer, PlayerAnimations.ATTACK);
                     if (controller != null) {
                         controller.setFirstPersonMode(FirstPersonMode.THIRD_PERSON_MODEL);
@@ -124,18 +129,65 @@ public class GasterBlasterItem extends Item implements GeoItem {
         return InteractionResultHolder.consume(itemStack);
     }
 
-
     @Override
-    public void releaseUsing(@NotNull ItemStack stack, @NotNull Level level, @NotNull LivingEntity livingEntity, int timeLeft) {
-        if (level.isClientSide() && livingEntity instanceof Player player) {
+    public @NotNull InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        if(level.isClientSide()) {
+            return InteractionResult.SUCCESS;
+        }
+        Player player = context.getPlayer();
+        if (player == null) {
+            return InteractionResult.PASS;
+        }
+        ItemStack itemStack = context.getItemInHand();
+        // 获取放置位置
+        BlockPos clickedPos = context.getClickedPos();
+        Direction direction = context.getClickedFace();
+        BlockPos placePos = clickedPos.relative(direction);
+        Vec3 pos = new Vec3(placePos.getX() + 0.5f, placePos.getY(), placePos.getZ() + 0.5f);
+        // 从数据组件中读取
+        GasterBlaster gb = new GasterBlaster(level, player).mountable();
+        gb.setPos(pos);
+        gb.setYRot(player.getYRot());
+        // 检查位置是否合适
+        if (!level.noCollision(gb.getBoundingBox())) {
+            return InteractionResult.PASS;
+        }
+        level.addFreshEntity(gb);
+        itemStack.consume(1,player);
+        return InteractionResult.SUCCESS;
+    }
+
+
+    /**
+     * count 是剩余还可以使用的Tick数
+     */
+    @Override
+    public void onStopUsing(@NotNull ItemStack stack, @NotNull LivingEntity entity, int count) {
+        Level level = entity.level();
+        if(entity instanceof Player player){
             if (player instanceof AbstractClientPlayer clientPlayer) {
                 PlayerAnimationController controller = (PlayerAnimationController) PlayerAnimationAccess.getPlayerAnimationLayer(clientPlayer, PlayerAnimations.ATTACK);
                 if (controller != null) {
                     controller.stopTriggeredAnimation();
                 }
             }
+            // 从数据组件中读取
+            CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
+            if (customData != null) {
+                CompoundTag tag = customData.copyTag();
+                if (tag.contains("entityId")) {
+                    if (level.getEntity(tag.getInt("entityId")) instanceof GasterBlaster blaster) {
+                        if (blaster.isFire()) {
+                            blaster.startDecay();
+                        } else {
+                            blaster.discard();
+                        }
+                    }
+                }
+            }
+            player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER.get(), (getUseDuration(stack,entity) - count)/2);
         }
-        super.releaseUsing(stack, level, livingEntity, timeLeft);
     }
 
 
@@ -143,6 +195,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
         consumer.accept(new GeoRenderProvider() {
             private GasterBlasterItemRender render;
+
             @Override
             public @NotNull BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
                 if (render == null) {

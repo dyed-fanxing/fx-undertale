@@ -1,22 +1,14 @@
 package com.sakpeipei.undertale.entity.summon;
 
-import com.sakpeipei.undertale.common.DamageTypes;
-import com.sakpeipei.undertale.entity.boss.sans.Sans;
-import com.sakpeipei.undertale.item.GasterBlasterItem;
+import com.sakpeipei.undertale.entity.Mountable;
 import com.sakpeipei.undertale.mixin.LivingEntityAccessor;
 import com.sakpeipei.undertale.registry.EntityTypes;
 import com.sakpeipei.undertale.registry.ItemTypes;
 import com.sakpeipei.undertale.registry.SoundEvnets;
-import com.sakpeipei.undertale.utils.CollisionDetectionUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
-import dev.kosmx.playerAnim.api.layered.AnimationStack;
-import dev.kosmx.playerAnim.minecraftApi.PlayerAnimationAccess;
-import net.minecraft.client.gui.screens.worldselection.OptimizeWorldScreen;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.protocol.game.ServerboundPaddleBoatPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -24,22 +16,16 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
-import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -50,15 +36,15 @@ import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+public class GasterBlasterLiving extends LivingSummons implements Mountable,IGasterBlaster, IEntityWithComplexSpawn, GeoEntity {
+    private static final Logger log = LoggerFactory.getLogger(GasterBlasterLiving.class);
 
-public class GasterBlaster extends FollowableSummons implements IGasterBlaster,GeoEntity {
+
+    protected Vec3 relativePos;         // 跟随拥有者的相对位置
+    protected boolean isFollow;
+
     public static final float DEFAULT_LENGTH = 32f;
     public static final int DECAY = 2;
-    private static final Logger log = LoggerFactory.getLogger(GasterBlaster.class);
     private float maxLength = DEFAULT_LENGTH;
     private float length = DEFAULT_LENGTH;
 
@@ -69,34 +55,33 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
     protected int fireTick = 17;            // 开火Tick点
     protected int shotTick = 19;            // 发射Tick点
     protected int decayTick = 47;           // 开始衰退Tick点
-
-
     // 骑乘相关
-    private static final EntityDataAccessor<Boolean> DATA_MOUNTABLE = SynchedEntityData.defineId(GasterBlaster.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_MOUNTABLE = SynchedEntityData.defineId(GasterBlasterLiving.class, EntityDataSerializers.BOOLEAN);
     private static final double HORIZONTAL_SPEED = 0.5;
     private static final double VERTICAL_SPEED = 0.5;
 
-    public GasterBlaster(EntityType<? extends Entity> type, Level level) {
-        super(type, level);
+
+    public GasterBlasterLiving(EntityType<? extends LivingEntity> entityType, Level level) {
+        super(entityType, level);
         super.setNoGravity(true);
     }
 
-    public GasterBlaster(EntityType<?> entityType, Level level, Entity owner) {
+    public GasterBlasterLiving(EntityType<? extends LivingEntity> entityType, Level level, LivingEntity owner) {
         super(entityType, level, owner);
         super.setNoGravity(true);
     }
 
-    public GasterBlaster(Level level, LivingEntity owner) {
+    public GasterBlasterLiving(Level level, LivingEntity owner) {
         this(level, owner,1.0f, 1.0f, 17,  28);
     }
-    public GasterBlaster(Level level, LivingEntity owner,float damage, float size) {
+    public GasterBlasterLiving(Level level, LivingEntity owner,float damage, float size) {
         this(level, owner,damage, size,17,28);
     }
-    public GasterBlaster(Level level, LivingEntity owner,float damage, float size,int shot) {
+    public GasterBlasterLiving(Level level, LivingEntity owner,float damage, float size,int shot) {
         this(level, owner,damage, size,17,shot);
     }
-    public GasterBlaster(Level level, LivingEntity owner,float damage, float size,int charge, int shot) {
-        super(EntityTypes.GASTER_BLASTER.get(), level,owner);
+    public GasterBlasterLiving(Level level, LivingEntity owner,float damage, float size,int charge, int shot) {
+        super(EntityTypes.GASTER_BLASTER_LIVING.get(), level,owner);
         super.setNoGravity(true);
         this.damage = damage;
         this.size = size;
@@ -114,148 +99,20 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
         this.maxLength = (float) Math.max(dir.length()+5,DEFAULT_LENGTH);
         this.length = maxLength;
     }
-    public GasterBlaster follow(Vec3 relativePos) {
+    public GasterBlasterLiving follow(Vec3 relativePos) {
         this.isFollow = true;
         this.relativePos = relativePos;
         setPos(owner.position().add(RotUtils.getWorldPos(relativePos,owner.getViewXRot(1.0f), owner.getViewYRot(1.0f))));
         return this;
     }
-    public GasterBlaster aimSmoothSpeed(float speed){
+    public GasterBlasterLiving aimSmoothSpeed(float speed){
         this.aimSmoothSpeed = speed;
         return this;
     }
-    public GasterBlaster mountable(){
+    public GasterBlasterLiving mountable(){
         setMountable(true);
         return this;
     }
-
-    /**
-     * 平滑瞄准目标，旋转速度由 speed 控制（0~1，值越小越慢）
-     */
-    protected void aimSmoothly(Entity target) {
-        Vec3 dir = new Vec3(target.getX(), target.getY(0.5f), target.getZ()).subtract(this.getEyePosition());
-        this.maxLength = (float) Math.max(dir.length()+5,DEFAULT_LENGTH);
-        this.length = maxLength;
-        this.setYRot(Mth.rotLerp(aimSmoothSpeed,this.getYRot(), RotUtils.yRotD(dir)));
-        this.setXRot(Mth.rotLerp(aimSmoothSpeed,this.getXRot(), RotUtils.xRotD(dir)));
-    }
-
-    @Override
-    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
-        return this.getType().getDimensions().scale(size);
-    }
-
-    /**
-     * 瞄准发射时不保存，应该跟随SansAi重启会立刻发射一个新的
-     */
-    @Override
-    public boolean shouldBeSaved() {
-        return !isFollow && super.shouldBeSaved();
-    }
-
-    @Override
-    public void tick() {
-        super.tick();
-        if(isMountable()) {
-            if (isVehicle() && this.isControlledByLocalInstance()) {
-                LivingEntity passenger = getControllingPassenger();
-                // 1. 飞行控制
-                float forward = passenger.zza;
-                float strafe = passenger.xxa;
-                boolean jump = ((LivingEntityAccessor) passenger).isJumping();
-                boolean shift = passenger.isShiftKeyDown();
-                float yRot = passenger.getYRot();
-                Vec3 moveVec = new Vec3(strafe, 0, forward).normalize().scale(HORIZONTAL_SPEED);
-                moveVec = moveVec.yRot(-passenger.getYRot() * Mth.DEG_TO_RAD);
-                double ySpeed = 0;
-                if (jump) ySpeed = ySpeed+VERTICAL_SPEED;
-                if (shift) ySpeed = ySpeed-VERTICAL_SPEED;
-                setDeltaMovement(moveVec.x, ySpeed, moveVec.z);
-                // 2. GB炮的朝向完全跟随玩家视角
-                setYRot(yRot);
-                setXRot(passenger.getXRot());
-                this.move(MoverType.SELF, this.getDeltaMovement());
-            }
-            return;
-        }
-
-        if(isFollow){
-            if(this.level().isClientSide && owner == null && ownerId != -1){
-                Entity owner = this.level().getEntity(ownerId);
-                if(owner != null){
-                    setOwner(owner);
-                }
-            }
-            Entity owner = getOwner();
-            if(owner != null){
-                float viewXRot = owner.getViewXRot(1.0f);
-                float viewYRot = owner.getViewYRot(1.0f);
-                setPos(owner.position().add(RotUtils.getWorldPos(relativePos,viewXRot, viewYRot)));
-                if(owner instanceof Targeting targeting){
-                    LivingEntity target = targeting.getTarget();
-                    if(target != null){
-                        aimSmoothly(target);
-                    }else if(!this.level().isClientSide){
-                        this.discard();
-                        return;
-                    }
-                }else if(owner instanceof Player player){
-                    if(player.isUsingItem() && player.getUseItem().getItem() == ItemTypes.GASTER_BLASTER.get()){
-                        this.length = maxLength;
-                        this.setYRot(player.getViewYRot(1.0f));
-                        this.setXRot(player.getViewXRot(1.0f));
-                        this.decayTick = Math.max(tickCount, 200);
-                    }
-                } else if(!this.level().isClientSide){
-                    // 必须服务端，在重新进入游戏时，服务端同步targetId，客户端接受有延迟
-                    this.discard();
-                    return;
-                }
-            }else if(!this.level().isClientSide){
-                this.discard();
-                return;
-            }
-        }
-        if(tickCount > decayTick){
-            if(tickCount >= decayTick + DECAY){
-                this.discard();
-            }
-            return;
-        }
-        Vec3 start = this.getEyePosition();
-        Vec3 end = start.add(this.getLookAngle().scale(maxLength));
-        // 光束的射线检测，如果路径上被方块阻挡，则最终位置替换成该方块位置
-        BlockHitResult clip = level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
-        // 攻击终点若为null 或 碰撞的攻击终点位置和上一次的攻击终点位置发生变化，则进行更新
-        double disSqr = start.distanceToSqr(clip.getLocation());
-        if (maxLength*maxLength - disSqr >= Mth.EPSILON) {
-            end = clip.getLocation();
-            length = (float) Math.sqrt(disSqr);
-        }
-        if(tickCount < shotTick){
-            return;
-        }
-        if(!this.level().isClientSide){
-            Vec3 finalEnd = end;
-            List<LivingEntity> livingEntities = level().getEntitiesOfClass(LivingEntity.class, new AABB(start, end).inflate(size), this::canHitEntity)
-                    .stream().filter(target -> CollisionDetectionUtils.capsuleIntersectsAABB(start, finalEnd, size * 0.5f, target.getBoundingBox()))
-                    .sorted(Comparator.comparingDouble(e -> e.distanceToSqr(start))).toList();
-            for (LivingEntity target : livingEntities) {
-                target.hurt(damageSources().source(DamageTypes.FRAME, this, getOwner() == null ? this : owner), damage);
-            }
-        }
-    }
-
-
-    protected void positionRider(@NotNull Entity entity, Entity.@NotNull MoveFunction function) {
-        super.positionRider(entity, function);
-        if (entity instanceof LivingEntity) {
-            ((LivingEntity)entity).yBodyRot = this.getYRot();
-        }
-
-    }
-
-
     @Override
     public @NotNull InteractionResult interact(@NotNull Player player, @NotNull InteractionHand hand) {
         if (isMountable() && owner == player) {
@@ -276,32 +133,34 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
         return super.interact(player, hand);
     }
 
-    @Override
-    public @Nullable LivingEntity getControllingPassenger() {
-        if(getFirstPassenger() instanceof LivingEntity livingEntity){
-            return livingEntity;
+    protected void positionRider(@NotNull Entity entity, Entity.@NotNull MoveFunction function) {
+        super.positionRider(entity, function);
+        if (entity instanceof LivingEntity) {
+            ((LivingEntity)entity).yBodyRot = this.getYRot();
         }
-        return super.getControllingPassenger();
-    }
 
-
-
-    @Override
-    protected void onHitBlock(BlockHitResult hitResult) {
     }
 
     @Override
-    protected void onHitEntity(Entity entity, Vec3 location) {
+    protected void tickRidden(@NotNull Player player, @NotNull Vec3 vec3) {
+        setDeltaMovement(vec3);
+        setYRot(player.getYRot());
+        setXRot(player.getXRot());
+        this.move(MoverType.SELF, this.getDeltaMovement());
     }
 
-    //实体是否可以被选中
     @Override
-    public boolean isPickable() {
-        return true;
-    }
-    @Override
-    public boolean canBeCollidedWith() {
-        return isMountable();
+    protected @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 vec3) {
+        double forward = vec3.z;
+        double strafe = vec3.x;
+        boolean jump = ((LivingEntityAccessor) player).isJumping();
+        boolean shift = player.isShiftKeyDown();
+        double ySpeed = 0;
+        if (jump) ySpeed = ySpeed+VERTICAL_SPEED;
+        if (shift) ySpeed = ySpeed-VERTICAL_SPEED;
+        Vec3 moveVec = new Vec3(strafe, 0, forward).normalize();
+        moveVec = moveVec.yRot(-player.getYRot() * Mth.DEG_TO_RAD);
+        return new Vec3(moveVec.x, ySpeed, moveVec.z);
     }
 
     @Override
@@ -342,11 +201,14 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
 
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
+        super.defineSynchedData(builder);
         builder.define(DATA_MOUNTABLE,false);
     }
 
+
+
     @Override
-    protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
+    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         if (ownerUUID != null) {
             tag.putUUID("ownerUUID", ownerUUID);
@@ -358,12 +220,17 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
         tag.putFloat("maxLength", maxLength);
         tag.putFloat("aimSmoothSpeed", aimSmoothSpeed);
 
+        if (relativePos != null) {
+            tag.put("relativePos", this.newDoubleList(relativePos.x, relativePos.y, relativePos.z));
+        }
+        tag.putBoolean("isFollow", isFollow);
+
 
         tag.putBoolean("mountable", isMountable());
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag tag) {
+    public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (tag.hasUUID("ownerUUID")) {
             ownerUUID = tag.getUUID("ownerUUID");
@@ -387,6 +254,12 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
             aimSmoothSpeed = tag.getFloat("aimSmoothSpeed");
         }
 
+        if (tag.contains("relativePos")) {
+            ListTag list = tag.getList("relativePos", 6);
+            this.relativePos = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
+        }
+        this.isFollow = tag.getBoolean("isFollow");
+
         if (tag.contains("mountable")) {
             setMountable(tag.getBoolean("mountable"));
         }
@@ -394,28 +267,46 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
 
     @Override
     public void writeSpawnData(@NotNull RegistryFriendlyByteBuf buffer) {
-        super.writeSpawnData(buffer);
         buffer.writeFloat(size);
         buffer.writeInt(fireTick);
         buffer.writeInt(shotTick);
         buffer.writeInt(decayTick);
         buffer.writeFloat(maxLength);
         buffer.writeFloat(aimSmoothSpeed);
+        buffer.writeBoolean(this.isFollow);
+        if(relativePos != null) {
+            buffer.writeBoolean(true);
+            buffer.writeDouble(this.relativePos.x);
+            buffer.writeDouble(this.relativePos.y);
+            buffer.writeDouble(this.relativePos.z);
+        }else{
+            buffer.writeBoolean(false);
+        }
     }
 
     @Override
     public void readSpawnData(@NotNull RegistryFriendlyByteBuf buffer) {
-        super.readSpawnData(buffer);
         this.size = buffer.readFloat();
         this.fireTick = buffer.readInt();
         this.shotTick = buffer.readInt();
         this.decayTick = buffer.readInt();
         this.maxLength = buffer.readFloat();
         this.aimSmoothSpeed = buffer.readFloat();
+        this.isFollow = buffer.readBoolean();
+        if(buffer.readBoolean()) {
+            this.relativePos = new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
+        }
+
         this.refreshDimensions();
     }
 
-
+    public static AttributeSupplier.Builder createAttributes() {
+        return PathfinderMob.createMobAttributes()
+                .add(Attributes.MAX_HEALTH, 20.0)
+                .add(Attributes.MOVEMENT_SPEED, 0.5)
+                .add(Attributes.ATTACK_DAMAGE, 1.0)
+                .add(Attributes.FOLLOW_RANGE, 32f);
+    }
 
 
 
@@ -432,7 +323,7 @@ public class GasterBlaster extends FollowableSummons implements IGasterBlaster,G
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         if(!this.isMountable()){
             controllers.add(new AnimationController<>(this, "attack", state -> {
-                AnimationController<GasterBlaster> controller = state.getController();
+                AnimationController<GasterBlasterLiving> controller = state.getController();
                 if (this.tickCount < fireTick) {
                     controller.setAnimation(CHARGE_ANIM);
                     controller.setAnimationSpeed(20.0 / fireTick);

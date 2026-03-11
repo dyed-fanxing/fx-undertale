@@ -17,6 +17,7 @@
   "menu.undertale.gravity_selection": "重力方向选择",
   "gui.undertale.select_direction": "请选择重力方向：",
   "gui.undertale.close": "关闭",
+  "mount.onboard.double.key.dismount": "双击 %1$s 来脱离",
 
   "undertale.configuration.general": "通用",
   "undertale.configuration.general.expPerLv": "每级所需经验基数",

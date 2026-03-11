@@ -5,7 +5,9 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "AbstractArrowMixin",
+    "LivingEntityAccessor",
     "MixinGeoRenderer",
+    "PlayerWantsToStopRidingMixin",
     "gravity.EntityGravityMixin",
     "gravity.LivingEntityGravityMixin",
     "gravity.MoveControlTestMixin",
@@ -17,6 +19,7 @@
     "gravity.projectile.WindChargeItemGravityMixin"
   ],
   "client": [
+    "ClientPacketListenerMixin",
     "EntityRenderDispatcherMixin",
     "KarmaHeartMixin",
     "MixinGeoEntityRenderer",

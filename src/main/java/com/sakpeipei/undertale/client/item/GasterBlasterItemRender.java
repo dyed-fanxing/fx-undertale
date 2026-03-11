@@ -2,25 +2,34 @@ package com.sakpeipei.undertale.client.item;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.sakpeipei.undertale.Undertale;
+import com.sakpeipei.undertale.client.layer.AnimatedGlowingLayer;
 import com.sakpeipei.undertale.client.model.item.GasterBlasterItemModel;
+import com.sakpeipei.undertale.entity.summon.IGasterBlaster;
 import com.sakpeipei.undertale.item.GasterBlasterItem;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.animatable.GeoAnimatable;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
+import software.bernie.geckolib.renderer.GeoRenderer;
+import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
+
+import static com.sakpeipei.undertale.client.entity.summon.GasterBlasterRender.EYES_GLOW;
 
 public class GasterBlasterItemRender extends GeoItemRenderer<GasterBlasterItem> {
     public GasterBlasterItemRender() {
         super(new GasterBlasterItemModel());
-    }
-
-    @Override
-    public void defaultRender(PoseStack poseStack, GasterBlasterItem animatable, MultiBufferSource bufferSource, @Nullable RenderType renderType, @Nullable VertexConsumer buffer, float yaw, float partialTick, int packedLight) {
-        super.defaultRender(poseStack, animatable, bufferSource, renderType, buffer, yaw, partialTick, packedLight);
+        this.addRenderLayer(new GasterBlasterEyesLayer<>(this));
     }
 
     @Override
@@ -40,5 +49,16 @@ public class GasterBlasterItemRender extends GeoItemRenderer<GasterBlasterItem> 
             }
         }
         super.renderByItem(stack, transformType, poseStack, bufferSource, packedLight, packedOverlay);
+    }
+
+
+    public static class GasterBlasterEyesLayer<T extends Item & GeoAnimatable> extends GeoRenderLayer<T> {
+        public GasterBlasterEyesLayer(GeoRenderer<T> entityRendererIn) {
+            super(entityRendererIn);
+        }
+        @Override
+        public void render(PoseStack poseStack, T animatable, BakedGeoModel bakedModel, @Nullable RenderType renderType, MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
+            this.getRenderer().reRender(bakedModel, poseStack, bufferSource, animatable,EYES_GLOW, bufferSource.getBuffer(EYES_GLOW), partialTick, LightTexture.FULL_SKY, packedOverlay, -1);
+        }
     }
 }

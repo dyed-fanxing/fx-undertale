@@ -4,8 +4,10 @@ import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.entity.boss.sans.Sans;
 import com.sakpeipei.undertale.entity.boss.sans.SansAi;
+import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -20,12 +22,12 @@ import org.slf4j.LoggerFactory;
 @EventBusSubscriber(modid = Undertale.MOD_ID)
 public class PlayerHandler {
     private static final Logger log = LoggerFactory.getLogger(PlayerHandler.class);
-
     @SubscribeEvent
     public static void onPlayerTickPre(PlayerTickEvent.Pre event) {
     }
     @SubscribeEvent
-    public static void onPlayerTickPre(PlayerTickEvent.Post event) {
+    public static void onPlayerTickPos(PlayerTickEvent.Post event) {
+        Player player = event.getEntity();
     }
     @SubscribeEvent
     public static void onStartTracking(PlayerEvent.StartTracking event) {
