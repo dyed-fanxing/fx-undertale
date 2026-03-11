@@ -2,11 +2,6 @@ package com.sakpeipei.undertale.event.handler;
 
 import com.mojang.logging.LogUtils;
 import com.sakpeipei.undertale.Undertale;
-import com.sakpeipei.undertale.entity.boss.sans.Sans;
-import com.sakpeipei.undertale.entity.boss.sans.SansAi;
-import com.sakpeipei.undertale.entity.summon.GasterBlaster;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;

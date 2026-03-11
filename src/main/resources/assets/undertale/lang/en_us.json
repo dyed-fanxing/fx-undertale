@@ -1,11 +1,10 @@
 {
   "itemGroup.undertale": "undertale",
   "item.undertale.gaster_blaster": "GasterBlaster",
-  "item.undertale.gaster_blaster_pro": "GasterBlasterPro",
   "item.undertale.gravity_debug_stick": "gravity_debug_stick",
 
   "entity.undertale.sans": "Sans",
-
+  "entity.undertale.gaster_blaster": "GasterBlaster",
 
   "effect.undertale.karma": "karma",
   "effect.undertale.gravity": "gravity",

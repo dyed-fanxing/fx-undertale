@@ -19,9 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -63,7 +61,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
 
     @Override
     public int getUseDuration(@NotNull ItemStack stack, @NotNull LivingEntity entity) {
-        return 200; // 足够长的时间，实现无限按住
+        return 200;
     }
 
     /**
@@ -80,7 +78,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
         if (!level.isClientSide()) {
             if (player.isShiftKeyDown()) {
                 Vec3 relativePos = new Vec3(0, player.getEyeHeight(), 2f); // 玩家前方2格
-                GasterBlaster blaster = new GasterBlaster(level, player,1f,1f,17,1).follow(relativePos);
+                GasterBlaster blaster = new GasterBlaster(level, player,1f,1f,getUseDuration(itemStack,player)).follow(relativePos);
                 RotUtils.lookVec(blaster, player.getViewVector(1.0f));
                 level.addFreshEntity(blaster);
                 itemStack.set(DataComponents.CUSTOM_DATA, CustomData.of(new CompoundTag() {{
@@ -146,7 +144,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
         BlockPos placePos = clickedPos.relative(direction);
         Vec3 pos = new Vec3(placePos.getX() + 0.5f, placePos.getY(), placePos.getZ() + 0.5f);
         // 从数据组件中读取
-        GasterBlaster gb = new GasterBlaster(level, player).mountable();
+        GasterBlaster gb = new GasterBlaster(level, player,100).mountable();
         gb.setPos(pos);
         gb.setYRot(player.getYRot());
         // 检查位置是否合适

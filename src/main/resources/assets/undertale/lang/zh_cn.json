@@ -1,10 +1,10 @@
 {
   "itemGroup.undertale": "传说之下",
   "item.undertale.gaster_blaster": "龙骨炮",
-  "item.undertale.gaster_blaster_pro": "超级龙骨炮",
   "item.undertale.gravity_debug_stick": "重力调试棍",
 
   "entity.undertale.sans": "杉斯",
+  "entity.undertale.gaster_blaster": "龙骨炮",
   "effect.undertale.karma": "业力",
   "effect.undertale.gravity": "重力",
 

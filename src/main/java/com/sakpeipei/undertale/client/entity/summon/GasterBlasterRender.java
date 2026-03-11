@@ -13,16 +13,12 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityAttachment;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RenderPlayerEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoAnimatable;
@@ -30,7 +26,6 @@ import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.renderer.GeoRenderer;
 
-@EventBusSubscriber
 public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     public static ResourceLocation EYES = ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID,"textures/entity/gaster_blaster_eyes.png");
     public static RenderType EYES_GLOW = RenderType.entityTranslucentEmissive(EYES);
@@ -43,27 +38,14 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     }
 
     @Override
-    protected void applyRotations(GasterBlaster animatable, PoseStack poseStack,float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
-        // 获取实体的精确中心点
-
-        double halfHeight = animatable.getBbHeight()*0.5f;
-        poseStack.translate(0, halfHeight, 0);
-        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(partialTick,-animatable.yRotO,-animatable.getYRot())));
-        if(!animatable.isMountable()){
-            poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTick,animatable.xRotO,animatable.getXRot())));
+    protected void applyRotations(GasterBlaster animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
+        if(animatable.isDeadOrDying()){
+            poseStack.mulPose(Axis.YP.rotationDegrees(180f - rotationYaw));
+        }else{
+            super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
         }
-        poseStack.translate(0, -halfHeight, 0);
-        super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
-    }
-    // 在客户端总线上注册
-    @SubscribeEvent
-    public static void onRenderPlayerPost(RenderPlayerEvent.Post event) {
-        Player player = event.getEntity();
-        // 检查玩家是否骑在你的GB上
-        if (player.getVehicle() instanceof GasterBlaster gb) {
-            PoseStack poseStack = event.getPoseStack();
-            Vec3 vec3 = gb.getAttachments().get(EntityAttachment.PASSENGER, 0, 0);
-            poseStack.translate(vec3.x,vec3.y,vec3.z);
+        if (!animatable.isMountable()) {
+            poseStack.mulPose(Axis.XP.rotationDegrees(-Mth.lerp(partialTick, animatable.xRotO, animatable.getXRot())));
         }
     }
 
@@ -92,7 +74,19 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
         return animatable.position().subtract(cameraX, cameraY, cameraZ).lengthSqr() < 1024;
     }
 
+    @Override
+    public int getPackedOverlay(GasterBlaster animatable, float u, float partialTick) {
+        return OverlayTexture.NO_OVERLAY;
+    }
 
+    @Override
+    public boolean shouldShowName(@NotNull GasterBlaster animatable) {
+        if(animatable.shouldShowName()){
+            return super.shouldShowName(animatable);
+        }else{
+            return false;
+        }
+    }
 
     public static class GasterBlasterEyesLayer<T extends Entity & GeoAnimatable & IGasterBlaster> extends AnimatedGlowingLayer<T> {
         public GasterBlasterEyesLayer(GeoRenderer<T> entityRendererIn) {

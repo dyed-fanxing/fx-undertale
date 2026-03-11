@@ -206,18 +206,18 @@ public class SansAi {
     private static AttackSchedulerBehavior<Sans> createPersistentSkillBehavior() {
         int[] delay = new int[3];
         return new AttackSchedulerBehavior<>(List.of(
-                new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
-                    if (tick == 4) {
-                        delay[0] = a.shootAimedBarrage(t);
-                    }
-                    return tick > 30 + delay[0];
-                }).weight((a, t) -> WeightMath.linearIncrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4))),
-                new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
-                    if (tick == 4) {
-                        delay[1] = a.shootForwardBarrage(t);
-                    }
-                    return tick > 30 + delay[1];
-                }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4))),
+//                new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
+//                    if (tick == 4) {
+//                        delay[0] = a.shootAimedBarrage(t);
+//                    }
+//                    return tick > 30 + delay[0];
+//                }).weight((a, t) -> WeightMath.linearIncrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4))),
+//                new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
+//                    if (tick == 4) {
+//                        delay[1] = a.shootForwardBarrage(t);
+//                    }
+//                    return tick > 30 + delay[1];
+//                }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4))),
                 new AttackNode<Sans>((byte) 10, 200, (a, t, tick) -> {
                     if (tick == 0) {
                         delay[2] = a.controlGBAim(t);
@@ -235,8 +235,8 @@ public class SansAi {
                     }
                     return distanceWeight * speedFactor;
                 })
-//        ), (a) -> List.of(), MemoryModuleTypes.COOLDOWN_2.get()
-        ), (a) -> List.of(persistentGBSkill()), MemoryModuleTypes.COOLDOWN_2.get()
+        ), (a) -> List.of(), MemoryModuleTypes.COOLDOWN_2.get()
+//        ), (a) -> List.of(persistentGBSkill()), MemoryModuleTypes.COOLDOWN_2.get()
         ) {
             @Override
             protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {

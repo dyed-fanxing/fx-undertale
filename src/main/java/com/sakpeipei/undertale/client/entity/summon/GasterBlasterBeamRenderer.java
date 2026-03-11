@@ -6,7 +6,6 @@ import com.sakpeipei.undertale.Config;
 import com.sakpeipei.undertale.common.RenderTypes;
 import com.sakpeipei.undertale.common.ResourceLocations;
 import com.sakpeipei.undertale.entity.summon.GasterBlaster;
-import com.sakpeipei.undertale.entity.summon.GasterBlasterLiving;
 import com.sakpeipei.undertale.utils.RenderUtils;
 import com.sakpeipei.undertale.utils.RotUtils;
 import net.minecraft.client.renderer.LightTexture;
@@ -143,57 +142,5 @@ public class GasterBlasterBeamRenderer {
             poseStack.popPose();
         }
     }
-
-
-    /**
-     * 渲染Pro GB
-     *
-     * @param partialTick 部分刻时间（用于平滑动画）
-     */
-    public static void render(GasterBlasterLiving animatable, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int[][] color) {
-        poseStack.pushPose(); // 在这里压栈
-        float size = animatable.getSize();
-        float radius = size * 0.5f;
-        int segments = Config.COMMON.segments.getAsInt();
-        float partialSize = 0f;
-        int fireTick = animatable.getFireTick();
-        int shotTick = animatable.getShotTick();
-        int decayTick = animatable.getDecayTick();
-        int discardTick = decayTick + 3;
-        float animTick = animatable.tickCount + partialTick;
-
-        poseStack.translate(0, animatable.getEyeHeight(), 0);
-        if (animatable.tickCount < fireTick) {
-            partialSize = Mth.lerp(animTick/ fireTick, 0, radius * 0.75f);
-            poseStack.pushPose();
-            RenderUtils.renderSphere(poseStack.last(), buffer.getBuffer(BEAM_NO_TRANSPARENCY), partialSize * 0.5f, segments, color[0][0], color[0][1], color[0][2], color[0][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
-            poseStack.popPose();
-            RenderUtils.renderSphere(poseStack.last(), buffer.getBuffer(BEAM_ENERGY_SWIRL), partialSize, segments, color[1][0], color[1][1], color[1][2], color[1][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
-
-            renderLightRay(poseStack,buffer,animatable.getUUID(),radius*(animatable.isFollow()?1.5f:1f),animTick,partialSize,color);
-        } else {
-            float offset = animTick * 0.3f;
-            float length = animatable.getLength();
-            poseStack.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(partialTick, -animatable.yRotO, -animatable.getYRot())));
-            // 要渲染的胶囊体默认是竖向的Y轴的，需要旋转到Z轴
-            poseStack.mulPose(Axis.XP.rotationDegrees(Mth.lerp(partialTick, animatable.xRotO + 90f, animatable.getXRot() + 90f)));
-            if (animatable.tickCount < shotTick) {
-                partialSize = Mth.lerp(animTick / shotTick, 0, radius);
-            } else if (animatable.tickCount < decayTick) {
-                partialSize = radius + (float) Math.sin(animTick * 0.5f) * 0.05f;
-            } else if (animatable.tickCount < discardTick) {
-                partialSize = Mth.lerp(animTick / discardTick, radius, 0);
-            }
-            poseStack.pushPose();
-            RenderUtils.renderCapsule(poseStack.last(), buffer.getBuffer(BEAM_NO_TRANSPARENCY_TRIANGLE_STRIP), buffer.getBuffer(BEAM_NO_TRANSPARENCY), partialSize * 0.5f, length, segments, color[0][0], color[0][1], color[0][2], color[0][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
-            poseStack.popPose();
-            RenderUtils.renderCapsule(poseStack.last(),
-                    buffer.getBuffer(RenderTypes.energySwirlTriangleStrip(ResourceLocations.BEAM_FLOW_TEXTURE, 0, -offset)),
-                    buffer.getBuffer(RenderType.energySwirl(ResourceLocations.BEAM_FLOW_TEXTURE, 0, -offset)),
-                    partialSize, length, segments, color[1][0], color[1][1], color[1][2], color[1][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT, 1f, length);
-        }
-        poseStack.popPose();
-    }
-
 
 }

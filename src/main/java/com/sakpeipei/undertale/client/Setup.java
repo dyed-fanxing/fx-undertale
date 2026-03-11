@@ -1,15 +1,12 @@
 package com.sakpeipei.undertale.client;
 
 import com.sakpeipei.undertale.Undertale;
+import com.sakpeipei.undertale.client.entity.summon.*;
 import com.sakpeipei.undertale.client.particle.BallGrowParticle;
 import com.sakpeipei.undertale.client.particle.CustomWhiteAshParticle;
 import com.sakpeipei.undertale.client.particle.LightStreakParticle;
 import com.sakpeipei.undertale.client.entity.FlyingBoneRender;
 import com.sakpeipei.undertale.client.entity.boss.SansRender;
-import com.sakpeipei.undertale.client.entity.summon.GasterBlasterRender;
-import com.sakpeipei.undertale.client.entity.summon.GroundBoneRender;
-import com.sakpeipei.undertale.client.entity.summon.LateralBoneRender;
-import com.sakpeipei.undertale.client.entity.summon.MovingGroundBoneRender;
 import com.sakpeipei.undertale.client.screen.GravitySelectionScreen;
 import com.sakpeipei.undertale.net.packet.*;
 import com.sakpeipei.undertale.registry.EntityTypes;
@@ -40,7 +37,6 @@ public class Setup {
     @SubscribeEvent
     public static void registerRendererHandler(final EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(EntityTypes.GASTER_BLASTER.get(), GasterBlasterRender::new);
-//        event.registerEntityRenderer(EntityTypes.GASTER_BLASTER_PRO.get(), GasterBlasterProRender::new);
         event.registerEntityRenderer(EntityTypes.SANS.get(), SansRender::new);
         event.registerEntityRenderer(EntityTypes.GROUND_BONE.get(), GroundBoneRender::new);
         event.registerEntityRenderer(EntityTypes.MOVING_GROUND_BONE.get(), MovingGroundBoneRender::new);

@@ -140,9 +140,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
         return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
     }
     @Override
-    protected @NotNull Brain<?> makeBrain(@NotNull Dynamic<?> dynamic) {
-        return SansAi.initBrain(this, this.brainProvider().makeBrain(dynamic));
-    }
+    protected @NotNull Brain<?> makeBrain(@NotNull Dynamic<?> dynamic) {return SansAi.initBrain(this, this.brainProvider().makeBrain(dynamic));}
     public @NotNull Brain<Sans> getBrain() { return (Brain<Sans>) super.getBrain();}
 
 
@@ -964,7 +962,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
     public void summonGBAroundSelf(LivingEntity target, int count, float size) {
         for (int i = 0; i < count; i++) {
             int attempts = 0;
-            GasterBlaster gb = createGasterBlaster(size, 17, 28);
+            GasterBlaster gb = createGasterBlaster(size);
             do {
                 gb.setPos(this.getEyePosition().subtract(target.getEyePosition()).scale(0.5).add(this.getEyePosition()).add(RotUtils.getWorldPos(
                         this.random.nextDouble() * 16 - 8,
@@ -992,7 +990,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
      */
     public void summonGBAroundTarget(LivingEntity target, int count, float offsetAngle) {
         int difficulty = this.level().getDifficulty().getId();
-        summonGBAroundTarget(target, count, target.getBbWidth() * 16, offsetAngle, 360f / count, 1.0f + (2 + difficulty - count) * 0.5f, 17, 28);
+        summonGBAroundTarget(target, count, target.getBbWidth() * 16, offsetAngle, 360f / count, 1.0f + (2 + difficulty - count) * 0.5f);
     }
 
     /**
@@ -1000,7 +998,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
      */
     public void summonGBFront(LivingEntity target, int count, float angleStep, int charge) {
         int difficulty = this.level().getDifficulty().getId();
-        summonGBAroundTarget(target, count, this.distanceTo(target)*0.9f, (1 - count) * angleStep * 0.5f, angleStep, 1.0f + (1 + difficulty + getFactor() - count) * 0.25f, charge, 28);
+        summonGBAroundTarget(target, count, this.distanceTo(target)*0.9f, (1 - count) * angleStep * 0.5f, angleStep, 1.0f + (1 + difficulty + getFactor() - count) * 0.25f);
     }
 
     /**
@@ -1011,11 +1009,11 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
      * @param offsetAngle 初始偏移角度（度）
      * @param angleStep   角度步长（度）
      */
-    public void summonGBAroundTarget(LivingEntity target, int count, float radius, float offsetAngle, float angleStep, float size, int charge, int shot) {
+    public void summonGBAroundTarget(LivingEntity target, int count, float radius, float offsetAngle, float angleStep, float size) {
         Vec3 targetPos = new Vec3(target.getX(), target.getY(0.5f), target.getZ());
         float currentAngle = offsetAngle; // 从指定角度开始
         for (int i = 0; i < count; i++, currentAngle += angleStep) {
-            GasterBlaster gb = createGasterBlaster(size, charge, shot);
+            GasterBlaster gb = createGasterBlaster(size);
             // 计算圆形上的位置
             double xOffset = Math.sin(currentAngle * Mth.DEG_TO_RAD) * radius;
             double zOffset = -Math.cos(currentAngle * Mth.DEG_TO_RAD) * radius;
@@ -1028,15 +1026,16 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
         int factor = getFactor();
         int difficulty = getDifficulty();
         float size = 0.5f+difficulty*0.3334f+factor*0.5f;
-        GasterBlaster gb = createGasterBlaster(size, (20-factor*10), (int) (100*size)).follow(new Vec3(0, this.getBbHeight()*0.5f, 1))
+        GasterBlaster gb = new GasterBlaster(level(),this,getAttackDamage(),size, (34-factor*17), (int) (100*size),100).follow(new Vec3(0, this.getBbHeight()*0.5f, 1))
                 .aimSmoothSpeed(0.1f+difficulty*0.02f+factor*0.04f);
+        gb.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(UUID.randomUUID().toString(), (byte) 10));
         gb.aim(target);
         this.level().addFreshEntity(gb);
         return gb.getDecayTick();
     }
 
-    public GasterBlaster createGasterBlaster(float size, int charge, int shot) {
-        GasterBlaster gb = new GasterBlaster(this.level(), this,getAttackDamage(), size, charge, shot);
+    public GasterBlaster createGasterBlaster(float size) {
+        GasterBlaster gb = new GasterBlaster(this.level(), this,getAttackDamage(), size);
         gb.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(UUID.randomUUID().toString(), (byte) 10));
         return gb;
     }

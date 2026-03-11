@@ -1,7 +1,6 @@
 package com.sakpeipei.undertale.entity.summon;
 
 import com.google.common.base.MoreObjects;
-import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -11,11 +10,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,11 +41,6 @@ public abstract class LivingSummons extends LivingEntity implements TraceableEnt
 
     public Entity getEffectSource() {
         return MoreObjects.firstNonNull(this.getOwner(), this);
-    }
-
-    protected boolean ownedBy(Entity entity) {
-        if(entity == null) return false;
-        return this.ownerUUID.equals(entity.getUUID());
     }
 
     public UUID getOwnerUUID() {

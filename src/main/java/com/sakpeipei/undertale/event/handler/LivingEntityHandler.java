@@ -2,7 +2,7 @@ package com.sakpeipei.undertale.event.handler;
 
 import com.sakpeipei.undertale.Undertale;
 import com.sakpeipei.undertale.entity.boss.sans.Sans;
-import com.sakpeipei.undertale.entity.summon.GasterBlasterLiving;
+import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import com.sakpeipei.undertale.registry.EntityTypes;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -26,7 +26,7 @@ public class LivingEntityHandler {
     @SubscribeEvent
     public static void onAttributeCreate(EntityAttributeCreationEvent event) {
         event.put(EntityTypes.SANS.get(), Sans.createAttributes().build());
-        event.put(EntityTypes.GASTER_BLASTER_LIVING.get(), GasterBlasterLiving.createAttributes().build());
+        event.put(EntityTypes.GASTER_BLASTER.get(), GasterBlaster.createAttributes().build());
     }
 
     /**
