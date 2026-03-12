@@ -1,0 +1,37 @@
+{
+    "entity.enemy_encounter_attack_tip": {
+        "sounds": [
+            "fx_undertale:enemy_encounter_attack_tip"
+        ]
+    },
+    "entity.sans.slam": {
+        "sounds": [
+            "fx_undertale:sans/slam"
+        ]
+    },
+    "entity.sans.bone_spine": {
+        "sounds": [
+            "fx_undertale:sans/bone_spine"
+        ]
+    },
+    "entity.sans.teleport_time_jump": {
+        "sounds": [
+            "fx_undertale:sans/teleport_time_jump"
+        ]
+    },
+    "entity.gaster_blaster.whole": {
+        "sounds": [
+            "fx_undertale:gaster_blaster/whole"
+        ]
+    },
+    "entity.gaster_blaster.charge": {
+        "sounds": [
+            "fx_undertale:gaster_blaster/charge"
+        ]
+    },
+    "entity.gaster_blaster.fire": {
+        "sounds": [
+            "fx_undertale:gaster_blaster/fire"
+        ]
+    }
+}

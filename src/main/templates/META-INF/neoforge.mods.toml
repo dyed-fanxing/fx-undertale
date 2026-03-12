@@ -38,7 +38,7 @@ description = '''${mod_description}'''
 enumExtensions = "META-INF/enumextensions.json"
 # [[mixins]] 块允许您向 FML 声明您的 mixin 配置，以便加载它。
 [[mixins]]
-config = "undertale.mixins.json"
+config = "fx_undertale.mixins.json"
 
 # [[accessTransformers]] 块允许您声明您的 AT 文件位置。
 # 如果省略此块，将尝试回退从 META-INF/accesstransformer.cfg 加载 AT
