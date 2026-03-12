@@ -1,8 +1,8 @@
 {
     "values": [
-        "undertale:karma",
-        "undertale:frame",
-        "undertale:frame_blockable",
-        "undertale:gaster_blaster_beam"
+        "fx_undertale:karma",
+        "fx_undertale:frame",
+        "fx_undertale:frame_blockable",
+        "fx_undertale:gaster_blaster_beam"
     ]
 }
