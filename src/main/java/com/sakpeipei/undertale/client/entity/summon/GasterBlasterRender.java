@@ -75,11 +75,6 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     }
 
     @Override
-    public int getPackedOverlay(GasterBlaster animatable, float u, float partialTick) {
-        return OverlayTexture.NO_OVERLAY;
-    }
-
-    @Override
     public boolean shouldShowName(@NotNull GasterBlaster animatable) {
         if(animatable.shouldShowName()){
             return super.shouldShowName(animatable);

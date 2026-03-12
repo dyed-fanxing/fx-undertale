@@ -53,7 +53,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     private static final int CD_TICK = 20; // 1秒
-
+    private static final int MAX_USE_DURATION = 200;
 
     public GasterBlasterItem(Properties properties) {
         super(properties.stacksTo(1));
@@ -61,7 +61,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
 
     @Override
     public int getUseDuration(@NotNull ItemStack stack, @NotNull LivingEntity entity) {
-        return 200;
+        return MAX_USE_DURATION;
     }
 
     /**

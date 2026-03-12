@@ -55,7 +55,7 @@ import java.util.Objects;
 
 public class GasterBlaster extends LivingSummons implements Mountable,IGasterBlaster, IEntityWithComplexSpawn, GeoEntity {
     private static final Logger log = LoggerFactory.getLogger(GasterBlaster.class);
-
+    private static final int DIE_TICK = 400;
 
     protected Vec3 relativePos;         // 跟随拥有者的相对位置
     protected boolean isFollow;
@@ -88,13 +88,13 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     }
 
     public GasterBlaster(Level level, LivingEntity owner) {
-        this(level, owner,1.0f, 1.0f, 17,  28,10);
+        this(level, owner,1.0f, 1.0f, 17,  28,20);
     }
     public GasterBlaster(Level level, LivingEntity owner,float health) {
         this(level, owner,1.0f, 1.0f, 17,  28,health);
     }
     public GasterBlaster(Level level, LivingEntity owner, float damage, float size) {
-        this(level, owner,damage, size,17,28,10);
+        this(level, owner,damage, size,17,28,20);
     }
     public GasterBlaster(Level level, LivingEntity owner, float damage, float size, int shot) {
         this(level, owner,damage, size,17,shot,100);
@@ -286,6 +286,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
                     if (!player.addItem(itemStack)) {
                         this.spawnAtLocation(itemStack);
                     }
+                    player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER.get(), (int)((1.0f - this.getHealth()/getMaxHealth()) *DIE_TICK));
                 }
                 return InteractionResult.CONSUME;
             }else{
@@ -303,18 +304,6 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         if(damageSource.is(Tags.DamageTypes.IS_ENVIRONMENT)){
             return false;
         }
-        if (!level().isClientSide) {
-            // 生成粒子
-            double halfWidth = this.getBbWidth()*0.5;
-            double halfHeight = this.getBbHeight()*0.5;
-            ((ServerLevel)level()).sendParticles(
-                    ParticleTypes.END_ROD,
-                    this.getX(), this.getY() + this.getBbHeight() * 0.5, this.getZ(),
-                    10, // 数量
-                    halfWidth, halfHeight, halfWidth, // 偏移
-                    0.05 // 速度
-            );
-        }
         return super.hurt(damageSource, damage);
     }
 
@@ -323,8 +312,10 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         if (!this.level().isClientSide) {
             if(isMountable()){
                 if(getOwner() instanceof Player player){
-                    this.spawnAtLocation(ItemTypes.GASTER_BLASTER.get());
-                    player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER.get(), 400);
+                    if(!player.addItem(new ItemStack(ItemTypes.GASTER_BLASTER.get()))){
+                        this.spawnAtLocation(ItemTypes.GASTER_BLASTER.get());
+                    }
+                    player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER.get(), DIE_TICK);
                 }
             }
             this.level().broadcastEntityEvent(this, (byte)60);

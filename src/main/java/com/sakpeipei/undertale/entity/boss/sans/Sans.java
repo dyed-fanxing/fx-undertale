@@ -1022,7 +1022,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
             this.level().addFreshEntity(gb);
         }
     }
-    public int controlGBAim(LivingEntity target) {
+    public GasterBlaster controlGBAim(LivingEntity target) {
         int factor = getFactor();
         int difficulty = getDifficulty();
         float size = 0.5f+difficulty*0.3334f+factor*0.5f;
@@ -1031,7 +1031,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
         gb.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(UUID.randomUUID().toString(), (byte) 10));
         gb.aim(target);
         this.level().addFreshEntity(gb);
-        return gb.getDecayTick();
+        return gb;
     }
 
     public GasterBlaster createGasterBlaster(float size) {

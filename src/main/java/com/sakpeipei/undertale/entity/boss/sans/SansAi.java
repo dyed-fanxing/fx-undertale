@@ -12,6 +12,7 @@ import com.sakpeipei.undertale.entity.ai.sensing.SensorTargeting;
 import com.sakpeipei.undertale.entity.ai.tracker.IgnoringSensorEntityTracker;
 import com.sakpeipei.undertale.entity.mechanism.ColorAttack;
 import com.sakpeipei.undertale.entity.persistentData.SoulMode;
+import com.sakpeipei.undertale.entity.summon.GasterBlaster;
 import com.sakpeipei.undertale.registry.MemoryModuleTypes;
 import com.sakpeipei.undertale.registry.SoundEvnets;
 import com.sakpeipei.undertale.utils.RotUtils;
@@ -204,7 +205,8 @@ public class SansAi {
         };
     }
     private static AttackSchedulerBehavior<Sans> createPersistentSkillBehavior() {
-        int[] delay = new int[3];
+        int[] delay = new int[2];
+        final GasterBlaster[] controlAimGB = {null};
         return new AttackSchedulerBehavior<>(List.of(
 //                new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
 //                    if (tick == 4) {
@@ -220,9 +222,9 @@ public class SansAi {
 //                }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4))),
                 new AttackNode<Sans>((byte) 10, 200, (a, t, tick) -> {
                     if (tick == 0) {
-                        delay[2] = a.controlGBAim(t);
+                        controlAimGB[0] = a.controlGBAim(t);
                     }
-                    return tick > delay[2];
+                    return controlAimGB[0] == null || tick > controlAimGB[0].getDecayTick() || !controlAimGB[0].isAlive();
                 }).weight((a, t) -> {
                     double distanceWeight = WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.7, a.getFollowRange() * 0.5f, 1);
                     double speed = getTargetSpeed(t);

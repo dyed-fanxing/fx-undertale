@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileDeflection;
 import net.minecraft.world.level.ClipContext;
@@ -113,7 +114,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
 
     @Override
     protected boolean canHitEntity(@NotNull Entity entity) {
-        return super.canHitEntity(entity) && !ownedBy(entity);
+        return super.canHitEntity(entity) && !ownedBy(entity) && !(entity instanceof TraceableEntity traceable && traceable.getOwner() == getOwner());
     }
 
     @Override
