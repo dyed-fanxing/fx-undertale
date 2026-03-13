@@ -19,7 +19,7 @@ public class FrameHandler {
     @SubscribeEvent
     public static void onLivingIncomingDamage(LivingIncomingDamageEvent event){
         DamageSource source = event.getSource();
-        if(source.is(DamageTypes.KARMA) || source.is(DamageTypes.FRAME)){
+        if(source.is(DamageTypes.KARMA) || source.is(DamageTypes.FRAME) || source.is(DamageTypes.KARMA_BLOCKABLE)) {
             int tick = 0;
             Iterable<ItemStack> armorSlots = event.getEntity().getArmorSlots();
             // 遍历装备槽位，检测有无延长无敌时间的装备或道具

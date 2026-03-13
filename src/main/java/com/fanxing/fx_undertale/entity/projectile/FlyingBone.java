@@ -88,7 +88,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
         delay--;
         if (delay > 0) {
             // 处理旋转插值
-            if (this.lerpSteps > 0 && Vec3.ZERO.equals(this.getDeltaMovement())) {
+            if (this.level().isClientSide && this.lerpSteps > 0 && Vec3.ZERO.equals(this.getDeltaMovement())) {
                 this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
                 this.lerpSteps--;
             }
@@ -133,13 +133,10 @@ public class FlyingBone extends AbstractPenetrableProjectile implements GeoEntit
                 damageSource = this.damageSources().mobProjectile(this, (LivingEntity) owner);
             }
             if (!livingTarget.hurt(damageSource, damage)) {
-                // TODO 如果是因为无敌导致的，则不应该执行，因为是穿透的，因为继续走，而不是被阻挡，待判定要不要用这个
                 if (livingTarget.isBlocking()) {
                     this.setNoGravity(false);
                     this.deflect(ProjectileDeflection.MIRROR_DEFLECT, target, this.getOwner(), false);
-                    if (!this.level().isClientSide) {
-                        this.setDeltaMovement(this.getDeltaMovement().scale(0.2));
-                    }
+                    this.setDeltaMovement(this.getDeltaMovement().scale(0.2));
                 }
             }
         }

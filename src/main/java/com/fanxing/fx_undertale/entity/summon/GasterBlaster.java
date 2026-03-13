@@ -324,15 +324,6 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     }
 
     @Override
-    public boolean isCustomNameVisible() {
-        return false;
-    }
-
-    @Override
-    public boolean shouldShowName() {
-        return false;
-    }
-    @Override
     public void knockback(double p_147241_, double p_147242_, double p_147243_) {
     }
 

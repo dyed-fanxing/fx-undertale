@@ -3,14 +3,18 @@ package com.fanxing.fx_undertale.mixin;
 import com.fanxing.fx_undertale.entity.Mountable;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Player.class)
 public abstract class PlayerWantsToStopRidingMixin {
+    private static final Logger log = LoggerFactory.getLogger(PlayerWantsToStopRidingMixin.class);
     @Unique
     private long undertale$lastShiftPressTime = 0;
     @Unique
@@ -46,6 +50,12 @@ public abstract class PlayerWantsToStopRidingMixin {
             }
             // 更新按键状态
             undertale$shiftWasPressed = isShiftPressed;
+        }
+    }
+    @Inject(method = "handleEntityEvent", at = @At("HEAD"))
+    public void handleEntityEvent(byte event, CallbackInfo ci){
+        if(event == 29){
+            log.info("盾牌播放声音");
         }
     }
 }

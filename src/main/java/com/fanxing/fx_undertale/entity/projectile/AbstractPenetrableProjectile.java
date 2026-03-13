@@ -25,6 +25,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import net.neoforged.neoforge.event.EventHooks;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +38,7 @@ import java.util.List;
  * 与 AbstractHurtingProjectile的区别在于，可穿透攻击，即会检测路径上多个可命中实体，而不是第一个
  */
 public abstract class AbstractPenetrableProjectile extends Projectile implements IEntityWithComplexSpawn {
+    private static final Logger log = LoggerFactory.getLogger(AbstractPenetrableProjectile.class);
     public float accelerationPower;
 
     public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level) {
@@ -67,7 +70,9 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
             for (HitResult hitResult : hitResults) {
                 if (hitResult.getType() != HitResult.Type.MISS && !EventHooks.onProjectileImpact(this, hitResult)) {
                     ProjectileDeflection projectileDeflection = this.hitTargetOrDeflectSelf(hitResult);
+                    this.hasImpulse = true;
                     if(projectileDeflection != ProjectileDeflection.NONE){
+                        log.info("被阻挡：{}", projectileDeflection);
                         break;
                     }
                 }
@@ -192,7 +197,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
     }
 
     protected ParticleOptions getTrailParticle() {
-        return ParticleTypes.WHITE_ASH;
+        return com.fanxing.fx_undertale.registry.ParticleTypes.CUSTOM_WHITE_ASH.get();
     }
 
 }

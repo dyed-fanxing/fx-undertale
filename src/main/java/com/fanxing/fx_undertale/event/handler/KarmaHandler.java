@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
@@ -31,20 +32,21 @@ public class KarmaHandler {
     private static final byte[] DAMAGE_INTERVAL_FRAMES = {30, 15, 5, 2, 1};
 
     /**
-     * 存活实体进入伤害事件
+     * 存活实体受伤后
      */
     @SubscribeEvent
-    public static void onLivingEntityIncomingDamage(LivingIncomingDamageEvent event){
+    public static void onLivingDamagePost(LivingDamageEvent.Post event){
         LivingEntity entity = event.getEntity();
         if (entity.level().isClientSide) return; // 只在服务端处理
         DamageSource source = event.getSource();
         Entity attacker = source.getEntity();
-        if (!(attacker instanceof Sans)) return; // 只有Sans攻击才触发
-
-        // 获取攻击实体（可能是投射物或直接攻击）
         Entity directEntity = source.getDirectEntity();
-        if (directEntity == null) return;
-
+        // Sans触发，直接攻击实体不为null，盾牌阻挡的伤害 > 0且剩余伤害 <= 0
+        // key 为什么不用markHurt，因为为了玩家不被GB炮黏住，
+        // 由于markHurt标记后，会重置玩家速度，导致玩家在被帧伤等高频伤害攻击时候走不动
+        // 所以对帧伤类型伤害使用no_impact标签，该标签会在hurt方法跳过markHurt，导致markHurt标记不上，所以判断不了
+        // 而且这个事件的时机，markHurt还没有设置呢，所以更用不了了
+        if (!(attacker instanceof Sans) || directEntity == null || (event.getBlockedDamage()>0&&event.getNewDamage() <=0)) return;
         // 获取攻击数据（投射物上的KaramsAttackData）
         KaramJudge attackData = directEntity.getData(AttachmentTypes.KARMA_ATTACK);
         String uuid = attackData.getUUID();

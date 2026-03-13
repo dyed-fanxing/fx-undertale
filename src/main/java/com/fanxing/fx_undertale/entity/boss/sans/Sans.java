@@ -125,6 +125,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
     private ServerBossEvent bossEvent;
     private final Set<ServerPlayer> trackingPlayers = new HashSet<>();
 
+    private GasterBlaster controllerAimGB = null;
+
     public Sans(EntityType<? extends Monster> type, Level level) {
         super(type, level);
 //        maxStamina = level.getDifficulty().getId() * 5;
@@ -342,6 +344,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
 
     private void meleeTeleport(Entity entity) {
         RandomSource random = this.random;
+        double followRangeBaseValue = this.getAttributeBaseValue(Attributes.FOLLOW_RANGE);
         for (int i = 0; i < 8; i++) {
             float rand = random.nextFloat();
             float baseAngle = entity.getYHeadRot() - 90f;
@@ -356,7 +359,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
             // 在选定方向尝试传送
             for (int j = 0; j < 8; j++) {
                 float angle = baseAngle + (random.nextFloat() - 0.5f) * 90f; // 90度范围内随机
-                double distance = getFollowRange()*SansAi.MID_RANGE_FACTOR - random.nextDouble() * 4.0;
+                double distance = followRangeBaseValue*SansAi.MID_RANGE_FACTOR - random.nextDouble() * 4.0;
                 double targetX = entity.getX() + Mth.cos(angle * Mth.DEG_TO_RAD) * distance;
                 double targetY = entity.getY() + random.nextDouble() * 16 - 8;
                 double targetZ = entity.getZ() + Mth.sin(angle * Mth.DEG_TO_RAD) * distance;
@@ -365,7 +368,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
                 Vec3 to = entity.getEyePosition();
                 if (level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this)).getType() == HitResult.Type.MISS) {
                     if (randomTeleport(targetX, targetY, targetZ,true)) {
-                        log.info("followRange：{},近战传送距离：{}",getFollowRange(),distance);
+                        log.info("followRangeBaseValue：{},近战传送距离：{}",followRangeBaseValue,distance);
                         return;
                     }
                 }
@@ -408,11 +411,9 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
     public float getMaxStamina() {
         return maxStamina;
     }
-
     public float getStamina() {
         return this.entityData.get(STAMINA);
     }
-
     public void setStamina(float stamina) {
         this.entityData.set(STAMINA, stamina);
     }
@@ -429,9 +430,12 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
         this.entityData.set(IS_EYE_BLINK, blink);
     }
 
+
     public Vec3 getPhantomStartPos() { return phantomStartPos; }
     public int getPhantomStartTick() { return phantomStartTick; }
     public boolean isPhantomActive() { return phantomActive; }
+
+
     @Override
     public byte getAnimID() {
         return animId;
@@ -440,6 +444,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
     public void setAnimID(byte id) {
         this.animId = id;
     }
+
+
     @Override
     public @Nullable LivingEntity getTarget() {
         if(this.level().isClientSide){
@@ -455,6 +461,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
         this.entityData.set(TARGET_ID, id);
     }
 
+
     public int getFactor(){
         return getPhaseID() == SECOND_PHASE?1:0;
     }
@@ -466,6 +473,13 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
     }
     public float getAttackDamage(){
         return (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
+    }
+
+    public void setControllerAimGB(GasterBlaster gb) {
+        this.controllerAimGB = gb;
+    }
+    public GasterBlaster getControllerAimGB() {
+        return controllerAimGB;
     }
 
     @Override
@@ -1122,18 +1136,16 @@ public class Sans extends AbstractUTMonster implements GeoEntity, IAnimatable, I
                 case 0, 1, 2, 3, 4, 5 -> controller.setAnimation(THROW_ANIMATIONS[animId]);
                 case 6 -> controller.setAnimation(isFirstPhase?ANIM_CAST_LEFT:ANIM_CAST);
                 case 7 -> controller.setAnimation(isFirstPhase?ANIM_CAST_CIRCLE_LEFT:ANIM_CAST_CIRCLE);
-                case 8 -> controller.setAnimation(isFirstPhase ? ANIM_BONE_PROJECTILE_LEFT : ANIM_BONE_PROJECTILE);
-                case 9 -> controller.setAnimation(isFirstPhase ? ANIM_BONE_SWEEP_LEFT : ANIM_BONE_SWEEP);
+                case 8 -> controller.setAnimation(isFirstPhase?ANIM_BONE_PROJECTILE_LEFT : ANIM_BONE_PROJECTILE);
+                case 9 -> controller.setAnimation(isFirstPhase?ANIM_BONE_SWEEP_LEFT : ANIM_BONE_SWEEP);
                 case 10 -> {
                     controller.setAnimation(ANIM_GB_FOLLOW);
                     controller.setAnimationSpeed(0.5*(1+getFactor()));
                 }
             }
-            log.info("执行动画ID：{}",animId);
             animId = -2;
-            log.info("清理动画ID：{}",animId);
             controller.forceAnimationReset();
-            return PlayState.CONTINUE;
+                return PlayState.CONTINUE;
         });
         controllers.add(
                 DefaultAnimations.genericWalkIdleController(this),

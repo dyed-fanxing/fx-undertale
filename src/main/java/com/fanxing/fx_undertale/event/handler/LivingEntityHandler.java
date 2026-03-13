@@ -4,11 +4,14 @@ import com.fanxing.fx_undertale.FxUndertale;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.registry.EntityTypes;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +51,13 @@ public class LivingEntityHandler {
 //        );
     }
 
+    @SubscribeEvent
+    public static void onDamagePost(LivingShieldBlockEvent event) {
+        LivingEntity entity = event.getEntity();
+        if(entity instanceof Player){
+            log.info("盾牌事件：{}，阻挡伤害：{}，伤害来源：{}，阻挡时的new伤害：{}",event.getBlocked(),event.getBlockedDamage(),event.getDamageSource(),event.getDamageContainer().getNewDamage());
+        }
+    }
 
 
 }

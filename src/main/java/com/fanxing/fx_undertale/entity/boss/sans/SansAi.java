@@ -105,6 +105,16 @@ public class SansAi {
                                     mob.teleportTowards(t);
                                 }
                             }
+                            @Override
+                            protected void handleMidRange(Sans mob, LivingEntity target,double disSqr){
+                                GasterBlaster gb = mob.getControllerAimGB();
+                                if(gb == null){
+                                    super.handleMidRange(mob, target, disSqr);
+                                }else if(gb.isRemoved()){
+                                    mob.setControllerAimGB(null);
+                                    super.handleMidRange(mob, target, disSqr);
+                                }
+                            }
                         },1)
                 ))
         ),MemoryModuleType.ATTACK_TARGET);
@@ -179,52 +189,12 @@ public class SansAi {
     private static AttackSchedulerBehavior<Sans> createComboSkillBehavior() {
         int[] delay = new int[1];
         return new AttackSchedulerBehavior<>(List.of(
-                new AttackNode<Sans>((byte) 6, 400, (a, t, tick) -> {
-                    if (tick == 4) {
-                        int difficulty = a.level().getDifficulty().getId();
-                        delay[0] = 1;
-                        for (int i = 0; i < 5; i++) {
-                            a.summonGroundBoneWall(t, ColorAttack.WHITE, 1.0f, LocalDirection.FRONT, delay[0], a.getFollowRange() * 0.5f);
-                            delay[0] += 10 - difficulty - a.getFactor();
-                            a.summonGroundBoneWall(t, ColorAttack.AQUA, 5.0f, LocalDirection.FRONT, delay[0], a.getFollowRange() * 0.5f);
-                            delay[0] += 14 - difficulty - a.getFactor();
-                        }
-                    }
-                    if (tick >= delay[0] + 10) {
-                        return true;
-                    }
-                    return false;
-                }).condition((a, t) -> t.onGround() && t.closerThan(a, a.getFollowRange() * 0.7f))
-        ), MemoryModuleTypes.COOLDOWN_3.get()
-        ) {
-            @Override
-            protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
-                this.totalCooldown -= (int) (totalCooldown * 0.3f * mob.getFactor());
-                super.stop(level, mob, gameTime);
-            }
-        };
-    }
-    private static AttackSchedulerBehavior<Sans> createPersistentSkillBehavior() {
-        int[] delay = new int[2];
-        final GasterBlaster[] controlAimGB = {null};
-        return new AttackSchedulerBehavior<>(List.of(
-//                new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
-//                    if (tick == 4) {
-//                        delay[0] = a.shootAimedBarrage(t);
-//                    }
-//                    return tick > 30 + delay[0];
-//                }).weight((a, t) -> WeightMath.linearIncrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4))),
-//                new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
-//                    if (tick == 4) {
-//                        delay[1] = a.shootForwardBarrage(t);
-//                    }
-//                    return tick > 30 + delay[1];
-//                }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4))),
                 new AttackNode<Sans>((byte) 10, 200, (a, t, tick) -> {
                     if (tick == 0) {
-                        controlAimGB[0] = a.controlGBAim(t);
+                        a.setControllerAimGB(a.controlGBAim(t));
                     }
-                    return controlAimGB[0] == null || tick > controlAimGB[0].getDecayTick() || !controlAimGB[0].isAlive();
+                    GasterBlaster gb = a.getControllerAimGB();
+                    return gb == null || tick > gb.getDecayTick() || !gb.isRemoved();
                 }).weight((a, t) -> {
                     double distanceWeight = WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.7, a.getFollowRange() * 0.5f, 1);
                     double speed = getTargetSpeed(t);
@@ -237,6 +207,47 @@ public class SansAi {
                     }
                     return distanceWeight * speedFactor;
                 })
+//                ,
+//                new AttackNode<Sans>((byte) 6, 400, (a, t, tick) -> {
+//                    if (tick == 4) {
+//                        int difficulty = a.level().getDifficulty().getId();
+//                        delay[0] = 1;
+//                        for (int i = 0; i < 5; i++) {
+//                            a.summonGroundBoneWall(t, ColorAttack.WHITE, 1.0f, LocalDirection.FRONT, delay[0], a.getFollowRange() * 0.5f);
+//                            delay[0] += 10 - difficulty - a.getFactor();
+//                            a.summonGroundBoneWall(t, ColorAttack.AQUA, 5.0f, LocalDirection.FRONT, delay[0], a.getFollowRange() * 0.5f);
+//                            delay[0] += 14 - difficulty - a.getFactor();
+//                        }
+//                    }
+//                    if (tick >= delay[0] + 10) {
+//                        return true;
+//                    }
+//                    return false;
+//                }).condition((a, t) -> t.onGround() && t.closerThan(a, a.getFollowRange() * 0.7f))
+        ), MemoryModuleTypes.COOLDOWN_3.get()
+        ) {
+            @Override
+            protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
+                this.totalCooldown -= (int) (totalCooldown * 0.3f * mob.getFactor());
+                super.stop(level, mob, gameTime);
+            }
+        };
+    }
+    private static AttackSchedulerBehavior<Sans> createPersistentSkillBehavior() {
+        int[] delay = new int[2];
+        return new AttackSchedulerBehavior<>(List.of(
+                new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
+                    if (tick == 4) {
+                        delay[0] = a.shootAimedBarrage(t);
+                    }
+                    return tick > 30 + delay[0];
+                }).weight((a, t) -> WeightMath.linearIncrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4)))
+//                new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
+//                    if (tick == 4) {
+//                        delay[1] = a.shootForwardBarrage(t);
+//                    }
+//                    return tick > 30 + delay[1];
+//                }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4))),
         ), (a) -> List.of(), MemoryModuleTypes.COOLDOWN_2.get()
 //        ), (a) -> List.of(persistentGBSkill()), MemoryModuleTypes.COOLDOWN_2.get()
         ) {
@@ -280,68 +291,68 @@ public class SansAi {
                 new AttackNode<>((byte) 8, 3, Sans::shootBoneRingVolley, 30, 40)
                         .weight((a,t)-> WeightMath.linearIncrease(a.distanceTo(t),0,a.getFollowRange())),
                 new AttackNode<Sans>((byte) 9, 3, (a, t) -> a.shootArcSweepVolley(), 30, 40)
-                        .weight((a,t)->WeightMath.linearDecrease(a.distanceTo(t),0,a.getFollowRange())*(1 + getTargetSpeed(t)*2)),
+                        .weight((a,t)->WeightMath.linearDecrease(a.distanceTo(t),0,a.getFollowRange())*(1 + getTargetSpeed(t)*2))
 
                 // GB
-                new AttackNode<Sans>((byte) 6, 4, (a, t) -> {
-                    int difficulty = a.level().getDifficulty().getId();
-                    a.summonGBAroundSelf(t, 1 + a.getFactor() + difficulty / 3, 1.0f + difficulty * 0.25f);
-                }, 30, 50).weight((a, t) -> {
-                    double distanceWeight = WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange(), a.getFollowRange() * 0.625, 2);
-                    double speed = getTargetSpeed(t);
-                    double speedFactor;
-                    double k = 1.0, baseSpeed = 0.15;
-                    if (speed <= baseSpeed) {
-                        speedFactor = 1 + k * (baseSpeed - speed);
-                    } else {
-                        speedFactor = baseSpeed / speed;
-                    }
-                    return distanceWeight * speedFactor;
-                }),
-                new AttackNode<Sans>((byte) 6, 4, Sans::summonGBAroundTarget, 30, 50).weight((a, t) -> {
-                    double distanceWeight = 16;
-                    double speed = getTargetSpeed(t);
-                    double speedFactor;
-                    double k = 1.5, baseSpeed = 0.15;
-                    if (speed <= baseSpeed) {
-                        speedFactor = 1 + k * (baseSpeed - speed);
-                    } else {
-                        speedFactor = baseSpeed / speed;
-                    }
-                    return distanceWeight * speedFactor;
-                }),
-                new AttackNode<Sans>((byte) 6, 4, (a, t) -> {
-                    int difficulty = a.level().getDifficulty().getId();
-                    int count = 1 + a.getRandom().nextInt(1 + difficulty + a.getFactor());
-                    a.summonGBFront(t, count, 60f / count, 17);
-                }, 30, 50).weight((a, t) -> {
-                    double distanceWeight = WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.7, a.getFollowRange() * CLOSE_RANGE_FACTOR, 2);
-                    double speed = getTargetSpeed(t);
-                    double speedFactor;
-                    double k = 1.0, baseSpeed = 0.15;
-                    if (speed <= baseSpeed) {
-                        speedFactor = 1 + k * (baseSpeed - speed);
-                    } else {
-                        speedFactor = baseSpeed / speed;
-                    }
-                    return distanceWeight * speedFactor;
-                }),
-
-//                // 地面
-                new AttackNode<Sans>((byte) 6,50,(a,t,tick)->{
-                    if(tick == 4){
-                        a.summonGroundBoneSpineAtSelf();
-                    }
-                    return tick>=20;
-                }).condition((a, t) -> t.getY()-a.getY() <= 1.0f+(a.getMaxStamina() - a.getStamina())/a.getMaxStamina()*3.0f && a.distanceTo(t) <= (6 + 2 * (a.getFactor() + a.getDifficulty()))*0.7f)
-                        .weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), a.getFollowRange(), a.getFollowRange() * 1.5, 0.0, (6 + 2 * (a.getFactor() + a.getDifficulty()))*0.7f)),
-                new AttackNode<Sans>((byte) 6, 50,(a,t,tick)->{
-                    if(tick == 4){
-                        a.summonGroundBoneSpineWaveAroundSelf(t);
-                    }
-                    return tick>=20;
-                }).condition((a, t) -> t.getY()-a.getY() <= 1.0f+(a.getMaxStamina() - a.getStamina())/a.getMaxStamina()*3.0f)
-                        .weight((a,t)-> WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.8f, a.getFollowRange()*0.5f,1))
+//                new AttackNode<Sans>((byte) 6, 4, (a, t) -> {
+//                    int difficulty = a.level().getDifficulty().getId();
+//                    a.summonGBAroundSelf(t, 1 + a.getFactor() + difficulty / 3, 1.0f + difficulty * 0.25f);
+//                }, 30, 50).weight((a, t) -> {
+//                    double distanceWeight = WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange(), a.getFollowRange() * 0.625, 2);
+//                    double speed = getTargetSpeed(t);
+//                    double speedFactor;
+//                    double k = 1.0, baseSpeed = 0.15;
+//                    if (speed <= baseSpeed) {
+//                        speedFactor = 1 + k * (baseSpeed - speed);
+//                    } else {
+//                        speedFactor = baseSpeed / speed;
+//                    }
+//                    return distanceWeight * speedFactor;
+//                }),
+//                new AttackNode<Sans>((byte) 6, 4, Sans::summonGBAroundTarget, 30, 50).weight((a, t) -> {
+//                    double distanceWeight = 16;
+//                    double speed = getTargetSpeed(t);
+//                    double speedFactor;
+//                    double k = 1.5, baseSpeed = 0.15;
+//                    if (speed <= baseSpeed) {
+//                        speedFactor = 1 + k * (baseSpeed - speed);
+//                    } else {
+//                        speedFactor = baseSpeed / speed;
+//                    }
+//                    return distanceWeight * speedFactor;
+//                }),
+//                new AttackNode<Sans>((byte) 6, 4, (a, t) -> {
+//                    int difficulty = a.level().getDifficulty().getId();
+//                    int count = 1 + a.getRandom().nextInt(1 + difficulty + a.getFactor());
+//                    a.summonGBFront(t, count, 60f / count, 17);
+//                }, 30, 50).weight((a, t) -> {
+//                    double distanceWeight = WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.7, a.getFollowRange() * CLOSE_RANGE_FACTOR, 2);
+//                    double speed = getTargetSpeed(t);
+//                    double speedFactor;
+//                    double k = 1.0, baseSpeed = 0.15;
+//                    if (speed <= baseSpeed) {
+//                        speedFactor = 1 + k * (baseSpeed - speed);
+//                    } else {
+//                        speedFactor = baseSpeed / speed;
+//                    }
+//                    return distanceWeight * speedFactor;
+//                }),
+//
+////                // 地面
+//                new AttackNode<Sans>((byte) 6,50,(a,t,tick)->{
+//                    if(tick == 4){
+//                        a.summonGroundBoneSpineAtSelf();
+//                    }
+//                    return tick>=20;
+//                }).condition((a, t) -> t.getY()-a.getY() <= 1.0f+(a.getMaxStamina() - a.getStamina())/a.getMaxStamina()*3.0f && a.distanceTo(t) <= (6 + 2 * (a.getFactor() + a.getDifficulty()))*0.7f)
+//                        .weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), a.getFollowRange(), a.getFollowRange() * 1.5, 0.0, (6 + 2 * (a.getFactor() + a.getDifficulty()))*0.7f)),
+//                new AttackNode<Sans>((byte) 6, 50,(a,t,tick)->{
+//                    if(tick == 4){
+//                        a.summonGroundBoneSpineWaveAroundSelf(t);
+//                    }
+//                    return tick>=20;
+//                }).condition((a, t) -> t.getY()-a.getY() <= 1.0f+(a.getMaxStamina() - a.getStamina())/a.getMaxStamina()*3.0f)
+//                        .weight((a,t)-> WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.8f, a.getFollowRange()*0.5f,1))
         );
     }
     private static AttackNode<Sans> persistentGBSkill() {

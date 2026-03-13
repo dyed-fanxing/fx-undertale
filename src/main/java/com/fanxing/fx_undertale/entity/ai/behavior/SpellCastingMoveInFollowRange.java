@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SpellCastingMoveInFollowRange<T extends Mob> extends Behavior<T> {
-    private static final float STRAFE_SPEED = 0.75f;
+    public static final float STRAFE_SCALE = 0.5f;
     private static final Logger log = LoggerFactory.getLogger(SpellCastingMoveInFollowRange.class);
     protected final double closeRangeSqr;
     protected final double closeRange;
@@ -138,7 +138,7 @@ public class SpellCastingMoveInFollowRange<T extends Mob> extends Behavior<T> {
         handleUnableToMove(mob,target);
         // 无法移动，可考虑传送（但这里不处理，由专门的传送行为负责）
 
-        mob.getMoveControl().strafe(isBack ? -STRAFE_SPEED : 0, right * STRAFE_SPEED);
+        mob.getMoveControl().strafe(isBack ? -STRAFE_SCALE : 0, right * STRAFE_SCALE);
     }
 
     protected void handleMidRange(T mob, LivingEntity target,double disSqr){
@@ -151,7 +151,7 @@ public class SpellCastingMoveInFollowRange<T extends Mob> extends Behavior<T> {
             strafeFrontTime = 5 + mob.getRandom().nextInt(25);
             front = mob.getRandom().nextInt(3)-1;
         }
-        mob.getMoveControl().strafe(front * STRAFE_SPEED, right * STRAFE_SPEED);
+        mob.getMoveControl().strafe(front * STRAFE_SCALE, right * STRAFE_SCALE);
 
     }
 
