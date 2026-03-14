@@ -5,14 +5,19 @@ import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class SansModel extends DefaultedEntityGeoModel<Sans> {
     private static final Logger log = LoggerFactory.getLogger(SansModel.class);
+    RotationBoneModel model = new RotationBoneModel();
 
     public SansModel() {
         super(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "sans"), true);
     }
 
-
+    @Override
+    public void setCustomAnimations(Sans animatable, long instanceId, AnimationState<Sans> animationState) {
+        super.setCustomAnimations(animatable, instanceId, animationState);
+    }
 }

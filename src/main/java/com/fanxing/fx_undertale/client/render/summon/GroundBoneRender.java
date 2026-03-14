@@ -1,9 +1,9 @@
-package com.fanxing.fx_undertale.client.entity.summon;
+package com.fanxing.fx_undertale.client.render.summon;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.fanxing.fx_undertale.client.model.entity.GroundBoneModel;
-import com.fanxing.fx_undertale.client.entity.ColorAttackRenderer;
+import com.fanxing.fx_undertale.client.render.ColorAttackRenderer;
 import com.fanxing.fx_undertale.entity.summon.GroundBone;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import software.bernie.geckolib.cache.object.BakedGeoModel;

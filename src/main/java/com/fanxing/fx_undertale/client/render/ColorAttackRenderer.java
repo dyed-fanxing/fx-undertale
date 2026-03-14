@@ -1,4 +1,4 @@
-package com.fanxing.fx_undertale.client.entity;
+package com.fanxing.fx_undertale.client.render;
 
 import com.fanxing.fx_undertale.entity.ColoredAttacker;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

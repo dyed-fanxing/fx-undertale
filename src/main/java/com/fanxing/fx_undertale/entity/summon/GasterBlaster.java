@@ -180,9 +180,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
                 if(owner instanceof Targeting targeting){
                     LivingEntity target = targeting.getTarget();
                     if(target != null){
-                        log.info("执行平滑瞄准前，角度：({},{})，yBodyRot：{}",this.getXRot(),this.getYRot(),this.yBodyRot);
                         aimSmoothly(target);
-                        log.info("执行平滑瞄准后，角度：({},{})，yBodyRot：{}",this.getXRot(),this.getYRot(),this.yBodyRot);
                     }else if(!this.level().isClientSide){
                         this.discard();
                         return;

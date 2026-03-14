@@ -55,7 +55,6 @@ public class LivingEntityHandler {
     public static void onDamagePost(LivingShieldBlockEvent event) {
         LivingEntity entity = event.getEntity();
         if(entity instanceof Player){
-            log.info("盾牌事件：{}，阻挡伤害：{}，伤害来源：{}，阻挡时的new伤害：{}",event.getBlocked(),event.getBlockedDamage(),event.getDamageSource(),event.getDamageContainer().getNewDamage());
         }
     }
 

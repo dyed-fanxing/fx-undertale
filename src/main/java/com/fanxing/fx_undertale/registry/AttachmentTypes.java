@@ -50,6 +50,9 @@ public class AttachmentTypes {
     public static final Supplier<AttachmentType<Byte>> SOUL_MODE = ATTACHMENT_TYPES.register(
             "soul_mode", () -> AttachmentType.builder(()-> SoulMode.DEFAULT).build()
     );
+    public static final Supplier<AttachmentType<Boolean>> GRAVITY_CONTROL_TAG = ATTACHMENT_TYPES.register(
+            "gravity_control_tag", () -> AttachmentType.builder(()->false).build()
+    );
     public static void register(IEventBus bus) {
         ATTACHMENT_TYPES.register(bus);
     }

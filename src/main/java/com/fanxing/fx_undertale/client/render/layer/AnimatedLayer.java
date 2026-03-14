@@ -1,4 +1,4 @@
-package com.fanxing.fx_undertale.client.layer;
+package com.fanxing.fx_undertale.client.render.layer;
 
 /**
  * @author FanXing

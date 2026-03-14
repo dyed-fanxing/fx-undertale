@@ -1,4 +1,4 @@
-package com.fanxing.fx_undertale.client.entity.summon;
+package com.fanxing.fx_undertale.client.render.summon;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;

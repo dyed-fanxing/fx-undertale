@@ -5,6 +5,8 @@ import com.fanxing.fx_undertale.entity.summon.GroundBone;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.animation.state.BoneSnapshot;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -12,6 +14,8 @@ import software.bernie.geckolib.loading.math.MathParser;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class GroundBoneModel extends DefaultedEntityGeoModel<GroundBone> {
+    private static final Logger log = LoggerFactory.getLogger(GroundBoneModel.class);
+
     public GroundBoneModel() {
         super(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "bone"));
     }
@@ -24,6 +28,7 @@ public class GroundBoneModel extends DefaultedEntityGeoModel<GroundBone> {
             GeoBone root = this.getBone("root").get();
             root.setHidden(delay >= 0);
         }else{
+            // 默认缩放
             GeoBone up = this.getBone("up").get();
             GeoBone body = this.getBone("body").get();
             BoneSnapshot upInitial = up.getInitialSnapshot();

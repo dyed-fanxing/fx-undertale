@@ -72,7 +72,6 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
                     ProjectileDeflection projectileDeflection = this.hitTargetOrDeflectSelf(hitResult);
                     this.hasImpulse = true;
                     if(projectileDeflection != ProjectileDeflection.NONE){
-                        log.info("被阻挡：{}", projectileDeflection);
                         break;
                     }
                 }
@@ -103,10 +102,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
             if(!this.isNoGravity()){
                 this.applyGravity();
             }
-            ParticleOptions particleoptions = this.getTrailParticle();
-            if (particleoptions != null) {
-                this.level().addParticle(particleoptions, d0, d1 + this.getBbHeight()*0.5f, d2, 0.0F, 0.0F, 0.0F);
-            }
+            spawnTrailParticle(d0,d1,d2,vec3);
             this.setPos(d0, d1, d2);
         } else {
             this.discard();
@@ -196,6 +192,12 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         return 0.8F;
     }
 
+    protected void spawnTrailParticle(double x,double y,double z,Vec3 deltaMovement) {
+        ParticleOptions particleoptions = this.getTrailParticle();
+        if (particleoptions != null) {
+            this.level().addParticle(particleoptions, x, y + this.getBbHeight()*0.5f, z, 0, 0, 0);
+        }
+    }
     protected ParticleOptions getTrailParticle() {
         return com.fanxing.fx_undertale.registry.ParticleTypes.CUSTOM_WHITE_ASH.get();
     }

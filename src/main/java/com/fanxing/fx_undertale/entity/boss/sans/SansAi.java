@@ -72,7 +72,7 @@ public class SansAi {
                 ),
                 createOpeningBehavior(),
                 new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-                        Pair.of(createComboSkillBehavior(),9),
+//                        Pair.of(createComboSkillBehavior(),9),
                         Pair.of(RestartableTryAllBehavior.Order(ImmutableList.of(
                                 Pair.of(createPersistentSkillBehavior(), 5),
                                 Pair.of(new AttackSchedulerBehavior<>(createSingleSkills(), MemoryModuleTypes.COOLDOWN_1.get()), 3)
@@ -113,6 +113,9 @@ public class SansAi {
                                 }else if(gb.isRemoved()){
                                     mob.setControllerAimGB(null);
                                     super.handleMidRange(mob, target, disSqr);
+                                }else{
+                                    mob.setYRot(mob.yHeadRot);
+                                    mob.getMoveControl().strafe(0, 0);
                                 }
                             }
                         },1)
@@ -187,14 +190,13 @@ public class SansAi {
         };
     }
     private static AttackSchedulerBehavior<Sans> createComboSkillBehavior() {
-        int[] delay = new int[1];
         return new AttackSchedulerBehavior<>(List.of(
-                new AttackNode<Sans>((byte) 10, 200, (a, t, tick) -> {
+                new AttackNode<Sans>((byte) 10, 400, (a, t, tick) -> {
                     if (tick == 0) {
                         a.setControllerAimGB(a.controlGBAim(t));
                     }
                     GasterBlaster gb = a.getControllerAimGB();
-                    return gb == null || tick > gb.getDecayTick() || !gb.isRemoved();
+                    return gb == null || tick > gb.getDecayTick() || gb.isRemoved();
                 }).weight((a, t) -> {
                     double distanceWeight = WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.7, a.getFollowRange() * 0.5f, 1);
                     double speed = getTargetSpeed(t);
@@ -207,23 +209,6 @@ public class SansAi {
                     }
                     return distanceWeight * speedFactor;
                 })
-//                ,
-//                new AttackNode<Sans>((byte) 6, 400, (a, t, tick) -> {
-//                    if (tick == 4) {
-//                        int difficulty = a.level().getDifficulty().getId();
-//                        delay[0] = 1;
-//                        for (int i = 0; i < 5; i++) {
-//                            a.summonGroundBoneWall(t, ColorAttack.WHITE, 1.0f, LocalDirection.FRONT, delay[0], a.getFollowRange() * 0.5f);
-//                            delay[0] += 10 - difficulty - a.getFactor();
-//                            a.summonGroundBoneWall(t, ColorAttack.AQUA, 5.0f, LocalDirection.FRONT, delay[0], a.getFollowRange() * 0.5f);
-//                            delay[0] += 14 - difficulty - a.getFactor();
-//                        }
-//                    }
-//                    if (tick >= delay[0] + 10) {
-//                        return true;
-//                    }
-//                    return false;
-//                }).condition((a, t) -> t.onGround() && t.closerThan(a, a.getFollowRange() * 0.7f))
         ), MemoryModuleTypes.COOLDOWN_3.get()
         ) {
             @Override
@@ -241,13 +226,13 @@ public class SansAi {
                         delay[0] = a.shootAimedBarrage(t);
                     }
                     return tick > 30 + delay[0];
-                }).weight((a, t) -> WeightMath.linearIncrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4)))
-//                new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
-//                    if (tick == 4) {
-//                        delay[1] = a.shootForwardBarrage(t);
-//                    }
-//                    return tick > 30 + delay[1];
-//                }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4))),
+                }).weight((a, t) -> WeightMath.linearIncrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4))),
+                new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
+                    if (tick == 4) {
+                        delay[1] = a.shootForwardBarrage(t);
+                    }
+                    return tick > 30 + delay[1];
+                }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (Math.min(1, t.getDeltaMovement().length() * 4)))
         ), (a) -> List.of(), MemoryModuleTypes.COOLDOWN_2.get()
 //        ), (a) -> List.of(persistentGBSkill()), MemoryModuleTypes.COOLDOWN_2.get()
         ) {
@@ -293,7 +278,7 @@ public class SansAi {
                 new AttackNode<Sans>((byte) 9, 3, (a, t) -> a.shootArcSweepVolley(), 30, 40)
                         .weight((a,t)->WeightMath.linearDecrease(a.distanceTo(t),0,a.getFollowRange())*(1 + getTargetSpeed(t)*2))
 
-                // GB
+//                 GB
 //                new AttackNode<Sans>((byte) 6, 4, (a, t) -> {
 //                    int difficulty = a.level().getDifficulty().getId();
 //                    a.summonGBAroundSelf(t, 1 + a.getFactor() + difficulty / 3, 1.0f + difficulty * 0.25f);
@@ -337,7 +322,7 @@ public class SansAi {
 //                    }
 //                    return distanceWeight * speedFactor;
 //                }),
-//
+////
 ////                // 地面
 //                new AttackNode<Sans>((byte) 6,50,(a,t,tick)->{
 //                    if(tick == 4){
@@ -432,6 +417,7 @@ public class SansAi {
                     a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor * 3f, 8 + (int) (factor - 1f) / 10, 10);
                     a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
                     duration[0] = tick;
+                    a.applyGravityControlTag(t,false);
                 }
                 return tick >= duration[0] + 12 - difficulty && !state[0];
             }));
@@ -481,5 +467,6 @@ public class SansAi {
         mob.controlSoulMode(target,SoulMode.DEFAULT);
         mob.setTargetId(-1);
         mob.applyKarma(target,false);
+        mob.applyGravityControlTag(target,false);
     }
 }

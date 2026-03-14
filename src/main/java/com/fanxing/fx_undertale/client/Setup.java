@@ -1,17 +1,18 @@
 package com.fanxing.fx_undertale.client;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.client.entity.summon.GasterBlasterRender;
-import com.fanxing.fx_undertale.client.entity.summon.GroundBoneRender;
-import com.fanxing.fx_undertale.client.entity.summon.LateralBoneRender;
-import com.fanxing.fx_undertale.client.entity.summon.MovingGroundBoneRender;
+import com.fanxing.fx_undertale.client.render.RotationBoneRender;
+import com.fanxing.fx_undertale.client.render.summon.GasterBlasterRender;
+import com.fanxing.fx_undertale.client.render.summon.GroundBoneRender;
+import com.fanxing.fx_undertale.client.render.summon.LateralBoneRender;
+import com.fanxing.fx_undertale.client.render.summon.MovingGroundBoneRender;
 import com.fanxing.fx_undertale.net.packet.*;
 import com.fanxing.fx_undertale.client.particle.BallGrowParticle;
 import com.fanxing.fx_undertale.client.particle.CustomWhiteAshNoGravityParticle;
 import com.fanxing.fx_undertale.client.particle.CustomWhiteAshParticle;
 import com.fanxing.fx_undertale.client.particle.LightStreakParticle;
-import com.fanxing.fx_undertale.client.entity.FlyingBoneRender;
-import com.fanxing.fx_undertale.client.entity.boss.SansRender;
+import com.fanxing.fx_undertale.client.render.FlyingBoneRender;
+import com.fanxing.fx_undertale.client.render.boss.SansRender;
 import com.fanxing.fx_undertale.client.screen.GravitySelectionScreen;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.registry.MenuTypes;
@@ -46,6 +47,7 @@ public class Setup {
         event.registerEntityRenderer(EntityTypes.MOVING_GROUND_BONE.get(), MovingGroundBoneRender::new);
         event.registerEntityRenderer(EntityTypes.LATERAL_BONE.get(), LateralBoneRender::new);
         event.registerEntityRenderer(EntityTypes.FLYING_BONE.get(), FlyingBoneRender::new);
+        event.registerEntityRenderer(EntityTypes.ROTATION_BONE.get(), RotationBoneRender::new);
     }
 
     /**
@@ -78,6 +80,7 @@ public class Setup {
 //        registrar.playToClient(WarningTipAABBPacket.TYPE, WarningTipAABBPacket.STREAM_CODEC, WarningTipAABBPacket::handle);
         registrar.playToClient(TimeJumpTeleportPacket.TYPE,TimeJumpTeleportPacket.STREAM_CODEC, TimeJumpTeleportPacket::handle);
         registrar.playToClient(GravityPacket.TYPE,GravityPacket.STREAM_CODEC, GravityPacket::handle);
+        registrar.playToClient(GravityControlTagPacket.TYPE,GravityControlTagPacket.STREAM_CODEC, GravityControlTagPacket::handle);
         registrar.playToClient(KaramPacket.TYPE,KaramPacket.STREAM_CODEC, KaramPacket::handle);
         registrar.playToClient(KaramTagPacket.TYPE, KaramTagPacket.STREAM_CODEC, KaramTagPacket::handle);
         registrar.playToServer(GravitySelectionPacket.TYPE,GravitySelectionPacket.STREAM_CODEC, GravitySelectionPacket::handle);

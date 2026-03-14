@@ -1,10 +1,10 @@
-package com.fanxing.fx_undertale.client.entity.summon;
+package com.fanxing.fx_undertale.client.render.summon;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.client.layer.AnimatedGlowingLayer;
+import com.fanxing.fx_undertale.client.render.layer.AnimatedGlowingLayer;
 import com.fanxing.fx_undertale.client.model.entity.GasterBlasterModel;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.entity.summon.IGasterBlaster;

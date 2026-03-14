@@ -6,6 +6,7 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.WhiteAshParticle;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.NotNull;
 
 public class CustomWhiteAshNoGravityParticle extends WhiteAshParticle {
@@ -31,6 +32,10 @@ public class CustomWhiteAshNoGravityParticle extends WhiteAshParticle {
         public Particle createParticle(@NotNull SimpleParticleType type, @NotNull ClientLevel level,
                                        double x, double y, double z,
                                        double vx, double vy, double vz) {
+            RandomSource random = level.random;
+            vx += (random.nextDouble() - 0.5) * 0.02;
+            vy += (random.nextDouble() - 0.5) * 0.02;
+            vz += (random.nextDouble() - 0.5) * 0.02;
             return new CustomWhiteAshNoGravityParticle(level, x, y, z, vx, vy, vz, sprites);
         }
     }

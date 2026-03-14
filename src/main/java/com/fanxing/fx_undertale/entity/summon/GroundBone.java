@@ -20,6 +20,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.*;
@@ -30,6 +32,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * @since 2025-08-18 18:44
  */
 public class GroundBone extends Summons implements GeoEntity, IEntityWithComplexSpawn, ColoredAttacker {
+    private static final Logger log = LoggerFactory.getLogger(GroundBone.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private ColorAttack colorAttack = ColorAttack.WHITE;
     private float damage = 1.0f;
@@ -105,7 +108,7 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
     public void tick() {
         super.tick();
         delay--;
-        if (this.lerpSteps > 0) {
+        if (this.level().isClientSide && this.lerpSteps > 0) {
             this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
             this.lerpSteps--;
         }
