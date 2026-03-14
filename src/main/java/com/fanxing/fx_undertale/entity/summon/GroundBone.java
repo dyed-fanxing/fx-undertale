@@ -1,284 +1,236 @@
 package com.fanxing.fx_undertale.entity.summon;
 
-import com.fanxing.fx_undertale.common.DamageTypes;
-import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
+import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.ColoredAttacker;
+import com.fanxing.fx_undertale.entity.IScalable;
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
+import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
+import com.fanxing.fx_undertale.common.phys.OBB;
+import com.fanxing.fx_undertale.entity.IOBB;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import com.fanxing.fx_undertale.registry.EntityTypes;
-import com.fanxing.fx_undertale.registry.SoundEvnets;
+import com.fanxing.fx_undertale.utils.CurvesUtils;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.*;
+import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 /**
+ * 地面骨头 - 支持 OBB 碰撞检测
+ *
  * @author FanXing
- * @since 2025-08-18 18:44
+ * @since 2025-08-18
  */
-public class GroundBone extends Summons implements GeoEntity, IEntityWithComplexSpawn, ColoredAttacker {
+public class GroundBone extends Summons implements GeoEntity, IEntityWithComplexSpawn, ColoredAttacker, IOBB<GroundBone>, IScalable<GroundBone> {
+
+    private static final Logger log = LoggerFactory.getLogger(GroundBone.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+
+    // ========== 基础属性 ==========
     private ColorAttack colorAttack = ColorAttack.WHITE;
     private float damage = 1.0f;
     private int delay = 20;
-
-    private boolean isPlaySound = false;
     private int lifetime = 10;
-    private boolean isCurve = true;    // 曲线
 
-    private float scale = 1.0f; // 整体缩放
-    private float growScale = 1.0f; // 在基于整体缩放的基础上的高度缩放
+    // ========== 缩放属性 ==========
+    private float scale = 1.0f;      // 整体缩放
+    private float growScale = 1.0f;  // 高度缩放
 
-    // 核心插值属性
-    public int lerpSteps;
-    private double lerpX;
-    private double lerpY;
-    private double lerpZ;
-    private double lerpYRot;
-    private double lerpXRot;
+    // ========== 曲线属性 ==========
+    private float holdTimeScale = 1f;
+
+    // ========== OBB 碰撞 ==========
+    private OBB obb;
+
+    // ========== 构造函数 ==========
 
     public GroundBone(EntityType<? extends GroundBone> type, Level level) {
-        super(type,level);
+        super(type, level);
     }
 
-    public GroundBone(Level level, LivingEntity owner, float damage,int delay) {
-        this(level, owner,1.0f,1.0f,damage,10,delay, ColorAttack.WHITE,false,false,Direction.DOWN);
-    }
-    public GroundBone(Level level, LivingEntity owner,float scale,float growScale,float damage,int lifetime,int delay,ColorAttack colorAttack,boolean isPlaySound,boolean isCurve) {
-        super(EntityTypes.GROUND_BONE.get(), level,owner);
+    public GroundBone(Level level, LivingEntity owner, float scale, float growScale, float damage,int lifetime, int delay) {
+        super(EntityTypes.GROUND_BONE.get(), level, owner);
         this.setNoGravity(true);
         this.scale = scale;
         this.growScale = growScale;
-
         this.lifetime = lifetime;
         this.delay = delay;
         this.damage = damage;
-        this.colorAttack = colorAttack;
-        this.isPlaySound = isPlaySound;
-        this.isCurve = isCurve;
     }
-    public GroundBone(Level level, LivingEntity owner,float scale,float growScale,float damage,int lifetime,int delay,ColorAttack colorAttack,boolean isPlaySound,boolean isCurve,Direction gravity) {
-        super(EntityTypes.GROUND_BONE.get(), level,owner);
-        this.setNoGravity(true);
-        this.scale = scale;
-        this.growScale = growScale;
-
-        this.lifetime = lifetime;
-        this.delay = delay;
-        this.damage = damage;
+    // ========== 链式配置方法 ==========
+    public GroundBone colorAttack(ColorAttack colorAttack){
         this.colorAttack = colorAttack;
-        this.isPlaySound = isPlaySound;
-        this.isCurve = isCurve;
-        this.setData(AttachmentTypes.GRAVITY, Gravity.applyGravity(this,gravity));
+        return this;
     }
-
+    public GroundBone gravity(Direction gravity) {
+        this.setData(AttachmentTypes.GRAVITY, Gravity.applyGravity(this, gravity));
+        return this;
+    }
+    public GroundBone holdTimeScale(float holdTimeScale) {
+        this.holdTimeScale = holdTimeScale;
+        return this;
+    }
 
     @Override
     public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
-        return this.getType().getDimensions().scale(scale).scale(1f,growScale*getBoneProgress());
+        return IScalable.super.getDimensions(pose).scale(1f, growScale * getProgress(0));
     }
-    public float getBoneProgress() {
-        if(isCurve){
-            if (delay >= -lifetime && delay < 0) {
-                return Mth.sin((float) (-delay) / lifetime * Mth.PI);
-            }
-            return 0f;
-        }else{
-            return 1f;
-        }
+    @Override
+    public void refreshDimensions() {
+        super.refreshDimensions();
+        updateOBB();
     }
 
+    @Override
+    public @NotNull AABB getBoundingBoxForCulling() {
+        return IOBB.super.getBoundingBoxForCulling();
+    }
+
+    /**
+     * 获取生长进度曲线
+     */
+    public float getProgress(float partialTick) {
+        if (delay >= -lifetime && delay < 0) {
+            return CurvesUtils.parametricHeight((-delay + partialTick) / lifetime, holdTimeScale,0.8f);
+        }
+        return 1f;
+    }
+
+    // ========== 核心逻辑 ==========
     @Override
     public void tick() {
         super.tick();
         delay--;
-        if (this.lerpSteps > 0) {
-            this.lerpPositionAndRotationStep(this.lerpSteps, this.lerpX, this.lerpY, this.lerpZ, this.lerpYRot, this.lerpXRot);
-            this.lerpSteps--;
-        }
-        if(this.level().isClientSide){
-            if(delay == 0 && isPlaySound){
-                this.level().playLocalSound(this, SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE,1,1);
-            }
-        }
-        if (delay >= -lifetime && delay < 0) {
-            if(isCurve){
-                this.refreshDimensions();
-            }
-            // 碰撞检测
+        // 生命周期内（从延迟结束到消失）
+        if (delay >= -lifetime && delay <= 0) {
+            this.refreshDimensions();
             if (!this.level().isClientSide) {
-                for (LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class,this.getBoundingBox(), this::canHitEntity)) {
-                    onHitEntity(target,null);
+                AABB aabb = this.obb.getBoundingAABB();
+                for (LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class, aabb,
+                        (target) -> this.canHitEntity(target) && (this.obb == null || this.obb.intersects(target.getBoundingBox())))) {
+                    onHitEntity(target, null);
                 }
             }
-        } else if (delay < -lifetime) {
+        }
+        // 生命周期结束
+        else if (delay < -lifetime) {
             this.discard();
         }
     }
 
     @Override
     protected boolean canHitEntity(Entity entity) {
-        return  super.canHitEntity(entity) && colorAttack.canHitEntity(entity);
+        return super.canHitEntity(entity) && colorAttack.canHitEntity(entity);
     }
-
-    @Override
-    protected void onHitBlock(BlockHitResult hitResult) {
-
-    }
-
 
     @Override
     protected void onHitEntity(Entity entity, Vec3 location) {
         Entity owner = getOwner();
+        DamageSource damageSource;
         if (owner instanceof Sans) {
-            entity.hurt(damageSources().source(DamageTypes.FRAME, this, owner), damage);
+            damageSource = damageSources().source(DamageTypes.FRAME, this, owner);
+        } else if (owner != null) {
+            damageSource = damageSources().indirectMagic(this, owner);
         } else {
-            entity.hurt(damageSources().indirectMagic(owner, this), damage);
+            damageSource = damageSources().magic();
         }
+        entity.hurt(damageSource, damage);
     }
 
+    // ========== Getter ==========
     public float getScale() {
         return scale;
     }
     public float getGrowScale() {
         return growScale;
     }
-
     public int getDelay() {
         return delay;
     }
-
-    public boolean isCurve() {
-        return isCurve;
+    public int getLifetime() {
+        return lifetime;
     }
-
+    public float getHoldTimeScale() {
+        return holdTimeScale;
+    }
     @Override
     public int getColor() {
         return colorAttack.getColor();
     }
-
+    @Override
+    public OBB getOBB() {
+        return obb;
+    }
+    @Override
+    public void setOBB(OBB obb) {
+        this.obb = obb;
+    }
+    // ========== 物理参数 ==========
     @Override
     protected double getDefaultGravity() {
         return 0f;
     }
 
-    @Override
-    public void lerpMotion(double p_37279_, double p_37280_, double p_37281_) {
-        this.setDeltaMovement(p_37279_, p_37280_, p_37281_);
-        if(this.xRotO == 0 && this.yRotO == 0){
-            this.xRotO = getXRot();
-            this.yRotO = getYRot();
-        }
-    }
+    // ========== 数据同步 ==========
 
-    @Override
-    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
-        this.lerpX = x;
-        this.lerpY = y;
-        this.lerpZ = z;
-        this.lerpYRot = yRot;
-        this.lerpXRot = xRot;
-        this.lerpSteps = steps;
-    }
-    @Override
-    public double lerpTargetX() {
-        return this.lerpSteps > 0 ? this.lerpX : this.getX();
-    }
-    @Override
-    public double lerpTargetY() {
-        return this.lerpSteps > 0 ? this.lerpY : this.getY();
-    }
-    @Override
-    public double lerpTargetZ() {
-        return this.lerpSteps > 0 ? this.lerpZ : this.getZ();
-    }
-    @Override
-    public float lerpTargetXRot() {
-        return this.lerpSteps > 0 ? (float)this.lerpXRot : this.getXRot();
-    }
-    @Override
-    public float lerpTargetYRot() {
-        return this.lerpSteps > 0 ? (float)this.lerpYRot : this.getYRot();
-    }
     @Override
     protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putFloat("scale", scale);
         tag.putFloat("growScale", growScale);
-
-        tag.putInt("lifetime",this.lifetime);
-        tag.putInt("delay",this.delay);
-        tag.putInt("color",this.colorAttack.getColor());
-        tag.putBoolean("isPlaySound",this.isPlaySound);
-        tag.putBoolean("isCurve",this.isCurve);
+        tag.putInt("lifetime", lifetime);
+        tag.putInt("delay", delay);
+        tag.putInt("color", colorAttack.getColor());
+        tag.putFloat("holdTimeScale", holdTimeScale);
     }
 
     @Override
     protected void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("scale")) {
-            this.scale = tag.getFloat("scale");
-        }
-        if (tag.contains("growScale")) {
-            this.growScale = tag.getFloat("growScale");
-        }
-        if(tag.contains("lifetime")){
-            this.lifetime = tag.getInt("lifetime");
-        }
-        if(tag.contains("delay")){
-            this.delay = tag.getInt("delay");
-        }
-        if (tag.contains("color")) {
-            this.colorAttack = ColorAttack.of(tag.getInt("color"));
-        }
-        if(tag.contains("isPlaySound")){
-            this.isPlaySound = tag.getBoolean("isPlaySound");
-        }
-        if(tag.contains("isCurve")){
-            this.isCurve = tag.getBoolean("isCurve");
-        }
+        if (tag.contains("scale")) this.scale = tag.getFloat("scale");
+        if (tag.contains("growScale")) this.growScale = tag.getFloat("growScale");
+        if (tag.contains("lifetime")) this.lifetime = tag.getInt("lifetime");
+        if (tag.contains("delay")) this.delay = tag.getInt("delay");
+        if (tag.contains("color")) this.colorAttack = ColorAttack.of(tag.getInt("color"));
+        if (tag.contains("holdTimeScale")) this.holdTimeScale = tag.getFloat("holdTimeScale");
+        refreshDimensions();
     }
 
     @Override
     public void writeSpawnData(RegistryFriendlyByteBuf buf) {
         buf.writeFloat(this.scale);
         buf.writeFloat(this.growScale);
-
         buf.writeInt(this.lifetime);
         buf.writeInt(this.delay);
-
         buf.writeInt(this.colorAttack.getColor());
-        buf.writeBoolean(this.isPlaySound);
-        buf.writeBoolean(this.isCurve);
-
+        buf.writeFloat(this.holdTimeScale);
         buf.writeEnum(this.getData(AttachmentTypes.GRAVITY).getGravity());
     }
 
     @Override
     public void readSpawnData(RegistryFriendlyByteBuf buf) {
-        this.scale  = buf.readFloat();
+        this.scale = buf.readFloat();
         this.growScale = buf.readFloat();
-
         this.lifetime = buf.readInt();
         this.delay = buf.readInt();
-
         this.colorAttack = ColorAttack.of(buf.readInt());
-        this.isPlaySound = buf.readBoolean();
-        this.isCurve = buf.readBoolean();
-        this.setData(AttachmentTypes.GRAVITY, Gravity.applyGravity(this,buf.readEnum(Direction.class)));
+        this.holdTimeScale = buf.readFloat();
+        this.setData(AttachmentTypes.GRAVITY, Gravity.applyGravity(this, buf.readEnum(Direction.class)));
         refreshDimensions();
     }
 
@@ -286,55 +238,14 @@ public class GroundBone extends Summons implements GeoEntity, IEntityWithComplex
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
     }
 
+    // ========== GeoEntity ==========
 
-
-    private static final RawAnimation GROW = RawAnimation.begin().thenPlay("grow");
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "attack", 0, state -> {
-            if(delay < 0 && isCurve){
-                state.setAndContinue(GROW);
-                state.setControllerSpeed((float) 20 /lifetime);
-                return PlayState.CONTINUE;
-            }
-            return PlayState.STOP;
-        }));
     }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
-    }
-
-
-
-
-    /**
-     * 分段参数方程实现
-     * @param t 时间 (0到1)
-     * @param holdTime 停留时间比例 (0到1)
-     * @return 高度 (0到1)
-     */
-    public static float parametricHeight(float t, float holdTime) {
-        // 定义分段
-        float riseTime = (1.0f - holdTime) / 2.0f;
-        if (t < riseTime) {
-            // 上升阶段：使用二次贝塞尔曲线
-            return bezier(t / riseTime, 0, 0.2f, 1);
-        } else if (t < riseTime + holdTime) {
-            // 停留阶段
-            return 1.0f;
-        } else {
-            // 下降阶段：使用正弦衰减
-            float t2 = (t - riseTime - holdTime) / riseTime;
-            return (float) Math.cos(t2 * Math.PI / 2);
-        }
-    }
-    // 二次贝塞尔曲线
-    private static float bezier(float t, float p0, float p1, float p2) {
-        float oneMinusT = 1 - t;
-        return oneMinusT * oneMinusT * p0 +
-                2 * oneMinusT * t * p1 +
-                t * t * p2;
     }
 }

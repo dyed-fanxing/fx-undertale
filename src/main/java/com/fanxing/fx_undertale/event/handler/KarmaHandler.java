@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.event.handler;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.common.DamageTypes;
+import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.attachment.KaramJudge;
 import com.fanxing.fx_undertale.entity.attachment.Karam;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
@@ -16,7 +16,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
 import java.util.HashSet;

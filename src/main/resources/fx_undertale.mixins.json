@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "AbstractArrowMixin",
+    "EntityTestMixin",
     "LivingEntityAccessor",
     "MixinGeoRenderer",
     "PlayerWantsToStopRidingMixin",

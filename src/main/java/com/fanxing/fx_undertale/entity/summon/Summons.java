@@ -36,14 +36,26 @@ public abstract class Summons extends Entity implements TraceableEntity {
         }
     }
 
+    @Override
+    public void tick() {
+        super.tick();
+        if(this.level().isClientSide && owner == null && ownerId != -1){
+            Entity owner = this.level().getEntity(ownerId);
+            if(owner != null){
+                setOwner(owner);
+            }
+        }
+    }
 
     protected boolean canHitEntity(Entity entity) {
         Entity owner = getOwner();
         return entity!=owner && !entity.isRemoved() && !(entity instanceof TraceableEntity traceable && traceable.getOwner() == owner);
     }
 
-    protected abstract void onHitBlock(BlockHitResult hitResult);
-    protected abstract void onHitEntity(Entity entity, Vec3 location);
+    protected void onHitBlock(BlockHitResult hitResult){
+    }
+    protected void onHitEntity(Entity entity, Vec3 location){
+    }
 
 
     public Entity getEffectSource() {

@@ -41,7 +41,7 @@ public class BallGrowParticle extends TextureSheetParticle {
 
     @Override
     public void render(@NotNull VertexConsumer buffer, @NotNull Camera camera, float partialTick) {
-        this.quadSize = AnimationUtils.calculateProgress(super.age,super.lifetime,partialTick,AnimationUtils.EasingType.LINEAR) * size;
+//        this.quadSize = AnimationUtils.calculateProgress(super.age,super.lifetime,partialTick,AnimationUtils.EasingType.LINEAR) * size;
         super.render(buffer, camera, partialTick);
     }
 

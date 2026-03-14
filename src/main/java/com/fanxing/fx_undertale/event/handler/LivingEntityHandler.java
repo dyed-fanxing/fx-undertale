@@ -23,14 +23,6 @@ import org.slf4j.LoggerFactory;
 public class LivingEntityHandler {
     private static final Logger log = LoggerFactory.getLogger(LivingEntityHandler.class);
 
-    /**
-     * 注册需要属性的实体，即继承自LivingEntity
-     */
-    @SubscribeEvent
-    public static void onAttributeCreate(EntityAttributeCreationEvent event) {
-        event.put(EntityTypes.SANS.get(), Sans.createAttributes().build());
-        event.put(EntityTypes.GASTER_BLASTER.get(), GasterBlaster.createAttributes().build());
-    }
 
     /**
      * 存活实体进入伤害事件
@@ -55,7 +47,6 @@ public class LivingEntityHandler {
     public static void onDamagePost(LivingShieldBlockEvent event) {
         LivingEntity entity = event.getEntity();
         if(entity instanceof Player){
-            log.info("盾牌事件：{}，阻挡伤害：{}，伤害来源：{}，阻挡时的new伤害：{}",event.getBlocked(),event.getBlockedDamage(),event.getDamageSource(),event.getDamageContainer().getNewDamage());
         }
     }
 

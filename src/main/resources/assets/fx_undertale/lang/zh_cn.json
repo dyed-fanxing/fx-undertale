@@ -19,6 +19,13 @@
   "gui.fx_undertale.close": "关闭",
   "mount.onboard.double.key.dismount": "双击 %1$s 来脱离",
 
+  "death.attack.fx_undertale.frame.player": "%1$s 被 %2$s 使用 帧伤 杀死了",
+  "death.attack.fx_undertale.frame.frame_blockable.player": "%1$s 被 %2$s 使用 帧伤 杀死了",
+  "death.attack.fx_undertale.frame.flying_bone": "%1$s 被 %2$s 使用 魔法骨头 射穿了",
+  "death.attack.fx_undertale.frame.ground_bone": "%1$s 被 %2$s 使用 魔法骨头 刺穿了",
+
+
+
   "fx_undertale.configuration.general": "通用",
   "config.fx_undertale.general.segments": "圆段数",
   "fx_undertale.configuration.general.expPerLv": "每级所需经验基数",
@@ -84,4 +91,5 @@
   "fx_undertale.configuration.chara_hidden": "屠杀殆尽",
   "fx_undertale.configuration.chara_hidden.charaMaxHpPercent": "每次攻击削减最大生命值百分比",
   "fx_undertale.configuration.chara_hidden.charaRemoveBuffs": "攻击是否移除目标正面效果"
+
 }

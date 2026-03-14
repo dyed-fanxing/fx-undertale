@@ -74,7 +74,7 @@ public abstract class LivingEntityGravityMixin {
         LivingEntity self = (LivingEntity)(Object)this;
         if(self.getData(AttachmentTypes.SOUL_MODE) == SoulMode.GRAVITY) {
             if (!self.onGround() && this.jumping && self.getDeltaMovement().y > 0) {
-                double accel = 0.6 * this.noJumpDelay/20;
+                double accel = 0.3 * this.noJumpDelay/20;
                 Vec3 motion = self.getDeltaMovement();
                 self.setDeltaMovement(motion.x, motion.y + accel, motion.z);
             }

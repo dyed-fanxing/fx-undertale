@@ -33,6 +33,17 @@ public abstract class LivingSummons extends LivingEntity implements TraceableEnt
         }
     }
 
+    @Override
+    public void tick() {
+        super.tick();
+        if(this.level().isClientSide && owner == null && ownerId != -1){
+            Entity owner = this.level().getEntity(ownerId);
+            if(owner != null){
+                setOwner(owner);
+            }
+        }
+    }
+
     protected boolean canHitEntity(Entity entity) {
         Entity owner = getOwner();
         return entity!=owner && !entity.isRemoved() && !(entity instanceof TraceableEntity traceable && traceable.getOwner() == owner);

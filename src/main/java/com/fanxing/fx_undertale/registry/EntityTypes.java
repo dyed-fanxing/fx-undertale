@@ -3,13 +3,16 @@ package com.fanxing.fx_undertale.registry;
 import com.fanxing.fx_undertale.FxUndertale;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.projectile.FlyingBone;
+import com.fanxing.fx_undertale.entity.projectile.FlyingBone1;
+import com.fanxing.fx_undertale.entity.projectile.RotationBone;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.entity.summon.GroundBone;
-import com.fanxing.fx_undertale.entity.summon.LateralBone;
+import com.fanxing.fx_undertale.entity.summon.ObbBone;
 import com.fanxing.fx_undertale.entity.summon.MovingGroundBone;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityAttachment;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.neoforged.bus.api.IEventBus;
@@ -40,6 +43,7 @@ public class EntityTypes {
             EntityType.Builder.of(Sans::new, MobCategory.MONSTER)
                     .sized(0.8f, 2.0f)  // 碰撞箱
                     .eyeHeight(1.6665f)
+                    .attach(EntityAttachment.WARDEN_CHEST,0.2f,1.6665f,0.4f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位)
     );
 
@@ -55,16 +59,22 @@ public class EntityTypes {
                     .eyeHeight(0.5445f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
-    public static final DeferredHolder<EntityType<?>, EntityType<LateralBone>> LATERAL_BONE = register("lateral_bone",
-            EntityType.Builder.<LateralBone>of(LateralBone::new, MobCategory.MISC)
-                    .sized(0.25f, 0.25f)  // 碰撞箱
+    public static final DeferredHolder<EntityType<?>, EntityType<ObbBone>> LATERAL_BONE = register("lateral_bone",
+            EntityType.Builder.<ObbBone>of(ObbBone::new, MobCategory.MISC)
+                    .sized(0.25f, 1.0f)  // 碰撞箱
                     .eyeHeight(0.125f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
     public static final DeferredHolder<EntityType<?>, EntityType<FlyingBone>> FLYING_BONE = register("flying_bone",
             EntityType.Builder.<FlyingBone>of(FlyingBone::new, MobCategory.MISC)
                     .sized(0.3125f,0.3125f)
-                    .eyeHeight(0.25f)
+                    .eyeHeight(0.15625f)
+                    .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
+    );
+    public static final DeferredHolder<EntityType<?>, EntityType<RotationBone>> ROTATION_BONE = register("rotation_bone",
+            EntityType.Builder.<RotationBone>of(RotationBone::new, MobCategory.MISC)
+                    .sized(0.8f,0.3125f)
+                    .eyeHeight(0.15625f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
 }

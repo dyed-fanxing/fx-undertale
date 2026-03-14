@@ -1,6 +1,7 @@
 package com.fanxing.fx_undertale.utils;
 
 
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -30,19 +31,19 @@ public class RotUtils {
         return vec.yRot(-yaw * Mth.DEG_TO_RAD);
     }
 
-    public static Vec3 getWorldPos(Vec3 pos,float pitch,float yaw){
-        return getWorldPos((float) pos.x, (float) pos.y, (float) pos.z,pitch,yaw);
+    public static Vec3 getWorldVec3(Vec3 pos,float pitch,float yaw){
+        return getWorldVec3((float) pos.x, (float) pos.y, (float) pos.z,pitch,yaw);
     }
-    public static Vec3 getWorldPos(double x, double y, double z, float pitch, float yaw) {
-        return getWorldPos((float) x, (float) y, (float) z,pitch,yaw);
+    public static Vec3 getWorldVec3(double x, double y, double z, float pitch, float yaw) {
+        return getWorldVec3((float) x, (float) y, (float) z,pitch,yaw);
     }
     /**
      * 根据 相对向量（坐标）和仰俯、航偏 获取世界向量（坐标），先仰俯 后航偏
      * @param x,y,z 相对坐标
      * @param pitch,yaw 仰俯，航偏
-     * @return 世界坐标
+     * @return 世界向量
      */
-    public static Vec3 getWorldPos(float x, float y, float z, float pitch, float yaw) {
+    public static Vec3 getWorldVec3(float x, float y, float z, float pitch, float yaw) {
         float pitchRad = -pitch * Mth.DEG_TO_RAD;
         float yawRad = -yaw * Mth.DEG_TO_RAD;
         float cosPitch = Mth.cos(pitchRad);
@@ -57,8 +58,8 @@ public class RotUtils {
                 z1 * cosYaw - x * sinYaw
         );
     }
-    public static Vec3 getWorldPos(Vec3 pos,float roll,float pitch,float yaw){
-        return getWorldPos((float) pos.x, (float) pos.y, (float) pos.z,roll,pitch,yaw);
+    public static Vec3 getWorldVec3(Vec3 pos,float roll,float pitch,float yaw){
+        return getWorldVec3((float) pos.x, (float) pos.y, (float) pos.z,roll,pitch,yaw);
     }
     /**
      * 根据 相对坐标和仰俯、航偏 获取世界坐标，先翻滚，再仰俯，后航偏
@@ -66,7 +67,7 @@ public class RotUtils {
      * @param roll,pitch,yaw 仰俯，航偏
      * @return 世界坐标
      */
-    public static Vec3 getWorldPos(float x, float y, float z, float roll, float pitch, float yaw) {
+    public static Vec3 getWorldVec3(float x, float y, float z, float roll, float pitch, float yaw) {
         float rollRad = roll * Mth.DEG_TO_RAD;
         float pitchRad = -pitch * Mth.DEG_TO_RAD;
         float yawRad = -yaw * Mth.DEG_TO_RAD;
@@ -182,13 +183,32 @@ public class RotUtils {
         Vec3 vec = new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getY(),target.getZ() - entity.getZ());
         entity.absRotateTo(shootXRot(vec.y,vec.horizontalDistance()),shootYRot(vec.x,vec.z));
     }
+
     public static void lookAtShoot(Entity entity, Entity target){
-        lookVecShoot(entity,new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getEyeY(),target.getZ() - entity.getZ()));
+        lookVecShoot(entity, new Vec3(target.getX() - entity.getX(),target.getY() - entity.getY(),target.getZ() - entity.getZ()));
     }
     public static void lookAtShoot(Entity entity, Vec3 targetPos){
-        lookVecShoot(entity,new Vec3(targetPos.x - entity.getX(),targetPos.y - entity.getEyeY(),targetPos.z - entity.getZ()));
+        lookVecShoot(entity,new Vec3(targetPos.x - entity.getX(),targetPos.y - entity.getY(),targetPos.z - entity.getZ()));
     }
     public static void lookAtShoot(Entity entity, double x,double y,double z){
+        lookVecShoot(entity,new Vec3(x - entity.getX(),y - entity.getY(),z - entity.getZ()));
+    }
+    public static void lookAtBodyShoot(Entity entity, Entity target){
+        lookVecShoot(entity, new Vec3(target.getX() - entity.getX(),target.getY(0.5f) - entity.getY(0.5f),target.getZ() - entity.getZ()));
+    }
+    public static void lookAtBodyShoot(Entity entity, Vec3 targetPos){
+        lookVecShoot(entity,new Vec3(targetPos.x - entity.getX(),targetPos.y - entity.getY(0.5f),targetPos.z - entity.getZ()));
+    }
+    public static void lookAtBodyShoot(Entity entity, double x,double y,double z){
+        lookVecShoot(entity,new Vec3(x - entity.getX(),y - entity.getY(0.5f),z - entity.getZ()));
+    }
+    public static void lookAtEyeShoot(Entity entity, Entity target){
+        lookVecShoot(entity,new Vec3(target.getX() - entity.getX(),target.getEyeY() - entity.getEyeY(),target.getZ() - entity.getZ()));
+    }
+    public static void lookAtEyeShoot(Entity entity, Vec3 targetPos){
+        lookVecShoot(entity,new Vec3(targetPos.x - entity.getX(),targetPos.y - entity.getEyeY(),targetPos.z - entity.getZ()));
+    }
+    public static void lookAtEyeShoot(Entity entity, double x,double y,double z){
         lookVecShoot(entity,new Vec3(x - entity.getX(),y - entity.getEyeY(),z - entity.getZ()));
     }
     /**
@@ -208,4 +228,5 @@ public class RotUtils {
     public static Quaternionf rotation(Vec3 from, Vec3 to) {
         return new Quaternionf().fromAxisAngleRad(from.cross(to).toVector3f(), (float) Math.acos(from.dot(to)));
     }
+
 }

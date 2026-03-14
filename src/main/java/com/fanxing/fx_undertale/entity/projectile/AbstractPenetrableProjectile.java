@@ -47,6 +47,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
     public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level,float accelerationPower) {
         super(type, level);
         this.accelerationPower = accelerationPower;
+
     }
 
 
@@ -72,7 +73,6 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
                     ProjectileDeflection projectileDeflection = this.hitTargetOrDeflectSelf(hitResult);
                     this.hasImpulse = true;
                     if(projectileDeflection != ProjectileDeflection.NONE){
-                        log.info("被阻挡：{}", projectileDeflection);
                         break;
                     }
                 }
@@ -81,14 +81,16 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
             Vec3 vec3 = this.getDeltaMovement();
             double speedSqr = vec3.lengthSqr();
             // 有位移时才更新旋转，否则由子类决定没位移时的朝向
-            if(speedSqr > 2.5000003E-5F){
+            if(speedSqr != 0){
                 this.updateRotation();
-            }else if(speedSqr != 0f){
-                this.discard();
             }
             double d0 = this.getX() + vec3.x;
             double d1 = this.getY() + vec3.y;
             double d2 = this.getZ() + vec3.z;
+            this.setPos(d0, d1, d2);
+            spawnTrailParticle(d0,d1,d2,vec3);
+
+            // 下一tick处理的速度
             float f;
             if (this.isInWater()) {
                 for(int i = 0; i < 4; ++i) {
@@ -99,15 +101,10 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
             } else {
                 f = this.getInertia();
             }
-            this.setDeltaMovement(vec3.add(vec3.normalize().scale(this.accelerationPower)).scale(f));
             if(!this.isNoGravity()){
                 this.applyGravity();
             }
-            ParticleOptions particleoptions = this.getTrailParticle();
-            if (particleoptions != null) {
-                this.level().addParticle(particleoptions, d0, d1 + this.getBbHeight()*0.5f, d2, 0.0F, 0.0F, 0.0F);
-            }
-            this.setPos(d0, d1, d2);
+            this.setDeltaMovement(vec3.add(vec3.normalize().scale(this.accelerationPower)).scale(f));
         } else {
             this.discard();
         }
@@ -127,6 +124,25 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         return !this.isInvulnerableTo(damageSource);
     }
 
+    protected float getInertia() {
+        return 0.95F;
+    }
+
+    protected float getLiquidInertia() {
+        return 0.8F;
+    }
+
+
+    protected void spawnTrailParticle(double x,double y,double z,Vec3 deltaMovement) {
+        ParticleOptions particleoptions = this.getTrailParticle();
+        if (particleoptions != null) {
+            this.level().addParticle(particleoptions, x, y + this.getBbHeight()*0.5f, z, 0, 0, 0);
+        }
+    }
+    protected ParticleOptions getTrailParticle() {
+        return com.fanxing.fx_undertale.registry.ParticleTypes.CUSTOM_WHITE_ASH.get();
+    }
+
     @Override
     public boolean shouldRenderAtSqrDistance(double r) {
         double d0 = this.getBoundingBox().getSize() * (double)2.0F;
@@ -136,6 +152,28 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
 
         d0 *= 64.0F;
         return r < d0 * d0;
+    }
+
+    /**
+     * 获取实体添加进世界的数据包，将服务端实体的速度和拥有者也加入
+     */
+    @Override
+    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity serverEntity) {
+        Entity owner = this.getOwner();
+        int ownerId = owner == null ? 0 : owner.getId();
+        Vec3 vec3 = serverEntity.getPositionBase();
+        return new ClientboundAddEntityPacket(this.getId(), this.getUUID(), vec3.x(), vec3.y(), vec3.z(), serverEntity.getLastSentXRot(), serverEntity.getLastSentYRot(), this.getType(), ownerId, serverEntity.getLastSentMovement(), 0.0F);
+    }
+
+    /**
+     * 客户端添加实体包，速度和拥有者设置
+     */
+    @Override
+    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        Vec3 vec3 = new Vec3(packet.getXa(), packet.getYa(), packet.getZa());
+        this.setDeltaMovement(vec3);
+
     }
 
     @Override
@@ -161,43 +199,8 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         this.accelerationPower = buffer.readFloat();
     }
 
-    /**
-     * 获取实体添加进世界的数据包，将服务端实体的速度和拥有者也加入
-     */
-    @Override
-    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity serverEntity) {
-        Entity owner = this.getOwner();
-        int ownerId = owner == null ? 0 : owner.getId();
-        Vec3 vec3 = serverEntity.getPositionBase();
-        return new ClientboundAddEntityPacket(this.getId(), this.getUUID(), vec3.x(), vec3.y(), vec3.z(), serverEntity.getLastSentXRot(), serverEntity.getLastSentYRot(), this.getType(), ownerId, serverEntity.getLastSentMovement(), 0.0F);
-    }
-
-    /**
-     * 客户端添加实体包，速度和拥有者设置
-     */
-    @Override
-    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
-        super.recreateFromPacket(packet);
-        Vec3 vec3 = new Vec3(packet.getXa(), packet.getYa(), packet.getZa());
-        this.setDeltaMovement(vec3);
-
-    }
-
-
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
 
     }
-    protected float getInertia() {
-        return 0.95F;
-    }
-
-    protected float getLiquidInertia() {
-        return 0.8F;
-    }
-
-    protected ParticleOptions getTrailParticle() {
-        return com.fanxing.fx_undertale.registry.ParticleTypes.CUSTOM_WHITE_ASH.get();
-    }
-
 }

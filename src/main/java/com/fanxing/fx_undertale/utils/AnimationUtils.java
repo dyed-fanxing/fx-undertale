@@ -1,5 +1,9 @@
 package com.fanxing.fx_undertale.utils;
 
+import dev.kosmx.playerAnim.api.layered.modifier.AbstractFadeModifier;
+import software.bernie.geckolib.animation.EasingType;
+import software.bernie.geckolib.animation.keyframe.AnimationPoint;
+
 /**
  * 动画计算工具类
  * 提供静态方法处理各种动画效果
@@ -70,4 +74,10 @@ public final class AnimationUtils {
         EASE_OUT,     // 缓出
         EASE_IN_OUT   // 缓入缓出
     }
+
+
+
+
+
+
 }

@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity.summon;
 
-import com.fanxing.fx_undertale.common.DamageTypes;
+import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.entity.ColoredAttacker;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
@@ -27,7 +27,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * @author FanXing
  * @since 2025-10-06 21:18
  */
-public class MovingGroundBone extends AbstractMovingSummons implements IEntityWithComplexSpawn, ColoredAttacker,GeoEntity {
+public class MovingGroundBone extends AbstractMovingSummons implements ColoredAttacker, GeoEntity ,IEntityWithComplexSpawn{
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private float scale = 1.0f; // 整体缩放
     private float growScale = 1.0f; // 在基于整体缩放的基础上的高度缩放

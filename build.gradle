@@ -124,6 +124,12 @@ repositories {
         name = "Jared's maven"
         url = "https://maven.blamejared.com/"
     }
+//    repositories {
+//        maven {
+//            name = "Iris Maven"
+//            url = "https://maven.irisshaders.dev/releases/"
+//        }
+//    }
     mavenCentral()
 }
 
@@ -134,10 +140,6 @@ dependencies {
      runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
     // GECKOLIB ***************************************************************************************************
     implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
-    // PLAYER ANIMATOR ********************************************************************************************
-    //compileOnly "dev.kosmx.player-anim:player-animation-lib-forge:${player_animator_version}"
-    implementation "dev.kosmx.player-anim:player-animation-lib-forge:${player_animator_version}"
-
     implementation("com.zigythebird.playeranim:PlayerAnimationLibNeo:$pal_version") {
         //  排除gson的版本配置，使用neoforge的
         exclude group: 'com.google.code.gson'
@@ -147,6 +149,7 @@ dependencies {
     }
     // CURIOS *****************************************************************************************************
     implementation "top.theillusivec4.curios:curios-neoforge:${curios_version}+${minecraft_version}"
+//    compileOnly "net.irisshaders:iris-api:1.6.0+mc1.20.1"
 
 }
 

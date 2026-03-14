@@ -25,7 +25,12 @@ public class OBB {
 
     // ============== 构造方法 ==============
 
-
+    /**
+     * 从中心、尺寸和前方向创建OBB（自动计算up和right）
+     */
+    public OBB(Vec3 center,float width, float height,Entity entity) {
+        this(center, width*0.5f,height*0.5f,width*0.5f, entity.getViewVector(1.0f), entity.getUpVector(1.0f));
+    }
     /**
      * 从中心、尺寸和前方向创建OBB（自动计算up和right）
      */
@@ -191,10 +196,29 @@ public class OBB {
         return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
     }
     /**
-     * 从实体的视线方向创建OBB
+     * 根据实体的视线方向和给定的长宽高创建OBB
      */
-    public static OBB fromEntityView(Entity entity, float xHalfSize, float yHalfSize, float zHalfSize) {
-        return new OBB(entity.getBoundingBox().getCenter(),xHalfSize, yHalfSize, zHalfSize,entity.getViewVector(1.0f), entity.getUpVector(1.0f));
+    public static OBB fromEntity(Entity entity, float xSize, float ySize, float zSize) {
+        return new OBB(entity.getBoundingBox().getCenter(),xSize*0.5f, ySize*0.5f, zSize*0.5f,entity.getViewVector(1.0f), entity.getUpVector(1.0f));
+    }
+    /**
+     * 根据实体角度和给定的宽度和高度创建OBB，中心点为实体position
+     */
+    public static OBB fromEntity(Entity entity,float widthSize, float heightSize) {
+        Vec3 up = entity.getUpVector(1.0f);
+        float halfHeight =  heightSize*0.5f;
+        float halfWidth = widthSize*0.5f;
+        return new OBB(entity.position().add(up.scale(halfHeight)), halfWidth, halfHeight, halfWidth,entity.getViewVector(1.0f),up );
+    }
+
+    /**
+     * 根据实体已有的碰撞箱和角度创建OBB，中心点为实体position
+     */
+    public static OBB fromEntity(Entity entity) {
+        float halfWidth = entity.getBbWidth()*0.5f;
+        float halfHeight = entity.getBbHeight()*0.5f;
+        Vec3 up = entity.getUpVector(1.0f);
+        return new OBB(entity.position().add(up.scale(halfHeight)), halfWidth,halfHeight, halfWidth,entity.getViewVector(1.0f), up);
     }
     // ============== 变换操作 ==============
 
@@ -406,6 +430,5 @@ public class OBB {
         return String.format("OBB{center=%s, size=(%.2f, %.2f, %.2f)}",
                 center, getLength(), getHeight(), getWidth());
     }
-
 
 }

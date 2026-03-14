@@ -18,7 +18,7 @@ public class LevelUtils {
 
 
     public static boolean addFreshProjectile(Level level, Projectile projectile,Entity target){
-        RotUtils.lookAtShoot(projectile, target);
+        RotUtils.lookAtEyeShoot(projectile, target);
         return level.addFreshEntity(projectile);
     }
     /**
@@ -30,7 +30,7 @@ public class LevelUtils {
      */
     public static boolean addFreshProjectile(Level level, Projectile projectile, Vec3 spawnPos, Entity target){
         projectile.setPos(spawnPos);
-        RotUtils.lookAtShoot(projectile, target);
+        RotUtils.lookAtEyeShoot(projectile, target);
         return level.addFreshEntity(projectile);
     }
 
@@ -43,11 +43,11 @@ public class LevelUtils {
      */
     public static boolean addFreshProjectile(Level level, Projectile projectile, double x,double y,double z, Entity target){
         projectile.setPos(x,y,z);
-        RotUtils.lookAtShoot(projectile, target);
+        RotUtils.lookAtEyeShoot(projectile, target);
         return level.addFreshEntity(projectile);
     }
     public static boolean addFreshProjectile(Level level, Projectile projectile,double x,double y,double z){
-        RotUtils.lookAtShoot(projectile,x,y,z);
+        RotUtils.lookAtEyeShoot(projectile,x,y,z);
         return level.addFreshEntity(projectile);
     }
     /**
@@ -59,7 +59,7 @@ public class LevelUtils {
      */
     public static boolean addFreshProjectile(Level level, Projectile projectile, Vec3 spawnPos, double x,double y,double z){
         projectile.setPos(spawnPos);
-        RotUtils.lookAtShoot(projectile,x,y,z);
+        RotUtils.lookAtEyeShoot(projectile,x,y,z);
         return level.addFreshEntity(projectile);
     }
     /**
@@ -71,7 +71,7 @@ public class LevelUtils {
      */
     public static boolean addFreshProjectile(Level level, Projectile projectile, double spawnX,double spawnY,double spawnZ, double targetX,double targetY,double targetZ){
         projectile.setPos(spawnX,spawnY,spawnZ);
-        RotUtils.lookAtShoot(projectile,targetX,targetY,targetZ);
+        RotUtils.lookAtEyeShoot(projectile,targetX,targetY,targetZ);
         return level.addFreshEntity(projectile);
     }
     /**
@@ -83,7 +83,7 @@ public class LevelUtils {
      */
     public static boolean addFreshProjectile(Level level, Projectile projectile, Vec3 spawnPos, Vec3 targetPos){
         projectile.setPos(spawnPos);
-        RotUtils.lookAtShoot(projectile, targetPos);
+        RotUtils.lookAtEyeShoot(projectile, targetPos);
         return level.addFreshEntity(projectile);
     }
 

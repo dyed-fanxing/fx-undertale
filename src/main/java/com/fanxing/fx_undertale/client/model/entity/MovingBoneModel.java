@@ -22,7 +22,6 @@ public class MovingBoneModel extends DefaultedEntityGeoModel<MovingGroundBone> {
         BoneSnapshot upInitial = up.getInitialSnapshot();
         float heightScale = animatable.getGrowScale();
         body.setScaleY((heightScale - 0.1875f) / 0.8125f);
-        body.setScaleY((heightScale - 0.1875f) / 0.8125f);
         up.setPosY(upInitial.getOffsetY() + (heightScale - 1) * 16);
     }
 

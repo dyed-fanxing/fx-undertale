@@ -88,17 +88,17 @@ public class RenderUtils {
 
         // 绘制6个面（每个面使用统一法线），UV 乘以缩放
         // 前 (Z+)
-        drawQuad(pose, consumer, v[3], v[2], v[6], v[7], 0, 0, 1, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
+        renderQuad(pose, consumer, v[3], v[2], v[6], v[7], 0, 0, 1, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
         // 后 (Z-)
-        drawQuad(pose, consumer, v[0], v[1], v[5], v[4], 0, 0, -1, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
+        renderQuad(pose, consumer, v[0], v[1], v[5], v[4], 0, 0, -1, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
         // 左 (X-)
-        drawQuad(pose, consumer, v[0], v[4], v[7], v[3], -1, 0, 0, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
+        renderQuad(pose, consumer, v[0], v[4], v[7], v[3], -1, 0, 0, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
         // 右 (X+)
-        drawQuad(pose, consumer, v[1], v[2], v[6], v[5], 1, 0, 0, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
+        renderQuad(pose, consumer, v[1], v[2], v[6], v[5], 1, 0, 0, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
         // 上 (Y+)
-        drawQuad(pose, consumer, v[4], v[5], v[6], v[7], 0, 1, 0, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
+        renderQuad(pose, consumer, v[4], v[5], v[6], v[7], 0, 1, 0, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
         // 下 (Y-)
-        drawQuad(pose, consumer, v[0], v[3], v[2], v[1], 0, -1, 0, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
+        renderQuad(pose, consumer, v[0], v[3], v[2], v[1], 0, -1, 0, 0, 0, uScale, vScale, r, g, b, a, overlay, light);
     }
 
     public static void renderCubeFromBackCenter(PoseStack.Pose pose, VertexConsumer consumer,
@@ -238,9 +238,9 @@ public class RenderUtils {
         // 侧面（使用 TRIANGLE_STRIP）
         renderCylinderSide(pose, sideConsumer, radius, height, segments, r, g, b, a, overlay, light, uScale, vScale);
         // 顶底面（使用 TRIANGLES）
-        drawCircle(pose, capConsumer, new Vec3(0, 0, 0), radius, segments, new Vec3(0, -1, 0),
+        renderCircle(pose, capConsumer, new Vec3(0, 0, 0), radius, segments, new Vec3(0, -1, 0),
                 r, g, b, a, overlay, light, uScale, vScale);
-        drawCircle(pose, capConsumer, new Vec3(0, height, 0), radius, segments, new Vec3(0, 1, 0),
+        renderCircle(pose, capConsumer, new Vec3(0, height, 0), radius, segments, new Vec3(0, 1, 0),
                 r, g, b, a, overlay, light, uScale, vScale);
     }
     /**
@@ -487,7 +487,7 @@ public class RenderUtils {
     /**
      * 四边形：UV缩放
      */
-    public static void drawQuad(PoseStack.Pose pose, VertexConsumer consumer,
+    public static void renderQuad(PoseStack.Pose pose, VertexConsumer consumer,
                                 Vec3 p1, Vec3 p2, Vec3 p3, Vec3 p4,
                                 float normalX, float normalY, float normalZ,
                                 float uMin, float vMin, float uMax, float vMax,
@@ -520,28 +520,82 @@ public class RenderUtils {
                 .setLight(light);
     }
     // 新增带UV缩放的 drawQuad 重载
-    public static void drawQuad(PoseStack.Pose pose, VertexConsumer consumer,
+    public static void renderQuad(PoseStack.Pose pose, VertexConsumer consumer,
                                 Vec3 p1, Vec3 p2, Vec3 p3, Vec3 p4,
                                 float normalX, float normalY, float normalZ,
                                 float uMin, float vMin, float uMax, float vMax,
                                 int r, int g, int b, int a, int overlay, int light) {
-        drawQuad(pose, consumer, p1, p2, p3, p4, normalX, normalY, normalZ, uMin, vMin, uMax, vMax, r, g, b, a, overlay, light, 1f, 1f);
+        renderQuad(pose, consumer, p1, p2, p3, p4, normalX, normalY, normalZ, uMin, vMin, uMax, vMax, r, g, b, a, overlay, light, 1f, 1f);
     }
+
+    /**
+     * 从起点向前延伸的四边形（在XZ平面），带法线，UV缩放
+     * @param start 起点
+     * @param width 总宽度（左右各半宽）
+     * @param length 总长度（向前延伸距离）
+     */
+    public static void renderQuadForward(Vec3 start, float width, float length,
+                                         PoseStack.Pose pose, VertexConsumer consumer,
+                                         float normalX, float normalY, float normalZ,
+                                         float uMin, float vMin, float uMax, float vMax,
+                                         int r, int g, int b, int a,int overlay, int light) {
+        float halfWidth = width * 0.5f;
+        Vec3 p1 = start.add(-halfWidth, 0, 0);
+        Vec3 p2 = start.add(halfWidth, 0, 0);
+        Vec3 p3 = start.add(halfWidth, 0, length);
+        Vec3 p4 = start.add(-halfWidth, 0, length);
+        renderQuad(pose, consumer,
+                p1, p2, p3, p4,
+                normalX, normalY, normalZ,
+                uMin, vMin, uMax, vMax,
+                r, g, b, a, overlay, light);
+    }
+    /**
+     * 全部UV缩放，默认法线方向
+     */
+    public static void renderQuadForward(Vec3 start, float width, float length,
+                                         PoseStack.Pose pose, VertexConsumer consumer,
+                                         float uMin, float vMin, float uMax, float vMax,
+                                         int r, int g, int b, int a,
+                                         int overlay, int light) {
+        renderQuadForward(start, width, length, pose, consumer,0f,1f,0f,uMin,vMin,uMax,vMax, r, g, b, a, overlay, light);
+    }
+    /**
+     * 最大UV缩放，默认法线方向
+     */
+    public static void renderQuadForward(Vec3 start, float width, float length,
+                                         PoseStack.Pose pose, VertexConsumer consumer,
+                                         float uMax, float vMax,
+                                         int r, int g, int b, int a,
+                                         int overlay, int light) {
+        renderQuadForward(start, width, length, pose, consumer,0f,1f,0f,0,0,uMax,vMax, r, g, b, a, overlay, light);
+    }
+    /**
+     * 无UV缩放，默认法线方向
+     */
+    public static void renderQuadForward(Vec3 start, float width, float length,
+                                         PoseStack.Pose pose, VertexConsumer consumer,
+                                         int r, int g, int b, int a,
+                                         int overlay, int light) {
+        renderQuadForward(start, width, length, pose, consumer,0f,1f,0f,0,0,1,1, r, g, b, a, overlay, light);
+    }
+
+
 
     public static void renderBillboardQuad(Vec3 from, Vec3 to, float halfWidth, float halfHeight,
                                            PoseStack.Pose pose, VertexConsumer consumer,
                                            int r, int g, int b, int a, float v,
                                            int overlay, int light) {
-        drawXZOrYZQuad(from, to, halfWidth, 0, pose, consumer, r, g, b, a, v, overlay, light, 0, 1, 0);
-        drawXZOrYZQuad(from, to, 0, halfHeight, pose, consumer, r, g, b, a, v, overlay, light, 1, 0, 0);
+        renderXZOrYZQuad(from, to, halfWidth, 0, pose, consumer, r, g, b, a, v, overlay, light, 0, 1, 0);
+        renderXZOrYZQuad(from, to, 0, halfHeight, pose, consumer, r, g, b, a, v, overlay, light, 1, 0, 0);
     }
 
-    public static void drawXZOrYZQuad(Vec3 from, Vec3 to, float halfWidth, float halfHeight,
+    public static void renderXZOrYZQuad(Vec3 from, Vec3 to, float halfWidth, float halfHeight,
                                       PoseStack.Pose pose, VertexConsumer consumer,
                                       int r, int g, int b, int a, float v,
                                       int overlay, int light,
                                       float normalX, float normalY, float normalZ) {
-        drawQuad(pose, consumer,
+        renderQuad(pose, consumer,
                 from.add(halfWidth, halfHeight, 0),
                 from.add(-halfWidth, -halfHeight, 0),
                 to.add(-halfWidth, -halfHeight, 0),
@@ -556,7 +610,7 @@ public class RenderUtils {
                                   int overlay, int light,
                                   float normalX, float normalY, float normalZ) {
         float halfWidth = width * 0.5f, halfHeight = height * 0.5f;
-        drawQuad(pose, consumer,
+        renderQuad(pose, consumer,
                 center.add(halfWidth, halfHeight, 0),
                 center.add(-halfWidth, halfHeight, 0),
                 center.add(-halfWidth, -halfHeight, 0),
@@ -569,7 +623,7 @@ public class RenderUtils {
 
 
     // ========== 私有辅助：带逐顶点法线的四边形 ==========
-    private static void drawQuad(PoseStack.Pose pose, VertexConsumer consumer,
+    public static void renderQuad(PoseStack.Pose pose, VertexConsumer consumer,
                                  float x1, float y1, float z1,
                                  float x2, float y2, float z2,
                                  float x3, float y3, float z3,
@@ -622,11 +676,16 @@ public class RenderUtils {
                                   int r, int g, int b, int a, int overlay, int light) {
         drawCircleTriangleFan(pose, consumer, center, radius, segments, normal, r, g, b, a, overlay, light, 1f, 1f);
     }
+    public static void drawCircleTriangleFan(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments,
+                                             int r, int g, int b, int a, int overlay, int light) {
+        drawCircleTriangleFan(pose, consumer, center, radius, segments, new Vec3(0,1,0), r, g, b, a, overlay, light, 1f, 1f);
+    }
+
 
     /**
      * 用 TRIANGLES 模式绘制圆（每个三角形独立，适合多实例渲染）
      */
-    public static void drawCircle(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments, Vec3 normal,
+    public static void renderCircle(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments, Vec3 normal,
                                            int r, int g, int b, int a, int overlay, int light,
                                            float uScale, float vScale) {
         float delta = Mth.TWO_PI / segments;
@@ -663,9 +722,9 @@ public class RenderUtils {
     /**
      * 用 TRIANGLES 模式绘制圆（每个三角形独立，适合多实例渲染）
      */
-    public static void drawCircle(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments, Vec3 normal,
+    public static void renderCircle(PoseStack.Pose pose, VertexConsumer consumer, Vec3 center, float radius, int segments, Vec3 normal,
                                            int r, int g, int b, int a, int overlay, int light) {
-        drawCircle(pose,consumer, center, radius, segments, normal, r, g, b, a, overlay, light,1f, 1f);
+        renderCircle(pose,consumer, center, radius, segments, normal, r, g, b, a, overlay, light,1f, 1f);
     }
 
 

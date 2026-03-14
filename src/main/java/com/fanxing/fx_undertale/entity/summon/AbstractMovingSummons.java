@@ -11,10 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,30 +34,36 @@ public abstract class AbstractMovingSummons extends Summons {
             Vec3 velocity = this.getDeltaMovement();
             Vec3 to = from.add(velocity);
             AABB searchArea = this.getBoundingBox().expandTowards(velocity);
-            if (TimeOfImpactUtils.isBlockCollide(this.level(),boundingBox,searchArea,velocity,getClipType(), ClipContext.Fluid.NONE, CollisionContext.of(this))) {
-                this.discard();
-                return;
-            }
+            BlockHitResult blockHitResult = TimeOfImpactUtils.getBlockHitResult(this.level(), boundingBox, searchArea, velocity, getClipType(), ClipContext.Fluid.NONE, CollisionContext.of(this));
+            boolean isBlockHit = blockHitResult.getType() != HitResult.Type.MISS;
+            if (isBlockHit) { to = blockHitResult.getLocation();}
             if (!this.level().isClientSide) {
-                for (EntityHitResult hitResult : ProjectileUtils.getEntityHitResults(this,from,to,searchArea, this::canHitEntity)) {
+                for (EntityHitResult hitResult : ProjectileUtils.getEntityHitResults(this,from,to,this::canHitEntity)) {
                     if (hitResult.getType() != HitResult.Type.MISS) {
                         onHitEntity(hitResult.getEntity(), hitResult.getLocation());
                     }
                 }
             }
-
-            this.checkInsideBlocks();
-            this.setPos(this.getX() + velocity.x, this.getY() + velocity.y, this.getZ() + velocity.z);
-            // 更新旋转（可选，用于视觉效果）
-            if (!velocity.equals(Vec3.ZERO)) {
-                RotUtils.lookVec(this, velocity);
+            if (isBlockHit) {
+                onHitBlock(blockHitResult);
             }
+            this.checkInsideBlocks();
+            Vec3 vec3 = this.getDeltaMovement();
+            double speedSqr = vec3.lengthSqr();
+            if(speedSqr != 0) {
+                // 更新旋转（可选，用于视觉效果）
+                updateRotation(vec3);
+            }
+            this.setPos(this.getX() + vec3.x, this.getY() + vec3.y, this.getZ() + vec3.z);
         }
     }
+    void updateRotation(Vec3 velocity) {
+        RotUtils.lookVec(this, velocity);
+    }
+
     protected ClipContext.Block getClipType() {
         return ClipContext.Block.COLLIDER;
     }
-
 
     /**
      * 获取实体添加进世界的数据包，将服务端实体的速度也加入

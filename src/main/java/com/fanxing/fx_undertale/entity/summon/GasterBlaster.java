@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity.summon;
 
-import com.fanxing.fx_undertale.common.DamageTypes;
+import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.Mountable;
 import com.fanxing.fx_undertale.mixin.LivingEntityAccessor;
 import com.fanxing.fx_undertale.registry.EntityTypes;
@@ -123,7 +123,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     public GasterBlaster follow(Vec3 relativePos) {
         this.isFollow = true;
         this.relativePos = relativePos;
-        setPos(owner.position().add(RotUtils.getWorldPos(relativePos,owner.getViewXRot(1.0f), owner.getViewYRot(1.0f))));
+        setPos(owner.position().add(RotUtils.getWorldVec3(relativePos,owner.getViewXRot(1.0f), owner.getViewYRot(1.0f))));
         return this;
     }
     public GasterBlaster aimSmoothSpeed(float speed){
@@ -166,23 +166,15 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         super.tick();
         if(isMountable()) return;
         if(isFollow){
-            if(this.level().isClientSide && owner == null && ownerId != -1){
-                Entity owner = this.level().getEntity(ownerId);
-                if(owner != null){
-                    setOwner(owner);
-                }
-            }
             Entity owner = getOwner();
             if(owner != null){
                 float viewXRot = owner.getViewXRot(1.0f);
                 float viewYRot = owner.getViewYRot(1.0f);
-                setPos(owner.position().add(RotUtils.getWorldPos(relativePos,viewXRot, viewYRot)));
+                setPos(owner.position().add(RotUtils.getWorldVec3(relativePos,viewXRot, viewYRot)));
                 if(owner instanceof Targeting targeting){
                     LivingEntity target = targeting.getTarget();
                     if(target != null){
-                        log.info("执行平滑瞄准前，角度：({},{})，yBodyRot：{}",this.getXRot(),this.getYRot(),this.yBodyRot);
                         aimSmoothly(target);
-                        log.info("执行平滑瞄准后，角度：({},{})，yBodyRot：{}",this.getXRot(),this.getYRot(),this.yBodyRot);
                     }else if(!this.level().isClientSide){
                         this.discard();
                         return;

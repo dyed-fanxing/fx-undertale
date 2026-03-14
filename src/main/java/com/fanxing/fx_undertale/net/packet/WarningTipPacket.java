@@ -32,7 +32,7 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
     }
 
     public static class Cylinder extends WarningTipPacket {
-        public static final Type<Cylinder> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "warning_tip_circle_packet"));
+        public static final Type<Cylinder> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "warning_tip_cylinder_packet"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Cylinder> STREAM_CODEC = CustomPacketPayload.codec(Cylinder::write, Cylinder::new);
 
         private final float h;
@@ -110,6 +110,72 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
         }
         public static void handle(Cube packet, IPayloadContext context) {
             context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.Cube(packet.x, packet.y, packet.z, packet.length, packet.width,packet.height,packet.yaw, packet.lifetime, packet.color)));
+        }
+        @Override
+        public @NotNull Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+
+    public static class Quad extends WarningTipPacket {
+        public static final Type<Quad> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "warning_tip_quad_packet"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Quad> STREAM_CODEC = CustomPacketPayload.codec(Quad::write, Quad::new);
+
+
+        private final float length;
+        private final float width;
+        private final float yaw;
+        public Quad(float x, float y, float z,float length,float width,float yaw, int lifetime, int color) {
+            super(x, y, z, lifetime, color);
+            this.length = length;
+            this.width = width;
+            this.yaw = yaw;
+        }
+        public Quad(FriendlyByteBuf buf) {
+            this(buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readVarInt(),buf.readInt());
+        }
+
+        public void write(FriendlyByteBuf buf) {
+            buf.writeFloat(x);
+            buf.writeFloat(y);
+            buf.writeFloat(z);
+            buf.writeFloat(length);
+            buf.writeFloat(width);
+            buf.writeFloat(yaw);
+            buf.writeVarInt(this.lifetime);
+            buf.writeInt(this.color);
+        }
+        public static void handle(Quad packet, IPayloadContext context) {
+            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.Quad(packet.x, packet.y, packet.z, packet.length, packet.width,packet.yaw, packet.lifetime, packet.color)));
+        }
+        @Override
+        public @NotNull Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+    public static class Circle extends WarningTipPacket {
+        public static final Type<Circle> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "warning_tip_circle_packet"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Circle> STREAM_CODEC = CustomPacketPayload.codec(Circle::write, Circle::new);
+
+        private final float radius;
+        public Circle(float x, float y, float z,float radius,int lifetime, int color) {
+            super(x, y, z, lifetime, color);
+            this.radius = radius;
+        }
+        public Circle(FriendlyByteBuf buf) {
+            this(buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readFloat(),buf.readVarInt(),buf.readInt());
+        }
+
+        public void write(FriendlyByteBuf buf) {
+            buf.writeFloat(x);
+            buf.writeFloat(y);
+            buf.writeFloat(z);
+            buf.writeFloat(radius);
+            buf.writeVarInt(this.lifetime);
+            buf.writeInt(this.color);
+        }
+        public static void handle(Circle packet, IPayloadContext context) {
+            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.Circle(packet.x, packet.y, packet.z, packet.radius,packet.lifetime, packet.color)));
         }
         @Override
         public @NotNull Type<? extends CustomPacketPayload> type() {

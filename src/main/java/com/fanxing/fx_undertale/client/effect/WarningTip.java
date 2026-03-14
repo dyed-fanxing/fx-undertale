@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.client.effect;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -16,6 +17,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.joml.Quaternionf;
@@ -114,6 +116,64 @@ public abstract class WarningTip extends Effect {
             poseStack.translate(x, y+0.01f, z);
             poseStack.mulPose(Axis.YP.rotationDegrees(-yaw));
             RenderUtils.renderCubeFromBackCenter(poseStack.last(), bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_WHITE),length,width,height,r, g, b, getAlpha(partialTick), OverlayTexture.NO_OVERLAY, LightTexture.FULL_SKY);
+            poseStack.popPose();
+        }
+
+        @Override
+        public boolean shouldRender(Frustum frustum, double cameraX, double cameraY, double cameraZ) {
+            return true;
+        }
+        protected AABB getBoundingBox() {
+            return null;
+        }
+    }
+
+    public static class Quad extends WarningTip {
+        private final float length, width;
+        private final float yaw;
+        public Quad(float x, float y, float z, float length, float width,float yaw, int lifetime, int r, int g, int b, int a) {
+            super(x, y, z, lifetime, r, g, b, a);
+            this.length = length;
+            this.width = width;
+            this.yaw = yaw;
+        }
+
+        public Quad(float x, float y, float z, float length,float width,float yaw, int lifetime, int color) {
+            this(x,y,z,length,width, yaw, lifetime, FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), FastColor.ARGB32.alpha(color));
+        }
+
+        @Override
+        protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {
+            poseStack.pushPose();
+            poseStack.translate(x, y, z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-yaw));
+            RenderUtils.renderQuadForward(Vec3.ZERO,width,length,poseStack.last(), bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_WHITE),r, g, b, getAlpha(partialTick), OverlayTexture.NO_OVERLAY, LightTexture.FULL_SKY);
+            poseStack.popPose();
+        }
+
+        @Override
+        public boolean shouldRender(Frustum frustum, double cameraX, double cameraY, double cameraZ) {
+            return true;
+        }
+        protected AABB getBoundingBox() {
+            return null;
+        }
+    }
+    public static class Circle extends WarningTip {
+        private final float radius;
+        public Circle(float x, float y, float z,float radius, int lifetime, int r, int g, int b, int a) {
+            super(x, y, z, lifetime, r, g, b, a);
+            this.radius = radius;
+        }
+        public Circle(float x, float y, float z, float radius, int lifetime, int color) {
+            this(x,y,z,radius, lifetime, FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), FastColor.ARGB32.alpha(color));
+        }
+
+        @Override
+        protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {
+            poseStack.pushPose();
+            poseStack.translate(x, y, z);
+            RenderUtils.drawCircleTriangleFan(poseStack.last(),bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_FAN_WHITE),Vec3.ZERO,radius,8, r, g, b, getAlpha(partialTick), OverlayTexture.NO_OVERLAY, LightTexture.FULL_SKY);
             poseStack.popPose();
         }
 

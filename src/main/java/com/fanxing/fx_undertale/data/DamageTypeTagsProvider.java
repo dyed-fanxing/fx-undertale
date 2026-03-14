@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.data;
 
-import com.fanxing.fx_undertale.common.DamageTypes;
+import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.tags.DamageTypeTags;

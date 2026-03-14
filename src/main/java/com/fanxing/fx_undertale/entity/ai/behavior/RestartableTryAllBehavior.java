@@ -1,5 +1,8 @@
 package com.fanxing.fx_undertale.entity.ai.behavior;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,7 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
-public class RestartableTryAllBehavior<T extends LivingEntity> implements BehaviorControl<T>  {
+public class RestartableTryAllBehavior<T extends LivingEntity> implements BehaviorControl<T> {
     private static final Logger log = LoggerFactory.getLogger(RestartableTryAllBehavior.class);
     private final Map<MemoryModuleType<?>, MemoryStatus> entryCondition;
     private final Set<MemoryModuleType<?>> exitErasedMemories;
@@ -30,13 +33,19 @@ public class RestartableTryAllBehavior<T extends LivingEntity> implements Behavi
     private Behavior.Status status = Behavior.Status.STOPPED;
 
     public static <T extends LivingEntity> RestartableTryAllBehavior<T> Order(List<Pair<? extends BehaviorControl<? super T>, Integer>> behaviors) {
-        return new RestartableTryAllBehavior<>(Map.of(),Set.of(),GateBehavior.OrderPolicy.ORDERED,behaviors);
-    }
-    public static <T extends LivingEntity> RestartableTryAllBehavior<T> SHUFFLED(List<Pair<? extends BehaviorControl<? super T>, Integer>> behaviors) {
-        return new RestartableTryAllBehavior<>(Map.of(),Set.of(),GateBehavior.OrderPolicy.SHUFFLED,behaviors);
+        return new RestartableTryAllBehavior<>(Map.of(), Set.of(), GateBehavior.OrderPolicy.ORDERED, behaviors);
     }
 
-    public RestartableTryAllBehavior(Map<MemoryModuleType<?>, MemoryStatus> entryCondition,Set<MemoryModuleType<?>> exitErasedMemories,GateBehavior.OrderPolicy orderPolicy,List<Pair<? extends BehaviorControl<? super T>, Integer>> behaviors) {
+    public static <T extends LivingEntity> RestartableTryAllBehavior<T> SHUFFLED(List<Pair<? extends BehaviorControl<? super T>, Integer>> behaviors) {
+        return new RestartableTryAllBehavior<>(Map.of(), Set.of(), GateBehavior.OrderPolicy.SHUFFLED, behaviors);
+    }
+
+    public RestartableTryAllBehavior(GateBehavior.OrderPolicy orderPolicy, List<Pair<? extends BehaviorControl<? super T>, Integer>> behaviors) {
+        this(ImmutableMap.of(), ImmutableSet.of(), orderPolicy, behaviors);
+        behaviors.forEach(p -> this.behaviors.add(p.getFirst(), p.getSecond()));
+    }
+
+    public RestartableTryAllBehavior(Map<MemoryModuleType<?>, MemoryStatus> entryCondition, Set<MemoryModuleType<?>> exitErasedMemories, GateBehavior.OrderPolicy orderPolicy, List<Pair<? extends BehaviorControl<? super T>, Integer>> behaviors) {
         this.entryCondition = entryCondition;
         this.exitErasedMemories = exitErasedMemories;
         this.orderPolicy = orderPolicy;
@@ -78,9 +87,9 @@ public class RestartableTryAllBehavior<T extends LivingEntity> implements Behavi
     @Override
     public final void tickOrStop(@NotNull ServerLevel level, @NotNull T entity, long gameTime) {
         this.behaviors.forEach((behaviorControl) -> {
-            if(behaviorControl.getStatus() == Behavior.Status.RUNNING) {
+            if (behaviorControl.getStatus() == Behavior.Status.RUNNING) {
                 behaviorControl.tickOrStop(level, entity, gameTime);
-            }else{
+            } else {
                 behaviorControl.tryStart(level, entity, gameTime);
             }
         });

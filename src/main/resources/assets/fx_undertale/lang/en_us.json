@@ -21,6 +21,9 @@
   "gui.fx_undertale.close": "关闭",
   "mount.onboard.double.key.dismount": "Double Press %1$s to Dismount",
 
+
+  "death.attack.fx_undertale.frame.player": "%1$s al %2$s use frame killed",
+
   "config.fx_undertale.general": "通用",
   "config.fx_undertale.general.segments": "圆段数",
   "config.fx_undertale.general.expPerLevel": "每级所需经验基数",

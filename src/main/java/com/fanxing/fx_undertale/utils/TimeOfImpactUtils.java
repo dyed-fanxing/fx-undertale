@@ -40,12 +40,16 @@ public class TimeOfImpactUtils {
      */
     @NotNull
     public static BlockHitResult getBlockHitResult(Level level, AABB box, Vec3 velocity,ClipContext.Block clipBlock,ClipContext.Fluid clipFluid,CollisionContext context) {
-
         if (velocity.lengthSqr() == 0) return BlockHitResult.miss(null,null,null);
-
         // 计算搜索范围
         AABB searchBox = box.expandTowards(velocity);
-
+        return getBlockHitResult(level, box,searchBox, velocity, clipBlock, clipFluid, context);
+    }
+    /**
+     * 精确检测：返回详细的BlockHitResult
+     */
+    @NotNull
+    public static BlockHitResult getBlockHitResult(Level level, AABB box,AABB searchBox,Vec3 velocity,ClipContext.Block clipBlock,ClipContext.Fluid clipFluid,CollisionContext context) {
         BlockHitResult earliestHit = BlockHitResult.miss(null,null,null);
         double earliestTime = Double.MAX_VALUE;
 
@@ -77,7 +81,6 @@ public class TimeOfImpactUtils {
 
         return earliestHit;
     }
-
 
     // ============== 快速检测（只返回是否碰撞） ==============
     public static boolean isBlockCollide(Entity entity, ClipContext.Block clipBlock) {

@@ -3,7 +3,7 @@ package com.fanxing.fx_undertale.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.fanxing.fx_undertale.common.phys.OBB;
-import com.fanxing.fx_undertale.entity.IOBBCapability;
+import com.fanxing.fx_undertale.entity.IOBB;
 import com.fanxing.fx_undertale.utils.RenderUtils;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -45,7 +45,7 @@ public class EntityRenderDispatcherMixin {
     @Inject(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V", at = @At("HEAD"),
             cancellable = true)
     private static void onRenderHitbox(PoseStack poseStack, VertexConsumer consumer, Entity entity, float partialTicks, float r, float g, float b, CallbackInfo ci) {
-        if (entity instanceof IOBBCapability obbEntity) {
+        if (entity instanceof IOBB obbEntity && ((IOBB<?>) entity).getOBB() != null) {
             ci.cancel();
             OBB obb = obbEntity.getOBB().move(-entity.getX(), -entity.getY(), -entity.getZ());
             RenderUtils.renderOBBOutline(poseStack.last(), consumer, obb,r,g,b,1.0f);
@@ -62,7 +62,7 @@ public class EntityRenderDispatcherMixin {
                         double d5 = d2 + Mth.lerp(partialTicks, part.zOld, part.getZ());
                         poseStack.translate(d3, d4, d5);
                         // 检查部分实体是否也是OBB实体
-                        if (part instanceof IOBBCapability partObbEntity) {
+                        if (part instanceof IOBB partObbEntity && ((IOBB<?>) part).getOBB() != null) {
                             RenderUtils.renderOBBOutline(poseStack.last(), consumer, partObbEntity.getOBB(),r,g,b,255);
                         } else {
                             // 原版渲染
@@ -88,7 +88,7 @@ public class EntityRenderDispatcherMixin {
                 float f = Math.min(vehicle.getBbWidth(), entity.getBbWidth()) / 2.0F;
                 float f2 = 0.0625F;
                 Vec3 vec3 = vehicle.getPassengerRidingPosition(entity).subtract(entity.position());
-                if(vehicle instanceof IOBBCapability vehicleObbEntity){
+                if(vehicle instanceof IOBB vehicleObbEntity && ((IOBB<?>) vehicle).getOBB() != null){
                     OBB vehicleObb = vehicleObbEntity.getOBB();
                     Vec3 ridingPosWorld = vehicle.getPassengerRidingPosition(entity);
                     poseStack.pushPose();

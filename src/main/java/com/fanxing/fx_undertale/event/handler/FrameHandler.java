@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.event.handler;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.common.DamageTypes;
+import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;

@@ -2,7 +2,7 @@ package com.fanxing.fx_undertale.item;
 
 import com.fanxing.fx_undertale.FxUndertale;
 import com.fanxing.fx_undertale.client.PlayerAnimations;
-import com.fanxing.fx_undertale.client.item.GasterBlasterItemRender;
+import com.fanxing.fx_undertale.client.render.item.GasterBlasterItemRender;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.registry.ItemTypes;
 import com.fanxing.fx_undertale.utils.ProjectileUtils;
@@ -90,7 +90,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
                 HitResult hitResult = ProjectileUtils.getHitResultOnViewVector(player, entity -> entity.isPickable() && entity != player.getVehicle(), GasterBlaster.DEFAULT_LENGTH);
                 GasterBlaster blaster = new GasterBlaster(level, player);
                 double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
-                blaster.setPos(player.position().add(RotUtils.getWorldPos(new Vec3(0, safeDistance, 0), player.getRandom().nextFloat() * 180f - 90f, player.getXRot(), player.getYRot())));
+                blaster.setPos(player.position().add(RotUtils.getWorldVec3(new Vec3(0, safeDistance, 0), player.getRandom().nextFloat() * 180f - 90f, player.getXRot(), player.getYRot())));
                 if (hitResult instanceof EntityHitResult entityHitResult) {
                     Entity target = entityHitResult.getEntity();
                     blaster.aim(new Vec3(target.getX(), target.getY(0.5f), target.getZ()));

@@ -16,8 +16,8 @@ public class GravityHandler {
     @SubscribeEvent
     public static void onEntityTickPre(EntityTickEvent.Pre event) {
         Entity entity = event.getEntity();
-        if(entity.getData(AttachmentTypes.SOUL_MODE) == SoulMode.GRAVITY) {
-            entity.addDeltaMovement(new Vec3(0,-0.04F,0));
+        if(entity.getData(AttachmentTypes.GRAVITY_CONTROL_TAG.get())) {
+            entity.addDeltaMovement(new Vec3(0,-0.08F,0));
         }
     }
     @SubscribeEvent

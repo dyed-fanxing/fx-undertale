@@ -31,6 +31,7 @@ public class Gravity {
     private Quaternionf localToWorld = new Quaternionf();
     private Quaternionf worldToLocal = new Quaternionf();
 
+
     public Gravity() {
     }
 
@@ -78,7 +79,7 @@ public class Gravity {
             case SOUTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, target.getBbHeight() * 0.5f));
             case NORTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, -target.getBbHeight() * 0.5f));
         }
-        log.debug("gravity：{},target之前世界坐标系的位置：{}，之后世界坐标系的位置：{}", gravity, localPos, target.position());
+//        log.debug("gravity：{},target之前世界坐标系的位置：{}，之后世界坐标系的位置：{}", gravity, localPos, target.position());
         return gravityData;
     }
 

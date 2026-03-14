@@ -2,6 +2,7 @@ package com.fanxing.fx_undertale.registry;
 
 import com.fanxing.fx_undertale.item.GasterBlasterItem;
 import com.fanxing.fx_undertale.item.GravityTestItem;
+import com.fanxing.fx_undertale.item.MagicBone;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.*;
@@ -26,9 +27,10 @@ public class ItemTypes {
 
     public static final Supplier<GasterBlasterItem> GASTER_BLASTER = ITEMS.registerItem("gaster_blaster", GasterBlasterItem::new);//使用注册器注册物品，并返回注册的物品
     public static final Supplier<GravityTestItem> GRAVITY_DEBUG_STICK = ITEMS.registerItem("gravity_debug_stick", GravityTestItem::new);//使用注册器注册物品，并返回注册的物品
+    public static final Supplier<MagicBone> MAGIC_BONE = ITEMS.registerItem("bone", MagicBone::new);//使用注册器注册物品，并返回注册的物品
 
     // 创建创造标签页，并添加物品，放置在战斗标签页之后
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS.register("undertale_tab",
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS.register("fx_undertale_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.fx_undertale")) // 标签页标题
                     .icon(() -> new ItemStack(GASTER_BLASTER.get()))
@@ -36,5 +38,6 @@ public class ItemTypes {
                     .displayItems((parameters, output) -> {
                         output.accept(GASTER_BLASTER.get());
                         output.accept(GRAVITY_DEBUG_STICK.get());
+                        output.accept(MAGIC_BONE.get());
                     }).build());
 }

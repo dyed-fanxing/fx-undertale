@@ -17,6 +17,7 @@ public class Shaders {
     private static ShaderInstance flyBasicShader;
     private static ShaderInstance topFadeShader;
 
+    private static ShaderInstance entityTranslucentEmissiveAdjustableShader;
 
     public static ShaderInstance getWhiteEntityShader() {
         return whiteEntityShader;
@@ -27,6 +28,7 @@ public class Shaders {
     public static ShaderInstance getTopFadeShader() {
         return topFadeShader;
     }
+    public static ShaderInstance getEntityTranslucentEmissiveAdjustableShader() { return entityTranslucentEmissiveAdjustableShader;}
 
     @SubscribeEvent
     public static void onRegisterShaders(RegisterShadersEvent event) throws IOException {
@@ -49,5 +51,12 @@ public class Shaders {
                         DefaultVertexFormat.NEW_ENTITY
                 ),
                 shader -> topFadeShader = shader);
+        event.registerShader(new ShaderInstance(
+                        event.getResourceProvider(),
+                        ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "entity_translucent_emissive_adjustable"),
+                        DefaultVertexFormat.NEW_ENTITY
+                ),
+                shader -> entityTranslucentEmissiveAdjustableShader = shader);
     }
+
 }
