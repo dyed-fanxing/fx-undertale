@@ -63,6 +63,9 @@ public class GateBehaviorWithExtraCondition<T extends LivingEntity> implements B
             this.status = Behavior.Status.RUNNING;
             this.orderPolicy.apply(this.behaviors);
             this.runningPolicy.apply(this.behaviors.stream(), level, entity, time);
+            this.behaviors.stream().filter(b -> b.getStatus() == Behavior.Status.RUNNING).forEach(b -> {
+                log.info("RunOneExtra started: {}", b.getClass().getSimpleName());
+            });
             return true;
         } else {
             return false;

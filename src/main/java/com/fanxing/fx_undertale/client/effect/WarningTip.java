@@ -117,6 +117,10 @@ public abstract class WarningTip extends Effect {
             poseStack.mulPose(Axis.YP.rotationDegrees(-yaw));
             RenderUtils.renderCubeFromBackCenter(poseStack.last(), bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_WHITE),length,width,height,r, g, b, getAlpha(partialTick), OverlayTexture.NO_OVERLAY, LightTexture.FULL_SKY);
             poseStack.popPose();
+            // 强制恢复深度写入和深度测试
+            RenderSystem.depthMask(true);
+            RenderSystem.enableDepthTest();
+            RenderSystem.disableBlend(); // 可选，根据实体需求
         }
 
         @Override
