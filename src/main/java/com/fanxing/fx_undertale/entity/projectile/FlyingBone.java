@@ -2,20 +2,16 @@ package com.fanxing.fx_undertale.entity.projectile;
 
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.common.phys.CollisionDeflection;
-import com.fanxing.fx_undertale.common.phys.motion.AbstractPhysicsMotionModel;
-import com.fanxing.fx_undertale.common.phys.motion.SpringMotionModel;
-import com.fanxing.fx_undertale.entity.ISyncablePhysicsMotion;
+import com.fanxing.fx_undertale.common.phys.motion.PhysicsMotionModel;
+import com.fanxing.fx_undertale.entity.capability.Scalable;
+import com.fanxing.fx_undertale.entity.capability.SyncablePhysicsMotion;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.utils.RotUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Targeting;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -31,7 +27,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 /**
  * 飞行骨头统一类 - 支持普通射击、延迟射击、振荡模式、旋转模式
  */
-public class FlyingBone extends AbstractPenetrableProjectile implements ISyncablePhysicsMotion, GeoEntity {
+public class FlyingBone extends AbstractPenetrableProjectile implements SyncablePhysicsMotion, Scalable, GeoEntity {
 
     private static final Logger log = LoggerFactory.getLogger(FlyingBone.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -40,92 +36,53 @@ public class FlyingBone extends AbstractPenetrableProjectile implements ISyncabl
     protected float damage = 1.0f;
     protected float speed = 1.0f;
     protected int delay = 0;
+    protected float scale = 1.0f;
+    protected float growScale = 1.0f;
+
     protected Vec3 shotVec;                    // 射击矢量
     protected Vec3 relativePos;                // 相对于拥有者的位置
-    protected Vec3 targetPos;                  // 目标位置（用于振荡模式）
 
     // ========== 运动模型 ==========
-    protected AbstractPhysicsMotionModel motion;
+    protected PhysicsMotionModel motion;
 
     // ========== 行为标志 ==========
     private boolean isAim = false;              // 延迟阶段是否瞄准目标
     private boolean isFollow = false;           // 延迟阶段是否跟随拥有者
-    private boolean isRoll = false;             // 是否绕自身z轴旋转
-    private float spinDir = 1f;                 // 旋转方向
 
     // ========== 构造函数 ==========
 
     public FlyingBone(EntityType<? extends FlyingBone> type, Level level) {
         super(type, level);
     }
-
-    /**
-     * 延迟移动模式 - 停留后按方向移动
-     */
-    public FlyingBone(EntityType<? extends FlyingBone> type, Level level, LivingEntity owner,
-                      float damage, float speed, int delay) {
+    public FlyingBone(EntityType<? extends FlyingBone> type, Level level, LivingEntity owner,float damage,float scale,float growScale) {
         this(type, level);
         this.setNoGravity(true);
         this.setOwner(owner);
         this.damage = damage;
-        this.speed = speed;
-        this.delay = delay;
-    }
-
-    /**
-     * 立即移动模式 - 直接按矢量移动
-     */
-    public FlyingBone(EntityType<? extends FlyingBone> type, Level level, LivingEntity owner,
-                      float damage, float speed, Vec3 velocity) {
-        this(type, level);
-        this.setNoGravity(true);
-        this.setOwner(owner);
-        this.damage = damage;
-        this.speed = speed;
-        this.delay = 0;
-        this.setDeltaMovement(velocity.scale(speed));
+        this.scale = scale;
+        this.growScale = growScale;
     }
 
     // ========== 行为配置方法 ==========
-
-    public FlyingBone aimShoot() {
+    public FlyingBone aimShoot(int delay,float speed) {
+        this.delay = delay;
+        this.speed = speed;
         this.isAim = true;
         return this;
     }
+    public FlyingBone followShoot(int delay,float speed,Vec3 relativePos) {
+        this.delay = delay;
+        this.speed = speed;
+        this.isFollow = true;
+        this.relativePos = relativePos;
+        return this;
+    }
 
-    public FlyingBone vectorShoot(Vec3 vec3) {
-        this.shotVec = vec3;
-        return this;
+    @Override
+    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
+        return super.getDimensions(pose).scale(scale,scale*growScale);
     }
-    public FlyingBone followAngleShoot(Vec3 relativePos) {
-        this.isFollow = true;
-        this.relativePos = relativePos;
-        return this;
-    }
-    public FlyingBone followPosShoot(Vec3 relativePos) {
-        this.isFollow = true;
-        this.relativePos = relativePos;
-        return this;
-    }
-    public FlyingBone setRoll(boolean roll) {
-        this.isRoll = roll;
-        return this;
-    }
-    public FlyingBone setSpinDir(float dir) {
-        this.spinDir = dir;
-        return this;
-    }
-    /**
-     * 启动振荡/运动模型模式
-     */
-    public FlyingBone startMotion(AbstractPhysicsMotionModel motionModel, Vec3 targetPos, float initSpeed) {
-        this.motion = motionModel;
-        this.targetPos = targetPos;
-        this.accelerationPower = 0;
-        Vec3 toTarget = targetPos.subtract(this.getX(), this.getY(0.5f), this.getZ());
-        this.shoot(toTarget.x, toTarget.y, toTarget.z, initSpeed, 0);
-        return this;
-    }
+
 
     // ========== 核心逻辑 ==========
     @Override
@@ -158,18 +115,8 @@ public class FlyingBone extends AbstractPenetrableProjectile implements ISyncabl
             }
             return;
         }
-
-        // 运动模型模式
-        if (motion != null) {
-            this.setDeltaMovement(motion.update(this.position(), this.getDeltaMovement(), targetPos, null, 0.05f));
-        }
         super.tick();
-        // 旋转效果
-        if (motion instanceof SpringMotionModel spring) {
-            this.setYRot(this.getYRot() + spring.getTotalEnergy() * 45F * spinDir);
-        }
     }
-
 
 
     // ========== 基类重载 ==========
@@ -201,23 +148,11 @@ public class FlyingBone extends AbstractPenetrableProjectile implements ISyncabl
 
     @Override
     protected void onHitBlock(@NotNull BlockHitResult result) {
-        if (motion != null) {
-            // 运动模型模式：滑动反弹
-            CollisionDeflection.slideDeflect(this, result.getDirection().getNormal(),
-                    this.level().random, 0.6f, 0f);
-        } else {
-            // 普通模式：直接销毁
-            this.discard();
-        }
+        // 普通模式：直接销毁
+        this.discard();
     }
 
 
-    @Override
-    protected void updateRotation() {
-        if (motion == null) {
-            super.updateRotation();
-        }
-    }
     @Override
     protected float getInertia() {
         return 0.995f;
@@ -243,8 +178,12 @@ public class FlyingBone extends AbstractPenetrableProjectile implements ISyncabl
 
     // ========== 接口实现 ==========
     @Override
-    public AbstractPhysicsMotionModel getMotionModel() {
+    public PhysicsMotionModel getMotionModel() {
         return motion;
+    }
+    @Override
+    public float getScale() {
+        return scale;
     }
 
     // ========== 数据同步 ==========
@@ -256,20 +195,11 @@ public class FlyingBone extends AbstractPenetrableProjectile implements ISyncabl
         tag.putInt("delay", delay);
         tag.putBoolean("isFollow", isFollow);
         tag.putBoolean("isAim", isAim);
-        tag.putBoolean("isRoll", isRoll);
-        tag.putFloat("spinDir", spinDir);
-
         if (relativePos != null) {
             tag.put("relativePos", this.newDoubleList(relativePos.x, relativePos.y, relativePos.z));
         }
         if (shotVec != null) {
             tag.put("shotVec", this.newDoubleList(shotVec.x, shotVec.y, shotVec.z));
-        }
-        if (targetPos != null) {
-            tag.put("targetPos", this.newDoubleList(targetPos.x, targetPos.y, targetPos.z));
-        }
-        if (motion != null) {
-            motion.addAdditionalSaveData(tag);
         }
     }
 
@@ -282,8 +212,6 @@ public class FlyingBone extends AbstractPenetrableProjectile implements ISyncabl
         if (tag.contains("delay")) this.delay = tag.getInt("delay");
         if (tag.contains("isFollow")) this.isFollow = tag.getBoolean("isFollow");
         if (tag.contains("isAim")) this.isAim = tag.getBoolean("isAim");
-        if (tag.contains("isRoll")) this.isRoll = tag.getBoolean("isRoll");
-        if (tag.contains("spinDir")) this.spinDir = tag.getFloat("spinDir");
 
         if (tag.contains("relativePos")) {
             ListTag list = tag.getList("relativePos", 6);
@@ -293,12 +221,8 @@ public class FlyingBone extends AbstractPenetrableProjectile implements ISyncabl
             ListTag list = tag.getList("shotVec", 6);
             this.shotVec = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
         }
-        if (tag.contains("targetPos")) {
-            ListTag list = tag.getList("targetPos", 6);
-            this.targetPos = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
-        }
-
-        this.motion = AbstractPhysicsMotionModel.fromTag(tag);
+        this.motion = PhysicsMotionModel.fromTag(tag);
+        this.refreshDimensions();
     }
 
     @Override
@@ -307,21 +231,6 @@ public class FlyingBone extends AbstractPenetrableProjectile implements ISyncabl
         buf.writeFloat(damage);
         buf.writeFloat(speed);
         buf.writeInt(delay);
-        buf.writeFloat(spinDir);
-
-        if (motion != null) {
-            buf.writeBoolean(true);
-            motion.writeSpawnData(buf);
-        } else {
-            buf.writeBoolean(false);
-        }
-
-        buf.writeBoolean(targetPos != null);
-        if (targetPos != null) {
-            buf.writeDouble(targetPos.x);
-            buf.writeDouble(targetPos.y);
-            buf.writeDouble(targetPos.z);
-        }
     }
 
     @Override
@@ -330,17 +239,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements ISyncabl
         this.damage = buf.readFloat();
         this.speed = buf.readFloat();
         this.delay = buf.readInt();
-        this.spinDir = buf.readFloat();
-
-        boolean hasMotion = buf.readBoolean();
-        if (hasMotion) {
-            this.motion = AbstractPhysicsMotionModel.fromBuf(buf);
-        }
-
-        boolean hasTargetPos = buf.readBoolean();
-        if (hasTargetPos) {
-            this.targetPos = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
-        }
+        this.refreshDimensions();
     }
 
 

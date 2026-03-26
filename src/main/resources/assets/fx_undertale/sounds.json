@@ -4,6 +4,11 @@
             "fx_undertale:enemy_encounter_attack_tip"
         ]
     },
+    "entity.sans.eye_blink": {
+        "sounds": [
+            "fx_undertale:sans/eye_blink"
+        ]
+    },
     "entity.sans.slam": {
         "sounds": [
             "fx_undertale:sans/slam"

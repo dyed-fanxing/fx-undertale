@@ -13,9 +13,11 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,6 +81,16 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
         }else{
             return false;
         }
+    }
+
+    @Override
+    public int getPackedOverlay(GasterBlaster animatable, float u, float partialTick) {
+        if (animatable.hurtTime > 0) {
+            int hurtDuration = animatable.hurtDuration;
+            int overlayU = OverlayTexture.u((float) animatable.hurtTime / hurtDuration);
+            return OverlayTexture.pack(overlayU, 10);
+        }
+        return OverlayTexture.NO_OVERLAY;
     }
 
     public static class GasterBlasterEyesLayer<T extends Entity & GeoAnimatable & IGasterBlaster> extends AnimatedGlowingLayer<T> {

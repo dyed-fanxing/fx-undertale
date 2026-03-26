@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.entity.ai.goal;
 
 import com.fanxing.fx_undertale.entity.ai.anim.TimelineAnim;
-import com.fanxing.fx_undertale.entity.IAnimatable;
+import com.fanxing.fx_undertale.entity.capability.Animatable;
 import com.fanxing.fx_undertale.net.packet.AnimPacket;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
@@ -23,7 +23,7 @@ import java.util.function.ToIntFunction;
  * @since 2025-11-23 21:21
  * 时间线动画执行器
  */
-public abstract class TimelineAnimGoal<R extends Mob & IAnimatable> extends Goal {
+public abstract class TimelineAnimGoal<R extends Mob & Animatable> extends Goal {
     private static final Logger log = LogManager.getLogger(TimelineAnimGoal.class);
     protected final R mob;
     protected int tick;             // 动画tick

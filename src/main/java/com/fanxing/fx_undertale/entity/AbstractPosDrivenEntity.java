@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity;
 
-import com.fanxing.fx_undertale.utils.ProjectileUtils;
+import com.fanxing.fx_undertale.utils.collsion.ProjectileUtils;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;

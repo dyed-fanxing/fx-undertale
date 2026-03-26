@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.fanxing.fx_undertale.entity.Mountable;
+import com.fanxing.fx_undertale.entity.capability.Mountable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.Component;

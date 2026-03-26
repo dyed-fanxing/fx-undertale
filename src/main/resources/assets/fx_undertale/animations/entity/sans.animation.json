@@ -80,6 +80,16 @@
 							"vector": [0.25, 0.25, 0]
 						}
 					}
+				},
+				"rotation_bone_left": {
+					"scale": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rotation_bone_right": {
+					"scale": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		},
@@ -205,6 +215,16 @@
 							"vector": [0, 0, 0]
 						}
 					}
+				},
+				"rotation_bone_left": {
+					"scale": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rotation_bone_right": {
+					"scale": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		},
@@ -324,6 +344,16 @@
 						"1.0": {
 							"vector": [0, 0, 0]
 						}
+					}
+				},
+				"rotation_bone_left": {
+					"scale": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rotation_bone_right": {
+					"scale": {
+						"vector": [0, 0, 0]
 					}
 				}
 			}
@@ -2796,7 +2826,7 @@
 				}
 			}
 		},
-		"attack.gb.follow": {
+		"attack.gb.control": {
 			"loop": "hold_on_last_frame",
 			"animation_length": 0.8333,
 			"bones": {

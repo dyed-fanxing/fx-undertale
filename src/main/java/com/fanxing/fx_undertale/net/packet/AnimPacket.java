@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.net.packet;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.entity.IAnimatable;
+import com.fanxing.fx_undertale.entity.capability.Animatable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.FriendlyByteBuf;
@@ -38,8 +38,7 @@ public record AnimPacket(int entityId, byte id,float speed) implements CustomPac
     public static void handle(AnimPacket packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
-            if (level != null && level.getEntity(packet.entityId) instanceof IAnimatable entity) {
-                log.info("当前动画ID：{},客户端接收到动画ID：{}",entity.getAnimID(),packet.id);
+            if (level != null && level.getEntity(packet.entityId) instanceof Animatable entity) {
                 entity.setAnimID(packet.id);
             }
         });

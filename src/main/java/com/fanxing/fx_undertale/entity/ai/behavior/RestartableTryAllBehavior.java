@@ -42,7 +42,6 @@ public class RestartableTryAllBehavior<T extends LivingEntity> implements Behavi
 
     public RestartableTryAllBehavior(GateBehavior.OrderPolicy orderPolicy, List<Pair<? extends BehaviorControl<? super T>, Integer>> behaviors) {
         this(ImmutableMap.of(), ImmutableSet.of(), orderPolicy, behaviors);
-        behaviors.forEach(p -> this.behaviors.add(p.getFirst(), p.getSecond()));
     }
 
     public RestartableTryAllBehavior(Map<MemoryModuleType<?>, MemoryStatus> entryCondition, Set<MemoryModuleType<?>> exitErasedMemories, GateBehavior.OrderPolicy orderPolicy, List<Pair<? extends BehaviorControl<? super T>, Integer>> behaviors) {

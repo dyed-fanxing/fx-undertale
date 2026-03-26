@@ -1,10 +1,13 @@
 {
   "itemGroup.fx_undertale": "传说之下",
-  "item.fx_undertale.gaster_blaster": "龙骨炮",
+  "item.fx_undertale.gaster_blaster": "加斯特冲击波",
   "item.fx_undertale.gravity_debug_stick": "重力调试棍",
 
   "entity.fx_undertale.sans": "杉斯",
-  "entity.fx_undertale.gaster_blaster": "龙骨炮",
+  "entity.fx_undertale.gaster_blaster": "加斯特冲击波",
+  "entity.fx_undertale.flying_bone": "魔法骨头",
+  "entity.fx_undertale.rotation_bone": "魔法骨头",
+  "entity.fx_undertale.ground_bone": "魔法骨头",
   "effect.fx_undertale.karma": "业力",
   "effect.fx_undertale.gravity": "重力",
 

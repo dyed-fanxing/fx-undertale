@@ -352,11 +352,7 @@ public class RenderUtils {
                 float nx3 = cosPhi2 * cosTheta2, nz3 = cosPhi2 * sinTheta2;
                 float nx4 = cosPhi1 * cosTheta2, nz4 = cosPhi1 * sinTheta2;
 
-                Matrix4f matrix = pose.pose();
-                consumer.addVertex(matrix, x1, y1, z1).setNormal(pose, nx1, sinPhi1, nz1).setUv(u1, v1).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
-                consumer.addVertex(matrix, x2, y2, z2).setNormal(pose, nx2, sinPhi2, nz2).setUv(u1, v2).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
-                consumer.addVertex(matrix, x3, y3, z3).setNormal(pose, nx3, sinPhi2, nz3).setUv(u2, v2).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
-                consumer.addVertex(matrix, x4, y4, z4).setNormal(pose, nx4, sinPhi1, nz4).setUv(u2, v1).setColor(r, g, b, a).setOverlay(overlay).setLight(light);
+                renderQuad(pose, consumer, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, nx1, sinPhi1, nz1, nx2, sinPhi2, nz2, nx3, sinPhi2, nz3, nx4, sinPhi1, nz4, u1, v1, u1, v2, u2, v2, u2, v1, r, g, b, a, overlay, light);
             }
         }
     }
@@ -726,7 +722,6 @@ public class RenderUtils {
                                            int r, int g, int b, int a, int overlay, int light) {
         renderCircle(pose,consumer, center, radius, segments, normal, r, g, b, a, overlay, light,1f, 1f);
     }
-
 
     /**
      * 绘制单个三角形，连续

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * 振荡模型：恒定速度，越过目标时反转方向。
  * 速度大小固定，运动始终沿直线，通过距离比较实现来回穿透。
  */
-public class OscillationMotionModel extends AbstractPhysicsMotionModel {
+public class OscillationMotionModel extends PhysicsMotionModel {
     private float speed;               // 恒定速度大小
     private double lastDist = Double.MAX_VALUE; // 上一帧距离（用于检测越过）
 

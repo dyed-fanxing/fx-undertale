@@ -11,11 +11,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.model.GeoModel;
@@ -52,7 +54,7 @@ public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMons
                 Objects.requireNonNull(shader.getUniform("bottomY")).set((float) animatable.getY());
                 Objects.requireNonNull(shader.getUniform("bbHeight")).set(animatable.getBbHeight());
             }
-//            spawnDeathParticles(animatable, progress);
+            spawnDeathParticles(animatable, progress);
             super.actuallyRender(poseStack, animatable, model, type, bufferSource, consumer,
                     isReRender, partialTick, packedLight, packedOverlay, colour);
         } else {
@@ -101,6 +103,13 @@ public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMons
         }
     }
 
+    @Override
+    public boolean shouldRender(T animatable, @NotNull Frustum frustum, double p_114493_, double p_114494_, double p_114495_) {
+        if (animatable.isDeadOrDying()) {
+            return true;
+        }
+        return super.shouldRender(animatable, frustum, p_114493_, p_114494_, p_114495_);
+    }
 
     @Override
     public int getPackedOverlay(T animatable, float u, float partialTick) {

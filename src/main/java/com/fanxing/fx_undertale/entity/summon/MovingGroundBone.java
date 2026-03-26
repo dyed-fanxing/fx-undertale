@@ -1,6 +1,7 @@
 package com.fanxing.fx_undertale.entity.summon;
 
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
+import com.fanxing.fx_undertale.entity.capability.Growable;
 import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.entity.ColoredAttacker;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
@@ -13,6 +14,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +29,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * @author FanXing
  * @since 2025-10-06 21:18
  */
-public class MovingGroundBone extends AbstractMovingSummons implements ColoredAttacker, GeoEntity ,IEntityWithComplexSpawn{
+public class MovingGroundBone extends AbstractMovingSummons implements Growable,ColoredAttacker,IEntityWithComplexSpawn, GeoEntity{
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private float scale = 1.0f; // 整体缩放
     private float growScale = 1.0f; // 在基于整体缩放的基础上的高度缩放
@@ -82,6 +84,7 @@ public class MovingGroundBone extends AbstractMovingSummons implements ColoredAt
         return super.getDimensions(pose).scale(scale).scale(1f, growScale);
     }
 
+
     @Override
     public void tick() {
         super.tick();
@@ -93,7 +96,10 @@ public class MovingGroundBone extends AbstractMovingSummons implements ColoredAt
             this.setDeltaMovement(this.getLookAngle().scale(speed));
             this.hasImpulse = true;
         }
-
+    }
+    @Override
+    public float getGrowProgress(float partialTick) {
+        return 0;
     }
     /**
      * 判断是否可命中实体
@@ -108,7 +114,8 @@ public class MovingGroundBone extends AbstractMovingSummons implements ColoredAt
     }
 
     @Override
-    protected void onHitEntity(Entity entity, Vec3 location) {
+    protected void onHitEntity(EntityHitResult hitResult) {
+        Entity entity = hitResult.getEntity();
         DamageSource damageSource;
         if (owner instanceof Sans) {
             damageSource = this.damageSources().source(DamageTypes.FRAME, this, owner);

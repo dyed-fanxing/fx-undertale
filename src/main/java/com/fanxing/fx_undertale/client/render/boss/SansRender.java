@@ -3,7 +3,6 @@ package com.fanxing.fx_undertale.client.render.boss;
 import com.fanxing.fx_undertale.FxUndertale;
 import com.fanxing.fx_undertale.client.model.entity.SansModel;
 import com.fanxing.fx_undertale.client.render.AbstractDeadUTMonsterDustRenderer;
-import com.fanxing.fx_undertale.client.render.RotationBoneRender;
 import com.fanxing.fx_undertale.client.render.layer.SansFatigueLayer;
 import com.fanxing.fx_undertale.common.RenderTypes;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;

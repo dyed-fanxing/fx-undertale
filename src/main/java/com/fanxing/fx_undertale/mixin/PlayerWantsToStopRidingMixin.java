@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.mixin;
 
-import com.fanxing.fx_undertale.entity.Mountable;
+import com.fanxing.fx_undertale.entity.capability.Mountable;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;

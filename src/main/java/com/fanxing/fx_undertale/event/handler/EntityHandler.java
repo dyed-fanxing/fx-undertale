@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.event.handler;
 
-import com.fanxing.fx_undertale.entity.ISyncablePhysicsMotion;
+import com.fanxing.fx_undertale.entity.capability.SyncablePhysicsMotion;
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
@@ -33,7 +33,7 @@ public class EntityHandler {
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event){
         Entity entity = event.getEntity();
-        if(entity instanceof ISyncablePhysicsMotion){
+        if(entity instanceof SyncablePhysicsMotion){
 //            entity.discard();
 //            event.setCanceled(true);
         }

@@ -10,7 +10,7 @@ import software.bernie.geckolib.animation.state.BoneSnapshot;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
-public class MovingBoneModel extends DefaultedEntityGeoModel<MovingGroundBone> {
+public class MovingBoneModel extends GrowableBoneModel<MovingGroundBone> {
     public MovingBoneModel() {
         super(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "bone"));
     }

@@ -1,13 +1,13 @@
 package com.fanxing.fx_undertale.entity.ai.goal;
 
-import com.fanxing.fx_undertale.entity.IAnimatable;
+import com.fanxing.fx_undertale.entity.capability.Animatable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
 
-public abstract class CasterMainGoal<T extends Mob&IAnimatable> extends Goal {
+public abstract class CasterMainGoal<T extends Mob& Animatable> extends Goal {
     protected final T mob;
     protected LivingEntity target;
     protected int seeTime;

@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
  * 引力模型（固定强度）：加速度 = strength / (距离² + 软化半径²) * 方向指向目标
  * 当角动量为零时，物体沿直线振荡，振幅恒定（能量守恒）。
  */
-public class GravityMotion extends AbstractPhysicsMotionModel {
+public class GravityMotion extends PhysicsMotionModel {
     private static final Logger log = LoggerFactory.getLogger(GravityMotion.class);
     private float strength;   // 实际使用的引力强度（固定）
     private float damping = 1.0F;

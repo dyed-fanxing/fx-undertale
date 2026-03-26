@@ -1,13 +1,15 @@
 package com.fanxing.fx_undertale.entity.summon;
 
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
-import com.fanxing.fx_undertale.entity.Mountable;
+import com.fanxing.fx_undertale.entity.capability.Mountable;
 import com.fanxing.fx_undertale.mixin.LivingEntityAccessor;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.registry.ItemTypes;
 import com.fanxing.fx_undertale.registry.SoundEvnets;
-import com.fanxing.fx_undertale.utils.CollisionDetectionUtils;
+import com.fanxing.fx_undertale.utils.CurvesUtils;
+import com.fanxing.fx_undertale.utils.collsion.CollisionDetectionUtils;
 import com.fanxing.fx_undertale.utils.RotUtils;
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -66,6 +68,11 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     protected int fireTick = 17;            // 开火Tick点
     protected int shotTick = 19;            // 发射Tick点
     protected int decayTick = 47;           // 开始衰退Tick点
+
+    protected float holdTimeScale;
+    private static final float DIST = 5f;
+    private Entity target;
+
     // 骑乘相关
     private static final EntityDataAccessor<Boolean> DATA_MOUNTABLE = SynchedEntityData.defineId(GasterBlaster.class, EntityDataSerializers.BOOLEAN);
 
@@ -110,16 +117,6 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(health);
         this.setHealth(this.getMaxHealth());
     }
-
-    public void aim(Entity target) {
-        aim(new Vec3(target.getX(), target.getY(0.5f), target.getZ()));
-    }
-    public void aim(Vec3 targetPos) {
-        Vec3 dir = targetPos.subtract(this.getEyePosition());
-        RotUtils.lookVec(this,dir);
-        this.maxLength = (float) Math.max(dir.length()+5,DEFAULT_LENGTH);
-        this.length = maxLength;
-    }
     public GasterBlaster follow(Vec3 relativePos) {
         this.isFollow = true;
         this.relativePos = relativePos;
@@ -134,14 +131,35 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         setMountable(true);
         return this;
     }
+    public GasterBlaster holdTimeScale(float holdTimeScale){
+        this.holdTimeScale = holdTimeScale;
+        return this;
+    }
+    public GasterBlaster target(Entity target) {
+        this.target = target;
+        return this;
+    }
 
+    public void aim(Entity target) {
+        aim(new Vec3(target.getX(), target.getY(0.5f), target.getZ()));
+    }
+    public void aim(Vec3 targetPos) {
+        Vec3 dir = targetPos.subtract(this.getEyePosition());
+        RotUtils.lookVec(this,dir);
+        this.maxLength = (float) Math.max(dir.length()+5,DEFAULT_LENGTH);
+        this.length = maxLength;
+    }
+
+    public void restAnimPos(){
+        setPos(this.position().add(this.getLookAngle().scale(-DIST)));
+    }
 
     /**
      * 平滑瞄准目标，旋转速度由 speed 控制（0~1，值越小越慢）
      */
     protected void aimSmoothly(Entity target) {
         Vec3 dir = new Vec3(target.getX(), target.getY(0.5f), target.getZ()).subtract(this.getEyePosition());
-        this.maxLength = (float) Math.max(dir.length()+5,DEFAULT_LENGTH);
+        this.maxLength = (float) Math.max(dir.length()+DIST,DEFAULT_LENGTH);
         this.length = maxLength;
         this.setYRot(Mth.rotLerp(aimSmoothSpeed,this.getYRot(), RotUtils.yRotD(dir)));
         this.setXRot(Mth.rotLerp(aimSmoothSpeed,this.getXRot(), RotUtils.xRotD(dir)));
@@ -165,8 +183,11 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     public void tick() {
         super.tick();
         if(isMountable()) return;
+        Vec3 velocity = getLookAngle().scale(CurvesUtils.parametricDerivative((float) tickCount / decayTick, holdTimeScale, 0.5f)*0.1f);
+        setDeltaMovement(velocity);
+        setPos(this.position().add(velocity));
+        Entity owner = getOwner();
         if(isFollow){
-            Entity owner = getOwner();
             if(owner != null){
                 float viewXRot = owner.getViewXRot(1.0f);
                 float viewYRot = owner.getViewYRot(1.0f);
@@ -181,7 +202,12 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
                     }
                 }else if(owner instanceof Player player){
                     if(player.isUsingItem() && player.getUseItem().getItem() == ItemTypes.GASTER_BLASTER.get()){
-                        this.setXRot(viewXRot);
+                        if(!Minecraft.getInstance().options.keySprint.isDown()){
+                            this.setXRot(viewXRot);
+                        }else{
+                            player.setXRot(0);
+                            this.setXRot(0);
+                        }
                         this.setYRot(viewYRot);
                     }
                 } else if(!this.level().isClientSide){
@@ -192,6 +218,11 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
             }else if(!this.level().isClientSide){
                 this.discard();
                 return;
+            }
+        }else{
+            if(owner instanceof Player player && target != null && this.canHitEntity(target)){
+                if(tickCount < shotTick) aim(target);
+                else if(tickCount < decayTick) aimSmoothly(target);
             }
         }
         if(tickCount > decayTick){
@@ -393,42 +424,29 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
 
 
         tag.putBoolean("mountable", isMountable());
+
+        tag.putFloat("holdTimeScale", holdTimeScale);
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.hasUUID("ownerUUID")) {
-            ownerUUID = tag.getUUID("ownerUUID");
-        }
-        if (tag.contains("size")) {
-            size = tag.getFloat("size");
-        }
-        if (tag.contains("fireTick")) {
-            fireTick = tag.getInt("fireTick");
-        }
-        if(tag.contains("shotTick")){
-            shotTick = tag.getInt("shotTick");
-        }
-        if (tag.contains("decayTick")) {
-            decayTick = tag.getInt("decayTick");
-        }
-        if(tag.contains("maxLength")){
-            maxLength = tag.getFloat("maxLength");
-        }
-        if(tag.contains("aimSmoothSpeed")){
-            aimSmoothSpeed = tag.getFloat("aimSmoothSpeed");
-        }
+        if(tag.hasUUID("ownerUUID")) ownerUUID = tag.getUUID("ownerUUID");
+        if(tag.contains("size")) size = tag.getFloat("size");
+        if(tag.contains("fireTick")) fireTick = tag.getInt("fireTick");
+        if(tag.contains("shotTick")) shotTick = tag.getInt("shotTick");
+        if(tag.contains("decayTick")) decayTick = tag.getInt("decayTick");
+        if(tag.contains("maxLength")) maxLength = tag.getFloat("maxLength");
+        if(tag.contains("aimSmoothSpeed")) aimSmoothSpeed = tag.getFloat("aimSmoothSpeed");
 
-        if (tag.contains("relativePos")) {
+        if(tag.contains("relativePos")) {
             ListTag list = tag.getList("relativePos", 6);
             this.relativePos = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
         }
         this.isFollow = tag.getBoolean("isFollow");
 
-        if (tag.contains("mountable")) {
-            setMountable(tag.getBoolean("mountable"));
-        }
+        if(tag.contains("mountable")) setMountable(tag.getBoolean("mountable"));
+        if(tag.contains("holdTimeScale"))  this.holdTimeScale = tag.getFloat("holdTimeScale");
     }
 
     @Override
@@ -448,6 +466,9 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         }else{
             buffer.writeBoolean(false);
         }
+        buffer.writeFloat(holdTimeScale);
+        buffer.writeBoolean(target != null);
+        if(target != null) buffer.writeInt(target.getId());
     }
 
     @Override
@@ -462,7 +483,8 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         if(buffer.readBoolean()) {
             this.relativePos = new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
         }
-
+        this.holdTimeScale = buffer.readFloat();
+        if(buffer.readBoolean()) this.target = this.level().getEntity(buffer.readInt());
         this.refreshDimensions();
     }
 

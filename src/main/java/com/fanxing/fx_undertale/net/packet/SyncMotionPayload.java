@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.net.packet;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.entity.ISyncablePhysicsMotion;
+import com.fanxing.fx_undertale.entity.capability.SyncablePhysicsMotion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.FriendlyByteBuf;
@@ -28,7 +28,7 @@ public record SyncMotionPayload(int entityId, byte[] data) implements CustomPack
     public static void handle(SyncMotionPayload packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
-            if (level != null && level.getEntity(packet.entityId) instanceof ISyncablePhysicsMotion syncableMotion) {
+            if (level != null && level.getEntity(packet.entityId) instanceof SyncablePhysicsMotion syncableMotion) {
                 syncableMotion.getMotionModel().readSyncData(packet.data);
             }
         });

@@ -5,7 +5,7 @@ import com.fanxing.fx_undertale.client.PlayerAnimations;
 import com.fanxing.fx_undertale.client.render.item.GasterBlasterItemRender;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.registry.ItemTypes;
-import com.fanxing.fx_undertale.utils.ProjectileUtils;
+import com.fanxing.fx_undertale.utils.collsion.ProjectileUtils;
 import com.fanxing.fx_undertale.utils.RotUtils;
 import com.zigythebird.playeranim.animation.PlayerAnimResources;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
@@ -31,6 +31,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -64,6 +65,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
         return MAX_USE_DURATION;
     }
 
+
     /**
      * 物品使用交互逻辑（右键触发动画）
      */
@@ -88,12 +90,12 @@ public class GasterBlasterItem extends Item implements GeoItem {
                 return InteractionResultHolder.consume(itemStack);
             } else {
                 HitResult hitResult = ProjectileUtils.getHitResultOnViewVector(player, entity -> entity.isPickable() && entity != player.getVehicle(), GasterBlaster.DEFAULT_LENGTH);
-                GasterBlaster blaster = new GasterBlaster(level, player);
+                GasterBlaster blaster = new GasterBlaster(level, player).holdTimeScale(0.95F);
                 double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
                 blaster.setPos(player.position().add(RotUtils.getWorldVec3(new Vec3(0, safeDistance, 0), player.getRandom().nextFloat() * 180f - 90f, player.getXRot(), player.getYRot())));
                 if (hitResult instanceof EntityHitResult entityHitResult) {
                     Entity target = entityHitResult.getEntity();
-                    blaster.aim(new Vec3(target.getX(), target.getY(0.5f), target.getZ()));
+                    blaster.target(target).aimSmoothSpeed(0.15f);
                 } else {
                     blaster.aim(hitResult.getLocation());
                 }

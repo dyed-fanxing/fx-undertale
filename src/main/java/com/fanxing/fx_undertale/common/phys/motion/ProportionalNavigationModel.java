@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
  * 比例导引模型：每 tick 将速度方向以固定最大转向速率转向目标方向。
  * 速度大小恒定，无阻尼。
  */
-public class ProportionalNavigationModel extends AbstractPhysicsMotionModel {
+public class ProportionalNavigationModel extends PhysicsMotionModel {
     private static final Logger log = LoggerFactory.getLogger(ProportionalNavigationModel.class);
 
     private float turnRate;   // 每 tick 最大转向角度（弧度）

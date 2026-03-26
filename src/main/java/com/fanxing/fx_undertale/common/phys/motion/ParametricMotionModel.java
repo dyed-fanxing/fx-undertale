@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
  * 抽象参数方程运动模型
  * 子类需实现参数方程及其导数
  */
-public abstract class ParametricMotionModel extends AbstractPhysicsMotionModel {
+public abstract class ParametricMotionModel extends PhysicsMotionModel {
     private static final Logger log = LoggerFactory.getLogger(ParametricMotionModel.class);
 
     // ========== 控制参数（初始化后不变，只需生成时同步）==========

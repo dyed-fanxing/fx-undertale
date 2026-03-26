@@ -1,10 +1,9 @@
 package com.fanxing.fx_undertale.client;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.client.render.RotationBoneRender;
+import com.fanxing.fx_undertale.client.render.RotationBoneRenderer;
 import com.fanxing.fx_undertale.client.render.summon.GasterBlasterRender;
 import com.fanxing.fx_undertale.client.render.summon.GroundBoneRender;
-import com.fanxing.fx_undertale.client.render.summon.OBBBoneRender;
 import com.fanxing.fx_undertale.client.render.summon.MovingGroundBoneRender;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
@@ -13,7 +12,7 @@ import com.fanxing.fx_undertale.client.particle.BallGrowParticle;
 import com.fanxing.fx_undertale.client.particle.CustomWhiteAshNoGravityParticle;
 import com.fanxing.fx_undertale.client.particle.CustomWhiteAshParticle;
 import com.fanxing.fx_undertale.client.particle.LightStreakParticle;
-import com.fanxing.fx_undertale.client.render.FlyingBoneRender;
+import com.fanxing.fx_undertale.client.render.FlyingBoneRenderer;
 import com.fanxing.fx_undertale.client.render.boss.SansRender;
 import com.fanxing.fx_undertale.client.screen.GravitySelectionScreen;
 import com.fanxing.fx_undertale.registry.EntityTypes;
@@ -21,6 +20,8 @@ import com.fanxing.fx_undertale.registry.MenuTypes;
 import com.fanxing.fx_undertale.registry.ParticleTypes;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
+import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonConfiguration;
+import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
 import com.zigythebird.playeranimcore.enums.PlayState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -48,9 +49,8 @@ public class Setup {
         event.registerEntityRenderer(EntityTypes.SANS.get(), SansRender::new);
         event.registerEntityRenderer(EntityTypes.GROUND_BONE.get(), GroundBoneRender::new);
         event.registerEntityRenderer(EntityTypes.MOVING_GROUND_BONE.get(), MovingGroundBoneRender::new);
-        event.registerEntityRenderer(EntityTypes.FLYING_BONE.get(), FlyingBoneRender::new);
-        event.registerEntityRenderer(EntityTypes.LATERAL_BONE.get(), OBBBoneRender::new);
-        event.registerEntityRenderer(EntityTypes.ROTATION_BONE.get(), RotationBoneRender::new);
+        event.registerEntityRenderer(EntityTypes.FLYING_BONE.get(), FlyingBoneRenderer::new);
+        event.registerEntityRenderer(EntityTypes.ROTATION_BONE.get(), RotationBoneRenderer::new);
     }
 
     /**
@@ -93,6 +93,8 @@ public class Setup {
         registrar.playToClient(WarningTipPacket.Cube.TYPE, WarningTipPacket.Cube.STREAM_CODEC, WarningTipPacket.Cube::handle);
         registrar.playToClient(WarningTipPacket.Quad.TYPE, WarningTipPacket.Quad.STREAM_CODEC, WarningTipPacket.Quad::handle);
         registrar.playToClient(WarningTipPacket.Circle.TYPE, WarningTipPacket.Circle.STREAM_CODEC, WarningTipPacket.Circle::handle);
+        registrar.playToClient(WarningTipPacket.CurveStrip.TYPE, WarningTipPacket.CurveStrip.STREAM_CODEC, WarningTipPacket.CurveStrip::handle);
+        registrar.playToClient(WarningTipPacket.RadialPrecessionCurveStripsPacket.TYPE, WarningTipPacket.RadialPrecessionCurveStripsPacket.STREAM_CODEC, WarningTipPacket.RadialPrecessionCurveStripsPacket::handle);
 
 
         registrar.playToClient(GravityPacket.TYPE,GravityPacket.STREAM_CODEC, GravityPacket::handle);
@@ -125,9 +127,7 @@ public class Setup {
         event.enqueueWork(() -> {
             // 注册动画层。1000 是优先级，你可以根据需要调整（文档建议重要动画用 1500+）
             PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(PlayerAnimations.ATTACK, 1500,
-                    player -> new PlayerAnimationController(player,
-                            (controller, state, animSetter) -> PlayState.STOP
-                    )
+                    player -> new PlayerAnimationController(player,(controller, state, animSetter) -> PlayState.STOP)
             );
         });
     }

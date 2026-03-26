@@ -1,584 +1,307 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>地脉波动 · 唯一避难所 | 2D躲避游戏</title>
+    <title>最终修复：完美连续螺旋</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Courier New', monospace; user-select: none; }
+        #ui {
+            position: absolute; top: 20px; left: 20px;
+            color: #fff; background: rgba(0, 0, 0, 0.8);
+            padding: 20px; border-radius: 8px; border: 1px solid #444;
+            pointer-events: none; z-index: 10;
         }
+        h1 { margin: 0 0 15px 0; font-size: 16px; color: #00ffcc; text-transform: uppercase; }
+        p { margin: 8px 0; font-size: 14px; color: #888; transition: all 0.2s; }
+        .active { color: #fff; font-weight: bold; font-size: 16px; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .key-hint { color: #ffff00; font-weight: bold; margin-right: 5px; }
 
-        body {
-            background: linear-gradient(135deg, #0a0a1a, #03010a);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', 'Poppins', monospace;
-            overflow: hidden;
-        }
-
-        .game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            max-width: 1200px;
-            max-height: 900px;
-            background: #010008;
-            border-radius: 32px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-        }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: block;
-            cursor: crosshair;
-        }
-
-        .ui-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            z-index: 10;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: none;
-        }
-
-        .info-card {
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            padding: 12px 24px;
-            border-radius: 40px;
-            border-left: 4px solid #ff8844;
-            color: #ffdd99;
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        .score-card {
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            padding: 12px 28px;
-            border-radius: 40px;
-            color: #ffaa44;
-            font-size: 28px;
-            font-weight: bold;
-            font-family: monospace;
-        }
-
-        .message {
-            position: absolute;
-            bottom: 25%;
-            left: 50%;
+        #mode-display {
+            position: absolute; bottom: 30px; left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(12px);
-            padding: 12px 24px;
-            border-radius: 60px;
-            color: #ffaa66;
-            font-size: 18px;
-            font-weight: bold;
-            white-space: nowrap;
-            border: 1px solid #ff8844;
-            pointer-events: none;
-            z-index: 10;
-            font-family: monospace;
+            font-size: 24px; color: #00ffcc; font-weight: bold;
+            text-shadow: 0 0 20px #00ffcc;
+            background: rgba(0,0,0,0.6); padding: 10px 30px;
+            border-radius: 50px; border: 2px solid #00ffcc;
+            pointer-events: none; z-index: 10;
         }
-
-        .controls-tip {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(8px);
-            padding: 8px 18px;
-            border-radius: 30px;
-            color: #88ffaa;
-            font-size: 13px;
-            font-weight: bold;
-            pointer-events: none;
-            z-index: 10;
+        #click-hint {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.3); font-size: 24px;
+            pointer-events: none; text-align: center;
+            animation: pulse 2s infinite; z-index: 5;
         }
-
-        .restart-btn {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #ff6644, #ff4466);
-            border: none;
-            padding: 12px 28px;
-            border-radius: 50px;
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            z-index: 20;
-            transition: transform 0.2s;
-            box-shadow: 0 0 20px rgba(255,68,68,0.5);
-            font-family: monospace;
-        }
-
-        .restart-btn:hover {
-            transform: scale(1.05);
-        }
-
-        @media (max-width: 700px) {
-            .info-card { font-size: 10px; padding: 6px 12px; }
-            .score-card { font-size: 20px; padding: 6px 16px; }
-            .message { font-size: 12px; padding: 8px 16px; white-space: nowrap; bottom: 20%; }
-            .controls-tip { font-size: 10px; }
-            .restart-btn { padding: 8px 18px; font-size: 12px; }
-        }
+        @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 0.8; } 100% { opacity: 0.3; } }
+        .flash { animation: flashAnim 0.2s ease-out; }
+        @keyframes flashAnim { 0% { background-color: rgba(0, 255, 204, 0.3); } 100% { background-color: rgba(0, 0, 0, 0.8); } }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 </head>
 <body>
-<div class="game-container">
-    <canvas id="gameCanvas"></canvas>
-    <div class="ui-panel">
-        <div class="info-card">
-            ⚡ 地脉波动 · 唯一安全区 ⚡
-        </div>
-        <div class="score-card">
-            ⏱️ <span id="scoreValue">0</span> 秒
-        </div>
-    </div>
-    <div class="message" id="message">
-        🎮 WASD 或 鼠标移动 控制光球
-    </div>
-    <div class="controls-tip">
-        🕹️ WASD 移动 | 🖱️ 鼠标移动 | 躲进金色光环
-    </div>
-    <button class="restart-btn" id="restartBtn">✨ 重新开始 ✨</button>
+<div id="click-hint">[ 点击画面激活键盘 ]<br>按 1: 蛇形 | 按 5: 完美连续螺旋</div>
+
+<div id="ui">
+    <h1>世界规则控制台</h1>
+    <p id="m1"><span class="key-hint">[1]</span> 经典蛇形 (Classic Snake)</p>
+    <p id="m5"><span class="key-hint">[5]</span> 完美连续螺旋 (Continuous Spiral)</p>
 </div>
 
+<div id="mode-display">MODE: 1 - CLASSIC SNAKE</div>
+
 <script>
-    (function() {
-        // 获取canvas
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+    const CONFIG = {
+        gridSize: 60,
+        spacing: 1.0,
+        maxSpike: 10.0,
+        baseSpeed: 2.0
+    };
 
-        let width, height;
+    let scene, camera, renderer, composer, controls;
+    let spikes = [];
+    let clock = new THREE.Clock();
 
-        // 游戏状态
-        let player = { x: 0, y: 0 };
-        let targetX = 0, targetY = 0;
-        let safeZone = { x: 0, y: 0 };
-        let isAlive = true;
-        let surviveTime = 0;
-        let lastTimestamp = 0;
+    let currentMode = 1;
+    let time = 0;
+    let spiralRotation = 0;
 
-        // 波动攻击数据
-        let waves = [];
-        let waveTime = 0;
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x050505);
+        scene.fog = new THREE.FogExp2(0x050505, 0.015);
 
-        // 键盘控制
-        const keys = {
-            w: false, s: false, a: false, d: false,
-            ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false
-        };
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+        camera.position.set(0, 45, 55);
 
-        // 安全区刷新计时
-        let nextSafeChange = 0;
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
 
-        // ========== 事件绑定 ==========
-        window.addEventListener('load', () => {
-            resizeCanvas();
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0.2;
+        bloomPass.strength = 1.2;
+        bloomPass.radius = 0.5;
+        composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
 
-            // 键盘事件
-            window.addEventListener('keydown', (e) => {
-                const key = e.key;
-                // 防止页面滚动
-                if (key === 'w' || key === 'W' || key === 's' || key === 'S' ||
-                    key === 'a' || key === 'A' || key === 'd' || key === 'D' ||
-                    key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
-                    e.preventDefault();
-                }
+        const ambientLight = new THREE.AmbientLight(0x222222);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        dirLight.position.set(30, 50, 30);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.set(2048, 2048);
+        scene.add(dirLight);
 
-                if (key === 'w' || key === 'W') keys.w = true;
-                if (key === 's' || key === 'S') keys.s = true;
-                if (key === 'a' || key === 'A') keys.a = true;
-                if (key === 'd' || key === 'D') keys.d = true;
-                if (key === 'ArrowUp') keys.ArrowUp = true;
-                if (key === 'ArrowDown') keys.ArrowDown = true;
-                if (key === 'ArrowLeft') keys.ArrowLeft = true;
-                if (key === 'ArrowRight') keys.ArrowRight = true;
+        createTerrain();
 
-                console.log('按键:', key, keys); // 调试
-            });
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
 
-            window.addEventListener('keyup', (e) => {
-                const key = e.key;
-                if (key === 'w' || key === 'W') keys.w = false;
-                if (key === 's' || key === 'S') keys.s = false;
-                if (key === 'a' || key === 'A') keys.a = false;
-                if (key === 'd' || key === 'D') keys.d = false;
-                if (key === 'ArrowUp') keys.ArrowUp = false;
-                if (key === 'ArrowDown') keys.ArrowDown = false;
-                if (key === 'ArrowLeft') keys.ArrowLeft = false;
-                if (key === 'ArrowRight') keys.ArrowRight = false;
-            });
-
-            // 鼠标移动控制
-            canvas.addEventListener('mousemove', (e) => {
-                if (!isAlive) return;
-                const rect = canvas.getBoundingClientRect();
-                const scaleX = width / rect.width;
-                const scaleY = height / rect.height;
-                let mouseX = (e.clientX - rect.left) * scaleX;
-                let mouseY = (e.clientY - rect.top) * scaleY;
-                // 映射到游戏区域 [-5,5] 范围
-                const gameX = (mouseX / width) * 12 - 6;
-                const gameY = (mouseY / height) * 10 - 5;
-                targetX = Math.min(5.2, Math.max(-5.2, gameX));
-                targetY = Math.min(4.2, Math.max(-4.2, gameY));
-            });
-
-            // 触摸屏支持
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                if (!isAlive) return;
-                const rect = canvas.getBoundingClientRect();
-                const touch = e.touches[0];
-                const scaleX = width / rect.width;
-                const scaleY = height / rect.height;
-                let touchX = (touch.clientX - rect.left) * scaleX;
-                let touchY = (touch.clientY - rect.top) * scaleY;
-                const gameX = (touchX / width) * 12 - 6;
-                const gameY = (touchY / height) * 10 - 5;
-                targetX = Math.min(5.2, Math.max(-5.2, gameX));
-                targetY = Math.min(4.2, Math.max(-4.2, gameY));
-            });
-            canvas.addEventListener('touchstart', (e) => e.preventDefault());
-
-            // 重启按钮
-            document.getElementById('restartBtn').addEventListener('click', () => {
-                restartGame();
-            });
-
-            // 窗口大小变化
-            window.addEventListener('resize', () => {
-                resizeCanvas();
-            });
-
-            // 启动游戏
-            restartGame();
-            requestAnimationFrame(gameLoop);
+        window.addEventListener('click', () => {
+            document.getElementById('click-hint').style.display = 'none';
+            document.body.classList.add('flash');
+            setTimeout(() => document.body.classList.remove('flash'), 200);
         });
 
-        function resizeCanvas() {
-            const container = canvas.parentElement;
-            width = container.clientWidth;
-            height = container.clientHeight;
-            canvas.width = width;
-            canvas.height = height;
-        }
+        window.addEventListener('keydown', (e) => {
+            if (e.key === '1') setMode(1);
+            if (e.key === '5') setMode(5);
+            if(e.key >= '1' && e.key <= '5') e.preventDefault();
+        });
 
-        // 重启游戏
-        function restartGame() {
-            isAlive = true;
-            surviveTime = 0;
-            document.getElementById('scoreValue').innerText = "0";
-            player.x = 0;
-            player.y = 0;
-            targetX = 0;
-            targetY = 0;
-            waveTime = 0;
+        window.addEventListener('resize', onWindowResize, false);
+        updateUI();
+        animate();
+    }
 
-            // 随机初始安全区
-            safeZone.x = (Math.random() - 0.5) * 8;
-            safeZone.y = (Math.random() - 0.5) * 6;
-            safeZone.x = Math.min(4.8, Math.max(-4.8, safeZone.x));
-            safeZone.y = Math.min(3.8, Math.max(-3.8, safeZone.y));
+    function createTerrain() {
+        const geometry = new THREE.BoxGeometry(0.8, 1, 0.8);
+        const offset = (CONFIG.gridSize * CONFIG.spacing) / 2;
 
-            nextSafeChange = performance.now() / 1000 + 4.5;
+        for (let x = 0; x < CONFIG.gridSize; x++) {
+            for (let z = 0; z < CONFIG.gridSize; z++) {
+                const wx = (x * CONFIG.spacing) - offset;
+                const wz = (z * CONFIG.spacing) - offset;
 
-            const msgDiv = document.getElementById('message');
-            msgDiv.innerHTML = '✨ 快躲进金色光环！ ✨';
-            msgDiv.style.color = '#ffaa66';
-        }
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0x333333, roughness: 0.3, metalness: 0.7,
+                    emissive: 0x000000, emissiveIntensity: 0
+                });
 
-        // 更新安全区位置
-        function updateSafeZone(now) {
-            if (now >= nextSafeChange) {
-                safeZone.x = (Math.random() - 0.5) * 9;
-                safeZone.y = (Math.random() - 0.5) * 7;
-                safeZone.x = Math.min(5, Math.max(-5, safeZone.x));
-                safeZone.y = Math.min(4.2, Math.max(-4.2, safeZone.y));
-                nextSafeChange = now + 4 + Math.random() * 3;
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(wx, 0, wz);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.userData = { x: wx, z: wz };
 
-                // 闪烁提示
-                const msgDiv = document.getElementById('message');
-                msgDiv.innerHTML = '⚠️ 安全区转移了！快找新的！ ⚠️';
-                msgDiv.style.color = '#ff8866';
-                setTimeout(() => {
-                    if (isAlive) {
-                        msgDiv.innerHTML = '🏃 快移动！躲进金色光环 🏃';
-                        msgDiv.style.color = '#ffaa66';
-                    }
-                }, 1500);
+                scene.add(mesh);
+                spikes.push(mesh);
             }
         }
+    }
 
-        // 计算地面波动高度（用于视觉效果和伤害判定）
-        function getGroundHeight(x, y, time) {
-            let height = 0;
-            // 多个波动源
-            const sources = [
-                { cx: Math.sin(time * 0.4) * 4, cy: Math.cos(time * 0.5) * 3, amp: 0.6, freq: 1.8 },
-                { cx: Math.sin(time * 0.7 + 2) * 3.5, cy: Math.cos(time * 0.6) * 3.2, amp: 0.55, freq: 2.0 },
-                { cx: Math.cos(time * 0.55) * 4.5, cy: Math.sin(time * 0.65) * 3.8, amp: 0.5, freq: 1.6 },
-                { cx: Math.sin(time * 0.9) * 3, cy: Math.cos(time * 0.8) * 2.8, amp: 0.45, freq: 2.2 }
-            ];
+    function setMode(mode) {
+        if (currentMode === mode) return;
+        currentMode = mode;
+        if (mode === 5) spiralRotation = 0;
+        updateUI();
+    }
 
-            for (const s of sources) {
-                const dx = x - s.cx;
-                const dy = y - s.cy;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                const influence = Math.max(0, 1 - dist / 4);
-                const wave = Math.sin(dist * s.freq - time * 3) * s.amp * influence;
-                height += wave;
-            }
-
-            // 安全区保护
-            const dxSafe = x - safeZone.x;
-            const dySafe = y - safeZone.y;
-            const distSafe = Math.sqrt(dxSafe*dxSafe + dySafe*dySafe);
-            if (distSafe < 1.2) {
-                const factor = Math.min(1, distSafe / 1.2);
-                height = height * factor * 0.15;
+    function updateUI() {
+        for (let i of [1, 5]) {
+            const el = document.getElementById(`m${i}`);
+            if (i === currentMode) {
+                el.classList.add('active');
+                el.style.color = '#00ffcc';
             } else {
-                height = Math.min(0.8, Math.max(-0.5, height));
-                height += Math.sin(x * 2 + time * 4) * 0.08;
-                height += Math.cos(y * 2.2 + time * 3.5) * 0.08;
+                el.classList.remove('active');
+                el.style.color = '#888';
             }
+        }
+        const names = ["", "1 - CLASSIC SNAKE", "", "", "", "5 - CONTINUOUS SPIRAL"];
+        const colors = ["", "#00ffcc", "", "", "", "#aa00ff"];
+        const display = document.getElementById('mode-display');
+        display.innerText = names[currentMode];
+        display.style.color = colors[currentMode];
+        display.style.borderColor = colors[currentMode];
+        display.style.textShadow = `0 0 20px ${colors[currentMode]}`;
+    }
 
-            return height;
+    // 核心修复：使用更稳健的距离计算
+    function getSpiralMask(x, z, rotation) {
+        const r = Math.sqrt(x*x + z*z);
+        if (r < 0.1) return 0.0; // 中心点安全
+
+        // 1. 获取当前点的角度 (-PI 到 PI)
+        let angle = Math.atan2(z, x);
+
+        // 2. 计算该半径下，螺旋线的“理论角度”
+        // 螺旋方程：theta = r * k - rotation
+        const k = 0.35; // 螺旋紧密度
+        let targetAngle = (r * k - rotation);
+
+        // 3. 关键修复：将角度差归一化到 -PI 到 PI 之间
+        // 这确保了在 0/2PI 交界处不会断裂
+        let diff = angle - targetAngle;
+
+        // 强制将 diff  wrapping 到 [-PI, PI]
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+
+        // 4. 计算垂直于螺旋线的距离
+        // 随着半径增大，螺旋线之间的实际弧长距离会变大
+        // 为了保持螺旋线宽度视觉上一致，我们需要除以半径相关的因子，或者调整阈值
+        // 这里使用弧长距离：distance = angle_diff * radius
+        const arcDist = Math.abs(diff) * r;
+
+        // 5. 定义螺旋线的“半宽”
+        // 为了让螺旋线在远处不至于太宽而连成一片，也不至于太细看不见
+        // 我们让宽度随半径轻微增加，但限制最大值
+        const lineWidth = 3.5 + r * 0.05;
+
+        // 6. 使用 smoothstep 生成平滑的掩码
+        // 0.0 = 螺旋线中心 (安全), 1.0 = 远离螺旋线 (危险)
+        // 参数调整为：从 lineWidth*0.5 开始过渡，到 lineWidth*1.5 结束
+        const edge0 = lineWidth * 0.5;
+        const edge1 = lineWidth * 1.5;
+
+        const t = Math.max(0, Math.min(1, (arcDist - edge0) / (edge1 - edge0)));
+        return t * t * (3 - 2 * t);
+    }
+
+    function getNoise(x, z, t) {
+        let n = Math.sin(x * 0.15 + t) * Math.cos(z * 0.15 + t);
+        n += Math.sin(x * 0.3 - t * 1.5) * 0.5;
+        return (n + 1.5) / 2.0;
+    }
+
+    function updateLogic(time) {
+        if (currentMode === 5) {
+            spiralRotation += 0.02; // 旋转速度
         }
 
-        // 检查是否在安全区
-        function isInSafeZone() {
-            const dx = player.x - safeZone.x;
-            const dy = player.y - safeZone.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            return dist < 1.2;
+        for (let i = 0; i < spikes.length; i++) {
+            const spike = spikes[i];
+            if (!spike.userData) continue;
+
+            const x = spike.userData.x;
+            const z = spike.userData.z;
+
+            let mask = 1.0;
+
+            if (currentMode === 1) {
+                // --- 模式 1: 经典蛇形 ---
+                const centerX = Math.sin(time * 0.8) * 20;
+                const centerZ = Math.cos(time * 0.5) * 20;
+                const dist = Math.sqrt((x - centerX)**2 + (z - centerZ)**2);
+
+                const t = Math.max(0, Math.min(1, (dist - 6) / (10 - 6)));
+                mask = t * t * (3 - 2 * t);
+            }
+            else if (currentMode === 5) {
+                // --- 模式 5: 完美连续螺旋 (重构算法) ---
+                mask = getSpiralMask(x, z, spiralRotation);
+            }
+
+            // 计算高度
+            const noiseH = getNoise(x, z, time * CONFIG.baseSpeed) * CONFIG.maxSpike;
+            let targetH = noiseH * mask;
+
+            // 物理平滑
+            const currentH = spike.scale.y;
+            const newH = currentH + (targetH - currentH) * 0.15;
+
+            spike.scale.y = Math.max(0.2, newH);
+            spike.position.y = spike.scale.y / 2;
+
+            // 颜色逻辑
+            const isSafe = mask < 0.3; // 稍微放宽安全阈值以显示更多螺旋线
+            let color, emisInt;
+
+            if (isSafe) {
+                if (currentMode === 1) color = new THREE.Color(0x004444);
+                else if (currentMode === 5) color = new THREE.Color(0xaa00ff);
+                emisInt = 0.8 + Math.sin(time * 5 + x) * 0.3;
+            } else {
+                const hRatio = spike.scale.y / CONFIG.maxSpike;
+                color = new THREE.Color().setHSL(0.05 - hRatio * 0.05, 0.9, 0.5);
+                emisInt = hRatio * 0.8;
+            }
+
+            spike.material.color.copy(color);
+            spike.material.emissive.copy(color);
+            spike.material.emissiveIntensity = emisInt;
         }
+    }
 
-        // 移动玩家
-        function movePlayer(deltaTime) {
-            if (!isAlive) return;
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        composer.setSize(window.innerWidth, window.innerHeight);
+    }
 
-            let moveX = 0, moveY = 0;
-            if (keys.w || keys.ArrowUp) moveY -= 1;
-            if (keys.s || keys.ArrowDown) moveY += 1;
-            if (keys.a || keys.ArrowLeft) moveX -= 1;
-            if (keys.d || keys.ArrowRight) moveX += 1;
+    function animate() {
+        requestAnimationFrame(animate);
+        time = clock.getElapsedTime();
+        updateLogic(time);
+        controls.update();
+        composer.render();
+    }
 
-            const speed = 7.5;
-            if (moveX !== 0 || moveY !== 0) {
-                const len = Math.hypot(moveX, moveY);
-                moveX /= len;
-                moveY /= len;
-                targetX += moveX * speed * deltaTime;
-                targetY += moveY * speed * deltaTime;
-            }
-
-            // 边界限制
-            targetX = Math.min(5.5, Math.max(-5.5, targetX));
-            targetY = Math.min(4.5, Math.max(-4.5, targetY));
-
-            // 平滑移动
-            player.x += (targetX - player.x) * 0.35;
-            player.y += (targetY - player.y) * 0.35;
-        }
-
-        // 绘制游戏
-        function draw() {
-            if (!ctx) return;
-            ctx.clearRect(0, 0, width, height);
-
-            // 背景渐变
-            const grad = ctx.createLinearGradient(0, 0, width, height);
-            grad.addColorStop(0, '#0a0520');
-            grad.addColorStop(1, '#010008');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, width, height);
-
-            // 绘制网格线
-            ctx.save();
-            ctx.globalAlpha = 0.2;
-            ctx.strokeStyle = '#8a6eff';
-            ctx.lineWidth = 1;
-            const stepX = width / 12;
-            const stepY = height / 10;
-            for (let i = 0; i <= 12; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * stepX, 0);
-                ctx.lineTo(i * stepX, height);
-                ctx.stroke();
-            }
-            for (let i = 0; i <= 10; i++) {
-                ctx.beginPath();
-                ctx.moveTo(0, i * stepY);
-                ctx.lineTo(width, i * stepY);
-                ctx.stroke();
-            }
-            ctx.restore();
-
-            // 绘制波动地面效果（热力图风格）
-            const cellW = width / 40;
-            const cellH = height / 34;
-            for (let i = 0; i < 40; i++) {
-                for (let j = 0; j < 34; j++) {
-                    const worldX = (i / 40) * 12 - 6;
-                    const worldY = (j / 34) * 9 - 4.5;
-                    const heightVal = getGroundHeight(worldX, worldY, waveTime);
-                    const intensity = Math.min(0.8, Math.abs(heightVal) * 1.2);
-                    if (intensity > 0.1) {
-                        const isDanger = heightVal > 0.3 || heightVal < -0.2;
-                        ctx.fillStyle = isDanger ? `rgba(255, 68, 68, ${intensity * 0.4})` : `rgba(100, 68, 200, ${intensity * 0.3})`;
-                        ctx.fillRect(i * cellW, j * cellH, cellW + 1, cellH + 1);
-                    }
-                }
-            }
-
-            // 绘制安全区 (金色光环)
-            const safeScreenX = ((safeZone.x + 6) / 12) * width;
-            const safeScreenY = ((safeZone.y + 4.5) / 9) * height;
-
-            ctx.save();
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#ffaa44';
-            // 外圈
-            ctx.beginPath();
-            ctx.arc(safeScreenX, safeScreenY, 35, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 170, 68, 0.2)';
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(safeScreenX, safeScreenY, 28, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255, 200, 100, 0.3)';
-            ctx.fill();
-            // 光柱效果
-            for (let i = 0; i < 12; i++) {
-                const angle = Date.now() * 0.005 + i * Math.PI / 6;
-                const x2 = safeScreenX + Math.cos(angle) * 38;
-                const y2 = safeScreenY + Math.sin(angle) * 38;
-                ctx.beginPath();
-                ctx.moveTo(safeScreenX, safeScreenY);
-                ctx.lineTo(x2, y2);
-                ctx.strokeStyle = `rgba(255, 200, 100, 0.5)`;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-            }
-            // 中心光环
-            ctx.beginPath();
-            ctx.arc(safeScreenX, safeScreenY, 18, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffaa55';
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(safeScreenX, safeScreenY, 12, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffdd99';
-            ctx.fill();
-            ctx.restore();
-
-            // 绘制玩家
-            const playerScreenX = ((player.x + 6) / 12) * width;
-            const playerScreenY = ((player.y + 4.5) / 9) * height;
-
-            ctx.save();
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = '#66ccff';
-            ctx.beginPath();
-            ctx.arc(playerScreenX, playerScreenY, 20, 0, Math.PI * 2);
-            ctx.fillStyle = isAlive ? 'rgba(100, 200, 255, 0.8)' : 'rgba(255, 68, 68, 0.8)';
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(playerScreenX, playerScreenY, 12, 0, Math.PI * 2);
-            ctx.fillStyle = isAlive ? '#88ddff' : '#ff6688';
-            ctx.fill();
-            ctx.beginPath();
-            ctx.arc(playerScreenX, playerScreenY, 6, 0, Math.PI * 2);
-            ctx.fillStyle = 'white';
-            ctx.fill();
-            ctx.restore();
-
-            // 安全区文字
-            ctx.font = 'bold 14px monospace';
-            ctx.fillStyle = '#ffdd99';
-            ctx.shadowBlur = 0;
-            ctx.fillText('⚜️ 唯一安全区 ⚜️', safeScreenX - 65, safeScreenY - 28);
-        }
-
-        // 主循环
-        let lastTime = performance.now() / 1000;
-
-        function gameLoop() {
-            const now = performance.now() / 1000;
-            let delta = Math.min(0.033, now - lastTime);
-            if (delta < 0.01) delta = 0.016;
-            lastTime = now;
-
-            if (isAlive) {
-                // 更新时间
-                surviveTime += delta;
-                document.getElementById('scoreValue').innerText = Math.floor(surviveTime);
-
-                // 更新波动时间
-                waveTime += delta * 1.3;
-
-                // 移动玩家
-                movePlayer(delta);
-
-                // 更新安全区
-                updateSafeZone(now);
-
-                // 检查是否在安全区
-                const inSafe = isInSafeZone();
-                const msgDiv = document.getElementById('message');
-
-                if (!inSafe) {
-                    // 不在安全区，受到伤害判定
-                    const groundH = Math.abs(getGroundHeight(player.x, player.y, waveTime));
-                    if (groundH > 0.35) {
-                        isAlive = false;
-                        msgDiv.innerHTML = '💀 被地脉波动吞噬 💀';
-                        msgDiv.style.color = '#ff6666';
-                    } else {
-                        const dist = Math.hypot(player.x - safeZone.x, player.y - safeZone.y);
-                        if (dist > 2.2) {
-                            msgDiv.innerHTML = '⚠️ 远离安全区！快回去！ ⚠️';
-                            msgDiv.style.color = '#ff8866';
-                        } else if (dist > 1.4) {
-                            msgDiv.innerHTML = '🔔 接近安全区... 加速！';
-                            msgDiv.style.color = '#ffcc88';
-                        } else {
-                            msgDiv.innerHTML = '🏃 快进入金色光环！ 🏃';
-                            msgDiv.style.color = '#ffaa66';
-                        }
-                    }
-                } else {
-                    msgDiv.innerHTML = '✅ 安全区内 · 波动退散 ✅';
-                    msgDiv.style.color = '#aaffaa';
-                }
-            }
-
-            draw();
-            requestAnimationFrame(gameLoop);
-        }
-
-        console.log('游戏已启动，使用 WASD 或 鼠标移动！');
-    })();
+    init();
 </script>
 </body>
 </html>

@@ -26,13 +26,34 @@ public class CurvesUtils {
         }
     }
     // 二次贝塞尔曲线
-    private static float bezier(float t, float p0, float p1, float p2) {
+    public static float bezier(float t, float p0, float p1, float p2) {
         float oneMinusT = 1 - t;
         return oneMinusT * oneMinusT * p0 + 2 * oneMinusT * t * p1 + t * t * p2;
     }
 
 
-
-
-
+    public static float parametricDerivative(float t, float holdTimeScale, float ease) {
+        return parametricDerivative(t, holdTimeScale, ease,ease);
+    }
+    public static float parametricDerivative(float t, float holdTimeScale, float riseEase, float fallEase) {
+        float riseTime = (1.0f - holdTimeScale) / 2.0f;
+        if (t < riseTime) {
+            // 上升阶段：h(u) = bezier(u, 0, riseEase, 1), u = t/riseTime
+            float u = t / riseTime;
+            // 对 bezier(u, 0, riseEase, 1) 求导得 2*(1-u)*(riseEase-0) + 2*u*(1-riseEase)
+            // 更准确：bezier'(u) = 2*(1-u)*(p1-p0) + 2*u*(p2-p1)
+            float du_dt = 1.0f / riseTime;
+            float hDerivU = 2 * (1 - u) * (riseEase - 0) + 2 * u * (1 - riseEase);
+            return hDerivU * du_dt;
+        } else if (t < riseTime + holdTimeScale) {
+            // 停留阶段：高度恒为1，导数为0
+            return 0f;
+        } else {
+            // 下降阶段：h(v) = bezier(v, 1, fallEase, 0), v = (t - riseTime - holdTimeScale)/riseTime
+            float v = (t - riseTime - holdTimeScale) / riseTime;
+            float dv_dt = 1.0f / riseTime;
+            float hDerivV = 2 * (1 - v) * (fallEase - 1) + 2 * v * (0 - fallEase);
+            return hDerivV * dv_dt;
+        }
+    }
 }

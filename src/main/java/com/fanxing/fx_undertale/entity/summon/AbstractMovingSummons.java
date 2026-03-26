@@ -1,8 +1,8 @@
 package com.fanxing.fx_undertale.entity.summon;
 
-import com.fanxing.fx_undertale.utils.ProjectileUtils;
+import com.fanxing.fx_undertale.utils.collsion.ProjectileUtils;
 import com.fanxing.fx_undertale.utils.RotUtils;
-import com.fanxing.fx_undertale.utils.TimeOfImpactUtils;
+import com.fanxing.fx_undertale.utils.collsion.TimeOfImpactUtils;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -14,6 +14,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.*;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class AbstractMovingSummons extends Summons {
 
@@ -27,26 +30,15 @@ public abstract class AbstractMovingSummons extends Summons {
     @Override
     public void tick() {
         Entity owner = getOwner();
-        if (this.level().isClientSide || (owner == null || !owner.isRemoved()) && this.level().isLoaded(this.blockPosition())) {
+        if (this.level().isClientSide || (owner == null || !owner.isRemoved()) && this.level().isLoaded(this.blockPosition()) ) {
             super.tick();
-            AABB boundingBox = this.getBoundingBox();
-            Vec3 from = boundingBox.getCenter();
-            Vec3 velocity = this.getDeltaMovement();
-            Vec3 to = from.add(velocity);
-            AABB searchArea = this.getBoundingBox().expandTowards(velocity);
-            BlockHitResult blockHitResult = TimeOfImpactUtils.getBlockHitResult(this.level(), boundingBox, searchArea, velocity, getClipType(), ClipContext.Fluid.NONE, CollisionContext.of(this));
-            boolean isBlockHit = blockHitResult.getType() != HitResult.Type.MISS;
-            if (isBlockHit) { to = blockHitResult.getLocation();}
-            if (!this.level().isClientSide) {
-                for (EntityHitResult hitResult : ProjectileUtils.getEntityHitResults(this,from,to,this::canHitEntity)) {
-                    if (hitResult.getType() != HitResult.Type.MISS) {
-                        onHitEntity(hitResult.getEntity(), hitResult.getLocation());
-                    }
+            BlockHitResult blockHitResult = getBlockHitResult();
+            for (EntityHitResult hitResult : getEntityHitResults(blockHitResult.getLocation())) {
+                if (hitResult.getType() != HitResult.Type.MISS) {
+                    onHitEntity(hitResult);
                 }
             }
-            if (isBlockHit) {
-                onHitBlock(blockHitResult);
-            }
+            onHitBlock(blockHitResult);
             this.checkInsideBlocks();
             Vec3 vec3 = this.getDeltaMovement();
             double speedSqr = vec3.lengthSqr();
@@ -59,6 +51,12 @@ public abstract class AbstractMovingSummons extends Summons {
     }
     void updateRotation(Vec3 velocity) {
         RotUtils.lookVec(this, velocity);
+    }
+    protected BlockHitResult getBlockHitResult() {
+        return TimeOfImpactUtils.getBlockHitResult(this.level(), this.getBoundingBox(),this.getDeltaMovement(), getClipType(), ClipContext.Fluid.NONE, CollisionContext.of(this));
+    }
+    protected List<EntityHitResult> getEntityHitResults(Vec3 to){
+        return ProjectileUtils.getEntityHitResults(this,this.getBoundingBox().getCenter(),to,this::canHitEntity);
     }
 
     protected ClipContext.Block getClipType() {

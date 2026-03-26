@@ -12,6 +12,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -54,7 +55,7 @@ public abstract class Summons extends Entity implements TraceableEntity {
 
     protected void onHitBlock(BlockHitResult hitResult){
     }
-    protected void onHitEntity(Entity entity, Vec3 location){
+    protected void onHitEntity(EntityHitResult hitResult){
     }
 
 
@@ -120,16 +121,12 @@ public abstract class Summons extends Entity implements TraceableEntity {
 
     @Override
     protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        if (this.ownerUUID != null) {
-            tag.putUUID("ownerUUID", this.ownerUUID);
-        }
+        if (this.ownerUUID != null)    tag.putUUID("ownerUUID", this.ownerUUID);
     }
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        if (tag.hasUUID("ownerUUID")) {
-            this.ownerUUID = tag.getUUID("ownerUUID");
-        }
+        if (tag.hasUUID("ownerUUID")) this.ownerUUID = tag.getUUID("ownerUUID");
     }
 
 }

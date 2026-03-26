@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity.ai.goal;
 
-import com.fanxing.fx_undertale.entity.IAnimatable;
+import com.fanxing.fx_undertale.entity.capability.Animatable;
 import com.fanxing.fx_undertale.entity.ai.anim.CastStep;
 import com.fanxing.fx_undertale.net.packet.AnimPacket;
 import net.minecraft.network.chat.Component;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Objects;
 
 
-public abstract class CastComboGoal<T extends Mob & IAnimatable> extends Goal {
+public abstract class CastComboGoal<T extends Mob & Animatable> extends Goal {
     private static final Logger log = LoggerFactory.getLogger(CastComboGoal.class);
     protected final T mob;
     protected int tick;

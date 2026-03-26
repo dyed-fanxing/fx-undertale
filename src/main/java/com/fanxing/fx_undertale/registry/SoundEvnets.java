@@ -20,6 +20,7 @@ public class SoundEvnets {
     public static final DeferredHolder<SoundEvent,SoundEvent> GASTER_BLASTER_CHARGE = register("entity.gaster_blaster.charge");
     public static final DeferredHolder<SoundEvent,SoundEvent> GASTER_BLASTER_FIRE = register("entity.gaster_blaster.fire");
 
+    public static final DeferredHolder<SoundEvent,SoundEvent> SANS_EYE_BLINK = register("entity.sans.eye_blink");
     public static final DeferredHolder<SoundEvent,SoundEvent> SANS_SLAM = register("entity.sans.slam");
     public static final DeferredHolder<SoundEvent,SoundEvent> SANS_BONE_SPINE = register("entity.sans.bone_spine");
     public static final DeferredHolder<SoundEvent,SoundEvent> SANS_TELEPORT_TIME_JUMP = register("entity.sans.teleport_time_jump");

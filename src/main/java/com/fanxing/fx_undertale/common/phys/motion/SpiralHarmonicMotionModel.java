@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * 2. 计算切线速度 V_tangent = cross(R, UpVector) * angularSpeed
  * 3. 如果需要半径变化，再叠加径向速度。
  */
-public class SpiralHarmonicMotionModel extends AbstractPhysicsMotionModel {
+public class SpiralHarmonicMotionModel extends PhysicsMotionModel {
 
     private final float amplitude;       // 基础半径
     private final float radialFreq;      // 径向频率 (半径伸缩快慢)

@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale;
 
+import com.fanxing.fx_undertale.common.phys.motion.PhysicsMotionModel;
 import com.fanxing.fx_undertale.registry.*;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
@@ -60,7 +61,7 @@ public class FxUndertale {
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         }
-
+        PhysicsMotionModel.init();
 
     }
 

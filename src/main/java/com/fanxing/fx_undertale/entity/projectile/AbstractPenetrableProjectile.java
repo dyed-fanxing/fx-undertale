@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity.projectile;
 
-import com.fanxing.fx_undertale.utils.ProjectileUtils;
+import com.fanxing.fx_undertale.utils.collsion.ProjectileUtils;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -18,10 +18,7 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ProjectileDeflection;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import net.neoforged.neoforge.event.EventHooks;
 import org.jetbrains.annotations.NotNull;
@@ -40,33 +37,24 @@ import java.util.List;
 public abstract class AbstractPenetrableProjectile extends Projectile implements IEntityWithComplexSpawn {
     private static final Logger log = LoggerFactory.getLogger(AbstractPenetrableProjectile.class);
     public float accelerationPower;
-
+    protected int lifetime;
     public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level) {
-        this(type, level,0.1f);
+        this(type, level,0.1f,200);
     }
-    public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level,float accelerationPower) {
+    public AbstractPenetrableProjectile(EntityType<? extends AbstractPenetrableProjectile> type, Level level,float accelerationPower,int lifetime) {
         super(type, level);
         this.accelerationPower = accelerationPower;
-
+        this.lifetime = lifetime;
     }
 
 
     @Override
     public void tick() {
         Entity entity = this.getOwner();
-        if (this.level().isClientSide || (entity == null || !entity.isRemoved()) && this.level().isLoaded(this.blockPosition())) {
+        if (this.level().isClientSide || (entity == null || !entity.isRemoved()) && this.level().isLoaded(this.blockPosition()) && this.tickCount < lifetime) {
             super.tick();
-            AABB boundingBox = this.getBoundingBox();
-            Vec3 from = boundingBox.getCenter();
-            Vec3 velocity = this.getDeltaMovement();
-            Vec3 to = from.add(velocity);
-//            AABB searchArea = boundingBox.expandTowards(velocity);
-            BlockHitResult blockHitResult = getBlockHitResult(from,to);
-            if(blockHitResult.getType() != HitResult.Type.MISS) {
-                Vec3 location = blockHitResult.getLocation();
-                to = new Vec3(location.x, to.y, location.z);
-            }
-            List<HitResult> hitResults = new ArrayList<>(ProjectileUtils.getEntityHitResults(this, from, to, boundingBox.expandTowards(velocity), this::canHitEntity));
+            BlockHitResult blockHitResult = getBlockHitResult();
+            List<HitResult> hitResults = new ArrayList<>(getEntityHitResults(blockHitResult.getLocation()));
             hitResults.add(blockHitResult);
             for (HitResult hitResult : hitResults) {
                 if (hitResult.getType() != HitResult.Type.MISS && !EventHooks.onProjectileImpact(this, hitResult)) {
@@ -88,7 +76,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
             double d1 = this.getY() + vec3.y;
             double d2 = this.getZ() + vec3.z;
             this.setPos(d0, d1, d2);
-            spawnTrailParticle(d0,d1,d2,vec3);
+            spawnTrailParticle();
 
             // 下一tick处理的速度
             float f;
@@ -110,8 +98,14 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         }
     }
 
-    protected BlockHitResult getBlockHitResult(Vec3 from,Vec3 to) {
-        return this.level().clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+    protected BlockHitResult getBlockHitResult() {
+        AABB boundingBox = this.getBoundingBox();
+        Vec3 from = boundingBox.getCenter();
+        Vec3 velocity = this.getDeltaMovement();
+        return this.level().clip(new ClipContext(from, from.add(velocity), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+    }
+    protected List<EntityHitResult> getEntityHitResults(Vec3 to) {
+        return ProjectileUtils.getEntityHitResults(this, this.getBoundingBox().getCenter(), to, this::canHitEntity);
     }
 
     @Override
@@ -133,10 +127,11 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
     }
 
 
-    protected void spawnTrailParticle(double x,double y,double z,Vec3 deltaMovement) {
+    protected void spawnTrailParticle() {
+        Vec3 position = position();
         ParticleOptions particleoptions = this.getTrailParticle();
         if (particleoptions != null) {
-            this.level().addParticle(particleoptions, x, y + this.getBbHeight()*0.5f, z, 0, 0, 0);
+            this.level().addParticle(particleoptions, position.x, position.y + this.getBbHeight()*0.5f, position.z, 0, 0, 0);
         }
     }
     protected ParticleOptions getTrailParticle() {
@@ -182,25 +177,30 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         if (tag.contains("accelerationPower")) {
             this.accelerationPower = tag.getFloat("accelerationPower");
         }
+        if (tag.contains("lifetime")) {
+            this.lifetime = tag.getInt("lifetime");
+        }
     }
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putFloat("accelerationPower", this.accelerationPower);
+        tag.putInt("lifetime", this.lifetime);
     }
 
     @Override
     public void writeSpawnData(@NotNull RegistryFriendlyByteBuf buffer) {
         buffer.writeFloat(accelerationPower);
+        buffer.writeInt(lifetime);
     }
 
     @Override
     public void readSpawnData(@NotNull RegistryFriendlyByteBuf buffer) {
         this.accelerationPower = buffer.readFloat();
+        this.lifetime = buffer.readInt();
     }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
-
     }
 }

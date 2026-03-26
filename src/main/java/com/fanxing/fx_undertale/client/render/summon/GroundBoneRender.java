@@ -29,7 +29,6 @@ public class GroundBoneRender extends ColorAttackRenderer<GroundBone> {
 
     @Override
     protected void applyRotations(GroundBone animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
-        poseStack.translate(0,-0.01f,0);
         poseStack.mulPose(Axis.YP.rotationDegrees(-animatable.getYRot()));
         poseStack.mulPose(Axis.XP.rotationDegrees(animatable.getXRot()));
 

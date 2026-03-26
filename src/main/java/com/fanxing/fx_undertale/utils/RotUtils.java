@@ -62,52 +62,38 @@ public class RotUtils {
         return getWorldVec3((float) pos.x, (float) pos.y, (float) pos.z,roll,pitch,yaw);
     }
     /**
-     * 根据 相对坐标和仰俯、航偏 获取世界坐标，先翻滚，再仰俯，后航偏
+     * 根据相对坐标和翻滚、仰俯、航偏获取世界坐标
+     * 顺序：先绕 Z 轴翻滚，再绕 X 轴仰俯，最后绕 Y 轴航偏
      * @param x,y,z 相对坐标
-     * @param roll,pitch,yaw 仰俯，航偏
-     * @return 世界坐标
+     * @param roll 翻滚角（度）
+     * @param pitch 仰俯角（度）
+     * @param yaw 航偏角（度）
+     * @return 世界坐标向量
      */
     public static Vec3 getWorldVec3(float x, float y, float z, float roll, float pitch, float yaw) {
         float rollRad = roll * Mth.DEG_TO_RAD;
         float pitchRad = -pitch * Mth.DEG_TO_RAD;
         float yawRad = -yaw * Mth.DEG_TO_RAD;
 
-        float cosRoll = Mth.cos(rollRad);
-        float sinRoll = Mth.sin(rollRad);
-        float cosPitch = Mth.cos(pitchRad);
-        float sinPitch = Mth.sin(pitchRad);
         float cosYaw = Mth.cos(yawRad);
         float sinYaw = Mth.sin(yawRad);
+        float cosPitch = Mth.cos(pitchRad);
+        float sinPitch = Mth.sin(pitchRad);
+        float cosRoll = Mth.cos(rollRad);
+        float sinRoll = Mth.sin(rollRad);
 
-        float cycr = cosYaw * cosRoll;
-        float sycr = sinYaw * cosRoll;      
-        float cysr = cosYaw * sinRoll;      
-        float sysr = sinYaw * sinRoll;      
-        float crcp = cosRoll * cosPitch;    
-        float crsp = cosRoll * sinPitch;    
+        // 1. 绕 Z 轴旋转 roll
+        double x1 = x * cosRoll - y * sinRoll;
+        double y1 = x * sinRoll + y * cosRoll;
 
-        // 组合项
-        float cysrcp = cysr * cosPitch;     
-        float cysrsp = cysr * sinPitch;     
-        float sysrcp = sysr * cosPitch;     
-        float sysrsp = sysr * sinPitch;     
-        float sycrcp = sycr * cosPitch;     
-        float cycrcp = cycr * cosPitch;     
+        // 2. 绕 X 轴旋转 pitch
+        double y2 = y1 * cosPitch + (double) z * sinPitch;
+        double z2 = -y1 * sinPitch + (double) z * cosPitch;
 
-        // 使用提取的变量计算
-        float worldX = cycr * x
-                + (-cysrcp - sysrsp) * y
-                + (-cysrsp + sycrcp) * z;
-
-        float worldY = sinRoll * x
-                + crcp * y
-                + crsp * z;
-
-        float worldZ = (-sycr) * x
-                + (sysrcp - cysrsp) * y
-                + (sysrsp + cycrcp) * z;
-
-        return new Vec3(worldX, worldY, worldZ);
+        // 3. 绕 Y 轴旋转 yaw
+        double x3 = x1 * cosYaw + z2 * sinYaw;
+        double z3 = -x1 * sinYaw + z2 * cosYaw;
+        return new Vec3(x3, y2, z3);
     }
 
 
@@ -229,4 +215,24 @@ public class RotUtils {
         return new Quaternionf().fromAxisAngleRad(from.cross(to).toVector3f(), (float) Math.acos(from.dot(to)));
     }
 
+    /**
+     * 将一个向量绕指定轴，旋转一定角度
+     * @param vec 向量
+     * @param axis 轴
+     * @param angleRad 角度
+     */
+    public static Vec3 rotate(Vec3 vec, Vec3 axis, double angleRad) {
+        double cos = Math.cos(angleRad);
+        double sin = Math.sin(angleRad);
+        double dot = vec.dot(axis);
+        // 平行分量
+        Vec3 parallel = axis.scale(dot);
+        // 垂直分量
+        Vec3 perpendicular = vec.subtract(parallel);
+        // 叉积分量（用于旋转）
+        Vec3 cross = axis.cross(perpendicular);
+        // 旋转后的垂直分量
+        Vec3 rotatedPerp = perpendicular.scale(cos).add(cross.scale(sin));
+        return parallel.add(rotatedPerp);
+    }
 }

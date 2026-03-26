@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.client.effect;
 
+import com.fanxing.fx_undertale.utils.CurvesUtils;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -20,8 +21,16 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 
 /**
@@ -32,16 +41,24 @@ import org.joml.Vector3f;
 @OnlyIn(Dist.CLIENT)
 public abstract class WarningTip extends Effect {
 
+    private static final Logger log = LoggerFactory.getLogger(WarningTip.class);
     public static int RED = FastColor.ARGB32.color(200, 255, 80, 80);
 
     protected final float x,y,z;
-    protected final int r, g, b, baseAlpha;
-    public WarningTip(float x,float y,float z,int lifetime, int r, int g, int b, int baseAlpha) {
+    protected final int r, g, b, a;
+    public WarningTip(float x,float y,float z,int lifetime, int r, int g, int b, int a) {
         super(lifetime);
         this.x=x; this.y=y; this.z=z;
-        this.r = r;this.g = g;this.b = b;this.baseAlpha = baseAlpha;
+        this.r = r;this.g = g;this.b = b;this.a = a;
     }
-
+    public WarningTip(float x,float y,float z,int lifetime, int color) {
+        super(lifetime);
+        this.x=x; this.y=y; this.z=z;
+        this.r = FastColor.ARGB32.red(color);
+        this.g = FastColor.ARGB32.green(color);
+        this.b = FastColor.ARGB32.blue(color);
+        this.a = FastColor.ARGB32.alpha(color);
+    }
 
     /**
      * 获取当前透明度（基于 age 和 partialTick 插值）
@@ -49,24 +66,21 @@ public abstract class WarningTip extends Effect {
      * @return 0-255 的透明度值
      */
     protected int getAlpha(float partialTick) {
-        float currentTime = age + partialTick;          // 浮点时间
-        float progress = currentTime / lifetime;        // 已完成比例 (0~1)
-        return (int) (Mth.lerp(progress, 1.0f, 0)*baseAlpha);
+        return (int) (Mth.lerp(getProgress(partialTick), 1.0f, 0)*a);
+    }
+    protected  float getProgress(float partialTick){
+        return (age + partialTick)/lifetime;
     }
 
     public static class Cylinder extends WarningTip {
         private final float radius, height;
         private final Quaternionf localToWorld;
 
-        public Cylinder(float x, float y, float z, float radius, float height, int lifetime, int r, int g, int b, int baseAlpha, Direction gravity) {
-            super(x, y, z, lifetime, r, g, b, baseAlpha);
+        public Cylinder(float x, float y, float z, float radius, float height, int lifetime, int color, Direction gravity) {
+            super(x, y, z, lifetime,color);
             this.radius = radius;
             this.height = height;
             this.localToWorld = Gravity.getRotation(gravity);
-        }
-
-        public Cylinder(float x, float y, float z, float radius, float height, int lifetime, int color, Direction gravity) {
-            this(x,y,z,radius, height, lifetime, FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), FastColor.ARGB32.alpha(color),gravity);
         }
 
         @Override
@@ -93,21 +107,15 @@ public abstract class WarningTip extends Effect {
             return new AABB( x+min.x,y+min.y,z+min.z,x+max.x,y+max.y,z+max.z);
         }
     }
-
-
     public static class Cube extends WarningTip {
         private final float length, width,height;
         private final float yaw;
-        public Cube(float x, float y, float z, float length, float width,float height,float yaw, int lifetime, int r, int g, int b, int a) {
-            super(x, y, z, lifetime, r, g, b, a);
+        public Cube(float x, float y, float z, float length, float width,float height,float yaw, int lifetime, int color) {
+            super(x, y, z, lifetime,color);
             this.length = length;
             this.width = width;
             this.height = height;
             this.yaw = yaw;
-        }
-
-        public Cube(float x, float y, float z, float length,float width, float height,float yaw, int lifetime, int color) {
-            this(x,y,z,length,width, height,yaw, lifetime, FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), FastColor.ARGB32.alpha(color));
         }
 
         @Override
@@ -132,19 +140,18 @@ public abstract class WarningTip extends Effect {
         }
     }
 
+
+
     public static class Quad extends WarningTip {
         private final float length, width;
         private final float yaw;
-        public Quad(float x, float y, float z, float length, float width,float yaw, int lifetime, int r, int g, int b, int a) {
-            super(x, y, z, lifetime, r, g, b, a);
+        public Quad(float x, float y, float z, float length, float width,float yaw, int lifetime, int color) {
+            super(x, y, z, lifetime, color);
             this.length = length;
             this.width = width;
             this.yaw = yaw;
         }
 
-        public Quad(float x, float y, float z, float length,float width,float yaw, int lifetime, int color) {
-            this(x,y,z,length,width, yaw, lifetime, FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), FastColor.ARGB32.alpha(color));
-        }
 
         @Override
         protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {
@@ -165,12 +172,9 @@ public abstract class WarningTip extends Effect {
     }
     public static class Circle extends WarningTip {
         private final float radius;
-        public Circle(float x, float y, float z,float radius, int lifetime, int r, int g, int b, int a) {
-            super(x, y, z, lifetime, r, g, b, a);
+        public Circle(float x, float y, float z,float radius, int lifetime, int color) {
+            super(x, y, z, lifetime, color);
             this.radius = radius;
-        }
-        public Circle(float x, float y, float z, float radius, int lifetime, int color) {
-            this(x,y,z,radius, lifetime, FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), FastColor.ARGB32.alpha(color));
         }
 
         @Override
@@ -187,6 +191,189 @@ public abstract class WarningTip extends Effect {
         }
         protected AABB getBoundingBox() {
             return null;
+        }
+    }
+
+
+
+
+    public static class CurveStrip extends WarningTip {
+        private final Function<Float, Vec3> curve;   // t∈[0,1] → 局部坐标（相对位置）
+        private final int segments;                  // 分段数（整数）
+        private final float radius;                  // 半径缩放
+        private final float width;                   // 条带宽度
+        private final float yaw;                     // 偏航角
+
+        public CurveStrip(float x, float y, float z, int lifetime, int color,
+                                    float radius, float width, float yaw, int segments,
+                                    Function<Float, Vec3> curve) {
+            super(x, y, z, lifetime, color);
+            this.radius = radius;
+            this.width = width;
+            this.yaw = yaw;
+            this.segments = segments;
+            this.curve = curve;
+        }
+
+        @Override
+        protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {
+            int alpha = getAlpha(partialTick);
+            if (alpha <= 0) return;
+            poseStack.pushPose();
+            poseStack.translate(x, y + 0.01f, z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-yaw));
+
+            VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_STRIP_WHITE);
+            Matrix4f matrix = poseStack.last().pose();
+
+            // 关键：线性进度（用于条带长度）
+            float linearProgress = (age + partialTick) / lifetime;   // 0 -> 1 匀速增长
+            // 收集点集：只到 linearProgress 为止
+            List<Vec3> points = new ArrayList<>();
+            for (int i = 0; i <= segments; i++) {
+                float t = (float) i / segments;
+                if (t > linearProgress) break;   // 截断
+                points.add(getWorldPoint(t));
+            }
+            if (points.size() < 2) {
+                poseStack.popPose();
+                return;
+            }
+
+            // 以下渲染代码不变，使用 points 列表生成条带
+            for (int i = 0; i < points.size(); i++) {
+                Vec3 p = points.get(i);
+                Vec3 tangent;
+                if (i == 0) {
+                    tangent = points.get(1).subtract(p).normalize();
+                } else if (i == points.size() - 1) {
+                    tangent = p.subtract(points.get(i - 1)).normalize();
+                } else {
+                    tangent = points.get(i + 1).subtract(points.get(i - 1)).normalize();
+                }
+                Vec3 normal = new Vec3(0, 1, 0).cross(tangent).normalize();
+                Vec3 left = p.add(normal.scale(width / 2));
+                Vec3 right = p.add(normal.scale(-width / 2));
+
+                consumer.addVertex(matrix, (float) left.x, (float) left.y, (float) left.z)
+                        .setColor(r, g, b, alpha)
+                        .setUv(0, 0)
+                        .setOverlay(OverlayTexture.NO_OVERLAY)
+                        .setLight(LightTexture.FULL_SKY)
+                        .setNormal(poseStack.last(), 0, 1, 0);
+                consumer.addVertex(matrix, (float) right.x, (float) right.y, (float) right.z)
+                        .setColor(r, g, b, alpha)
+                        .setUv(0, 0)
+                        .setOverlay(OverlayTexture.NO_OVERLAY)
+                        .setLight(LightTexture.FULL_SKY)
+                        .setNormal(poseStack.last(), 0, 1, 0);
+            }
+            poseStack.popPose();
+        }
+
+        /**
+         * 返回相对于中心点的局部坐标（已应用半径缩放）
+         */
+        private Vec3 getWorldPoint(float t) {
+            Vec3 local = curve.apply(t).scale(radius);
+            return new Vec3(local.x, local.y, local.z);   // 不再加绝对坐标，由 poseStack 的平移负责
+        }
+
+        @Override
+        protected AABB getBoundingBox() {
+            double r = radius + width;
+            return new AABB(x - r, y - r, z - r, x + r, y + r, z + r);
+        }
+    }
+
+    public static class CurveStripPrecession extends WarningTip {
+        private final Function<Float, Vec3> curve;      // t∈[0,1] → 局部坐标（相对位置）
+        private final int segments;                     // 分段数（整数）
+        private final float radius;                     // 半径缩放
+        private final float width;                      // 条带宽度
+        private final float yaw;                        // 偏航角
+        public CurveStripPrecession(float x, float y, float z, int lifetime, int color,
+                          float radius, float width, float yaw, int segments,
+                          Function<Float, Vec3> curve) {
+            super(x, y, z, lifetime, color);
+            this.radius = radius;
+            this.width = width;
+            this.yaw = yaw;
+            this.segments = segments;
+            this.curve = curve;
+        }
+
+        @Override
+        protected float getProgress(float partialTick) {
+            return CurvesUtils.parametricHeight((age + partialTick)/lifetime,0.8f,0.2f);
+        }
+        protected int getAlpha(float partialTick) {
+            return (int) (Mth.lerp(getProgress(partialTick), 0f, 1f)*a);
+        }
+        @Override
+        protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {
+            int alpha = (int) (Mth.lerp(getProgress(partialTick), 0f, 1f)*a);;
+
+            poseStack.pushPose();
+            poseStack.translate(x, y + 0.01f, z);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-yaw));
+
+            VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_STRIP_WHITE);
+            Matrix4f matrix = poseStack.last().pose();
+
+            // 使用生命周期的一半进行进动
+            float linearProgress = ((age + partialTick) / lifetime)*2f;
+            List<Vec3> points = new ArrayList<>();
+            for (int i = 0; i <= segments; i++) {
+                float t = (float) i / segments;
+                if (t > linearProgress) break;   // 使用线性进度截断
+                points.add(getWorldPoint(t));
+            }
+            if (points.size() < 2) {
+                poseStack.popPose();
+                return;
+            }
+            // 2. 渲染整条曲线条带（使用衰减透明度）
+            for (int i = 0; i < points.size(); i++) {
+                Vec3 p = points.get(i);
+                Vec3 tangent;
+                if (i == 0) {
+                    tangent = points.get(1).subtract(p).normalize();
+                } else if (i == points.size() - 1) {
+                    tangent = p.subtract(points.get(i - 1)).normalize();
+                } else {
+                    tangent = points.get(i + 1).subtract(points.get(i - 1)).normalize();
+                }
+                Vec3 normal = new Vec3(0, 1, 0).cross(tangent).normalize();
+                Vec3 left = p.add(normal.scale(width / 2));
+                Vec3 right = p.add(normal.scale(-width / 2));
+                consumer.addVertex(matrix, (float) left.x, (float) left.y, (float) left.z)
+                        .setColor(r, g, b, alpha)
+                        .setUv(0, 0)
+                        .setOverlay(OverlayTexture.NO_OVERLAY)
+                        .setLight(LightTexture.FULL_SKY)
+                        .setNormal(poseStack.last(), 0, 1, 0);
+                consumer.addVertex(matrix, (float) right.x, (float) right.y, (float) right.z)
+                        .setColor(r, g, b, alpha)
+                        .setUv(0, 0)
+                        .setOverlay(OverlayTexture.NO_OVERLAY)
+                        .setLight(LightTexture.FULL_SKY)
+                        .setNormal(poseStack.last(), 0, 1, 0);
+            }
+            poseStack.popPose();
+        }
+        /**
+         * 返回相对于中心点的局部坐标（已应用半径缩放）
+         */
+        private Vec3 getWorldPoint(float t) {
+            Vec3 local = curve.apply(t).scale(radius);
+            return new Vec3(local.x, local.y, local.z);   // 不再加绝对坐标，由 poseStack 的平移负责
+        }
+
+        @Override
+        protected AABB getBoundingBox() {
+            double r = radius + width;
+            return new AABB(x - r, y - r, z - r, x + r, y + r, z + r);
         }
     }
 }

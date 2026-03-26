@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.mixin;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.entity.Mountable;
+import com.fanxing.fx_undertale.entity.capability.Mountable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.resources.ResourceLocation;

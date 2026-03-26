@@ -16,11 +16,11 @@ import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.loading.math.MathParser;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
-public class GroundBoneModel extends DefaultedEntityGeoModel<GroundBone> {
+public class GroundBoneModel extends GrowableBoneModel<GroundBone> {
     private static final Logger log = LoggerFactory.getLogger(GroundBoneModel.class);
 
     public GroundBoneModel() {
-        super(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "bone"));
+        super(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "ground_bone"));
     }
 
     @Override
@@ -31,24 +31,7 @@ public class GroundBoneModel extends DefaultedEntityGeoModel<GroundBone> {
             root.setHidden(true);
         }else{
             root.setHidden(false);
-            // 获取骨骼
-            GeoBone up = this.getBone("up").get();
-            GeoBone body = this.getBone("body").get();
-            GeoBone down = this.getBone("down").get();
-            BoneSnapshot upInitial = up.getInitialSnapshot();
-            BoneSnapshot bodyInitial = body.getInitialSnapshot();
-            BoneSnapshot downInitial = down.getInitialSnapshot();
-            float t = animatable.getGrowScale()*animatable.getProgress(animationState.getPartialTick());
-            body.setScaleY(1.125f*t);
-            body.setPosY(bodyInitial.getOffsetY()+ 1.5f*t-3f);
-            up.setPosY(upInitial.getOffsetY() + 16f*(t-1));
-            down.setPosY(downInitial.getOffsetY()+1.5f*t-3f);
+            super.setCustomAnimations(animatable, instanceId, animationState);
         }
     }
-
-    @Override
-    public @Nullable RenderType getRenderType(GroundBone animatable, ResourceLocation texture) {
-        return RenderType.entityTranslucentEmissive(texture);
-    }
-
 }

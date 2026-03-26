@@ -2,6 +2,7 @@ package com.fanxing.fx_undertale.entity.boss.sans;
 
 import com.fanxing.fx_undertale.entity.ai.behavior.*;
 import com.fanxing.fx_undertale.entity.ai.behavior.StartAttacking;
+import com.fanxing.fx_undertale.net.packet.AnimPacket;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
@@ -29,6 +30,7 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,7 +75,7 @@ public class SansAi {
                 ),
                 createOpeningBehavior(),
                 new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-                        Pair.of(createComboSkillBehavior(),9),
+                        Pair.of(createComboSkillBehavior(), 9),
                         Pair.of(RestartableTryAllBehavior.Order(ImmutableList.of(
 //                                Pair.of(createPersistentSkillBehavior(), 5),
                                 Pair.of(new AttackSchedulerBehavior<>(createSingleSkills(), MemoryModuleTypes.COOLDOWN_1.get()), 3)
@@ -139,6 +141,7 @@ public class SansAi {
     }
 
     private static AttackSchedulerBehavior<Sans> createOpeningBehavior() {
+        int[] delay = new int[1];
         return new AttackSchedulerBehavior<>(new AttackNode<Sans>(100, (a, t, tick) -> {
             if (tick == 0) {
                 a.timeJumpTeleport(t, 2);
@@ -156,17 +159,22 @@ public class SansAi {
                         int difficulty = a.level().getDifficulty().getId();
                         a.summonCircleGroundBoneSpine(t, 5 + 2 * difficulty, 4.5f, 10, 10);
                         a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
+                        PacketDistributor.sendToPlayersTrackingEntity(a, new AnimPacket(a.getId(),(byte) 0));
                         return true;
                     }
                     return false;
                 })).then(new AttackNode<>((byte) 4, 100, (a, t, tick) -> {
-                    if (tick == 3) {
-                        a.summonLateralBoneMatrix(t, 0);
+                    if(tick == 10){
+                        a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
                     }
-                    if (tick >= 5 && t.onGround()) {
+                    if (tick == 13) {
+                        a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_EYE_BLINK.get(), SoundSource.HOSTILE);
+                        delay[0] = a.summonLateralBoneMatrix(t, 0f);
+                    }
+                    if (tick >= 18 && t.onGround()) {
                         a.controlSoulMode(t, SoulMode.DEFAULT);
                     }
-                    return tick >= 90;
+                    return tick >= 20 && tick >= delay[0] + 20;
                 })).then(new AttackNode<>((byte) 6, 4, (a, t) -> a.summonGBAroundTarget(t, 4, 0f), 20, 100))
                 .then(new AttackNode<>((byte) 6, 4, (a, t) -> a.summonGBAroundTarget(t, 4, 45f), 20, 100))
                 .then(new AttackNode<>((byte) 6, 100, (a, t, tick) -> {
@@ -281,22 +289,22 @@ public class SansAi {
 
 
     private static List<AttackNode<Sans>> createSingleSkills() {
+        int[] delay = new int[1];
         return List.of(
                 // 飞行骨
 //                new AttackNode<>((byte) 8, 3, Sans::shootBoneRingVolley, 30, 40)
 //                        .weight((a,t)-> WeightMath.linearIncrease(a.distanceTo(t),0,a.getFollowRange())),
 //                new AttackNode<Sans>((byte) 9, 3, (a, t) -> a.shootArcSweepVolley(), 30, 40)
 //                        .weight((a,t)->WeightMath.linearDecrease(a.distanceTo(t),0,a.getFollowRange())*(1 + getTargetSpeed(t)*2)),
-//                new AttackNode<Sans>((byte) 12, 60, (a,t,tick)->{
-//                    if(tick == 20){
-//                     a.shootRotationBone(t,0.01F,1.0F,1);
-//                    }
-//                    if( tick == 26){
-//                        a.shootRotationBone(t,0.01F,1.0F,-1);
-//                    }
-//                    return tick >= 30;
-//                })
-//                .weight((a,t)->WeightMath.linearDecrease(a.distanceTo(t),0,a.getFollowRange())*(1 + getTargetSpeed(t)*2))
+                new AttackNode<Sans>((byte) 11, 100, (a, t, tick) -> {
+                    if (tick == 20) {
+                        a.shootRotationBone(t, 1F, 10F);
+                    }
+                    if (tick == 26) {
+//                        a.shootRotationBone(t, -1F, 10F);
+                    }
+                    return tick >= 30;
+                }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (1 + getTargetSpeed(t) * 2)),
 //                 GB
 //                new AttackNode<Sans>((byte) 6, 4, (a, t) -> {
 //                    int difficulty = a.level().getDifficulty().getId();
@@ -325,22 +333,22 @@ public class SansAi {
 //                    }
 //                    return distanceWeight * speedFactor;
 //                }),
-//                new AttackNode<Sans>((byte) 6, 4, (a, t) -> {
-//                    int difficulty = a.level().getDifficulty().getId();
-//                    int count = 1 + a.getRandom().nextInt(1 + difficulty + a.getPhaseFactor());
-//                    a.summonGBFront(t, count, 60f / count, 17);
-//                }, 30, 50).weight((a, t) -> {
-//                    double distanceWeight = WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.7, a.getFollowRange() * CLOSE_RANGE_FACTOR, 2);
-//                    double speed = getTargetSpeed(t);
-//                    double speedFactor;
-//                    double k = 1.0, baseSpeed = 0.15;
-//                    if (speed <= baseSpeed) {
-//                        speedFactor = 1 + k * (baseSpeed - speed);
-//                    } else {
-//                        speedFactor = baseSpeed / speed;
-//                    }
-//                    return distanceWeight * speedFactor;
-//                }),
+                new AttackNode<Sans>((byte) 6, 4, (a, t) -> {
+                    int difficulty = a.level().getDifficulty().getId();
+                    int count = 1 + a.getRandom().nextInt(1 + difficulty + a.getPhaseFactor());
+                    a.summonGBFront(t, count, 60f / count, 17);
+                }, 30, 50).weight((a, t) -> {
+                    double distanceWeight = WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.7, a.getFollowRange() * CLOSE_RANGE_FACTOR, 2);
+                    double speed = getTargetSpeed(t);
+                    double speedFactor;
+                    double k = 1.0, baseSpeed = 0.15;
+                    if (speed <= baseSpeed) {
+                        speedFactor = 1 + k * (baseSpeed - speed);
+                    } else {
+                        speedFactor = baseSpeed / speed;
+                    }
+                    return distanceWeight * speedFactor;
+                }),
 //
                 // 地面
 //                new AttackNode<Sans>((byte) 6, 50, (a, t, tick) -> {
@@ -368,14 +376,22 @@ public class SansAi {
 //                }).condition((a, t) -> t.getY()-a.getY() <= 1.0f+(a.getMaxStamina() - a.getStamina())/a.getMaxStamina()*3.0f)
 //                        .weight((a,t)-> WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.8f, a.getFollowRange()*0.5f,1)),
 
-                new AttackNode<Sans>((byte) 4, 50,(a,t,tick)->{
-                    if(tick == 4){
+                new AttackNode<Sans>((byte) 4, 100, (a, t, tick) -> {
+                    if (tick == 4) {
                         a.summonHugeThreadGroundBoneSpineWave(t);
-                        a.level().playSound(null,t,SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE,1,1);
                     }
-                    return tick>=20;
-                }).condition((a, t) -> t.getY()-a.getY() <= 1.0f+(a.getMaxStamina() - a.getStamina())/a.getMaxStamina()*3.0f)
-                        .weight((a,t)-> WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.8f, a.getFollowRange()*0.5f,1))
+                    if (tick == 20) {
+                        a.level().playSound(null, t, SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE, 1, 1);
+                    }
+                    return tick >= 40;
+                }).condition((a, t) -> t.getY() - a.getY() <= 1.0f + (a.getMaxStamina() - a.getStamina()) / a.getMaxStamina() * 3.0f)
+//                        .weight((a,t)-> WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.8f, a.getFollowRange()*0.5f,1)),
+//                new AttackNode<Sans>((byte) 4,40, (a, t, tick) -> {
+//                    if (tick == 0) {
+//                        delay[0] = a.summonLateralBoneMatrix(t,0.5f);
+//                    }
+//                    return tick >= delay[0];
+//                }).condition((a, t) -> t.onGround())
         );
     }
 
@@ -398,6 +414,7 @@ public class SansAi {
 
     private static AttackNode<Sans> timeJumpSkill() {
         int[] counter = new int[]{0};
+        int[] delay = new int[1];
         AttackNode<Sans> root = new AttackNode<Sans>(20, (a, t, tick) -> {
             if (tick == 0) {
                 a.timeJumpTeleport(t, 5);
@@ -413,9 +430,9 @@ public class SansAi {
                 }).child(root),
                 new AttackNode<Sans>(100, (a, t, tick) -> {
                     if (tick == 0) {
-                        a.summonLateralBoneMatrix(t, -1);
+                        delay[0] = a.summonLateralBoneMatrix(t, 0.5f);
                     }
-                    return tick >= 80;
+                    return tick >= delay[0];
                 }).condition((a, t) -> t.onGround()).child(root),
                 new AttackNode<Sans>(100, (a, t, tick) -> {
                     if (tick == 0) {

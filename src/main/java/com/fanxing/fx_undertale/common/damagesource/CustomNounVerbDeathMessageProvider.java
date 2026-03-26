@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.common.damagesource;
 
-import com.fanxing.fx_undertale.entity.CustomDeathMessage;
+import com.fanxing.fx_undertale.entity.capability.CustomDeathMessage;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.CombatEntry;

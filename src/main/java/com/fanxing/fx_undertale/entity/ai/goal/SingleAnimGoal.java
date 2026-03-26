@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.entity.ai.goal;
 
 import com.fanxing.fx_undertale.entity.ai.anim.SingleAnim;
-import com.fanxing.fx_undertale.entity.IAnimatable;
+import com.fanxing.fx_undertale.entity.capability.Animatable;
 import com.fanxing.fx_undertale.net.packet.AnimPacket;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @since 2025-11-22 21:46
  * 单个动画执行GOAL，需要维护服务端动画Tick
  */
-public abstract class SingleAnimGoal<R extends Mob & IAnimatable> extends Goal {
+public abstract class SingleAnimGoal<R extends Mob & Animatable> extends Goal {
     protected final R mob;
     protected int tick;             // 动画Tick
     protected int cooldownEndTick;  // 动画冷却结束Tick点

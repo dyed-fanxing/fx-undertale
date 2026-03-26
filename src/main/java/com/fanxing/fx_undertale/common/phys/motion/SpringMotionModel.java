@@ -20,10 +20,10 @@ import org.slf4j.LoggerFactory;
  *   potential = 0.5 * k * |displacement|^2
  *   total = kinetic + potential
  */
-public class SpringMotionModel extends AbstractPhysicsMotionModel {
+public class SpringMotionModel extends PhysicsMotionModel {
     private static final Logger log = LoggerFactory.getLogger(SpringMotionModel.class);
-    private float frequency;      // 弹簧刚度 k
-    private float damping;         // 每 tick 速度缩放因子 (1.0 无阻尼, <1 衰减)
+    private float frequency ;      // 弹簧刚度 k
+    private float damping = 1.0f;         // 每 tick 速度缩放因子 (1.0 无阻尼, <1 衰减)
     private float mass;            // 质量，默认为 1.0
 
     private double springForce; // 最近一次计算的弹簧力大小
@@ -64,20 +64,15 @@ public class SpringMotionModel extends AbstractPhysicsMotionModel {
             // 无目标时，仅按阻尼衰减速度
             return currentVel.scale(damping);
         }
-
-        // 位移向量（从物体指向目标）
+        // 位移向量，将 Y 分量置零
         Vec3 displacement = targetPos.subtract(currentPos);
-
         // 弹簧力（大小与位移成正比）
         Vec3 springForce = displacement.scale(frequency);
         this.springForce = springForce.length();
-
         // 加速度 = 力 / 质量
         Vec3 acceleration = springForce.scale(1.0f / mass);
-
         // 新速度 = (当前速度 + 加速度 * dt) * 阻尼
         Vec3 newVel = currentVel.add(acceleration).scale(damping);
-
         // 计算能量（动能包含质量，势能不变）
         this.kineticEnergy = 0.5 * mass * newVel.lengthSqr();
         this.potentialEnergy = 0.5 * frequency * displacement.lengthSqr();
