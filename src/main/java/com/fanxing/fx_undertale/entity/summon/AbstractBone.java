@@ -17,6 +17,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -60,11 +62,12 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         return (T) this;
     }
 
+
     public T gravity(Direction gravity) {
-        this.setData(AttachmentTypes.GRAVITY, Gravity.applyGravity(this, gravity));
+        Gravity gravityData = Gravity.applyGravity(this, gravity);
+        Gravity.rotation(this,gravity);
         return (T) this;
     }
-
     // ========== 尺寸与 OBB ==========
     @Override
     public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
@@ -75,6 +78,16 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
     public void refreshDimensions() {
         super.refreshDimensions();
         updateOBB();
+    }
+
+    @Override
+    public boolean fudgePositionAfterSizeChange(EntityDimensions p_347526_) {
+        return false;
+    }
+
+    @Override
+    protected boolean updateInWaterStateAndDoFluidPushing() {
+        return false;
     }
 
     @Override
@@ -127,17 +140,19 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         tag.putFloat("damage", damage);
         tag.putInt("lifetime", lifetime);
         tag.putInt("color", colorAttack.getColor());
+        tag.putString("gravity",getData(AttachmentTypes.GRAVITY).getGravity().getName());
     }
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("scale")) scale = tag.getFloat("scale");
-        if (tag.contains("growScale")) growScale = tag.getFloat("growScale");
-        if (tag.contains("holdTimeScale")) holdTimeScale = tag.getFloat("holdTimeScale");
-        if (tag.contains("damage")) damage = tag.getFloat("damage");
-        if (tag.contains("lifetime")) lifetime = tag.getInt("lifetime");
-        if (tag.contains("color")) colorAttack = ColorAttack.of(tag.getInt("color"));
+        if(tag.contains("scale")) scale = tag.getFloat("scale");
+        if(tag.contains("growScale")) growScale = tag.getFloat("growScale");
+        if(tag.contains("holdTimeScale")) holdTimeScale = tag.getFloat("holdTimeScale");
+        if(tag.contains("damage")) damage = tag.getFloat("damage");
+        if(tag.contains("lifetime")) lifetime = tag.getInt("lifetime");
+        if(tag.contains("color")) colorAttack = ColorAttack.of(tag.getInt("color"));
+        if(tag.contains("gravity")) this.setData(AttachmentTypes.GRAVITY,new Gravity(Direction.byName(tag.getString("gravity"))));
         refreshDimensions();
     }
 
@@ -148,6 +163,7 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         buf.writeFloat(damage);
         buf.writeInt(lifetime);
         buf.writeInt(colorAttack.getColor());
+        buf.writeEnum(this.getData(AttachmentTypes.GRAVITY).getGravity());
     }
 
     public void readSpawnData(RegistryFriendlyByteBuf buf) {
@@ -157,6 +173,7 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         damage = buf.readFloat();
         lifetime = buf.readInt();
         colorAttack = ColorAttack.of(buf.readInt());
+        this.setData(AttachmentTypes.GRAVITY,new Gravity(buf.readEnum(Direction.class)));
         refreshDimensions();
     }
 

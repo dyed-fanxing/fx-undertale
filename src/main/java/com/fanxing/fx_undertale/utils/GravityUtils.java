@@ -76,7 +76,7 @@ public class GravityUtils {
         );
     }
 
-    public static Vec3 findGround(Level level, Vec3 pos,Direction gravity) {
+    public static Vec3 findGround(Level level, Vec3 pos, Direction gravity) {
         Vec3i normal = gravity.getNormal();
         Vec3 g = new Vec3(normal.getX(), normal.getY(), normal.getZ());
         BlockPos searchPos = getContaining(pos,gravity);
@@ -104,4 +104,7 @@ public class GravityUtils {
         } while (-step*searchPos.get(gravity.getAxis()) >= -step*height);
         return new Vec3(normal.getX(),normal.getY(),normal.getZ()).add(g.scale(collisionHeight));
     }
+
+
+
 }

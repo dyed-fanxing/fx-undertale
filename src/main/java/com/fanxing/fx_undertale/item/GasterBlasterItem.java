@@ -90,7 +90,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
                 return InteractionResultHolder.consume(itemStack);
             } else {
                 HitResult hitResult = ProjectileUtils.getHitResultOnViewVector(player, entity -> entity.isPickable() && entity != player.getVehicle(), GasterBlaster.DEFAULT_LENGTH);
-                GasterBlaster blaster = new GasterBlaster(level, player).holdTimeScale(0.95F);
+                GasterBlaster blaster = new GasterBlaster(level, player);
                 double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
                 blaster.setPos(player.position().add(RotUtils.getWorldVec3(new Vec3(0, safeDistance, 0), player.getRandom().nextFloat() * 180f - 90f, player.getXRot(), player.getYRot())));
                 if (hitResult instanceof EntityHitResult entityHitResult) {

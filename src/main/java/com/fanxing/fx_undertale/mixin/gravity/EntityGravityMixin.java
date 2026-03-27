@@ -1,6 +1,7 @@
 package com.fanxing.fx_undertale.mixin.gravity;
 
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
+import com.fanxing.fx_undertale.entity.capability.OBBable;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
@@ -104,8 +105,11 @@ public abstract class EntityGravityMixin {
 
     @Shadow public abstract EntityDimensions getDimensions(Pose p_19975_);
 
+    @Shadow public abstract boolean isNoGravity();
+
     @Inject(method = "calculateViewVector", at = @At("RETURN"), cancellable = true)
     public void calculateViewVector(float xRot, float yRot, CallbackInfoReturnable<Vec3> cir) {
+        if(this instanceof OBBable) return;
         Entity self = (Entity) (Object) this;
         Gravity data = self.getData(AttachmentTypes.GRAVITY);
         if (data.getGravity() != Direction.DOWN) {
@@ -119,6 +123,7 @@ public abstract class EntityGravityMixin {
      */
     @Inject(method = "makeBoundingBox", at = @At("HEAD"), cancellable = true)
     protected void makeBoundingBox(CallbackInfoReturnable<AABB> cir) {
+        if(this instanceof OBBable) return;
         Entity self = (Entity) (Object) (this);
         Direction gravity = self.getData(AttachmentTypes.GRAVITY).getGravity();
         if (gravity != Direction.DOWN) {
@@ -146,9 +151,10 @@ public abstract class EntityGravityMixin {
      */
     @Inject(method = "getEyeY", at = @At(value = "HEAD"), cancellable = true)
     public void getEyeY(CallbackInfoReturnable<Double> cir) {
+        if(this instanceof OBBable) return;
         Entity self = (Entity) (Object) (this);
         Direction gravity = self.getData(AttachmentTypes.GRAVITY).getGravity();
-        if (gravity != Direction.DOWN) {
+        if (gravity != Direction.DOWN)  {
             cir.cancel();
             cir.setReturnValue(switch (gravity) {
                 case UP -> this.position.y - eyeHeight;
@@ -163,6 +169,7 @@ public abstract class EntityGravityMixin {
      */
     @Inject(method = "getEyePosition()Lnet/minecraft/world/phys/Vec3;", at = @At(value = "HEAD"), cancellable = true)
     public void getEyePosition(CallbackInfoReturnable<Vec3> cir) {
+        if(this instanceof OBBable) return;
         Entity self = (Entity) (Object) (this);
         Direction gravity = self.getData(AttachmentTypes.GRAVITY).getGravity();
         if (gravity != Direction.DOWN) {
@@ -183,6 +190,7 @@ public abstract class EntityGravityMixin {
      */
     @Inject(method = "getEyePosition(F)Lnet/minecraft/world/phys/Vec3;", at = @At(value = "HEAD"), cancellable = true)
     public void getEyePositionLerp(float partialTick, CallbackInfoReturnable<Vec3> cir) {
+        if(this instanceof OBBable) return;
         Entity self = (Entity) (Object) (this);
         Direction gravity = self.getData(AttachmentTypes.GRAVITY).getGravity();
         if (gravity != Direction.DOWN) {
@@ -227,7 +235,7 @@ public abstract class EntityGravityMixin {
         Entity self = (Entity) (Object) this;
         Gravity data = self.getData(AttachmentTypes.GRAVITY);
         Direction gravity = data.getGravity();
-        if (gravity == Direction.DOWN) return;
+        if (gravity == Direction.DOWN ) return;
         ci.cancel();
         Vec3i normal = gravity.getNormal();
         if (this.position.x != x || this.position.y != y || this.position.z != z) {
@@ -413,10 +421,6 @@ public abstract class EntityGravityMixin {
     @Unique
     private Vec3 undertale$gravityCollideWithShapes(Vec3 movement, AABB bb, List<VoxelShape> shapes,
                                                     Direction.Axis heightAxis, Direction.Axis h1, Direction.Axis h2, Direction gravity) {
-        double d0 = movement.x;
-        double d1 = movement.y;
-        double d2 = movement.z;
-
         // 先处理高度轴
         double height = movement.get(heightAxis);
         if (height != 0) {

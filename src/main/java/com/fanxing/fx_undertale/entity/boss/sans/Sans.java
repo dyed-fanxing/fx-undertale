@@ -6,10 +6,10 @@ import com.fanxing.fx_undertale.common.phys.motion.PhysicsMotionModel;
 import com.fanxing.fx_undertale.common.phys.motion.RoseSpiralMotionModel;
 import com.fanxing.fx_undertale.common.phys.motion.SpringMotionModel;
 import com.fanxing.fx_undertale.entity.AbstractUTMonster;
-import com.fanxing.fx_undertale.entity.capability.Animatable;
 import com.fanxing.fx_undertale.entity.ai.control.PatchedMoveControl;
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.attachment.KaramJudge;
+import com.fanxing.fx_undertale.entity.capability.Animatable;
 import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.entity.projectile.FlyingBone;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
@@ -123,8 +123,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     private final Set<ServerPlayer> trackingPlayers = new HashSet<>();
 
     private GasterBlaster controllerAimGB = null;
-    public boolean shotA;
 
+    private int targetNotDownwardGravityTick;
     public Sans(EntityType<? extends Monster> type, Level level) {
         super(type, level);
 //        maxStamina = level.getDifficulty().getId() * 5;
@@ -191,7 +191,17 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             setStamina(stamina);
         }
         this.bossEvent.setProgress(stamina / maxStamina);
-        if (getTargetFromBrain() != null) {
+        LivingEntity target = getTargetFromBrain();
+        if (target != null) {
+            if(target.getData(AttachmentTypes.GRAVITY).getGravity() != Direction.DOWN) {
+                targetNotDownwardGravityTick++;
+                if(targetNotDownwardGravityTick >= 400){
+                    // 目标在非向下重力的Tick数超过20，则将其摔在默认重力下方
+                    if(!brain.hasMemoryValue(MemoryModuleTypes.ATTACKING.get())){
+                        this.gravitySlam(target,LocalDirection.DOWN,0.8f);
+                    }
+                }
+            }
             for (ServerPlayer p : trackingPlayers) {
                 bossEvent.addPlayer(p);
             }
@@ -257,18 +267,18 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         }
         if (sourceEntity != null) {
             if (source.isDirect()) {
-                log.info("攻击伤害来源实体和直接实体相等，触发近战传送，距离：{}", sourceEntity.distanceTo(this));
+                log.debug("攻击伤害来源实体和直接实体相等，触发近战传送，距离：{}", sourceEntity.distanceTo(this));
                 meleeTeleport(sourceEntity);
             } else {
                 if (sourceEntity.distanceToSqr(this) <= 25) {
-                    log.info("攻击伤害来源实体和直接实体不相等，触发近战传送，攻击来源距离：{}", sourceEntity.distanceTo(this));
+                    log.debug("攻击伤害来源实体和直接实体不相等，触发近战传送，攻击来源距离：{}", sourceEntity.distanceTo(this));
                     meleeTeleport(sourceEntity);
                 } else if (directEntity != null) {
                     if (directEntity instanceof LivingEntity) {
                         meleeTeleport(directEntity);
-                        log.info("攻击伤害来源实体和直接实体不相等，且与攻击来源实体距离超出近战范围，且直接实体是活体，触发近战传送，攻击来源距离：{}", sourceEntity.distanceTo(this));
+                        log.debug("攻击伤害来源实体和直接实体不相等，且与攻击来源实体距离超出近战范围，且直接实体是活体，触发近战传送，攻击来源距离：{}", sourceEntity.distanceTo(this));
                     } else {
-                        log.info("攻击伤害来源实体和直接实体不相等，且与攻击来源实体距离超出近战范围，且直接实体不是活体，触发范围传送，攻击来源距离：{}", sourceEntity.distanceTo(this));
+                        log.debug("攻击伤害来源实体和直接实体不相等，且与攻击来源实体距离超出近战范围，且直接实体不是活体，触发范围传送，攻击来源距离：{}", sourceEntity.distanceTo(this));
                         rangedTeleport(directEntity);
                     }
                 }
@@ -276,10 +286,10 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         } else {
             if (directEntity != null) {
                 if (directEntity.distanceToSqr(this) <= 25) {
-                    log.info("没有伤害来源实体，但是有直接实体，距离：{}，触发近身传送", directEntity.distanceTo(this));
+                    log.debug("没有伤害来源实体，但是有直接实体，距离：{}，触发近身传送", directEntity.distanceTo(this));
                     meleeTeleport(directEntity);
                 } else {
-                    log.info("没有伤害来源实体，但是有直接实体，距离：{}，触发范围传送", directEntity.distanceTo(this));
+                    log.debug("没有伤害来源实体，但是有直接实体，距离：{}，触发范围传送", directEntity.distanceTo(this));
                     rangedTeleport(directEntity);
                 }
             } else {
@@ -946,8 +956,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         Vec3 centerPos = target.position();
         Gravity data = target.getData(AttachmentTypes.GRAVITY);
         Direction gravity = data.getGravity();
-        this.level().addFreshEntity(createGroundBone(attackTypeUUID, centerPos.x, centerPos.z, centerPos.y, centerPos.y, 1.0f, growScale, lifetime, delay, 0f, 0f).gravity(gravity).holdTimeScale(-1f));
-        this.level().playSound(null, centerPos.x, getY(), centerPos.z, SoundEvnets.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+        this.level().addFreshEntity(createGroundBone(attackTypeUUID,centerPos, 1.0f, growScale, lifetime, delay, 0f, 0f).gravity(gravity).holdTimeScale(-1f));
+        this.level().playSound(null, centerPos.x, centerPos.y, centerPos.z, SoundEvnets.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
         PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.Cylinder((float) centerPos.x, (float) centerPos.y, (float) centerPos.z, layer * spacing, growScale, lifetime, WarningTip.RED, gravity));
         for (int i = 0; i < layer; i++) {
             int count = 8 * (i + 1);
@@ -957,11 +967,65 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             for (int j = 0; j < count; j++, angle += interval) {
                 Vec3 pos = centerPos.add(data.localToWorld(r * Math.cos(angle * Math.PI / 180F), 0, r * Math.sin(angle * Math.PI / 180F)));
                 pos = GravityUtils.findGround(this.level(), new Vec3(Math.round(pos.x * 1e6) / 1e6, Math.round(pos.y * 1e6) / 1e6, Math.round(pos.z * 1e6) / 1e6), gravity);
-                this.level().addFreshEntity(createGroundBone(attackTypeUUID, pos.x, pos.z, pos.y, pos.y, 1.0f, growScale, lifetime, delay, angle, (float) (this.random.nextGaussian() * 10f)).gravity(gravity).holdTimeScale(-1f));
+                //todo 暂时做不到其他重力方向也看向径向方向，感觉需要引入roll，但不想引入，麻烦
+                GroundBone groundBone = createGroundBone(attackTypeUUID, pos, 1.0f, growScale, lifetime, delay,0,(float) (this.random.nextGaussian() * 8)).gravity(gravity).holdTimeScale(-1f);
+                this.level().addFreshEntity(groundBone);
             }
         }
     }
-
+//    public void summonCircleGroundBoneSpine(LivingEntity target, int layer, float growScale, int lifetime, int delay) {
+//        String attackTypeUUID = UUID.randomUUID().toString();
+//        float spacing = 0.7f;
+//        Vec3 centerPos = target.position();
+//        Gravity data = target.getData(AttachmentTypes.GRAVITY);
+//        Direction gravity = data.getGravity();
+//        // 获取重力旋转四元数（临时构造，仅用于计算）
+//        Gravity tempGravity = new Gravity(gravity);
+//        Quaternionf gravityRot = tempGravity.getLocalToWorld();
+//        Quaternionf invGravity = gravityRot.conjugate(new Quaternionf());
+//
+//        // 中心骨刺（无指向需求，角度为0）
+//        this.level().addFreshEntity(createGroundBone(attackTypeUUID, centerPos, 1.0f, growScale, lifetime, delay, 0f, 0f)
+//                .gravity(gravity).holdTimeScale(-1f));
+//
+//        // 音效和预警（略）
+//        this.level().playSound(null, centerPos.x, centerPos.y, centerPos.z, SoundEvnets.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+//        PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.Cylinder((float) centerPos.x, (float) centerPos.y, (float) centerPos.z, layer * spacing, growScale, lifetime, WarningTip.RED, gravity));
+//
+//        for (int i = 0; i < layer; i++) {
+//            int count = 8 * (i + 1);
+//            float interval = 360f / count;
+//            float r = spacing * (i + 1);
+//            float angle = interval;
+//            for (int j = 0; j < count; j++, angle += interval) {
+//                // 计算骨刺的世界坐标
+//                Vec3 pos = centerPos.add(data.localToWorld(r * Math.cos(angle * Math.PI / 180F), 0, r * Math.sin(angle * Math.PI / 180F)));
+//                pos = GravityUtils.findGround(this.level(), pos, gravity);
+//
+//                // 随机俯仰偏移（度）
+//                float randomPitch = (float) (this.random.nextGaussian() * 8);
+//
+//                // 世界指向中心的方向
+//                Vec3 worldDir = centerPos.subtract(pos).normalize();
+//
+//                // 转换到默认重力坐标系下
+//                Vector3f localDir = invGravity.transform(new Vector3f((float) worldDir.x, (float) worldDir.y, (float) worldDir.z));
+//
+//                // 提取局部 yaw 和 pitch（先 Y 后 X）
+//                double yawLocal = Math.atan2(localDir.x, localDir.z);
+//                double pitchLocal = Math.asin(Math.min(1, Math.max(-1, localDir.y)));
+//
+//                // 叠加随机俯仰（绕局部 X 轴）
+//                pitchLocal += Math.toRadians(randomPitch);
+//
+//                // 创建骨刺
+//                GroundBone bone = createGroundBone(attackTypeUUID, pos, 1.0f, growScale, lifetime, delay,
+//                        (float) Math.toDegrees(yawLocal), (float) Math.toDegrees(pitchLocal));
+//                bone.gravity(gravity).holdTimeScale(-1f);
+//                this.level().addFreshEntity(bone);
+//            }
+//        }
+//    }
     /**
      * 骨刺波动 - 以自身为中心发射，单击（一阶段）
      */
@@ -1133,7 +1197,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 // 限制角度
                 yaw = Mth.clamp(yaw, -180, 180);
                 pitch = Mth.clamp(pitch, 20, 75);
-                GroundBone groundBone = (GroundBone) createGroundBone(attackTypeUUID, bonePos.x, bonePos.z, minY, maxY,
+                GroundBone groundBone = createGroundBone(attackTypeUUID, bonePos.x, bonePos.z, minY, maxY,
                         scale, growScale, lifetime, delay, yaw, pitch).holdTimeScale(0.8f);
                 groundBone.updateOBB();
                 this.level().addFreshEntity(groundBone);
@@ -1183,12 +1247,12 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     public int summonHugeThreadGroundBoneSpineWave(LivingEntity target) {
         String attackTypeUUID = UUID.randomUUID().toString();
         int phaseFactor = getPhaseFactor();
-        int curveCount = 12 + phaseFactor * 6;
+        int curveCount = 10 + phaseFactor * 6;
 //        int curveCount = 1;
         int lifetime = 30;
         float sizeScale = 2.0f;
         float growScale = 3.0f;
-        int pointsPerCurve = 80;
+        int pointsPerCurve = 60;
         float spacing = 0.175F * sizeScale;
         float radius = pointsPerCurve * spacing;
         Vec3 targetPos = target.position();
@@ -1196,8 +1260,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         Gravity data = target.getData(AttachmentTypes.GRAVITY);
         Direction gravity = data.getGravity();
         targetPos = GravityUtils.findGround(this.level(), targetPos, gravity);
-//        int type = this.random.nextInt(10);
-        int type = 3;
+        int type = this.random.nextInt(9);
+//        int type = 8;
         int tipLifetime = 40;
         int delay = tipLifetime / 2;
         Function<Float, Vec3> curve = ParametricCurveUtils.reverse(switch (type) {
@@ -1214,20 +1278,48 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 yield ParametricCurveUtils.spiral(0.3f);
             }
             case 3 -> {
-                curveCount = 1;
-                pointsPerCurve = 80;
-                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.RadialPrecessionCurveStripsPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, ParametricCurveType.FRACTAL_REVERSED, 5, 0.3F));
-                yield ParametricCurveUtils.fractal(5, 0.3f);
+                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.RadialPrecessionCurveStripsPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, ParametricCurveType.FRACTAL_REVERSED, 10, 1.0F));
+                yield ParametricCurveUtils.fractal(10, 1.0F);
             }
             case 4 -> {
-                curveCount = 1;
-                pointsPerCurve = 250;
-                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.RadialPrecessionCurveStripsPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, ParametricCurveType.FLOWER_REVERSED, 0.3F));
-                yield ParametricCurveUtils.flower(0.3F);
+                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.RadialPrecessionCurveStripsPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, ParametricCurveType.FLOWER_REVERSED, 5));
+                yield ParametricCurveUtils.flower(5);
             }
-//            case 4 -> ParametricCurveUtils.flower(5);
-//            case 5 -> ParametricCurveUtils.heart();
-            default -> ParametricCurveUtils.radial(0);
+            case 5 -> {
+                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.RadialPrecessionCurveStripsPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, ParametricCurveType.HEART_REVERSED));
+                yield ParametricCurveUtils.heart();
+            }
+            case 6 -> {
+                PacketDistributor.sendToPlayersTrackingEntity(this,
+                        new WarningTipPacket.RadialPrecessionCurveStripsPacket(
+                                (float) targetPos.x, (float) targetPos.y, (float) targetPos.z,
+                                tipLifetime, WarningTip.RED, curveCount, radius, spacing,
+                                pointsPerCurve, ParametricCurveType.SAWTOOTH_RADIAL_REVERSED,
+                                4.2f, 0.45f  // 示例参数，可自行定义
+                        ));
+                yield ParametricCurveUtils.sawtoothRadial(4.2f, 0.45f);
+            }
+            case 7 -> {
+                PacketDistributor.sendToPlayersTrackingEntity(this,
+                        new WarningTipPacket.RadialPrecessionCurveStripsPacket(
+                                (float) targetPos.x, (float) targetPos.y, (float) targetPos.z,
+                                tipLifetime, WarningTip.RED, curveCount, radius, spacing,
+                                pointsPerCurve, ParametricCurveType.STARBURST_REVERSED,
+                                6.0f, 0.6f
+                        ));
+                yield ParametricCurveUtils.starburst(6.0f, 0.6f);
+            }
+            case 8 -> {
+                PacketDistributor.sendToPlayersTrackingEntity(this,
+                        new WarningTipPacket.RadialPrecessionCurveStripsPacket(
+                                (float) targetPos.x, (float) targetPos.y, (float) targetPos.z,
+                                tipLifetime, WarningTip.RED, curveCount, radius, spacing,
+                                pointsPerCurve, ParametricCurveType.WAVEFOLD_REVERSED,
+                                4f, 8f, 0.3f
+                        ));
+                yield ParametricCurveUtils.wavefold(4f, 8f, 0.3f);
+            }
+            default -> ParametricCurveUtils.radial();
         });
         this.level().playSound(null, targetPos.x, targetPos.y, targetPos.z, SoundEvnets.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
         for (int s = 0; s < curveCount; s++) {
@@ -1250,7 +1342,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     }
 
     /**
-     * 创建地面骨
+     * 创建地面骨，默认重力下的，需要查找y轴位置
      *
      * @param scale     地面骨缩放大小
      * @param growScale 地面骨生长缩放大小
@@ -1268,6 +1360,22 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         }
         return bone;
     }
+    /**
+     * 创建地面骨，直接设置位置
+     *
+     * @param scale     地面骨缩放大小
+     * @param growScale 地面骨生长缩放大小
+     */
+    protected GroundBone createGroundBone(String attackUUID, Vec3 pos,float scale, float growScale, int lifetime, int delay, float yRot, float xRot) {
+        Level level = this.level();
+        // 如果找到有效地面，生成骨刺
+        GroundBone bone = new GroundBone(level, this, scale, growScale, getAttackDamage(), lifetime, delay);
+        bone.setPos(pos);
+        bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackUUID, (byte) (scale * 2f + growScale * 1.5f)));
+        bone.setYRot(yRot);
+        bone.setXRot(xRot);
+        return bone;
+    }
 
 
     /**
@@ -1276,7 +1384,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     public void summonGBAroundSelf(LivingEntity target, int count, float size) {
         for (int i = 0; i < count; i++) {
             int attempts = 0;
-            GasterBlaster gb = createGasterBlaster(size).holdTimeScale(0.9F);
+            GasterBlaster gb = createGasterBlaster(size);
             do {
                 gb.setPos(this.getEyePosition().subtract(target.getEyePosition()).scale(0.5).add(this.getEyePosition()).add(RotUtils.getWorldVec3(
                         this.random.nextDouble() * 16 - 8,
@@ -1306,7 +1414,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
      */
     public void summonGBAroundTarget(LivingEntity target, int count, float offsetAngle) {
         int difficulty = this.level().getDifficulty().getId();
-        summonGBAroundTarget(target, count, target.getBbWidth() * 16, offsetAngle, 360f / count, 1.0f + (2 + difficulty - count) * 0.5f);
+        summonGBAroundTarget(target, count, target.getBbWidth() * 13, offsetAngle, 360f / count, 1.0f + (2 + difficulty - count) * 0.5f);
     }
 
     /**
@@ -1322,23 +1430,49 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
      *
      * @param target      目标实体
      * @param count       GB数量
+     * @param radius      半径
      * @param offsetAngle 初始偏移角度（度）
      * @param angleStep   角度步长（度）
      */
     public void summonGBAroundTarget(LivingEntity target, int count, float radius, float offsetAngle, float angleStep, float size) {
-        Vec3 targetPos = new Vec3(target.getX(), target.getY(0.5f), target.getZ());
+        Gravity gravity = target.getData(AttachmentTypes.GRAVITY);
         float currentAngle = offsetAngle; // 从指定角度开始
         for (int i = 0; i < count; i++, currentAngle += angleStep) {
-            GasterBlaster gb = createGasterBlaster(size).holdTimeScale(0.9F);
+            GasterBlaster gb = createGasterBlaster(size);
             // 计算圆形上的位置
             double xOffset = Math.sin(currentAngle * Mth.DEG_TO_RAD) * radius;
             double zOffset = -Math.cos(currentAngle * Mth.DEG_TO_RAD) * radius;
-            gb.setPos(RotUtils.getWorldVec3(xOffset, 0, zOffset, this.getXRot(), this.getYHeadRot()).add(targetPos));
-            gb.aim(target);
+            gb.setPos(target.position().add(gravity.localToWorld(xOffset, target.getBbHeight()*0.5f, zOffset)));
+            gb.aim(target.position().add(gravity.localToWorld(0.0, target.getBbHeight()*0.5f, 0.0)));
             gb.restAnimPos();
             this.level().addFreshEntity(gb);
         }
     }
+
+    /**
+     * 在目标所在位置的指定高度上召唤四周GB，用于重力控制的追加技能
+     */
+    public void summonGBAtTargetHeight(LivingEntity target, int count, float offsetAngle,float height) {
+        int difficulty = this.level().getDifficulty().getId();
+        Vec3 position = target.position();
+        Gravity gravity = target.getData(AttachmentTypes.GRAVITY);
+        float radius = target.getBbWidth() * 13;
+        float angleStep = 360f / count;
+        float size = 1.0f + (2 + difficulty - count) * 0.5f;
+        float currentAngle = offsetAngle; // 从指定角度开始
+        for (int i = 0; i < count; i++, currentAngle += angleStep) {
+            GasterBlaster gb = new GasterBlaster(this.level(), this, getAttackDamage(), size);
+            gb.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(UUID.randomUUID().toString(), (byte) 10));
+            // 计算圆形上的位置
+            double xOffset = Math.sin(currentAngle * Mth.DEG_TO_RAD) * radius;
+            double zOffset = -Math.cos(currentAngle * Mth.DEG_TO_RAD) * radius;
+            gb.setPos(position.add(gravity.localToWorld(xOffset, height, zOffset)));
+            gb.aim(position.add(gravity.localToWorld(0.0, height, 0.0)));
+            gb.restAnimPos();
+            this.level().addFreshEntity(gb);
+        }
+    }
+
 
     public GasterBlaster controlGBAim(LivingEntity target) {
         int factor = getPhaseFactor();
@@ -1364,7 +1498,6 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), gravityData.getGravity(), acceleration));
         applyGravityControlTag(target, true);
     }
-
     public void applyGravityControlTag(LivingEntity target, boolean exist) {
         target.setData(AttachmentTypes.GRAVITY_CONTROL_TAG, exist);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityControlTagPacket(target.getId(), exist));

@@ -131,10 +131,6 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         setMountable(true);
         return this;
     }
-    public GasterBlaster holdTimeScale(float holdTimeScale){
-        this.holdTimeScale = holdTimeScale;
-        return this;
-    }
     public GasterBlaster target(Entity target) {
         this.target = target;
         return this;
@@ -183,7 +179,25 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     public void tick() {
         super.tick();
         if(isMountable()) return;
-        Vec3 velocity = getLookAngle().scale(CurvesUtils.parametricDerivative((float) tickCount / decayTick, holdTimeScale, 0.5f)*0.1f);
+        int discardTick = decayTick + DECAY;
+        float t = (float) tickCount / discardTick;
+        float rise = (float) shotTick / discardTick;
+        // 与HTML滑块对应的参数（可自由调整）
+        float slowEnd = 0.9f;      // 缓降结束时间
+        float slowEndY = 0.9f;     // 缓降结束时高度
+        float powerExp = 2.5f;     // 急降段幂指数
+
+        float velSpeed;
+        if (t < rise) velSpeed = (float) (20 * Math.pow(1 - t, 19)) * 0.1f;
+         else if (t < slowEnd) velSpeed = (slowEndY - 1f) / (slowEnd - rise) * 0.15f;
+         else {
+            float v = (t - slowEnd) / (1 - slowEnd);
+            float dt = 1 - slowEnd;
+            // 局部导数 * 全局时间缩放
+            float localDeriv = -slowEndY * powerExp * (float) Math.pow(v, powerExp - 1);
+            velSpeed = localDeriv / dt * 0.2f;
+        }
+        Vec3 velocity = getLookAngle().scale(velSpeed);
         setDeltaMovement(velocity);
         setPos(this.position().add(velocity));
         Entity owner = getOwner();

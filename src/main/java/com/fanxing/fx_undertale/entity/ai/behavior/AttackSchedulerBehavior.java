@@ -63,6 +63,7 @@ public class AttackSchedulerBehavior<T extends LivingEntity> extends Behavior<T>
         this.dynamicFactory = dynamicFactory;
         this.cooldownMemory = cooldownMemory;
         this.attackCoolingDownFactor = attackCoolingDownFactor;
+        log.info("动态工厂：{}",dynamicFactory);
     }
 
     @Override

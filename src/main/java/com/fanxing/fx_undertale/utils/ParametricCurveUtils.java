@@ -114,52 +114,9 @@ public class ParametricCurveUtils {
     }
 
     /**
-     * 4. 布朗漂移 (Brownian Drift)
-     * 描述：模拟随机游走。半径总体向外，但角度带有累积的随机噪声。
-     * 注意：由于 Function 是纯函数的，不能使用 Math.random() (否则每帧重绘轨迹会变)。
-     * 我们使用确定性的伪随机噪声 (基于 t 的正弦叠加) 来模拟随机性。
-     * @param intensity 扰动强度 (0.0 - 1.0)
+     * 4.花瓣，半径 1
+     * @param petals 花瓣数量
      */
-    public static Function<Float, Vec3> brownian(float intensity) {
-        return t -> {
-            float r = t;
-            // 基础角度均匀分布
-            float baseAngle = t * 2.0f * (float) Math.PI;
-            // 确定性噪声模拟布朗运动
-            // 叠加多个不同频率的正弦波，制造“无序”感
-            // 系数 123.4, 456.7 等是随意选取的质数倍率，用于去相关
-            float noise = 0.0f;
-            noise += (float) (Math.sin(t * 13.0f) * 0.5f);
-            noise += (float) (Math.sin(t * 37.0f) * 0.25f);
-            noise += (float) (Math.sin(t * 89.0f) * 0.125f);
-
-            // 噪声累积效应：越往外 (t 越大)，累积偏移可能越大，但也受强度控制
-            // 这里做一个简单的映射，让角度产生抖动
-            float angleOffset = noise * intensity * 2.0f * (float) Math.PI;
-
-            // 限制最大偏移，防止绕回中心太乱
-            angleOffset = angleOffset % (2.0f * (float) Math.PI);
-
-            float finalAngle = baseAngle + angleOffset;
-
-            return new Vec3(r * Math.cos(finalAngle), 0, r * Math.sin(finalAngle));
-        };
-    }
-
-
-
-    /** 星形，半径 1 */
-    public static Function<Float, Vec3> star(float points, float depth) {
-        return t -> {
-            float angle = t * 2 * (float) Math.PI;
-            float r = t;
-            float offset = depth * (float) Math.cos(points * angle);
-            float finalR = r * (1 - depth + offset);
-            return new Vec3(finalR * Math.cos(angle), 0, finalR * Math.sin(angle));
-        };
-    }
-
-    /** 花瓣，半径 1 */
     public static Function<Float, Vec3> flower(float petals) {
         return t -> {
             float angle = t * 2 * (float) Math.PI;
@@ -170,7 +127,7 @@ public class ParametricCurveUtils {
         };
     }
 
-    /** 爱心，半径 1（最宽处为 1） */
+    /** 5.爱心，半径 1（最宽处为 1） */
     public static Function<Float, Vec3> heart() {
         return t -> {
             float angle = t * 2 * (float) Math.PI;
@@ -182,30 +139,71 @@ public class ParametricCurveUtils {
         };
     }
 
-    /** 正弦波，长度 1，振幅 1 */
-    public static Function<Float, Vec3> sineWave(float waves) {
+    /**
+     * 6. 锯齿尖刺 (Sawtooth Radial)
+     * 描述：径向直刺基础上叠加三角波，产生锐利折线攻击感，适合闪电或锯齿切割特效。
+     *
+     * @param waves     锯齿波数量（频率）。建议 3.0 ~ 8.0。
+     * @param amplitude 摆动幅度（相对于半径 1）。建议 0.2 ~ 0.6。
+     */
+    public static Function<Float, Vec3> sawtoothRadial(float waves, float amplitude) {
         return t -> {
-            float x = (t - 0.5f); // 范围 -0.5 到 0.5，总长 1
-            float z = t * (float) Math.sin(t * Math.PI * 2 * waves);
-            return new Vec3(x, 0, z);
-        };
-    }
-
-    /** 方形，半径 1 */
-    public static Function<Float, Vec3> square() {
-        return t -> {
-            float angle = t * 2 * (float) Math.PI;
-            double x = t * Math.cos(angle);
-            double z = t * Math.sin(angle);
-            double max = Math.max(Math.abs(x), Math.abs(z));
-            if (max > 0) {
-                x = x / max * t;
-                z = z / max * t;
+            float x = t;
+            float z = 0.0f;
+            if (amplitude > 0.001f && waves > 0.001f) {
+                float phase = t * waves * 2.0f * (float) Math.PI;
+                // 三角波：在 0~2PI 范围内产生 -1..1 的尖锐折线
+                float frac = (phase % (2.0f * (float) Math.PI)) / (2.0f * (float) Math.PI);
+                float tri = 1.0f - Math.abs(2.0f * (frac - 0.5f));
+                float sharpWave = tri * 2.0f - 1.0f;
+                float envelope = t;  // 甩鞭效果
+                z = sharpWave * amplitude * envelope;
             }
             return new Vec3(x, 0, z);
         };
     }
 
+    /**
+     * 7. 星爆脉冲 (StarBurst)
+     * 描述：径向角度随 t 线性增长，同时半径受正弦调制，形成星形辐射爆裂效果。
+     *
+     * @param spikes    星芒数量（即瓣数）。建议 5 ~ 12。
+     * @param sharpness 锐度系数（0~1），控制星形凹陷程度。建议 0.4 ~ 0.9。
+     */
+    public static Function<Float, Vec3> starburst(float spikes, float sharpness) {
+        return t -> {
+            float angle = t * 2.0f * (float) Math.PI;
+            // 径向调制：基础半径 t，叠加正弦绝对值产生的星芒
+            float radialMod = 1.0f + sharpness * Math.abs((float) Math.sin(spikes * angle / 2.0f)) * 0.8f;
+            float r = t * radialMod;
+            r = Math.min(r, 1.0f); // 限制最大半径
+            return new Vec3(r * (float) Math.cos(angle), 0, r * (float) Math.sin(angle));
+        };
+    }
 
-
+    /**
+     * 8. 折叠波刃 (WaveFold)
+     * 描述：沿 X 轴方向叠加多层正弦波，产生类似折叠刀锋或波纹剑刃的形态，所有点位于 Y=0 平面。
+     *
+     * @param freq1     主波频率。建议 4 ~ 8。
+     * @param freq2     次波频率（可为 freq1 的倍数）。建议 6 ~ 12。
+     * @param amplitude 波动幅度。建议 0.2 ~ 0.6。
+     */
+    public static Function<Float, Vec3> wavefold(float freq1, float freq2, float amplitude) {
+        return t -> {
+            float x = t;
+            float phase1 = t * freq1 * 2.0f * (float) Math.PI;
+            float phase2 = t * freq2 * 2.0f * (float) Math.PI;
+            // 主波动 + 次波动，保留折叠感
+            float wave = (float) Math.sin(phase1) * amplitude * t
+                    + (float) Math.sin(phase2) * amplitude * 0.6f * t;
+            // 可选：增加轻微扭转，但将其合并到 Z 轴，Y 轴保持为 0
+            float twist = (float) Math.sin(t * Math.PI * 3) * 0.08f * (1.0f - t);
+            float finalZ = wave + twist;
+            return new Vec3(x, 0, finalZ);
+        };
+    }
+    public static Function<Float, Vec3> wavefold(float... params) {
+        return wavefold(params[0],params[1],params[2]);
+    }
 }

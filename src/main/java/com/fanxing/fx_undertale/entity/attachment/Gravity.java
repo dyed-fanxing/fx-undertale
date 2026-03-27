@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.entity.attachment;
 
+import com.fanxing.fx_undertale.entity.capability.OBBable;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.fanxing.fx_undertale.common.phys.LocalDirection;
@@ -20,19 +21,28 @@ import org.slf4j.LoggerFactory;
  */
 public class Gravity {
     private static final Logger log = LoggerFactory.getLogger(Gravity.class);
-
     // Codec用于序列化
     public static final Codec<Gravity> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Direction.CODEC.fieldOf("gravity").forGetter(data -> data.gravity)
     ).apply(instance, Gravity::new));
 
+    public static final Gravity DOWN = new Gravity(Direction.DOWN);
+    public static final Gravity UP = new Gravity(Direction.UP);
+    public static final Gravity EAST = new Gravity(Direction.EAST);
+    public static final Gravity WEST = new Gravity(Direction.WEST);
+    public static final Gravity SOUTH = new Gravity(Direction.SOUTH);
+    public static final Gravity NORTH = new Gravity(Direction.NORTH);
+
+
+
     // 控制方向
-    private Direction gravity = Direction.DOWN;
-    private Quaternionf localToWorld = new Quaternionf();
-    private Quaternionf worldToLocal = new Quaternionf();
+    private final Direction gravity;
+    private final Quaternionf localToWorld;
+    private final Quaternionf worldToLocal;
 
 
     public Gravity() {
+        this(Direction.DOWN);
     }
 
     public Gravity(Direction gravity) {
@@ -60,24 +70,26 @@ public class Gravity {
      * 对目标实体应用攻击者的相对重力
      */
     public static Gravity applyGravity(Entity target, Direction gravity) {
-        Gravity gravityData = new Gravity(gravity);
+        Gravity gravityData = get(gravity);
         Gravity oldGravity = target.getData(AttachmentTypes.GRAVITY);
         target.setData(AttachmentTypes.GRAVITY, gravityData);
-        Vec3 localPos = switch (oldGravity.getGravity()) {
-            case DOWN -> target.position();
-            case UP -> target.position().add(0, -target.getBbHeight(), 0);
-            case EAST -> target.position().add(-target.getBbHeight() * 0.5f, -target.getBbWidth() * 0.5f, 0);
-            case WEST -> target.position().add(target.getBbHeight() * 0.5f, -target.getBbWidth() * 0.5f, 0);
-            case SOUTH -> target.position().add(0, -target.getBbWidth() * 0.5f, -target.getBbHeight() * 0.5f);
-            case NORTH -> target.position().add(0, -target.getBbWidth() * 0.5f, target.getBbHeight() * 0.5f);
-        };
-        switch (gravityData.gravity) {
-            case DOWN -> target.setPos(localPos);
-            case UP -> target.setPos(localPos.add(0, target.getBbHeight(), 0));
-            case EAST -> target.setPos(localPos.add(target.getBbHeight() * 0.5f, target.getBbWidth() * 0.5f, 0));
-            case WEST -> target.setPos(localPos.add(-target.getBbHeight() * 0.5f, target.getBbWidth() * 0.5f, 0));
-            case SOUTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, target.getBbHeight() * 0.5f));
-            case NORTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, -target.getBbHeight() * 0.5f));
+        if (!(target instanceof OBBable)){
+            Vec3 localPos = switch (oldGravity.getGravity()) {
+                case DOWN -> target.position();
+                case UP -> target.position().add(0, -target.getBbHeight(), 0);
+                case EAST -> target.position().add(-target.getBbHeight() * 0.5f, -target.getBbWidth() * 0.5f, 0);
+                case WEST -> target.position().add(target.getBbHeight() * 0.5f, -target.getBbWidth() * 0.5f, 0);
+                case SOUTH -> target.position().add(0, -target.getBbWidth() * 0.5f, -target.getBbHeight() * 0.5f);
+                case NORTH -> target.position().add(0, -target.getBbWidth() * 0.5f, target.getBbHeight() * 0.5f);
+            };
+            switch (gravityData.gravity) {
+                case DOWN -> target.setPos(localPos);
+                case UP -> target.setPos(localPos.add(0, target.getBbHeight(), 0));
+                case EAST -> target.setPos(localPos.add(target.getBbHeight() * 0.5f, target.getBbWidth() * 0.5f, 0));
+                case WEST -> target.setPos(localPos.add(-target.getBbHeight() * 0.5f, target.getBbWidth() * 0.5f, 0));
+                case SOUTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, target.getBbHeight() * 0.5f));
+                case NORTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, -target.getBbHeight() * 0.5f));
+            }
         }
 //        log.debug("gravity：{},target之前世界坐标系的位置：{}，之后世界坐标系的位置：{}", gravity, localPos, target.position());
         return gravityData;
@@ -165,6 +177,8 @@ public class Gravity {
                 ",forward=" + getForward() +
                 ",up=" + getUp() +
                 ",right=" + getRight() +
+                ",localToWorld=" + localToWorld +
+                ",worldToLocal=" + worldToLocal +
                 '}';
     }
 
@@ -179,4 +193,34 @@ public class Gravity {
             case NORTH -> new Quaternionf().rotationY(Mth.PI).rotateX(-Mth.HALF_PI);
         };
     }
+    public static Gravity get(Direction gravity) {
+        return switch (gravity){
+            case DOWN -> DOWN;
+            case UP -> UP;
+            case EAST -> EAST;
+            case WEST -> WEST;
+            case SOUTH -> SOUTH;
+            case NORTH -> NORTH;
+        };
+    }
+    public static void rotation(Entity entity, Direction gravity) {
+        switch (gravity) {
+            case DOWN -> {}
+            case UP -> entity.setXRot(entity.getXRot()+180);
+            case EAST -> {
+                entity.setYRot(entity.getYRot()-90);
+                entity.setXRot(entity.getXRot()-90);
+            }
+            case WEST -> {
+                entity.setYRot(entity.getYRot()+90);
+                entity.setXRot(entity.getXRot()-90);
+            }
+            case SOUTH -> entity.setXRot(entity.getXRot()-90);
+            case NORTH -> {
+                entity.setYRot(entity.getYRot()+180);
+                entity.setXRot(entity.getXRot()-90);
+            }
+        }
+    }
+
 }

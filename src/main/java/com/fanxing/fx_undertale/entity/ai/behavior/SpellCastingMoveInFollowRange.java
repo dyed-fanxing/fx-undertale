@@ -147,12 +147,18 @@ public class SpellCastingMoveInFollowRange<T extends Mob> extends Behavior<T> {
             strafeRightTime = 5 + mob.getRandom().nextInt(25);
             right = mob.getRandom().nextBoolean() ? 1 : -1;
         }
-        if (strafeFrontTime-- <= 0) {
-            strafeFrontTime = 5 + mob.getRandom().nextInt(25);
-            front = mob.getRandom().nextInt(3)-1;
+        if(enableFrontAndBack()){
+            if (strafeFrontTime-- <= 0) {
+                strafeFrontTime = 5 + mob.getRandom().nextInt(25);
+                front = mob.getRandom().nextInt(3)-1;
+                mob.getMoveControl().strafe(front * STRAFE_SCALE, right * STRAFE_SCALE);
+            }
+        }else {
+            mob.getMoveControl().strafe(0f, right * STRAFE_SCALE);
         }
-        mob.getMoveControl().strafe(front * STRAFE_SCALE, right * STRAFE_SCALE);
-
+    }
+    public boolean enableFrontAndBack(){
+        return true;
     }
 
     protected void handleFarRange(T mob, LivingEntity target,double disSqr){

@@ -82,11 +82,6 @@ public class RotationBone extends AbstractBone<RotationBone> implements Rollable
     }
 
     @Override
-    public boolean fudgePositionAfterSizeChange(EntityDimensions p_347526_) {
-        return false;
-    }
-
-    @Override
     public void tick() {
         if(tickCount >= lifetime) {
             this.discard();

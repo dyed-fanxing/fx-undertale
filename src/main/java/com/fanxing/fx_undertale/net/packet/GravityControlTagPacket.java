@@ -31,7 +31,7 @@ public record GravityControlTagPacket(int entityId, boolean exist) implements Cu
         context.enqueueWork(() -> {
             ClientLevel level = Minecraft.getInstance().level;
             if (level != null && level.getEntity(packet.entityId) instanceof LivingEntity entity) {
-                entity.setData(AttachmentTypes.KARMA_TAG, packet.exist);
+                entity.setData(AttachmentTypes.GRAVITY_CONTROL_TAG, packet.exist);
             }
         });
     }
