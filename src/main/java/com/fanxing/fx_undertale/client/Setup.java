@@ -95,6 +95,7 @@ public class Setup {
         registrar.playToClient(WarningTipPacket.Circle.TYPE, WarningTipPacket.Circle.STREAM_CODEC, WarningTipPacket.Circle::handle);
         registrar.playToClient(WarningTipPacket.CurveStrip.TYPE, WarningTipPacket.CurveStrip.STREAM_CODEC, WarningTipPacket.CurveStrip::handle);
         registrar.playToClient(WarningTipPacket.RadialPrecessionCurveStripsPacket.TYPE, WarningTipPacket.RadialPrecessionCurveStripsPacket.STREAM_CODEC, WarningTipPacket.RadialPrecessionCurveStripsPacket::handle);
+        registrar.playToClient(WarningTipPacket.RadialPrecessionCurveStripsGravityPacket.TYPE, WarningTipPacket.RadialPrecessionCurveStripsGravityPacket.STREAM_CODEC, WarningTipPacket.RadialPrecessionCurveStripsGravityPacket::handle);
 
 
         registrar.playToClient(GravityPacket.TYPE,GravityPacket.STREAM_CODEC, GravityPacket::handle);

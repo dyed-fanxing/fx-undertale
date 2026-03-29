@@ -15,14 +15,6 @@ public abstract class FollowableSummons extends Summons implements IEntityWithCo
     protected boolean isFollow;
 
 
-    // 核心插值属性
-    protected int lerpSteps;
-    protected double lerpX;
-    protected double lerpY;
-    protected double lerpZ;
-    protected double lerpYRot;
-    protected double lerpXRot;
-
     public FollowableSummons(EntityType<?> entityType, Level level) {
         super(entityType, level);
     }
@@ -32,42 +24,12 @@ public abstract class FollowableSummons extends Summons implements IEntityWithCo
     }
 
 
-
+    /**
+     * key 禁用插值，直接客户端和服务端执行相同逻辑，使用客户端预测
+     */
     @Override
     public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
-        this.lerpX = x;
-        this.lerpY = y;
-        this.lerpZ = z;
-        this.lerpYRot = yRot;
-        this.lerpXRot = xRot;
-        this.lerpSteps = steps;
     }
-
-    @Override
-    public double lerpTargetX() {
-        return this.lerpSteps > 0 ? this.lerpX : this.getX();
-    }
-
-    @Override
-    public double lerpTargetY() {
-        return this.lerpSteps > 0 ? this.lerpY : this.getY();
-    }
-
-    @Override
-    public double lerpTargetZ() {
-        return this.lerpSteps > 0 ? this.lerpZ : this.getZ();
-    }
-
-    @Override
-    public float lerpTargetXRot() {
-        return this.lerpSteps > 0 ? (float) this.lerpXRot : this.getXRot();
-    }
-
-    @Override
-    public float lerpTargetYRot() {
-        return this.lerpSteps > 0 ? (float) this.lerpYRot : this.getYRot();
-    }
-
 
     @Override
     protected void addAdditionalSaveData(@NotNull CompoundTag tag) {

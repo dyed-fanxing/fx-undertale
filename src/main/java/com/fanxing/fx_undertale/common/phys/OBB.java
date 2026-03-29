@@ -1,5 +1,7 @@
 package com.fanxing.fx_undertale.common.phys;
 
+import com.fanxing.fx_undertale.entity.capability.Rollable;
+import com.fanxing.fx_undertale.utils.RotUtils;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.AABB;
@@ -63,83 +65,17 @@ public class OBB {
      * @param up        正交的上方向世界向量
      */
     public OBB(Vec3 center, float xHalfSize, float yHalfSize, float zHalfSize, Vec3 forward, Vec3 up) {
-        Vec3 right1;
-        Vec3 up1;
-        Vec3 forward1;
         this.center = center;
         this.xHalfSize = xHalfSize;
         this.yHalfSize = yHalfSize;
         this.zHalfSize = zHalfSize;
 
-        // 1. 先归一化 forward
-        Vec3 f = forward.normalize();
+        // 直接使用传入的 forward 和 up，只做归一化
+        this.forward = forward.normalize();
+        this.up = up.normalize();
+        this.right = this.forward.cross(this.up).normalize();
 
-        // 【防御性编程】如果 forward 是零向量，强制给个默认方向 (Z 轴)
-        if (f.lengthSqr() < Mth.EPSILON) {
-            f = new Vec3(0, 0, 1);
-        }
-        forward1 = f;
-
-        // 2. 初始化 up 和 right 为默认值 (防止编译报错 "可能未赋值")
-        // 默认假设 forward 是 Z 轴，那么 up 是 Y，right 是 X
-        Vec3 u = new Vec3(0, 1, 0);
-        Vec3 r = new Vec3(1, 0, 0);
-
-        // 3. 检查奇点 (Forward 和 Up 平行或反向)
-        double dot = up.dot(forward1);
-
-        if (Math.abs(dot) > 0.99) {
-            // === 奇点处理：Forward 和 Up 共线 (如 Pitch 90 度) ===
-            // 策略：找一个不与 forward 平行的轴作为临时参考
-            Vec3 tempRef;
-            // 如果 forward 接近 Y 轴 (上下方向)，我们就选 X 轴做参考
-            if (Math.abs(forward1.y) > 0.9) {
-                tempRef = new Vec3(1.0, 0.0, 0.0);
-            } else {
-                // 否则选 Y 轴做参考
-                tempRef = new Vec3(0.0, 1.0, 0.0);
-            }
-
-            // 计算 Right = Forward x TempRef
-            r = forward1.cross(tempRef).normalize();
-            // 计算 Up = Right x Forward (确保右手系且正交)
-            u = r.cross(forward1).normalize();
-
-        } else {
-            // === 正常情况：Gram-Schmidt 正交化 ===
-            // 从传入的 up 中减去 forward 方向的分量
-            Vec3 projected = forward1.scale(dot);
-            u = up.subtract(projected).normalize();
-
-            // 如果正交化后 u 变成了零向量 (极少见，除非 up 本身就是 0)，则 fallback 到默认
-            if (u.lengthSqr() < Mth.EPSILON) {
-                u = new Vec3(0, 1, 0);
-                // 重新调整 right
-                r = forward1.cross(u).normalize();
-                // 再次调整 up 确保正交
-                u = r.cross(forward1).normalize();
-            } else {
-                // 正常计算 right
-                r = forward1.cross(u).normalize();
-            }
-        }
-
-        // 4. 最终赋值 (此时 r 和 u 一定已经被赋值了)
-        up1 = u;
-        right1 = r;
-
-        // 5. 二次校验 (双重保险，防止出现 NaN 或 零向量)
-        if (right1.lengthSqr() < Mth.EPSILON || up1.lengthSqr() < Mth.EPSILON) {
-            // 如果还是算出零向量，强制重置为标准坐标系
-            forward1 = new Vec3(0, 0, 1);
-            up1 = new Vec3(0, 1, 0);
-            right1 = new Vec3(1, 0, 0);
-            // 记录错误日志方便调试
-            System.err.println("[OBB Warn] Axis calculation resulted in zero vector. Reset to default.");
-        }
-        this.right = right1;
-        this.up = up1;
-        this.forward = forward1;
+        // 重置缓存
         this.cachedVertices = null;
         this.cachedAABB = null;
     }
@@ -166,7 +102,6 @@ public class OBB {
         this.cachedAABB = null;
     }
 
-
     // ============== 辅助静态方法 ==============
     private static Vec3 calculateUpFromForward(Vec3 forward) {
         if (Math.abs(forward.y) > 0.99) {
@@ -187,23 +122,29 @@ public class OBB {
     /**
      * key 构建以实体几何中心为旋转中心的OBB，最终的OBB的几何中心就是position
      */
-    public static OBB fromCenter(Entity entity) {
+    public static OBB fromCenter(Entity entity, float partialTick) {
         float halfWidth = entity.getBbWidth() * 0.5f;
         float halfHeight = entity.getBbHeight() * 0.5f;
         return new OBB(entity.position(), halfWidth, halfHeight, halfWidth,
-                entity.getViewVector(1.0f), entity.getUpVector(1.0f));
+                entity.getViewVector(partialTick), entity.getUpVector(partialTick));
+    }
+    public static OBB fromCenter(Entity entity) {
+        return fromCenter(entity, 1.0f);
     }
 
     /**
      * key 构建以实体脚底(position)为旋转中心的OBB，最终的OBB的几何中心是绕position旋转得到的
      *  !!! 在做旋转碰撞检测时，需要传入position作为旋转点pivot，而不是OBB自身的center
      */
-    public static OBB fromFoot(Entity entity) {
+    public static OBB fromFoot(Entity entity, float partialTick) {
         float halfWidth = entity.getBbWidth() * 0.5f;
         float halfHeight = entity.getBbHeight() * 0.5f;
-        Vec3 up = entity.getUpVector(1.0f);
+        Vec3 up = entity.getUpVector(partialTick);
         return new OBB(entity.position().add(up.scale(halfHeight)), halfWidth, halfHeight, halfWidth,
-                entity.getViewVector(1.0f), up);
+                entity.getViewVector(partialTick), up);
+    }
+    public static OBB fromFoot(Entity entity) {
+        return fromFoot(entity,1.0f);
     }
 
 
@@ -289,7 +230,58 @@ public class OBB {
         }
         return new AABB(minX, minY, minZ, maxX, maxY, maxZ);
     }
+    /**
+     * 根据局部坐标（范围 [-1, 1] 对应半长）返回世界坐标点。
+     * @param localX 沿 right 轴的比例，范围 [-1, 1]，-1 表示最左，1 表示最右
+     * @param localY 沿 up 轴的比例，范围 [-1, 1]，-1 表示最下，1 表示最上
+     * @param localZ 沿 forward 轴的比例，范围 [-1, 1]，-1 表示最后，1 表示最前
+     * @return 世界坐标点
+     */
+    public Vec3 getPoint(float localX, float localY, float localZ) {
+        return center.add(right.scale(localX * xHalfSize))
+                .add(up.scale(localY * yHalfSize))
+                .add(forward.scale(localZ * zHalfSize));
+    }
 
+    /**
+     * 根据局部高度（绝对距离，沿 up 轴）返回世界坐标点。
+     * @param height 从中心沿 up 轴偏移的距离，正值向上，负值向下
+     * @return 世界坐标点
+     */
+    public Vec3 getPointAtLocalHeight(float height) {
+        return center.add(up.scale(height));
+    }
+    /**
+     * 返回一个位于指定局部高度的新 OBB，方向与原 OBB 相同。
+     * @param height  相对中心点位置 沿 up 轴的局部高度（从原中心向上为正，向下为负），单位为世界坐标距离
+     * @param halfThick 半厚
+     * @return 新的 OBB 对象
+     */
+    public OBB getSubOBBAtLocalHeight(float height, float halfThick) {
+        Vec3 newCenter = center.add(up.scale(height));
+        return new OBB(newCenter, xHalfSize, halfThick, zHalfSize, forward, up);
+    }
+
+    /**
+     * 获取局部高度的切片 OBB（厚度0.01）。
+     * 常用于渲染截面轮廓，如眼睛高度处。
+     * @param height 相对中心点位置 沿 up 轴的局部高度
+     * @return 厚度为 0.01f 的扁平 OBB
+     */
+    public OBB getSliceAtLocalHeight(float height) {
+        return getSubOBBAtLocalHeight(height, 0.005f);  // 总厚度 0.01
+    }
+    /**
+     * 获取相对于实体脚部的切片 OBB （厚度0.01）。
+     * @param height 从脚底向上的绝对高度（如 entity.getEyeHeight()）
+     * @return 新 OBB
+     */
+    public OBB getSliceRelativeToEntityFeet(float height) {
+        // 脚底 = center - up * yHalfSize
+        // 绝对高度点 = 脚底 + up * absoluteHeightFromFoot
+        // 所以相对中心的偏移 = (absoluteHeightFromFoot - yHalfSize)
+        return getSubOBBAtLocalHeight(height - yHalfSize, 0.005f);
+    }
 
     // ============== 变换操作 (Immutable) ==============
 

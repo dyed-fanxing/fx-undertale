@@ -27,7 +27,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 /**
  * 飞行骨头统一类 - 支持普通射击、延迟射击、振荡模式、旋转模式
  */
-public class FlyingBone extends AbstractPenetrableProjectile implements SyncablePhysicsMotion, Scalable, GeoEntity {
+public class FlyingBone extends AbstractPenetrableProjectile implements Scalable, GeoEntity {
 
     private static final Logger log = LoggerFactory.getLogger(FlyingBone.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -42,8 +42,6 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Syncable
     protected Vec3 shotVec;                    // 射击矢量
     protected Vec3 relativePos;                // 相对于拥有者的位置
 
-    // ========== 运动模型 ==========
-    protected PhysicsMotionModel motion;
 
     // ========== 行为标志 ==========
     private boolean isAim = false;              // 延迟阶段是否瞄准目标
@@ -94,7 +92,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Syncable
             if (owner != null) {
                 // 跟随拥有者
                 if (isFollow && relativePos != null) {
-                    this.setPos(owner.position().add(RotUtils.getWorldVec3(relativePos, owner.getXRot(), owner.getYHeadRot())));
+                    this.setPos(owner.position().add(RotUtils.rotateYX(relativePos, owner.getYHeadRot(), owner.getXRot())));
                     Vec3 viewVector = owner.getViewVector(1.0f);
                     RotUtils.lookVecShoot(this, viewVector);
                     shotVec = viewVector;
@@ -104,7 +102,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Syncable
                     LivingEntity target = targeting.getTarget();
                     if(target != null) {
                         Vec3 toTarget = target.getEyePosition().subtract(this.getEyePosition());
-                        RotUtils.lookAtEyeShoot(this, toTarget);
+                        RotUtils.lookVecShoot(this, toTarget);
                         shotVec = toTarget;
                     }
                 }
@@ -118,6 +116,9 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Syncable
         super.tick();
     }
 
+    @Override
+    public void lerpTo(double p_19896_, double p_19897_, double p_19898_, float p_19899_, float p_19900_, int p_19901_) {
+    }
 
     // ========== 基类重载 ==========
     @Override
@@ -140,7 +141,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Syncable
                 if (livingTarget.isBlocking()) {
                     this.setNoGravity(false);
                     this.deflect(CollisionDeflection.MIRROR_DEFLECT, target, owner, false);
-                    this.setDeltaMovement(this.getDeltaMovement().scale(0.2));
+                    this.setDeltaMovement(this.getDeltaMovement().scale(0.01F));
                 }
             }
         }
@@ -177,10 +178,6 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Syncable
 
 
     // ========== 接口实现 ==========
-    @Override
-    public PhysicsMotionModel getMotionModel() {
-        return motion;
-    }
     @Override
     public float getScale() {
         return scale;
@@ -221,7 +218,6 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Syncable
             ListTag list = tag.getList("shotVec", 6);
             this.shotVec = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
         }
-        this.motion = PhysicsMotionModel.fromTag(tag);
         this.refreshDimensions();
     }
 
@@ -231,7 +227,16 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Syncable
         buf.writeFloat(damage);
         buf.writeFloat(speed);
         buf.writeInt(delay);
+        buf.writeBoolean(isFollow);
+        buf.writeBoolean(isAim);
+        buf.writeBoolean(relativePos != null);
+        if (relativePos != null) {
+            buf.writeDouble(this.relativePos.x);
+            buf.writeDouble(this.relativePos.y);
+            buf.writeDouble(this.relativePos.z);
+        }
     }
+
 
     @Override
     public void readSpawnData(@NotNull RegistryFriendlyByteBuf buf) {
@@ -239,6 +244,9 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Syncable
         this.damage = buf.readFloat();
         this.speed = buf.readFloat();
         this.delay = buf.readInt();
+        this.isFollow = buf.readBoolean();
+        this.isAim = buf.readBoolean();
+        if(buf.readBoolean()) this.relativePos = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
         this.refreshDimensions();
     }
 

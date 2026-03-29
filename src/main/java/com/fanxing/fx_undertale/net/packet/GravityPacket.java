@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author FanXing
  * @since 2025-09-13 22:52
- * @param a 局部重力方向上的初始速度
+ * @param acceleration 局部重力方向上的初始速度
  */
 public record GravityPacket(int entityId, Direction gravity,float acceleration) implements CustomPacketPayload {
     public static final Type<GravityPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "gravity_packet"));

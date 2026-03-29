@@ -120,7 +120,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     public GasterBlaster follow(Vec3 relativePos) {
         this.isFollow = true;
         this.relativePos = relativePos;
-        setPos(owner.position().add(RotUtils.getWorldVec3(relativePos,owner.getViewXRot(1.0f), owner.getViewYRot(1.0f))));
+        setPos(owner.position().add(RotUtils.rotateYX(relativePos, owner.getViewYRot(1.0f),owner.getViewXRot(1.0f))));
         return this;
     }
     public GasterBlaster aimSmoothSpeed(float speed){
@@ -179,33 +179,12 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     public void tick() {
         super.tick();
         if(isMountable()) return;
-        int discardTick = decayTick + DECAY;
-        float t = (float) tickCount / discardTick;
-        float rise = (float) shotTick / discardTick;
-        // 与HTML滑块对应的参数（可自由调整）
-        float slowEnd = 0.9f;      // 缓降结束时间
-        float slowEndY = 0.9f;     // 缓降结束时高度
-        float powerExp = 2.5f;     // 急降段幂指数
-
-        float velSpeed;
-        if (t < rise) velSpeed = (float) (20 * Math.pow(1 - t, 19)) * 0.1f;
-         else if (t < slowEnd) velSpeed = (slowEndY - 1f) / (slowEnd - rise) * 0.15f;
-         else {
-            float v = (t - slowEnd) / (1 - slowEnd);
-            float dt = 1 - slowEnd;
-            // 局部导数 * 全局时间缩放
-            float localDeriv = -slowEndY * powerExp * (float) Math.pow(v, powerExp - 1);
-            velSpeed = localDeriv / dt * 0.2f;
-        }
-        Vec3 velocity = getLookAngle().scale(velSpeed);
-        setDeltaMovement(velocity);
-        setPos(this.position().add(velocity));
         Entity owner = getOwner();
         if(isFollow){
             if(owner != null){
                 float viewXRot = owner.getViewXRot(1.0f);
                 float viewYRot = owner.getViewYRot(1.0f);
-                setPos(owner.position().add(RotUtils.getWorldVec3(relativePos,viewXRot, viewYRot)));
+                setPos(owner.position().add(RotUtils.rotateYX(relativePos, viewYRot,viewXRot)));
                 if(owner instanceof Targeting targeting){
                     LivingEntity target = targeting.getTarget();
                     if(target != null){
@@ -234,6 +213,27 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
                 return;
             }
         }else{
+            int discardTick = decayTick + DECAY;
+            float t = (float) tickCount / discardTick;
+            float rise = (float) shotTick / discardTick;
+            // 与HTML滑块对应的参数（可自由调整）
+            float slowEnd = 0.9f;      // 缓降结束时间
+            float slowEndY = 0.9f;     // 缓降结束时高度
+            float powerExp = 2.5f;     // 急降段幂指数
+
+            float velSpeed;
+            if (t < rise) velSpeed = (float) (20 * Math.pow(1 - t, 19)) * 0.1f;
+            else if (t < slowEnd) velSpeed = (slowEndY - 1f) / (slowEnd - rise) * 0.15f;
+            else {
+                float v = (t - slowEnd) / (1 - slowEnd);
+                float dt = 1 - slowEnd;
+                // 局部导数 * 全局时间缩放
+                float localDeriv = -slowEndY * powerExp * (float) Math.pow(v, powerExp - 1);
+                velSpeed = localDeriv / dt * 0.2f;
+            }
+            Vec3 velocity = getLookAngle().scale(velSpeed);
+            setDeltaMovement(velocity);
+            setPos(this.position().add(velocity));
             if(owner instanceof Player player && target != null && this.canHitEntity(target)){
                 if(tickCount < shotTick) aim(target);
                 else if(tickCount < decayTick) aimSmoothly(target);

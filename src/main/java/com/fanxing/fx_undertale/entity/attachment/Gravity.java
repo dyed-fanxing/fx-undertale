@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity.attachment;
 
-import com.fanxing.fx_undertale.entity.capability.OBBable;
+import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.fanxing.fx_undertale.common.phys.LocalDirection;
@@ -73,7 +73,7 @@ public class Gravity {
         Gravity gravityData = get(gravity);
         Gravity oldGravity = target.getData(AttachmentTypes.GRAVITY);
         target.setData(AttachmentTypes.GRAVITY, gravityData);
-        if (!(target instanceof OBBable)){
+        if (!(target instanceof OBBHolder)){
             Vec3 localPos = switch (oldGravity.getGravity()) {
                 case DOWN -> target.position();
                 case UP -> target.position().add(0, -target.getBbHeight(), 0);
@@ -187,8 +187,8 @@ public class Gravity {
         return switch (gravity) {
             case DOWN -> new Quaternionf();
             case UP -> new Quaternionf().rotationZ(Mth.PI);
-            case EAST -> new Quaternionf().rotationY(Mth.PI * 0.5f).rotateX(-Mth.HALF_PI);
-            case WEST -> new Quaternionf().rotationY(-Mth.PI * 0.5f).rotateX(-Mth.HALF_PI);
+            case EAST -> new Quaternionf().rotationY(Mth.HALF_PI).rotateX(-Mth.HALF_PI);
+            case WEST -> new Quaternionf().rotationY(-Mth.HALF_PI).rotateX(-Mth.HALF_PI);
             case SOUTH -> new Quaternionf().rotationX(-Mth.HALF_PI);
             case NORTH -> new Quaternionf().rotationY(Mth.PI).rotateX(-Mth.HALF_PI);
         };
@@ -203,24 +203,36 @@ public class Gravity {
             case NORTH -> NORTH;
         };
     }
-    public static void rotation(Entity entity, Direction gravity) {
-        switch (gravity) {
-            case DOWN -> {}
-            case UP -> entity.setXRot(entity.getXRot()+180);
-            case EAST -> {
-                entity.setYRot(entity.getYRot()-90);
-                entity.setXRot(entity.getXRot()-90);
-            }
-            case WEST -> {
-                entity.setYRot(entity.getYRot()+90);
-                entity.setXRot(entity.getXRot()-90);
-            }
-            case SOUTH -> entity.setXRot(entity.getXRot()-90);
-            case NORTH -> {
-                entity.setYRot(entity.getYRot()+180);
-                entity.setXRot(entity.getXRot()-90);
-            }
-        }
+
+    /**
+     * 获取旋转轴
+     */
+    public Direction.Axis getRotateAxis() {
+        return switch (gravity){
+            case UP,DOWN -> Direction.Axis.Y;
+            case EAST,WEST -> Direction.Axis.X;
+            case SOUTH,NORTH -> Direction.Axis.Z;
+        };
+    }
+    /**
+     * 根据重力获取旋转轴
+     */
+    public static Direction.Axis getRotateAxis(Direction gravity) {
+        return switch (gravity){
+            case UP,DOWN -> Direction.Axis.Y;
+            case EAST,WEST -> Direction.Axis.X;
+            case SOUTH,NORTH -> Direction.Axis.Z;
+        };
     }
 
+    /**
+     * 根据重力获取旋转轴
+     */
+    public static Vec3 getRotateAxis(Direction.Axis axis) {
+        return switch (axis){
+            case Y -> new Vec3(0,1,0);
+            case X -> new Vec3(1,0,0);
+            case Z -> new Vec3(0,0,1);
+        };
+    }
 }

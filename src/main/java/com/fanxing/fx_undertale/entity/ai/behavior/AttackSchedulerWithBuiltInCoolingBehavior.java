@@ -25,39 +25,39 @@ import java.util.function.Function;
 
 
 /**
- * 单个攻击组的调度行为。负责从组内选择节点并执行，管理派生。
+ * 单个攻击组的调度行为。负责从组内选择节点并执行，管理派生，含有内置CD
  */
-public class AttackSchedulerBehavior<T extends LivingEntity> extends Behavior<T> {
-    private static final Logger log = LoggerFactory.getLogger(AttackSchedulerBehavior.class);
+public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> extends Behavior<T> {
+    private static final Logger log = LoggerFactory.getLogger(AttackSchedulerWithBuiltInCoolingBehavior.class);
     protected final List<AttackNode<T>> nodes;                // 静态节点列表
     protected final Function<T, List<AttackNode<T>>> dynamicFactory;                // 动态节点列表
-    protected final MemoryModuleType<Unit> cooldownMemory;    // 内置冷却
+    protected MemoryModuleType<Unit> cooldownMemory = null;    // 内置冷却
     protected final float attackCoolingDownFactor;               // 全局冷却因子
     protected int totalCooldown;                              // 内置总冷却
     protected AttackNode<T> currentNode;                      // 当前节点
     protected int tick;                                       // 计数器
 
-    public AttackSchedulerBehavior(AttackNode<T> node, MemoryModuleType<Unit> cooldownMemory) {
+    public AttackSchedulerWithBuiltInCoolingBehavior(AttackNode<T> node, MemoryModuleType<Unit> cooldownMemory) {
         this(node, mob -> List.of(), cooldownMemory);
     }
 
-    public AttackSchedulerBehavior(AttackNode<T> node, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory) {
+    public AttackSchedulerWithBuiltInCoolingBehavior(AttackNode<T> node, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory) {
         this(node, dynamicFactory, cooldownMemory, 0.16667f);
     }
 
-    public AttackSchedulerBehavior(AttackNode<T> node, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory, float attackCoolingDownFactor) {
+    public AttackSchedulerWithBuiltInCoolingBehavior(AttackNode<T> node, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory, float attackCoolingDownFactor) {
         this(List.of(node), dynamicFactory, cooldownMemory, attackCoolingDownFactor);
     }
 
-    public AttackSchedulerBehavior(List<AttackNode<T>> nodes, MemoryModuleType<Unit> cooldownMemory) {
+    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, MemoryModuleType<Unit> cooldownMemory) {
         this(nodes, mob -> List.of(), cooldownMemory);
     }
 
-    public AttackSchedulerBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory) {
+    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory) {
         this(nodes, dynamicFactory, cooldownMemory, 0.16667f);
     }
 
-    public AttackSchedulerBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory, float attackCoolingDownFactor) {
+    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory, float attackCoolingDownFactor) {
         super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryStatus.VALUE_ABSENT,MemoryModuleTypes.ATTACKING.get(),MemoryStatus.REGISTERED, cooldownMemory, MemoryStatus.VALUE_ABSENT),Integer.MAX_VALUE);
         this.nodes = nodes;
         this.dynamicFactory = dynamicFactory;
@@ -66,6 +66,16 @@ public class AttackSchedulerBehavior<T extends LivingEntity> extends Behavior<T>
         log.info("动态工厂：{}",dynamicFactory);
     }
 
+
+    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory) {
+        this(nodes, dynamicFactory, 0.16667f);
+    }
+    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, float attackCoolingDownFactor) {
+        super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryStatus.VALUE_ABSENT,MemoryModuleTypes.ATTACKING.get(),MemoryStatus.VALUE_ABSENT),Integer.MAX_VALUE);
+        this.nodes = nodes;
+        this.dynamicFactory = dynamicFactory;
+        this.attackCoolingDownFactor = attackCoolingDownFactor;
+    }
     @Override
     protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull T mob) {
         return true;

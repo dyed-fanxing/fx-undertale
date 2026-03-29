@@ -6,97 +6,12 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /**
  * 向量旋转工具
  */
 public class RotUtils {
-
-    /**
-     * 将向量（坐标）vec对齐MC世界Roll翻滚方向
-     */
-    public static Vec3 zRot(Vec3 vec,float roll) {
-        return vec.yRot(roll * Mth.DEG_TO_RAD);
-    }
-    /**
-     * 将向量（坐标）vec对齐MC世界Pitch仰俯方向
-     */
-    public static Vec3 xRot(Vec3 vec,float pitch) {
-        return vec.yRot(-pitch * Mth.DEG_TO_RAD);
-    }
-    /**
-     * 将向量（坐标）vec对齐MC世界Yaw航偏方向
-     */
-    public static Vec3 yRot(Vec3 vec,float yaw) {
-        return vec.yRot(-yaw * Mth.DEG_TO_RAD);
-    }
-
-    public static Vec3 getWorldVec3(Vec3 pos,float pitch,float yaw){
-        return getWorldVec3((float) pos.x, (float) pos.y, (float) pos.z,pitch,yaw);
-    }
-    public static Vec3 getWorldVec3(double x, double y, double z, float pitch, float yaw) {
-        return getWorldVec3((float) x, (float) y, (float) z,pitch,yaw);
-    }
-    /**
-     * 根据 相对向量（坐标）和仰俯、航偏 获取世界向量（坐标），先仰俯 后航偏
-     * @param x,y,z 相对坐标
-     * @param pitch,yaw 仰俯，航偏
-     * @return 世界向量
-     */
-    public static Vec3 getWorldVec3(float x, float y, float z, float pitch, float yaw) {
-        float pitchRad = -pitch * Mth.DEG_TO_RAD;
-        float yawRad = -yaw * Mth.DEG_TO_RAD;
-        float cosPitch = Mth.cos(pitchRad);
-        float sinPitch = Mth.sin(pitchRad);
-        float cosYaw = Mth.cos(yawRad);
-        float sinYaw = Mth.sin(yawRad);
-
-        float z1 = z * cosPitch - y * sinPitch;
-        return new Vec3(
-                x * cosYaw + z1 * sinYaw,
-                y * cosPitch + z * sinPitch,
-                z1 * cosYaw - x * sinYaw
-        );
-    }
-    public static Vec3 getWorldVec3(Vec3 pos,float roll,float pitch,float yaw){
-        return getWorldVec3((float) pos.x, (float) pos.y, (float) pos.z,roll,pitch,yaw);
-    }
-    /**
-     * 根据相对坐标和翻滚、仰俯、航偏获取世界坐标
-     * 顺序：先绕 Z 轴翻滚，再绕 X 轴仰俯，最后绕 Y 轴航偏
-     * @param x,y,z 相对坐标
-     * @param roll 翻滚角（度）
-     * @param pitch 仰俯角（度）
-     * @param yaw 航偏角（度）
-     * @return 世界坐标向量
-     */
-    public static Vec3 getWorldVec3(float x, float y, float z, float roll, float pitch, float yaw) {
-        float rollRad = roll * Mth.DEG_TO_RAD;
-        float pitchRad = -pitch * Mth.DEG_TO_RAD;
-        float yawRad = -yaw * Mth.DEG_TO_RAD;
-
-        float cosYaw = Mth.cos(yawRad);
-        float sinYaw = Mth.sin(yawRad);
-        float cosPitch = Mth.cos(pitchRad);
-        float sinPitch = Mth.sin(pitchRad);
-        float cosRoll = Mth.cos(rollRad);
-        float sinRoll = Mth.sin(rollRad);
-
-        // 1. 绕 Z 轴旋转 roll
-        double x1 = x * cosRoll - y * sinRoll;
-        double y1 = x * sinRoll + y * cosRoll;
-
-        // 2. 绕 X 轴旋转 pitch
-        double y2 = y1 * cosPitch + (double) z * sinPitch;
-        double z2 = -y1 * sinPitch + (double) z * cosPitch;
-
-        // 3. 绕 Y 轴旋转 yaw
-        double x3 = x1 * cosYaw + z2 * sinYaw;
-        double z3 = -x1 * sinYaw + z2 * cosYaw;
-        return new Vec3(x3, y2, z3);
-    }
-
-
 
     // 航偏角度，同MC默认lookAt方法计算方式，对齐MC世界坐标Z轴
     public static float yRotD(Vec3 vec) {
@@ -207,6 +122,104 @@ public class RotUtils {
         entity.setYRot((float)(Mth.atan2(vec.x, vec.z) * Mth.RAD_TO_DEG));
     }
 
+
+
+    /**
+     * 将向量（坐标）vec对齐MC世界Roll翻滚方向
+     */
+    public static Vec3 zRot(Vec3 vec,float roll) {
+        return vec.zRot(roll * Mth.DEG_TO_RAD);
+    }
+    /**
+     * 将向量（坐标）vec对齐MC世界Pitch仰俯方向
+     */
+    public static Vec3 xRot(Vec3 vec,float pitch) {
+        return vec.xRot(-pitch * Mth.DEG_TO_RAD);
+    }
+    /**
+     * 将向量（坐标）vec对齐MC世界Yaw航偏方向
+     */
+    public static Vec3 yRot(Vec3 vec,float yaw) {
+        return vec.yRot(-yaw * Mth.DEG_TO_RAD);
+    }
+
+    public static Vec3 rotateYX(Vec3 pos,float yaw,float pitch){
+        return rotateYX((float) pos.x, (float) pos.y, (float) pos.z,yaw,pitch);
+    }
+    public static Vec3 rotateYX(double x, double y, double z, float yaw, float pitch) {
+        return rotateYX((float) x, (float) y, (float) z,yaw,pitch);
+    }
+    /**
+     * 局部旋转顺序：先绕世界 Y 轴转 yaw，再绕局部 X 轴转 pitch。
+     * 等价于固定轴复合矩阵 R = Ry(yaw) * Rx(pitch)。
+     * key 因先Y，再局部X 需要每次旋转后都要计算出新的旋转轴然后再绕该轴旋转，计算复杂麻烦，所以用固定轴复合矩阵
+     * @param x,y,z 相对坐标
+     * @param yaw,pitch 航偏,仰俯
+     * @return 世界向量
+     */
+    public static Vec3 rotateYX(float x, float y, float z, float yaw, float pitch) {
+        float pitchRad = pitch * Mth.DEG_TO_RAD;      // 原版未取反
+        float yawRad   = -yaw * Mth.DEG_TO_RAD;       // 原版对 yaw 取反
+        float cosPitch = Mth.cos(pitchRad);
+        float sinPitch = Mth.sin(pitchRad);
+        float cosYaw   = Mth.cos(yawRad);
+        float sinYaw   = Mth.sin(yawRad);
+
+        // 先绕 X 轴旋转 pitch
+        float y1 = y * cosPitch - z * sinPitch;
+        float z1 = y * sinPitch + z * cosPitch;
+        // x 不变
+
+        // 再绕 Y 轴旋转 yawRad
+        float xOut = x * cosYaw + z1 * sinYaw;
+        float zOut = z1 * cosYaw - x * sinYaw;
+        float yOut = y1;
+
+        return new Vec3(xOut, yOut, zOut);
+    }
+
+    public static Vec3 rotateYXZ(Vec3 pos,float yaw,float pitch,float roll){
+        return rotateYXZ((float) pos.x, (float) pos.y, (float) pos.z,roll,yaw,pitch);
+    }
+
+    /**
+     * 局部旋转顺序：先绕世界 Y 轴转 yaw，再绕局部 X 轴转 pitch，最后绕局部 Z 轴转 roll。
+     * 等价于固定轴复合矩阵 R = Ry(yaw) * Rx(pitch) * Rz(roll)。
+     * key 因先Y，再局部X，再局部Z 需要每次旋转后都要计算出新的旋转轴然后再绕该轴旋转，计算复杂麻烦，所以用固定轴复合矩阵
+     * @param x,y,z 相对坐标
+     * @param yaw 航偏角（度）
+     * @param pitch 仰俯角（度）
+     * @param roll 翻滚角（度）
+     * @return 世界坐标向量
+     */
+    public static Vec3 rotateYXZ(float x, float y, float z, float yaw, float pitch, float roll) {
+        float yawRad   = -yaw * Mth.DEG_TO_RAD;      // 取反适配 MC
+        float pitchRad =  pitch * Mth.DEG_TO_RAD;
+        float rollRad  =  roll * Mth.DEG_TO_RAD;
+
+        double cy = Math.cos(yawRad);
+        double sy = Math.sin(yawRad);
+        double cp = Math.cos(pitchRad);
+        double sp = Math.sin(pitchRad);
+        double cr = Math.cos(rollRad);
+        double sr = Math.sin(rollRad);
+
+        // 矩阵 R = Ry * Rx * Rz
+        double m00 =  cy * cr + sy * sp * sr;
+        double m01 = -cy * sr + sy * sp * cr;
+        double m02 =  sy * cp;
+        double m10 =  cp * sr;
+        double m11 =  cp * cr;
+        double m12 = -sp;
+        double m20 = -sy * cr + cy * sp * sr;
+        double m21 =  sy * sr + cy * sp * cr;
+        double m22 =  cy * cp;
+
+        double xOut = m00 * x + m01 * y + m02 * z;
+        double yOut = m10 * x + m11 * y + m12 * z;
+        double zOut = m20 * x + m21 * y + m22 * z;
+        return new Vec3(xOut, yOut, zOut);
+    }
 
     /**
      * 返回从from向量旋转到to向量的四元数，常用于渲染矩阵旋转

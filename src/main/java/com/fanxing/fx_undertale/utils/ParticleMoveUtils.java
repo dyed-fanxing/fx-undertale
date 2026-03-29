@@ -61,7 +61,7 @@ public class ParticleMoveUtils {
             double rad = angle * Mth.DEG_TO_RAD;
             double cos = radius * Math.cos(rad);
             double sin = radius * Math.sin(rad);
-            Vec3 dir = RotUtils.getWorldVec3(cos,sin,dirZ,xRot,yRot).normalize().scale(0.5);
+            Vec3 dir = RotUtils.rotateYX(cos,sin,dirZ,yRot,xRot).normalize().scale(0.5);
             level.addParticle(particleSupplier.get(), x, y,  z, dir.x, dir.y, dir.z);
         }
     }

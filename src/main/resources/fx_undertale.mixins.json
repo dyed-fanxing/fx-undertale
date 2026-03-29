@@ -9,7 +9,7 @@
     "LivingEntityAccessor",
     "MixinGeoRenderer",
     "PlayerWantsToStopRidingMixin",
-    "RollableEntityMixin",
+    "OBBEntityMixin",
     "gravity.EntityGravityMixin",
     "gravity.LivingEntityGravityMixin",
     "gravity.MoveControlTestMixin",

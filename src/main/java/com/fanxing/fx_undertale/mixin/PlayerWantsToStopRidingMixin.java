@@ -55,7 +55,6 @@ public abstract class PlayerWantsToStopRidingMixin {
     @Inject(method = "handleEntityEvent", at = @At("HEAD"))
     public void handleEntityEvent(byte event, CallbackInfo ci){
         if(event == 29){
-            log.info("盾牌播放声音");
         }
     }
 }

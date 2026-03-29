@@ -86,9 +86,10 @@ public abstract class WarningTip extends Effect {
         @Override
         protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {
             poseStack.pushPose();
-            poseStack.translate(x, y+0.01f, z);
+            poseStack.translate(x, y, z);
             poseStack.mulPose(localToWorld);
-            
+            poseStack.translate(0,0.01f,0);
+
             VertexConsumer sideConsumer = bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_STRIP_WHITE);
             VertexConsumer capConsumer = bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_WHITE);
             
@@ -287,11 +288,11 @@ public abstract class WarningTip extends Effect {
     }
 
     public static class CurveStripPrecession extends WarningTip {
-        private final Function<Float, Vec3> curve;      // t∈[0,1] → 局部坐标（相对位置）
-        private final int segments;                     // 分段数（整数）
-        private final float radius;                     // 半径缩放
-        private final float width;                      // 条带宽度
-        private final float yaw;                        // 偏航角
+        protected final Function<Float, Vec3> curve;      // t∈[0,1] → 局部坐标（相对位置）
+        protected final int segments;                     // 分段数（整数）
+        protected final float radius;                     // 半径缩放
+        protected final float width;                      // 条带宽度
+        protected final float yaw;                        // 偏航角
         public CurveStripPrecession(float x, float y, float z, int lifetime, int color,
                           float radius, float width, float yaw, int segments,
                           Function<Float, Vec3> curve) {
@@ -327,7 +328,7 @@ public abstract class WarningTip extends Effect {
             for (int i = 0; i <= segments; i++) {
                 float t = (float) i / segments;
                 if (t > linearProgress) break;   // 使用线性进度截断
-                points.add(getWorldPoint(t));
+                points.add(curve.apply(t).scale(radius));
             }
             if (points.size() < 2) {
                 poseStack.popPose();
@@ -362,18 +363,74 @@ public abstract class WarningTip extends Effect {
             }
             poseStack.popPose();
         }
-        /**
-         * 返回相对于中心点的局部坐标（已应用半径缩放）
-         */
-        private Vec3 getWorldPoint(float t) {
-            Vec3 local = curve.apply(t).scale(radius);
-            return new Vec3(local.x, local.y, local.z);   // 不再加绝对坐标，由 poseStack 的平移负责
-        }
 
         @Override
         protected AABB getBoundingBox() {
             double r = radius + width;
             return new AABB(x - r, y - r, z - r, x + r, y + r, z + r);
+        }
+    }
+    public static class CurveStripPrecessionGravity extends CurveStripPrecession {
+        private final Quaternionf localToWorld;
+        public CurveStripPrecessionGravity(float x, float y, float z, int lifetime, int color, float radius, float width, float yaw, int segments, Function<Float, Vec3> curve,Direction gravity) {
+            super(x, y, z, lifetime, color, radius, width, yaw, segments, curve);
+            this.localToWorld = Gravity.getRotation(gravity);
+        }
+
+        @Override
+        protected void render(PoseStack poseStack, float partialTick, MultiBufferSource bufferSource, Camera camera) {
+            poseStack.pushPose();
+
+            int alpha = (int) (Mth.lerp(getProgress(partialTick), 0f, 1f)*a);;
+
+            poseStack.pushPose();
+            poseStack.translate(x, y, z);                      // 1. 先平移到目标世界位置
+            poseStack.mulPose(localToWorld);   // 2. 应用重力旋转（使局部Y轴指向重力方向）
+            poseStack.translate(0, 0.01f, 0);                 // 3. 沿局部Y轴向上偏移
+            poseStack.mulPose(Axis.YP.rotationDegrees(-yaw)); // 4. 绕局部Y轴旋转
+            VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_STRIP_WHITE);
+            Matrix4f matrix = poseStack.last().pose();
+
+            // 使用生命周期的一半进行进动
+            float linearProgress = ((age + partialTick) / lifetime)*2f;
+            List<Vec3> points = new ArrayList<>();
+            for (int i = 0; i <= segments; i++) {
+                float t = (float) i / segments;
+                if (t > linearProgress) break;   // 使用线性进度截断
+                points.add(curve.apply(t).scale(radius));
+            }
+            if (points.size() < 2) {
+                poseStack.popPose();
+                return;
+            }
+            // 2. 渲染整条曲线条带（使用衰减透明度）
+            for (int i = 0; i < points.size(); i++) {
+                Vec3 p = points.get(i);
+                Vec3 tangent;
+                if (i == 0) {
+                    tangent = points.get(1).subtract(p).normalize();
+                } else if (i == points.size() - 1) {
+                    tangent = p.subtract(points.get(i - 1)).normalize();
+                } else {
+                    tangent = points.get(i + 1).subtract(points.get(i - 1)).normalize();
+                }
+                Vec3 normal = new Vec3(0, 1, 0).cross(tangent).normalize();
+                Vec3 left = p.add(normal.scale(width / 2));
+                Vec3 right = p.add(normal.scale(-width / 2));
+                consumer.addVertex(matrix, (float) left.x, (float) left.y, (float) left.z)
+                        .setColor(r, g, b, alpha)
+                        .setUv(0, 0)
+                        .setOverlay(OverlayTexture.NO_OVERLAY)
+                        .setLight(LightTexture.FULL_SKY)
+                        .setNormal(poseStack.last(), 0, 1, 0);
+                consumer.addVertex(matrix, (float) right.x, (float) right.y, (float) right.z)
+                        .setColor(r, g, b, alpha)
+                        .setUv(0, 0)
+                        .setOverlay(OverlayTexture.NO_OVERLAY)
+                        .setLight(LightTexture.FULL_SKY)
+                        .setNormal(poseStack.last(), 0, 1, 0);
+            }
+            poseStack.popPose();
         }
     }
 }

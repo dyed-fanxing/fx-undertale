@@ -1,8 +1,7 @@
 package com.fanxing.fx_undertale.utils.collsion;
 
 import com.fanxing.fx_undertale.common.phys.OBB;
-import com.fanxing.fx_undertale.entity.capability.OBBable;
-import com.fanxing.fx_undertale.utils.RotUtils;
+import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -69,6 +68,7 @@ public class OBBCCDUtils {
      * 获取OBB实体仅旋转的情况下的实体碰撞结果集
      */
     public static List<EntityHitResultTimed> getEntityHitResultsOnlyOnRotation(OBB startOBB, float angularVelocity, Vec3 rotationAxis, Vec3 rotationPivot, Level level, @Nullable Entity exclude, Predicate<Entity> filter) {
+//        System.out.println("CCD: angularVelocity=" + angularVelocity + " rad, rotationAxis=" + rotationAxis + ", pivot=" + rotationPivot);
         if (Mth.abs(angularVelocity) < Mth.EPSILON) return Collections.emptyList();
         Vec3 axis = rotationAxis.normalize();
         if (axis.lengthSqr() < 0.9f) return Collections.emptyList();
@@ -297,7 +297,7 @@ public class OBBCCDUtils {
      */
     private static float findCollisionInHullCombined(Entity target, OBB startOBB, Vec3 velocity, float totalAngle, Vec3 axis, Vec3 pivot) {
         // 检查 t=0
-        if (target instanceof OBBable obbEntity) {
+        if (target instanceof OBBHolder obbEntity) {
             OBB targetOBB = obbEntity.getOBB();
             if (targetOBB != null && startOBB.intersects(targetOBB)) return 0.0f;
         } else {
@@ -313,7 +313,7 @@ public class OBBCCDUtils {
             OBB currentOBB = calculateOBBAtTime(startOBB, velocity, totalAngle, axis, pivot, t);
 
             boolean hit = false;
-            if (target instanceof OBBable obbEntity) {
+            if (target instanceof OBBHolder obbEntity) {
                 OBB targetOBB = obbEntity.getOBB();
                 if (targetOBB != null) hit = currentOBB.intersects(targetOBB);
             } else {
@@ -335,7 +335,7 @@ public class OBBCCDUtils {
             OBB midOBB = calculateOBBAtTime(startOBB, velocity, totalAngle, axis, pivot, tMid);
 
             boolean hit = false;
-            if (target instanceof OBBable obbEntity) {
+            if (target instanceof OBBHolder obbEntity) {
                 OBB targetOBB = obbEntity.getOBB();
                 if (targetOBB != null) hit = midOBB.intersects(targetOBB);
             } else {
@@ -424,9 +424,8 @@ public class OBBCCDUtils {
     // ============================================================
     // 4. 辅助方法 (纯旋转的扫掠盒构建，保留供参考)
     // ============================================================
-
     public static float findCollisionInHull(Entity target, OBB startOBB, float totalAngle, Vec3 axis, Vec3 pivot) {
-        if (target instanceof OBBable obbEntity) {
+        if (target instanceof OBBHolder obbEntity) {
             OBB targetOBB = obbEntity.getOBB();
             if (targetOBB != null) {
                 if (startOBB.intersects(targetOBB)) return 0.0f;

@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.utils.collsion;
 
 import com.fanxing.fx_undertale.common.phys.OBB;
-import com.fanxing.fx_undertale.entity.capability.OBBable;
+import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -108,7 +108,7 @@ public class OBBRotationCollider {
 
     public static float findCollisionInHull(Entity target, OBB startOBB, float totalAngle, Vec3 axis, Vec3 pivot) {
         // === 分支 1: 目标是 OBB ===
-        if (target instanceof OBBable obbEntity) {
+        if (target instanceof OBBHolder obbEntity) {
             OBB targetOBB = obbEntity.getOBB();
             if (targetOBB != null) {
                 // 检查 t=0

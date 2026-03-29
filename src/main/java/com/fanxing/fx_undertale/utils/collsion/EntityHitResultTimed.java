@@ -10,4 +10,16 @@ public class EntityHitResultTimed extends EntityHitResult {
         super(entity,location);
         this.time = time;
     }
+
+    public double getTime() {
+        return time;
+    }
+
+    @Override
+    public String toString() {
+        return "EntityHitResultTimed{" +
+                "time=" + time +
+                ", location=" + location +
+                '}';
+    }
 }

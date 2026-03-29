@@ -14,6 +14,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.function.Function;
 
@@ -22,6 +24,7 @@ import java.util.function.Function;
  * @since 2025/11/18 14:10
  */
 public abstract class WarningTipPacket implements CustomPacketPayload {
+    private static final Logger log = LoggerFactory.getLogger(WarningTipPacket.class);
     protected float x;
     protected float y;
     protected float z;
@@ -267,15 +270,15 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
      */
     public static class RadialPrecessionCurveStripsPacket extends WarningTipPacket {
         public static final Type<RadialPrecessionCurveStripsPacket> TYPE = new Type<>(
-                ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "radial_curve_strips_packet")
+                ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "radial_precession_curve_strips_packet")
         );
         public static final StreamCodec<FriendlyByteBuf, RadialPrecessionCurveStripsPacket> STREAM_CODEC = CustomPacketPayload.codec(RadialPrecessionCurveStripsPacket::write, RadialPrecessionCurveStripsPacket::new);
-        private final int count;                 // 条带数量
-        private final float radius;
-        private final float width;
-        private final int segments;
-        private final ParametricCurveType curveType;  // 已包含正向/反向
-        private final float[] params;
+        protected final int count;                 // 条带数量
+        protected final float radius;
+        protected final float width;
+        protected final int segments;
+        protected final ParametricCurveType curveType;  // 已包含正向/反向
+        protected final float[] params;
 
         public RadialPrecessionCurveStripsPacket(float x, float y, float z, int lifetime, int color, int count, float radius, float width, int segments, ParametricCurveType curveType, float... params) {
             super(x, y, z, lifetime, color);
@@ -295,6 +298,7 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
             this.segments = buf.readVarInt();
             this.curveType = buf.readEnum(ParametricCurveType.class);
             this.params = ByteBufUtils.readFloatArray(buf);
+
         }
 
         public void write(FriendlyByteBuf buf) {
@@ -317,6 +321,49 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
                             packet.lifetime, packet.color,
                             packet.radius, packet.width, yaw,
                             packet.segments, baseCurve
+                    ));
+                }
+            });
+        }
+
+        @Override
+        public @NotNull Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+    public static class RadialPrecessionCurveStripsGravityPacket extends RadialPrecessionCurveStripsPacket {
+        public static final Type<RadialPrecessionCurveStripsGravityPacket> TYPE = new Type<>(
+                ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "radial_precession_curve_strips_gravity_packet")
+        );
+        public static final StreamCodec<FriendlyByteBuf, RadialPrecessionCurveStripsGravityPacket> STREAM_CODEC = CustomPacketPayload.codec(RadialPrecessionCurveStripsGravityPacket::write, RadialPrecessionCurveStripsGravityPacket::new);
+
+
+        protected final Direction gravity;
+        public RadialPrecessionCurveStripsGravityPacket(float x, float y, float z, int lifetime, int color, int count, float radius, float width, int segments,Direction gravity,ParametricCurveType curveType, float... params) {
+            super(x, y, z, lifetime, color, count, radius, width, segments, curveType, params);
+            this.gravity = gravity;
+        }
+
+        public RadialPrecessionCurveStripsGravityPacket(FriendlyByteBuf buf) {
+            super(buf);
+            this.gravity = buf.readEnum(Direction.class);
+        }
+
+        @Override
+        public void write(FriendlyByteBuf buf) {
+            super.write(buf);
+            buf.writeEnum(gravity);
+        }
+        public static void handle(RadialPrecessionCurveStripsGravityPacket packet, IPayloadContext context) {
+            context.enqueueWork(() -> {
+                Function<Float, Vec3> baseCurve = packet.curveType.create(packet.params);
+                for (int s = 0; s < packet.count; s++) {
+                    float yaw = s * 360f / packet.count;   // 均匀分布角度
+                    EffectRendererHandler.addDecoration(new WarningTip.CurveStripPrecessionGravity(
+                            packet.x, packet.y, packet.z,
+                            packet.lifetime, packet.color,
+                            packet.radius, packet.width, yaw,
+                            packet.segments, baseCurve,packet.gravity
                     ));
                 }
             });

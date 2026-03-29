@@ -1,8 +1,12 @@
 package com.fanxing.fx_undertale.mixin;
 
+import com.fanxing.fx_undertale.client.debug.OBBCCDDebugRenderer;
 import com.fanxing.fx_undertale.common.phys.OBB;
-import com.fanxing.fx_undertale.entity.capability.OBBable;
+import com.fanxing.fx_undertale.entity.attachment.Gravity;
+import com.fanxing.fx_undertale.entity.capability.OBBHolder;
+import com.fanxing.fx_undertale.entity.capability.OBBRotationCollider;
 import com.fanxing.fx_undertale.entity.capability.Rollable;
+import com.fanxing.fx_undertale.entity.summon.RotationBone;
 import com.fanxing.fx_undertale.utils.RotUtils;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -37,7 +41,7 @@ public class EntityRenderDispatcherMixin {
     private static final Logger log = LogManager.getLogger(EntityRenderDispatcherMixin.class);
 
     @Shadow
-    private static void renderVector(PoseStack poseStack, VertexConsumer consumer, Vector3f p_353068_, Vec3 p_353070_, int p_353032_){
+    private static void renderVector(PoseStack poseStack, VertexConsumer consumer, Vector3f p_353068_, Vec3 p_353070_, int p_353032_) {
     }
 
     /**
@@ -47,25 +51,25 @@ public class EntityRenderDispatcherMixin {
     @Inject(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V", at = @At("HEAD"),
             cancellable = true)
     private static void onRenderHitbox(PoseStack poseStack, VertexConsumer consumer, Entity entity, float partialTicks, float r, float g, float b, CallbackInfo ci) {
-        if (entity instanceof OBBable obbEntity && obbEntity.getOBB() != null) {
+        if (entity instanceof OBBHolder obbEntity && obbEntity.getOBB() != null) {
             ci.cancel();
-            OBB obb = obbEntity.getOBB().move(-entity.getX(), -entity.getY(), -entity.getZ());
-            RenderUtils.renderOBBOutline(poseStack.last(), consumer, obb,r,g,b,1.0f);
+            OBB obb = obbEntity.getOBB(partialTicks).move(entity.position().reverse());
+            RenderUtils.renderOBBOutline(poseStack.last(), consumer,obb, r, g, b, 1.0f);
             // 2. 如果是多部分实体，渲染各部分（保持原版逻辑）
             if (entity.isMultipartEntity()) {
                 double d0 = -Mth.lerp(partialTicks, entity.xOld, entity.getX());
                 double d1 = -Mth.lerp(partialTicks, entity.yOld, entity.getY());
                 double d2 = -Mth.lerp(partialTicks, entity.zOld, entity.getZ());
-                for(PartEntity<?> part : entity.getParts()) {
+                for (PartEntity<?> part : entity.getParts()) {
                     poseStack.pushPose();
-                    if(part != null){
+                    if (part != null) {
                         double d3 = d0 + Mth.lerp(partialTicks, part.xOld, part.getX());
                         double d4 = d1 + Mth.lerp(partialTicks, part.yOld, part.getY());
                         double d5 = d2 + Mth.lerp(partialTicks, part.zOld, part.getZ());
                         poseStack.translate(d3, d4, d5);
                         // 检查部分实体是否也是OBB实体
-                        if (part instanceof OBBable partObbEntity && partObbEntity.getOBB() != null) {
-                            RenderUtils.renderOBBOutline(poseStack.last(), consumer, partObbEntity.getOBB(),r,g,b,255);
+                        if (part instanceof OBBHolder partObbEntity && partObbEntity.getOBB() != null) {
+                            RenderUtils.renderOBBOutline(poseStack.last(), consumer, partObbEntity.getOBB(partialTicks), r, g, b, 255);
                         } else {
                             // 原版渲染
                             AABB partAABB = part.getBoundingBox().move(-part.getX(), -part.getY(), -part.getZ());
@@ -78,7 +82,9 @@ public class EntityRenderDispatcherMixin {
 
             // 3. 如果是生物，渲染眼睛高度
             if (entity instanceof LivingEntity) {
-                RenderUtils.renderOBBOutline(poseStack.last(), consumer, new OBB(new Vec3(obb.center.x,entity.getEyeHeight(),obb.center.z), obb.xHalfSize,0.01f,obb.zHalfSize,obb.forward,obb.up),r,g,b,1.0f);
+                RenderUtils.renderOBBOutline(poseStack.last(), consumer, obb.getSliceRelativeToEntityFeet(entity.getEyeHeight()), 1.0F, 0F, 0F, 1.0f);
+            } else {
+                RenderUtils.renderOBBOutline(poseStack.last(),consumer,obb.getSliceRelativeToEntityFeet(entity.getEyeHeight()),1.0F, 0.5F, 0F, 1.0f);
             }
 
             // 4. 如果有载具，渲染乘坐位置
@@ -87,14 +93,14 @@ public class EntityRenderDispatcherMixin {
                 float f = Math.min(vehicle.getBbWidth(), entity.getBbWidth()) / 2.0F;
                 float f2 = 0.0625F;
                 Vec3 vec3 = vehicle.getPassengerRidingPosition(entity).subtract(entity.position());
-                if(vehicle instanceof OBBable vehicleObbEntity && vehicleObbEntity.getOBB() != null){
-                    com.fanxing.fx_undertale.common.phys.OBB vehicleObb = vehicleObbEntity.getOBB();
+                if (vehicle instanceof OBBHolder vehicleObbEntity && vehicleObbEntity.getOBB() != null) {
+                    OBB vehicleObb = vehicleObbEntity.getOBB(partialTicks);
                     Vec3 ridingPosWorld = vehicle.getPassengerRidingPosition(entity);
                     poseStack.pushPose();
                     poseStack.translate(-vehicle.getX(), -vehicle.getY(), -vehicle.getZ());
                     // 待渲染OBB载具
                     // 创建乘坐位置的扁平方框OBB
-                    RenderUtils.renderOBBOutline(poseStack.last(), consumer, new com.fanxing.fx_undertale.common.phys.OBB(
+                    RenderUtils.renderOBBOutline(poseStack.last(), consumer, new OBB(
                             ridingPosWorld,
                             Math.min(obb.xHalfSize, vehicleObb.xHalfSize),  // 宽度
                             0.03125f,  // 很薄（0.0625F的一半，因为OBB是半尺寸）
@@ -103,18 +109,29 @@ public class EntityRenderDispatcherMixin {
                             obb.up
                     ), 255, 255, 0, 255);
                     poseStack.popPose();
-                }else{
+                } else {
                     LevelRenderer.renderLineBox(poseStack, consumer,
-                            vec3.x - (double)f, vec3.y, vec3.z - (double)f,
-                            vec3.x + (double)f, vec3.y + (double)0.0625F, vec3.z + (double)f,
+                            vec3.x - (double) f, vec3.y, vec3.z - (double) f,
+                            vec3.x + (double) f, vec3.y + (double) 0.0625F, vec3.z + (double) f,
                             1.0F, 1.0F, 0.0F, 1.0F);
                 }
             }
-            // 5. 渲染视线向量
-            if(entity instanceof Rollable rollable){
-                renderVector(poseStack, consumer, RotUtils.getWorldVec3(0,entity.getEyeHeight(),0,rollable.getRoll(),entity.getViewXRot(partialTicks),entity.getViewYRot(partialTicks)).toVector3f(),entity.getViewVector(partialTicks).scale(2.0F),-16776961);
-            }else{
-                renderVector(poseStack, consumer,RotUtils.getWorldVec3(0, entity.getEyeHeight(), 0, entity.getViewXRot(partialTicks), entity.getViewYRot(partialTicks)).toVector3f(),entity.getViewVector(partialTicks).scale(2.0F),-16776961);
+            // 5. 渲染视线向量 key 必须用Rotlerp 角度插值去计算位置，不然lerp默认插值会在旋转一圈后在一帧内突然反向转一圈，渲染实体同理
+            if (entity instanceof Rollable rollable) {
+                renderVector(poseStack, consumer, RotUtils.rotateYXZ(0, entity.getEyeHeight(), 0,
+                        Mth.rotLerp(partialTicks, entity.yRotO, entity.getYRot()),
+                        Mth.rotLerp(partialTicks, entity.xRotO, entity.getXRot()),
+                        Mth.rotLerp(partialTicks, rollable.getRollO(), rollable.getRoll())
+                ).toVector3f(), entity.getViewVector(partialTicks).scale(2.0F), -16776961);
+            } else {
+                renderVector(poseStack, consumer, RotUtils.rotateYX(0, entity.getEyeHeight(), 0,
+                        Mth.rotLerp(partialTicks, entity.yRotO, entity.getYRot()),
+                        Mth.rotLerp(partialTicks, entity.xRotO, entity.getXRot())
+                ).toVector3f(), entity.getViewVector(partialTicks).scale(2.0F), -16776961);
+            }
+
+            if (entity instanceof OBBRotationCollider obbRotationCollider) {
+                OBBCCDDebugRenderer.renderSweptOBB(poseStack,consumer,obb,obbRotationCollider.getAngularVelocity()*Mth.DEG_TO_RAD, obbRotationCollider.getRotateAxis(),Vec3.ZERO,0xFF0000,0xFF0000);
             }
         }
     }

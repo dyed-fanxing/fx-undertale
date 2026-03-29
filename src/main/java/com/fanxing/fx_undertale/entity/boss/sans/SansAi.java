@@ -5,7 +5,7 @@ import com.fanxing.fx_undertale.entity.ai.behavior.StartAttacking;
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.net.packet.AnimPacket;
 import com.fanxing.fx_undertale.net.packet.GravityPacket;
-import com.fanxing.fx_undertale.utils.GravityUtils;
+import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
@@ -23,7 +23,6 @@ import com.fanxing.fx_undertale.utils.RotUtils;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
@@ -75,14 +74,16 @@ public class SansAi {
         brain.addActivityAndRemoveMemoryWhenStopped(Activity.FIGHT, 10, ImmutableList.of(
                 StopAndSwitchTargetIfTargetInvalidAndSelfNoAttacking.create(
                         SansAi::findNearestValidAttackTarget, SansAi::applyTargetTag,
-                        SansAi::clearTargetTag
+                        SansAi::clearTargetTag,false
                 ),
                 createOpeningBehavior(),
                 new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
                         Pair.of(createComboSkillBehavior(), 9),
                         Pair.of(RestartableTryAllBehavior.Order(ImmutableList.of(
-                                Pair.of(createPersistentSkillBehavior(), 5),
-                                Pair.of(new AttackSchedulerBehavior<>(createSingleSkills(),(a)->List.of(gravitySlamSinge(a)), MemoryModuleTypes.COOLDOWN_1.get()), 3)
+                                Pair.of(createPersistentSkillBehavior(), 5)
+                                ,
+//                                Pair.of(new AttackSchedulerWithBuiltInCoolingBehavior<>(createSingleSkills(),(a)->List.of(gravitySlamSinge(a,true)), MemoryModuleTypes.COOLDOWN_1.get()), 3)
+                                Pair.of(new AttackSchedulerWithBuiltInCoolingBehavior<>(createSingleSkills(), MemoryModuleTypes.COOLDOWN_1.get()), 3)
                         )), 1)
                 )) {
                     @Override
@@ -90,21 +91,22 @@ public class SansAi {
                         return entity.getPhaseID() == Sans.FIRST_PHASE;
                     }
                 },
-                new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-                        Pair.of(new AttackSchedulerBehavior<>(createSingleSkills(), MemoryModuleTypes.COOLDOWN_1.get()), 3),
-                        Pair.of(new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-                                Pair.of(new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-                                        Pair.of(createSecondPhaseComboBehavior(), 9)
-//                                        Pair.of(createComboSkillBehavior(), 9)
-                                )), 10)
-//                                Pair.of(createPersistentSkillBehavior(), 5)
-                        )), 10)
-                )) {
-                    @Override
-                    protected boolean checkExtraStartConditions(ServerLevel level, Sans entity) {
-                        return entity.getPhaseID() == Sans.SECOND_PHASE;
-                    }
-                },
+//                new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
+//                        Pair.of(new AttackSchedulerBehavior<>(createSingleSkills(), MemoryModuleTypes.COOLDOWN_1.get()), 3),
+//                        Pair.of(new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
+//                                Pair.of(new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
+//                                        Pair.of(createSecondPhaseComboBehavior(), 9)
+////                                        Pair.of(createComboSkillBehavior(), 9)
+//                                )), 10)
+////                                Pair.of(createPersistentSkillBehavior(), 5)
+//                        )), 10)
+//                )) {
+//                    @Override
+//                    protected boolean checkExtraStartConditions(ServerLevel level, Sans entity) {
+//                        return entity.getPhaseID() == Sans.SECOND_PHASE;
+//                    }
+//                },
+                new RecoverDownGravity(),
                 new RunOneExtra<>(GateBehavior.OrderPolicy.ORDERED, ImmutableList.of(
                         Pair.of(createTeleportIfOutOfFollowRange(), 1),
                         Pair.of(new SpellCastingMoveInFollowRange<>(sans, CLOSE_RANGE_FACTOR, MID_RANGE_FACTOR, 1.0f) {
@@ -149,15 +151,15 @@ public class SansAi {
         brain.setActiveActivityToFirstValid(ImmutableList.of(Activity.FIGHT, Activity.IDLE));
     }
 
-    private static AttackSchedulerBehavior<Sans> createOpeningBehavior() {
+    private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createOpeningBehavior() {
         int[] delay = new int[1];
-        return new AttackSchedulerBehavior<>(new AttackNode<Sans>(100, (a, t, tick) -> {
+        return new AttackSchedulerWithBuiltInCoolingBehavior<>(new AttackNode<Sans>(100, (a, t, tick) -> {
             if (tick == 0) {
                 a.timeJumpTeleport(t, 2);
                 a.controlSoulMode(t, SoulMode.GRAVITY);
                 a.setIsEyeBlink(true);
             } else if (tick == 2) {
-                Vec3 pos = RotUtils.getWorldVec3(0f, 5f, 12f, 0, a.getYHeadRot()).add(a.position());
+                Vec3 pos = RotUtils.rotateYX(0f, 5f, 12f, a.getYHeadRot(), 0).add(a.position());
                 t.teleportTo(pos.x, pos.y, pos.z);
             }
             return tick >= 3;
@@ -214,8 +216,8 @@ public class SansAi {
         };
     }
 
-    private static AttackSchedulerBehavior<Sans> createComboSkillBehavior() {
-        return new AttackSchedulerBehavior<>(List.of(
+    private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createComboSkillBehavior() {
+        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(
 //                new AttackNode<Sans>((byte) 10, 400, (a, t, tick) -> {
 //                    if (tick == 0) {
 //                        a.setControllerAimGB(a.controlGBAim(t));
@@ -244,9 +246,9 @@ public class SansAi {
         };
     }
 
-    private static AttackSchedulerBehavior<Sans> createPersistentSkillBehavior() {
+    private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createPersistentSkillBehavior() {
         int[] delay = new int[2];
-        return new AttackSchedulerBehavior<>(List.of(
+        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(
                 new AttackNode<Sans>((byte) 6, 200, (a, t, tick) -> {
                     if (tick == 4) {
                         delay[0] = a.shootAimedBarrage(t);
@@ -270,9 +272,9 @@ public class SansAi {
         };
     }
 
-    private static AttackSchedulerBehavior<Sans> createSecondPhaseComboBehavior() {
+    private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createSecondPhaseComboBehavior() {
 //        return new AttackSchedulerBehavior<>(List.of(), (a) -> List.of(timeJumpSkill(), gravitySlam(a)), MemoryModuleTypes.COOLDOWN_3.get()) {
-        return new AttackSchedulerBehavior<>(List.of(), (a) -> List.of(gravitySlam(a)), MemoryModuleTypes.COOLDOWN_3.get()) {
+        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(), (a) -> List.of(gravitySlam(a)), MemoryModuleTypes.COOLDOWN_3.get()) {
             @Override
             protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
                 super.stop(level, mob, gameTime);
@@ -305,20 +307,21 @@ public class SansAi {
         int[] duration = new int[1];
         return List.of(
                 // 飞行骨
-//                new AttackNode<>((byte) 8, 3, Sans::shootBoneRingVolley, 30, 40)
-//                        .weight((a,t)-> WeightMath.linearIncrease(a.distanceTo(t),0,a.getFollowRange())),
-//                new AttackNode<Sans>((byte) 9, 3, (a, t) -> a.shootArcSweepVolley(), 30, 40)
-//                        .weight((a,t)->WeightMath.linearDecrease(a.distanceTo(t),0,a.getFollowRange())*(1 + getTargetSpeed(t)*2)),
-//                new AttackNode<Sans>((byte) 11, 100, (a, t, tick) -> {
-//                    if (tick == 20) {
-//                        a.shootRotationBone(t, 1F, 10F);
-//                    }
-//                    if (tick == 26) {
-////                        a.shootRotationBone(t, -1F, 10F);
-//                    }
-//                    return tick >= 30;
-//                }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (1 + getTargetSpeed(t) * 2)),
-//                 GB
+                new AttackNode<>((byte) 8, 3, Sans::shootBoneRingVolley, 30, 40)
+                        .weight((a,t)-> WeightMath.linearIncrease(a.distanceTo(t),0,a.getFollowRange())),
+                new AttackNode<Sans>((byte) 9, 4, (a, t) -> a.shootArcSweepVolley(), 30, 40)
+                        .weight((a,t)->WeightMath.linearDecrease(a.distanceTo(t),0,a.getFollowRange())*(1 + getTargetSpeed(t)*2)),
+                new AttackNode<Sans>((byte) 11, 100, (a, t, tick) -> {
+                    if (tick == 20) {
+                        a.shootRotationBone(t, 1F, 10F);
+                    }
+                    if (tick == 26) {
+//                        a.shootRotationBone(t, -1F, 10F);
+                    }
+                    return tick >= 30;
+                }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (1 + getTargetSpeed(t) * 2))
+
+
 //                new AttackNode<Sans>((byte) 6, 4, (a, t) -> {
 //                    int difficulty = a.level().getDifficulty().getId();
 //                    a.summonGBAroundSelf(t, 1 + a.getPhaseFactor() + difficulty / 3, 1.0f + difficulty * 0.25f);
@@ -362,8 +365,8 @@ public class SansAi {
 //                    }
 //                    return distanceWeight * speedFactor;
 //                }),
-//
-                // 地面
+
+
 //                new AttackNode<Sans>((byte) 6, 50, (a, t, tick) -> {
 //                    if (tick == 4) {
 //                        a.summonGroundBoneSpineAtSelf();
@@ -386,9 +389,8 @@ public class SansAi {
 //                        a.level().playSound(null,t,SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE,1,1);
 //                    }
 //                    return tick>=22;
-//                }).condition((a, t) -> t.getY()-a.getY() <= 1.0f+(a.getMaxStamina() - a.getStamina())/a.getMaxStamina()*3.0f)
+//                }).condition((a, t) -> isSameGravity(a,t))
 //                        .weight((a,t)-> WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.8f, a.getFollowRange()*0.5f,1)),
-
 //                new AttackNode<Sans>((byte) 6, 100, (a, t, tick) -> {
 //                    if (tick == 4) {
 //                        a.summonHugeThreadGroundBoneSpineWave(t);
@@ -397,34 +399,30 @@ public class SansAi {
 //                        a.level().playSound(null, t, SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE, 1, 1);
 //                    }
 //                    return tick >= 40;
-//                }).condition((a, t) -> t.getY() - a.getY() <= 1.0f + (a.getMaxStamina() - a.getStamina()) / a.getMaxStamina() * 3.0f)
-//                        .weight((a,t)-> WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.8f, a.getFollowRange()*0.5f,1)),
-//                new AttackNode<Sans>((byte) 4,40, (a, t, tick) -> {
-//                    if (tick == 0) {
-//                        delay[0] = a.summonLateralBoneMatrix(t,0.5f);
-//                    }
-//                    return tick >= delay[0];
-//                }).condition((a, t) -> t.onGround())
+//                }).weight((a,t)-> WeightMath.linearPeak(a.distanceTo(t), 0,a.getFollowRange()*0.8f, a.getFollowRange()*0.5f,1)),
+
+
+
         );
     }
 
-    private static AttackNode<Sans> gravitySlamSinge(Sans mob) {
+    private static AttackNode<Sans> gravitySlamSinge(Sans mob,boolean isRandom) {
         LocalDirection[] directions = LocalDirection.values();
-        float factor = 1f - mob.getStamina() * 2f / mob.getMaxStamina();
+        float factor = mob.getPhaseFactor();
         int difficulty = mob.level().getDifficulty().getId();
-        int index = mob.getRandom().nextInt(directions.length);
+        int index = isRandom?mob.getRandom().nextInt(directions.length):1;
         boolean[] state = new boolean[]{true};
         int[] duration = new int[1];
         return new AttackNode<Sans>((byte) index, 50, (a, t, tick) -> {
             if (tick == 3) {
-                a.gravitySlam(t, LocalDirection.values()[4], 0.8f + factor * 0.1f);
+                a.gravitySlam(t, LocalDirection.values()[index], 0.8f + factor * 0.1f);
             }
             if (tick > 3 && state[0] && t.onGround()) {
                 state[0] = false;
                 if (factor >= 0.3F && a.getRandom().nextFloat() < factor * 0.5f) {
                     a.summonGBAtTargetHeight(t, 4, a.getRandom().nextInt(4) * 22.5f, a.getJumpBoostPower() + 5.5f);
                 }
-                a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor * 3f, 7, 10);
+                a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor, 7, 10);
                 a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
                 duration[0] = tick;
                 a.applyGravityControlTag(t, false);
@@ -433,7 +431,7 @@ public class SansAi {
                 a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
             }
             return tick >= duration[0] + 12 - difficulty && !state[0];
-        }).weight(1);
+        }).weight((a,t)->3.0+a.getPhaseFactor()*4);
     }
 
     private static AttackNode<Sans> persistentGBSkill() {
@@ -556,6 +554,9 @@ public class SansAi {
             return target.getDeltaMovement().length();
         }
     }
+    public static boolean isSameGravity(LivingEntity a,LivingEntity t){
+        return a.getData(AttachmentTypes.GRAVITY).getGravity() == t.getData(AttachmentTypes.GRAVITY).getGravity();
+    }
 
     private static Optional<? extends LivingEntity> findNearestValidAttackTarget(Sans mob) {
         Optional<LivingEntity> optional = BehaviorUtils.getLivingEntityFromUUIDMemory(mob, MemoryModuleType.ANGRY_AT);
@@ -580,5 +581,33 @@ public class SansAi {
         mob.applyGravityControlTag(target, false);
         Gravity.applyGravity(target, Direction.DOWN);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), Direction.DOWN, 0));
+    }
+
+    public static class RecoverDownGravity extends AttackSchedulerWithoutBuiltlnCoolingBehavior<Sans> {
+        protected Direction lastGravity = Direction.DOWN;
+        protected int targetNotDownwardGravityTick;
+        public RecoverDownGravity() {
+            super(List.of(),(a)->List.of(gravitySlamSinge(a,false)));
+        }
+
+        @Override
+        protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull Sans mob) {
+            Brain<Sans> brain = mob.getBrain();
+            mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> {
+                Direction gravity = target.getData(AttachmentTypes.GRAVITY).getGravity();
+                if(lastGravity != gravity) {
+                    lastGravity = gravity;
+                    targetNotDownwardGravityTick = 0;
+                }
+                if(gravity != Direction.DOWN) {
+                    targetNotDownwardGravityTick++;
+                }
+            });
+            boolean t =super.checkExtraStartConditions(level, mob) && targetNotDownwardGravityTick >= 400 &&!brain.hasMemoryValue(MemoryModuleTypes.ATTACKING.get());
+            if(t){
+                log.info("执行恢复目标默认重力猛击，targetNotDownwardGravityTick：{}",targetNotDownwardGravityTick);
+            }
+            return super.checkExtraStartConditions(level, mob) && targetNotDownwardGravityTick >= 400 &&!brain.hasMemoryValue(MemoryModuleTypes.ATTACKING.get());
+        }
     }
 }

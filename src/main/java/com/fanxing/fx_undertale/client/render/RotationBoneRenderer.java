@@ -27,7 +27,7 @@ public class RotationBoneRenderer extends GeoEntityRenderer<RotationBone> {
 
     @Override
     protected void applyRotations(RotationBone animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(partialTick,-animatable.yRotO,-animatable.getYRot())));
+        poseStack.mulPose(Axis.YP.rotationDegrees(-Mth.rotLerp(partialTick,animatable.yRotO,animatable.getYRot())));
         poseStack.mulPose(Axis.XP.rotationDegrees(Mth.rotLerp(partialTick,animatable.xRotO,animatable.getXRot())));
         poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.rotLerp(partialTick,animatable.rollO,animatable.getRoll())));
     }

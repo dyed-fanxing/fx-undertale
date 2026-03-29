@@ -4,7 +4,7 @@ import com.fanxing.fx_undertale.common.phys.OBB;
 import com.fanxing.fx_undertale.entity.ColoredAttacker;
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.capability.Growable;
-import com.fanxing.fx_undertale.entity.capability.OBBable;
+import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import com.fanxing.fx_undertale.entity.capability.Scalable;
 import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
@@ -12,6 +12,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoEntity;
 
 public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMovingSummons
-        implements Scalable, Growable, OBBable, ColoredAttacker, IEntityWithComplexSpawn, GeoEntity {
+        implements Scalable, Growable, OBBHolder, ColoredAttacker, IEntityWithComplexSpawn, GeoEntity {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractBone.class);
     // 通用属性
@@ -49,6 +50,7 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         this.growScale = growScale;
         this.lifetime = lifetime;
         this.damage = damage;
+        refreshDimensions();
     }
 
     // 链式配置方法（可被子类复用）
@@ -64,8 +66,12 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
 
 
     public T gravity(Direction gravity) {
-        Gravity gravityData = Gravity.applyGravity(this, gravity);
-        Gravity.rotation(this,gravity);
+        // 1. 当前姿态的四元数（YXZ 顺序）
+        Quaternionf qCurrent = new Quaternionf().rotationYXZ(this.getYRot()*Mth.DEG_TO_RAD, this.getXRot()*Mth.DEG_TO_RAD, 0);
+        // 3. 新姿态 = qGravity * qCurrent （左乘：先应用当前姿态，再整体旋转到新重力坐标系），转回欧拉角
+        Vector3f euler = Gravity.getRotation(gravity).mul(qCurrent).getEulerAnglesYXZ(new Vector3f());
+        setYRot(euler.y * Mth.RAD_TO_DEG);
+        setXRot(euler.x * Mth.RAD_TO_DEG);
         return (T) this;
     }
     // ========== 尺寸与 OBB ==========
@@ -81,6 +87,11 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
     }
 
     @Override
+    public void updateOBB() {
+        this.obb = OBB.fromFoot(this);
+    }
+
+    @Override
     public boolean fudgePositionAfterSizeChange(EntityDimensions p_347526_) {
         return false;
     }
@@ -88,11 +99,6 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
     @Override
     protected boolean updateInWaterStateAndDoFluidPushing() {
         return false;
-    }
-
-    @Override
-    public void updateOBB() {
-        this.obb = OBB.fromFoot(this);
     }
 
     @Override
@@ -114,9 +120,10 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         return growScale;
     }
     @Override
-    public OBB getOBB() {
-        return obb;
+    public OBB getOBB(float partialTicks) {
+        return partialTicks == 1.0F?obb:OBB.fromFoot(this,partialTicks);
     }
+
     public ColorAttack getColorAttack() {
         return colorAttack;
     }

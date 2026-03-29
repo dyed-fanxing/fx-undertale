@@ -35,7 +35,11 @@ public class StopAndSwitchTargetIfTargetInvalidAndSelfNoAttacking {
             BiConsumer<E, LivingEntity> onAttackTarget,BiConsumer<E, LivingEntity> onInvalid) {
         return create((mob)->true, targetFinder,onAttackTarget,  (mob,target,newTargetOptional)->false,onInvalid, true,(mob,target)->{});
     }
-
+    public static <E extends Mob> BehaviorControl<E> create(
+            Function<E, Optional<? extends LivingEntity>> targetFinder,
+            BiConsumer<E, LivingEntity> onAttackTarget,BiConsumer<E, LivingEntity> onInvalid,boolean checkTired) {
+        return create((mob)->true, targetFinder,onAttackTarget,  (mob,target,newTargetOptional)->false,onInvalid, checkTired,(mob,target)->{});
+    }
     public static <E extends Mob> BehaviorControl<E> create(
             Function<E, Optional<? extends LivingEntity>> targetFinder,
             BiConsumer<E, LivingEntity> onAttackTarget,

@@ -9,7 +9,7 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class FlyingBoneModel extends DefaultedEntityGeoModel<FlyingBone> {
     public FlyingBoneModel() {
-        super(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "bone"), true);
+        super(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "flying_bone"), true);
     }
 
     @Override
