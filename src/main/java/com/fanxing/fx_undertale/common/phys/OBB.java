@@ -307,13 +307,13 @@ public class OBB {
     /**
      * 绕指定轴和 pivot 点旋转 OBB (全 float 版本)
      */
-    public OBB rotateAround(float angle, Vec3 axis, Vec3 pivot) {
-        if (Mth.abs(angle) < Mth.EPSILON) return this;
+    public OBB rotateAround(float radian, Vec3 axis, Vec3 pivot) {
+        if (Mth.abs(radian) < Mth.EPSILON) return this;
         float ax = (float) axis.x;
         float ay = (float) axis.y;
         float az = (float) axis.z;
         // 使用 JOML float 版本
-        Quaternionf quat = new Quaternionf().rotationAxis(angle, ax, ay, az);
+        Quaternionf quat = new Quaternionf().rotationAxis(radian, ax, ay, az);
         // 1. 计算新中心
         Vector3f centerRel = new Vector3f(
                 (float) (this.center.x - pivot.x),
@@ -332,6 +332,41 @@ public class OBB {
         Vec3 newF = new Vec3(jomlF.x, jomlF.y, jomlF.z).normalize();
         Vector3f jomlU = new Vector3f((float) this.up.x, (float) this.up.y, (float) this.up.z);
         jomlU.rotate(quat);
+        Vec3 newU = new Vec3(jomlU.x, jomlU.y, jomlU.z);
+        // 3. 重新正交化
+        Vec3 r = newF.cross(newU).normalize();
+        Vec3 u = r.cross(newF).normalize();
+        return new OBB(newCenter, this.xHalfSize, this.yHalfSize, this.zHalfSize, newF, u);
+    }
+
+    /**
+     * 使用角速度向量进行旋转（使用 JOML 的 integrate 方法，不显式分解角度和轴）
+     * 注意：angularVelocity 向量必须使用弧度制
+     * @param angularVelocity 已按时间缩放的角速度向量（方向=旋转轴，大小=旋转角度，弧度）
+     * @param pivot 旋转锚点
+     * @return 旋转后的 OBB
+     */
+    public OBB rotateByAngularVelocity(Vector3f angularVelocity, Vec3 pivot) {
+        // 使用 JOML 的 integrate 方法，时间设为 1（因为角速度向量已经按时间缩放）
+        Quaternionf qRotation = new Quaternionf().integrate(1.0f, angularVelocity.x, angularVelocity.y, angularVelocity.z);
+        // 1. 计算新中心（相对于 pivot 旋转）
+        Vector3f centerRel = new Vector3f(
+                (float) (this.center.x - pivot.x),
+                (float) (this.center.y - pivot.y),
+                (float) (this.center.z - pivot.z)
+        );
+        centerRel.rotate(qRotation);
+        Vec3 newCenter = new Vec3(
+                centerRel.x + pivot.x,
+                centerRel.y + pivot.y,
+                centerRel.z + pivot.z
+        );
+        // 2. 计算新轴向
+        Vector3f jomlF = new Vector3f((float) this.forward.x, (float) this.forward.y, (float) this.forward.z);
+        jomlF.rotate(qRotation);
+        Vec3 newF = new Vec3(jomlF.x, jomlF.y, jomlF.z).normalize();
+        Vector3f jomlU = new Vector3f((float) this.up.x, (float) this.up.y, (float) this.up.z);
+        jomlU.rotate(qRotation);
         Vec3 newU = new Vec3(jomlU.x, jomlU.y, jomlU.z);
         // 3. 重新正交化
         Vec3 r = newF.cross(newU).normalize();

@@ -316,7 +316,7 @@ public class SansAi {
                         a.shootRotationBone(t, 1F, 10F);
                     }
                     if (tick == 26) {
-//                        a.shootRotationBone(t, -1F, 10F);
+//                        a.shootRotationBone(t, -1F, -10F);
                     }
                     return tick >= 30;
                 }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (1 + getTargetSpeed(t) * 2))
@@ -574,7 +574,7 @@ public class SansAi {
     }
 
     public static void clearTargetTag(Sans mob, LivingEntity target) {
-        Thread.dumpStack();
+//        Thread.dumpStack();
         mob.controlSoulMode(target, SoulMode.DEFAULT);
         mob.setTargetId(-1);
         mob.applyKarma(target, false);

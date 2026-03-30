@@ -70,7 +70,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     protected int decayTick = 47;           // 开始衰退Tick点
 
     protected float holdTimeScale;
-    private static final float DIST = 5f;
+    private static final float DIST = 8f;
     private Entity target;
 
     // 骑乘相关
@@ -222,8 +222,8 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
             float powerExp = 2.5f;     // 急降段幂指数
 
             float velSpeed;
-            if (t < rise) velSpeed = (float) (20 * Math.pow(1 - t, 19)) * 0.1f;
-            else if (t < slowEnd) velSpeed = (slowEndY - 1f) / (slowEnd - rise) * 0.15f;
+            if (t < rise) velSpeed = (float) (30 * Math.pow(1 - t, 19)) * 0.2f;
+            else if (t < slowEnd) velSpeed = (slowEndY - 1f) / (slowEnd - rise) * 0.25f;
             else {
                 float v = (t - slowEnd) / (1 - slowEnd);
                 float dt = 1 - slowEnd;

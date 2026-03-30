@@ -2,6 +2,7 @@ package com.fanxing.fx_undertale.entity.capability;
 
 import com.fanxing.fx_undertale.common.phys.OBB;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 
 /**
  * 需要OBB碰撞的实体
@@ -16,4 +17,5 @@ public interface OBBHolder {
      * 重写这个方法，以获取OBB的下的AABB渲染剔除碰撞箱
      */
     AABB getBoundingBoxForCulling();
+
 }

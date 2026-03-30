@@ -63,6 +63,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
+import org.joml.Vector3f;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
@@ -804,17 +805,17 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             // 钳位 x 到有效范围，确保 leftWidth 和 rightWidth 非负
             for (int c = 0; c < cols; c++) {
                 // 左侧骨头
-                RotationBone leftBone = createRotationBone(attackUUID, scale, leftWidth / scale, ticks).holdTimeScale(0.9f).roll(-90f);
+                RotationBone leftBone = createRotationBone(attackUUID, scale, leftWidth / scale, ticks).holdTimeScale(0.9f).initOrientation(yRot,0,-90f);
                 leftBone.setPos(RotUtils.yRot(new Vec3(-width, c * spacing + leftBone.getBbWidth() * 0.5f, -r * spacing), yRot).add(this.getX(), groundY, this.getZ()));
-                leftBone.setYRot(yRot);
                 leftBone.shoot(vel.scale(speed));
+                leftBone.updateOBB();
                 level.addFreshEntity(leftBone);
 
                 // 右侧骨头
-                RotationBone rightBone = createRotationBone(attackUUID, scale, rightWidth / scale, ticks).holdTimeScale(0.9f).roll(90f);
+                RotationBone rightBone = createRotationBone(attackUUID, scale, rightWidth / scale, ticks).holdTimeScale(0.9f).initOrientation(yRot,0,90f);
                 rightBone.setPos(RotUtils.yRot(new Vec3(width, c * spacing + rightBone.getBbWidth() * 0.5f, -r * spacing), yRot).add(this.getX(), groundY, this.getZ()));
-                rightBone.setYRot(yRot);
                 rightBone.shoot(vel.scale(speed));
+                rightBone.updateOBB();
                 level.addFreshEntity(rightBone);
             }
         }
@@ -831,20 +832,21 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         Gravity targetData = target.getData(AttachmentTypes.GRAVITY);
         Vec3 targetGroundPos = GravityUtils.findGround(level(), target.position(), targetData.getGravity());
         PhysicsMotionModel motionModel = getPhaseID() == FIRST_PHASE ? new RoseSpiralMotionModel(0.1f, 0.1f) : new SpringMotionModel(0.01f);
-        RotationBone bone = createRotationBone(UUID.randomUUID().toString(), scale, growScale, 300).angularVelocity(angularVelocity).holdTimeScale(0.9F).motion(motionModel,
+        RotationBone bone = createRotationBone(UUID.randomUUID().toString(), scale, growScale, 300).angularVelocity(new Vector3f(0,angularVelocity*Mth.DEG_TO_RAD,0)).holdTimeScale(0.9F).motion(motionModel,
                 targetGroundPos.add(targetData.localToWorld(RotUtils.rotateYXZ(scale * growScale * isRightHand, (float) targetHalfBbHeight, 0, getYHeadRot(), 0,0)))
         );
         Vec3 worldVec3 = RotUtils.rotateYXZ(bbWidth * isRightHand, (float) targetHalfBbHeight, 2*bbWidth, getYHeadRot(), 0,0);
         bone.setPos(this.position().add(targetData.localToWorld(worldVec3)));
-        bone.setXRot(90f);
+        bone.initOrientation(0,90,0);
         bone.gravity(gravity);
+        bone.updateOBB();  // ✅ 添加 updateOBB() 确保四元数正确同步到 OBB
         level().addFreshEntity(bone);
 
 
-        RotationBone bone1 = createRotationBone(UUID.randomUUID().toString(), scale, growScale, 300).angularVelocity(angularVelocity).holdTimeScale(0.9F).motion(motionModel,
+        RotationBone bone1 = createRotationBone(UUID.randomUUID().toString(), scale, growScale, 300).angularVelocity(new Vector3f(0,angularVelocity*Mth.DEG_TO_RAD,0)).holdTimeScale(0.9F).motion(motionModel,
                 targetGroundPos.add(targetData.localToWorld(RotUtils.rotateYXZ(scale * growScale * isRightHand, (float) targetHalfBbHeight, 0, getYHeadRot(), 0,0))));
         bone1.setPos(this.position().add(RotUtils.rotateYXZ(bbWidth * isRightHand, (float) targetHalfBbHeight, bbWidth * 2, getYHeadRot(), 0,0)));
-        bone1.setXRot(-90f);
+        bone1.initOrientation(0,-90f,0);
         bone1.gravity(gravity);
         bone1.updateOBB();
         level().addFreshEntity(bone1);
@@ -964,59 +966,6 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             }
         }
     }
-//    public void summonCircleGroundBoneSpine(LivingEntity target, int layer, float growScale, int lifetime, int delay) {
-//        String attackTypeUUID = UUID.randomUUID().toString();
-//        float spacing = 0.7f;
-//        Vec3 centerPos = target.position();
-//        Gravity data = target.getData(AttachmentTypes.GRAVITY);
-//        Direction gravity = data.getGravity();
-//        // 获取重力旋转四元数（临时构造，仅用于计算）
-//        Gravity tempGravity = new Gravity(gravity);
-//        Quaternionf gravityRot = tempGravity.getLocalToWorld();
-//        Quaternionf invGravity = gravityRot.conjugate(new Quaternionf());
-//
-//        // 中心骨刺（无指向需求，角度为0）
-//        this.level().addFreshEntity(createGroundBone(attackTypeUUID, centerPos, 1.0f, growScale, lifetime, delay, 0f, 0f)
-//                .gravity(gravity).holdTimeScale(-1f));
-//
-//        // 音效和预警（略）
-//        this.level().playSound(null, centerPos.x, centerPos.y, centerPos.z, SoundEvnets.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
-//        PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.Cylinder((float) centerPos.x, (float) centerPos.y, (float) centerPos.z, layer * spacing, growScale, lifetime, WarningTip.RED, gravity));
-//
-//        for (int i = 0; i < layer; i++) {
-//            int count = 8 * (i + 1);
-//            float interval = 360f / count;
-//            float r = spacing * (i + 1);
-//            float angle = interval;
-//            for (int j = 0; j < count; j++, angle += interval) {
-//                // 计算骨刺的世界坐标
-//                Vec3 pos = centerPos.add(data.localToWorld(r * Math.cos(angle * Math.PI / 180F), 0, r * Math.sin(angle * Math.PI / 180F)));
-//                pos = GravityUtils.findGround(this.level(), pos, gravity);
-//
-//                // 随机俯仰偏移（度）
-//                float randomPitch = (float) (this.random.nextGaussian() * 8);
-//
-//                // 世界指向中心的方向
-//                Vec3 worldDir = centerPos.subtract(pos).normalize();
-//
-//                // 转换到默认重力坐标系下
-//                Vector3f localDir = invGravity.transform(new Vector3f((float) worldDir.x, (float) worldDir.y, (float) worldDir.z));
-//
-//                // 提取局部 yaw 和 pitch（先 Y 后 X）
-//                double yawLocal = Math.atan2(localDir.x, localDir.z);
-//                double pitchLocal = Math.asin(Math.min(1, Math.max(-1, localDir.y)));
-//
-//                // 叠加随机俯仰（绕局部 X 轴）
-//                pitchLocal += Math.toRadians(randomPitch);
-//
-//                // 创建骨刺
-//                GroundBone bone = createGroundBone(attackTypeUUID, pos, 1.0f, growScale, lifetime, delay,
-//                        (float) Math.toDegrees(yawLocal), (float) Math.toDegrees(pitchLocal));
-//                bone.gravity(gravity).holdTimeScale(-1f);
-//                this.level().addFreshEntity(bone);
-//            }
-//        }
-//    }
     /**
      * 骨刺波动 - 以自身为中心发射，单击（一阶段）
      */

@@ -222,6 +222,15 @@ public class RotUtils {
     }
 
     /**
+     * 使用指定的四元数进行旋转
+     */
+    public static Vec3 rotate(float x,float y, float z, Quaternionf quaternionf) {
+        // 使用四元数计算眼睛位置
+        Vector3f upLocal = new Vector3f(x, y, z).rotate(quaternionf);
+        return new Vec3(upLocal.x, upLocal.y, upLocal.z);
+    }
+
+    /**
      * 返回从from向量旋转到to向量的四元数，常用于渲染矩阵旋转
      */
     public static Quaternionf rotation(Vec3 from, Vec3 to) {

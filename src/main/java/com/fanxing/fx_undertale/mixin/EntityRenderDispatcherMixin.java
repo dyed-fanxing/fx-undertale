@@ -5,6 +5,7 @@ import com.fanxing.fx_undertale.common.phys.OBB;
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import com.fanxing.fx_undertale.entity.capability.OBBRotationCollider;
+import com.fanxing.fx_undertale.entity.capability.QuaternionRotatable;
 import com.fanxing.fx_undertale.entity.capability.Rollable;
 import com.fanxing.fx_undertale.entity.summon.RotationBone;
 import com.fanxing.fx_undertale.utils.RotUtils;
@@ -12,7 +13,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.fanxing.fx_undertale.utils.RenderUtils;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -54,7 +57,7 @@ public class EntityRenderDispatcherMixin {
         if (entity instanceof OBBHolder obbEntity && obbEntity.getOBB() != null) {
             ci.cancel();
             OBB obb = obbEntity.getOBB(partialTicks).move(entity.position().reverse());
-            RenderUtils.renderOBBOutline(poseStack.last(), consumer,obb, r, g, b, 1.0f);
+            RenderUtils.renderOBBOutline(poseStack.last(), consumer, obb, r, g, b, 1.0f);
             // 2. 如果是多部分实体，渲染各部分（保持原版逻辑）
             if (entity.isMultipartEntity()) {
                 double d0 = -Mth.lerp(partialTicks, entity.xOld, entity.getX());
@@ -84,7 +87,7 @@ public class EntityRenderDispatcherMixin {
             if (entity instanceof LivingEntity) {
                 RenderUtils.renderOBBOutline(poseStack.last(), consumer, obb.getSliceRelativeToEntityFeet(entity.getEyeHeight()), 1.0F, 0F, 0F, 1.0f);
             } else {
-                RenderUtils.renderOBBOutline(poseStack.last(),consumer,obb.getSliceRelativeToEntityFeet(entity.getEyeHeight()),1.0F, 0.5F, 0F, 1.0f);
+                RenderUtils.renderOBBOutline(poseStack.last(), consumer, obb.getSliceRelativeToEntityFeet(entity.getEyeHeight()), 1.0F, 0.5F, 0F, 1.0f);
             }
 
             // 4. 如果有载具，渲染乘坐位置
@@ -117,7 +120,9 @@ public class EntityRenderDispatcherMixin {
                 }
             }
             // 5. 渲染视线向量 key 必须用Rotlerp 角度插值去计算位置，不然lerp默认插值会在旋转一圈后在一帧内突然反向转一圈，渲染实体同理
-            if (entity instanceof Rollable rollable) {
+            if (entity instanceof QuaternionRotatable quaternionRotatable) {
+                renderVector(poseStack, consumer, RotUtils.rotate(0, entity.getEyeHeight(), 0, quaternionRotatable.getLerpOrientation(partialTicks)).toVector3f(), entity.getViewVector(partialTicks).scale(2.0F), -16776961);
+            } else if (entity instanceof Rollable rollable) {
                 renderVector(poseStack, consumer, RotUtils.rotateYXZ(0, entity.getEyeHeight(), 0,
                         Mth.rotLerp(partialTicks, entity.yRotO, entity.getYRot()),
                         Mth.rotLerp(partialTicks, entity.xRotO, entity.getXRot()),
@@ -129,12 +134,9 @@ public class EntityRenderDispatcherMixin {
                         Mth.rotLerp(partialTicks, entity.xRotO, entity.getXRot())
                 ).toVector3f(), entity.getViewVector(partialTicks).scale(2.0F), -16776961);
             }
-
-            if (entity instanceof OBBRotationCollider obbRotationCollider) {
-                OBBCCDDebugRenderer.renderSweptOBB(poseStack,consumer,obb,obbRotationCollider.getAngularVelocity()*Mth.DEG_TO_RAD, obbRotationCollider.getRotateAxis(),Vec3.ZERO,0xFF0000,0xFF0000);
+            if (entity instanceof OBBRotationCollider obbRotationCollider && OBBCCDDebugRenderer.isShowCCDDebug()) {
+                OBBCCDDebugRenderer.renderSweptOBB(poseStack, consumer, obb, obbRotationCollider.getAngularVelocity(), Vec3.ZERO, 0xCC00FFFF, 0xCC00FFFF);
             }
         }
     }
-
-
 }

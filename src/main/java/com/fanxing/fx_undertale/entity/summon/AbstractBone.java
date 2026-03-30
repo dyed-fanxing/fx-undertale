@@ -50,7 +50,6 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         this.growScale = growScale;
         this.lifetime = lifetime;
         this.damage = damage;
-        refreshDimensions();
     }
 
     // 链式配置方法（可被子类复用）
@@ -121,7 +120,7 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
     }
     @Override
     public OBB getOBB(float partialTicks) {
-        return partialTicks == 1.0F?obb:OBB.fromFoot(this,partialTicks);
+        return partialTicks == 1f?obb:OBB.fromFoot(this,partialTicks);
     }
 
     public ColorAttack getColorAttack() {
@@ -147,7 +146,6 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         tag.putFloat("damage", damage);
         tag.putInt("lifetime", lifetime);
         tag.putInt("color", colorAttack.getColor());
-        tag.putString("gravity",getData(AttachmentTypes.GRAVITY).getGravity().getName());
     }
 
     @Override
@@ -159,8 +157,6 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         if(tag.contains("damage")) damage = tag.getFloat("damage");
         if(tag.contains("lifetime")) lifetime = tag.getInt("lifetime");
         if(tag.contains("color")) colorAttack = ColorAttack.of(tag.getInt("color"));
-        if(tag.contains("gravity")) this.setData(AttachmentTypes.GRAVITY,new Gravity(Direction.byName(tag.getString("gravity"))));
-        refreshDimensions();
     }
 
     public void writeSpawnData(RegistryFriendlyByteBuf buf) {
@@ -170,7 +166,6 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         buf.writeFloat(damage);
         buf.writeInt(lifetime);
         buf.writeInt(colorAttack.getColor());
-        buf.writeEnum(this.getData(AttachmentTypes.GRAVITY).getGravity());
     }
 
     public void readSpawnData(RegistryFriendlyByteBuf buf) {
@@ -180,8 +175,6 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         damage = buf.readFloat();
         lifetime = buf.readInt();
         colorAttack = ColorAttack.of(buf.readInt());
-        this.setData(AttachmentTypes.GRAVITY,new Gravity(buf.readEnum(Direction.class)));
-        refreshDimensions();
     }
 
 }

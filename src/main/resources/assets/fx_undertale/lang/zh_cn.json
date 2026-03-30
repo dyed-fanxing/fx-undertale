@@ -27,6 +27,9 @@
   "death.attack.fx_undertale.frame.flying_bone": "%1$s 被 %2$s 使用 魔法骨头 射穿了",
   "death.attack.fx_undertale.frame.ground_bone": "%1$s 被 %2$s 使用 魔法骨头 刺穿了",
 
+  "fx_undertale.debug.ccd.on": "CCD扫掠: 显示",
+  "fx_undertale.debug.ccd.off": "CCD扫掠: 关闭",
+
 
 
   "fx_undertale.configuration.general": "通用",

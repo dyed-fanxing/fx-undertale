@@ -18,6 +18,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
@@ -36,14 +38,31 @@ public class GroundBone extends AbstractBone<GroundBone> {
 
     private int delay = 20;
 
+    private float roll;
+
     public GroundBone(EntityType<? extends GroundBone> type, Level level) {
         super(type, level);
     }
     public GroundBone(Level level, LivingEntity owner, float scale, float growScale, float damage, int lifetime, int delay) {
         super(EntityTypes.GROUND_BONE.get(), level, owner,scale,growScale,lifetime,damage);
         this.delay = delay;
+        refreshDimensions();
     }
 
+
+//    @Override
+//    public GroundBone gravity(Direction gravity) {
+//        Quaternionf gravityRotation = Gravity.getRotation(gravity);
+//        orientation = gravityRotation.mul(orientation, new Quaternionf());
+
+//        Vector3f currentAngularVel = new Vector3f(getAngularVelocity());  // 创建副本
+//        Vector3f temp = new Vector3f(currentAngularVel);
+//        temp.rotate(gravityRotation);
+//        setAngularVelocity(temp);
+//        syncEulerAnglesFromQuaternion();
+//        return this;
+//    }
+//
     @Override
     public float getGrowProgress(float partialTick) {
         if (delay >= -lifetime && delay < 0) {
@@ -65,7 +84,7 @@ public class GroundBone extends AbstractBone<GroundBone> {
         if (delay >= -lifetime && delay <= 0) {
             this.refreshDimensions();
             if (!this.level().isClientSide) {
-                for (LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class, obb == null ? this.getBoundingBox() : this.obb.getBoundingAABB(), this::canHitEntity)) {
+                for (LivingEntity target : this.level().getEntitiesOfClass(LivingEntity.class,this.obb.getBoundingAABB(), this::canHitEntity)) {
                     onHitEntity(new EntityHitResult(target));
                 }
             }
@@ -78,7 +97,7 @@ public class GroundBone extends AbstractBone<GroundBone> {
 
     @Override
     protected boolean canHitEntity(Entity entity) {
-        return super.canHitEntity(entity) && (this.obb == null || this.obb.intersects(entity.getBoundingBox()));
+        return super.canHitEntity(entity) && this.obb.intersects(entity.getBoundingBox());
     }
 
     @Override
@@ -124,14 +143,12 @@ public class GroundBone extends AbstractBone<GroundBone> {
     public void writeSpawnData(RegistryFriendlyByteBuf buf) {
         super.writeSpawnData(buf);
         buf.writeInt(this.delay);
-        buf.writeEnum(this.getData(AttachmentTypes.GRAVITY).getGravity());
     }
 
     @Override
     public void readSpawnData(RegistryFriendlyByteBuf buf) {
         super.readSpawnData(buf);
         this.delay = buf.readInt();
-        this.setData(AttachmentTypes.GRAVITY, Gravity.applyGravity(this, buf.readEnum(Direction.class)));
         refreshDimensions();
     }
 

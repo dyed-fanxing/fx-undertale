@@ -1,8 +1,5 @@
 package com.fanxing.fx_undertale.utils;
 
-import dev.kosmx.playerAnim.api.layered.modifier.AbstractFadeModifier;
-import software.bernie.geckolib.animation.EasingType;
-import software.bernie.geckolib.animation.keyframe.AnimationPoint;
 
 /**
  * 动画计算工具类

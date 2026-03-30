@@ -118,6 +118,8 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Scalable
 
     @Override
     public void lerpTo(double p_19896_, double p_19897_, double p_19898_, float p_19899_, float p_19900_, int p_19901_) {
+//        this.setPos(p_19896_, p_19897_, p_19898_);
+//        this.setRot(p_19899_, p_19900_);
     }
 
     // ========== 基类重载 ==========
@@ -130,8 +132,8 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Scalable
             DamageSource damageSource;
             if (owner instanceof Sans) {
                 damageSource = damageSources().source(DamageTypes.KARMA_BLOCKABLE, this, owner);
-            } else if (owner instanceof LivingEntity) {
-                damageSource = this.damageSources().mobProjectile(this, (LivingEntity) owner);
+            } else if (owner instanceof LivingEntity living) {
+                damageSource = this.damageSources().mobProjectile(this, living);
             } else {
                 damageSource = this.damageSources().magic();
             }
@@ -141,7 +143,7 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Scalable
                 if (livingTarget.isBlocking()) {
                     this.setNoGravity(false);
                     this.deflect(CollisionDeflection.MIRROR_DEFLECT, target, owner, false);
-                    this.setDeltaMovement(this.getDeltaMovement().scale(0.01F));
+                    this.setDeltaMovement(this.getDeltaMovement().scale(0.02F));
                 }
             }
         }
@@ -156,21 +158,23 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Scalable
 
     @Override
     protected float getInertia() {
-        return 0.995f;
+        return 0.99f;
     }
     @Override
     protected float getLiquidInertia() {
         return 0.88888f;
     }
+
+
     @Override
     protected double getDefaultGravity() {
-        return 0f;
+        return 0.05F;
     }
+
     @Override
     public boolean isPickable() {
         return true;
     }
-
     @Override
     public boolean isAttackable() {
         return true;

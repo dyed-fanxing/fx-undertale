@@ -109,6 +109,7 @@ public class Setup {
 
 
         registrar.playToClient(SyncMotionPayload.TYPE,SyncMotionPayload.STREAM_CODEC, SyncMotionPayload::handle);
+        registrar.playToClient(QuaternionSyncPacket.TYPE,QuaternionSyncPacket.STREAM_CODEC, QuaternionSyncPacket::handle);
     }
 
     /**

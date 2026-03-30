@@ -24,6 +24,9 @@
 
   "death.attack.fx_undertale.frame.player": "%1$s al %2$s use frame killed",
 
+  "fx_undertale.debug.ccd.on": "CCD Debug: ON",
+  "fx_undertale.debug.ccd.off": "CCD Debug: OFF",
+
   "config.fx_undertale.general": "通用",
   "config.fx_undertale.general.segments": "圆段数",
   "config.fx_undertale.general.expPerLevel": "每级所需经验基数",

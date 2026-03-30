@@ -60,17 +60,13 @@ public class MagicBone extends Item implements GeoItem {
                 SpringMotionModel model = new SpringMotionModel(frequency,damping);
                 bone.setXRot(pitch);
                 bone.setYRot(yaw);
-                bone.roll(roll);
-                bone.angularVelocity(angularVelocity);
                 bone.motion(model,player.position());
 
                 player.sendSystemMessage(Component.literal("生成弹簧骨骼，参数：" + frequency + ", " + damping + ", " + speed + ", " + angularVelocity));
                 bone1.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
                 bone1.setXRot(pitch);
                 bone1.setYRot(yaw);
-                bone1.roll(-roll);
                 bone1.motion(model,player.position());
-                bone.angularVelocity(angularVelocity);
                 level.addFreshEntity(bone1);
             } else {
                 // 默认引力模型

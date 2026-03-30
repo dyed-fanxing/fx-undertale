@@ -89,10 +89,10 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
             } else {
                 f = this.getInertia();
             }
+            this.setDeltaMovement(vec3.add(vec3.normalize().scale(this.accelerationPower)).scale(f));
             if(!this.isNoGravity()){
                 this.applyGravity();
             }
-            this.setDeltaMovement(vec3.add(vec3.normalize().scale(this.accelerationPower)).scale(f));
         } else {
             this.discard();
         }

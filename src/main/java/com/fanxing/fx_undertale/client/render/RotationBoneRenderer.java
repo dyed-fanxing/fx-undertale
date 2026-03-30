@@ -3,9 +3,8 @@ package com.fanxing.fx_undertale.client.render;
 import com.fanxing.fx_undertale.client.model.entity.RotationBoneModel;
 import com.fanxing.fx_undertale.entity.summon.RotationBone;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.util.Mth;
+import org.joml.Quaternionf;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.util.Color;
@@ -27,9 +26,7 @@ public class RotationBoneRenderer extends GeoEntityRenderer<RotationBone> {
 
     @Override
     protected void applyRotations(RotationBone animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(-Mth.rotLerp(partialTick,animatable.yRotO,animatable.getYRot())));
-        poseStack.mulPose(Axis.XP.rotationDegrees(Mth.rotLerp(partialTick,animatable.xRotO,animatable.getXRot())));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.rotLerp(partialTick,animatable.rollO,animatable.getRoll())));
+        poseStack.mulPose(animatable.getLerpOrientation(partialTick));
     }
 
     @Override
