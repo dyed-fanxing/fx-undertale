@@ -50,7 +50,7 @@ public class DebugCommand {
                                             int function = IntegerArgumentType.getInteger(cc, "function");
                                             switch (function) {
                                                 case 1 -> sans.shootBoneRingVolley(player);
-                                                case 2 -> sans.shootArcSweepVolley();
+                                                case 2 -> sans.shootArcSweepVolley(player);
                                                 case 3 -> sans.shootAimedBarrage(player);
                                                 case 4 -> sans.shootForwardBarrage(player);
                                                 case 5 -> sans.summonGroundBoneSpineAtSelf();

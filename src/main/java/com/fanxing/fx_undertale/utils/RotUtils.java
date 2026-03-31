@@ -21,6 +21,10 @@ public class RotUtils {
     public static float xRotD(Vec3 vec) {
         return Mth.wrapDegrees((float)(-(Mth.atan2(vec.y, vec.horizontalDistance()) * Mth.RAD_TO_DEG)));
     }
+    public static float[] yxRotD(Vec3 vec){
+        return new float[]{Mth.wrapDegrees((float)(Mth.atan2(vec.z,vec.x) * Mth.RAD_TO_DEG - 90.0F)),Mth.wrapDegrees((float)(-(Mth.atan2(vec.y, vec.horizontalDistance()) * Mth.RAD_TO_DEG)))};
+    }
+
     // 航偏角度，同上
     public static float yRotD(double x,double z) {
         return Mth.wrapDegrees((float)(Mth.atan2(x, z) * Mth.RAD_TO_DEG - 90.0F));
@@ -179,7 +183,7 @@ public class RotUtils {
     }
 
     public static Vec3 rotateYXZ(Vec3 pos,float yaw,float pitch,float roll){
-        return rotateYXZ((float) pos.x, (float) pos.y, (float) pos.z,roll,yaw,pitch);
+        return rotateYXZ((float) pos.x, (float) pos.y, (float) pos.z,yaw,pitch,roll);
     }
 
     /**

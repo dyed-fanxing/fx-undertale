@@ -173,11 +173,11 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Scalable
 
     @Override
     public boolean isPickable() {
-        return true;
+        return false;
     }
     @Override
     public boolean isAttackable() {
-        return true;
+        return false;
     }
 
 

@@ -3,11 +3,13 @@ package com.fanxing.fx_undertale.entity.summon;
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
-import com.fanxing.fx_undertale.registry.AttachmentTypes;
+import com.fanxing.fx_undertale.entity.capability.QuaternionRotatable;
+import com.fanxing.fx_undertale.entity.capability.Rollable;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.utils.CurvesUtils;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
@@ -16,7 +18,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -31,15 +32,14 @@ import software.bernie.geckolib.util.GeckoLibUtil;
  * @author FanXing
  * @since 2025-08-18
  */
-public class GroundBone extends AbstractBone<GroundBone> {
+public class GroundBone extends AbstractBone<GroundBone> implements QuaternionRotatable {
 
     private static final Logger log = LoggerFactory.getLogger(GroundBone.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     private int delay = 20;
 
-    private float roll;
-
+    private Quaternionf orientation = new Quaternionf();
     public GroundBone(EntityType<? extends GroundBone> type, Level level) {
         super(type, level);
     }
@@ -48,21 +48,23 @@ public class GroundBone extends AbstractBone<GroundBone> {
         this.delay = delay;
         refreshDimensions();
     }
+    public GroundBone orientation(float yaw, float pitch, float roll) {
+        // 取负数为了对齐MC的坐标系
+        orientation.rotateYXZ(-yaw * Mth.DEG_TO_RAD, pitch * Mth.DEG_TO_RAD, roll * Mth.DEG_TO_RAD);  // 创建副本
+        return this;
+    }
 
+    public GroundBone orientation(Quaternionf orientation) {
+        this.orientation.set(orientation);
+        return this;
+    }
+    @Override
+    public GroundBone gravity(Direction gravity) {
+        Quaternionf gravityRotation = Gravity.getRotation(gravity);
+        orientation = gravityRotation.mul(orientation, new Quaternionf());
+        return this;
+    }
 
-//    @Override
-//    public GroundBone gravity(Direction gravity) {
-//        Quaternionf gravityRotation = Gravity.getRotation(gravity);
-//        orientation = gravityRotation.mul(orientation, new Quaternionf());
-
-//        Vector3f currentAngularVel = new Vector3f(getAngularVelocity());  // 创建副本
-//        Vector3f temp = new Vector3f(currentAngularVel);
-//        temp.rotate(gravityRotation);
-//        setAngularVelocity(temp);
-//        syncEulerAnglesFromQuaternion();
-//        return this;
-//    }
-//
     @Override
     public float getGrowProgress(float partialTick) {
         if (delay >= -lifetime && delay < 0) {
@@ -115,12 +117,20 @@ public class GroundBone extends AbstractBone<GroundBone> {
         entity.hurt(damageSource, damage);
     }
 
-    // ========== 物理参数 ==========
+    @Override
+    public Quaternionf getLerpOrientation(float partialTick) {
+        return orientation;
+    }
+
+    @Override
+    public Quaternionf getOrientation() {
+        return orientation;
+    }
+
     @Override
     protected double getDefaultGravity() {
         return 0f;
     }
-
     public int getDelay() {
         return delay;
     }
@@ -130,12 +140,21 @@ public class GroundBone extends AbstractBone<GroundBone> {
     protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putInt("delay", delay);
+        if (orientation != null) {
+            tag.put("orientation", this.newFloatList(orientation.x, orientation.y, orientation.z, orientation.w));
+        }
     }
 
     @Override
     protected void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("delay")) this.delay = tag.getInt("delay");
+        if(tag.contains("delay")) this.delay = tag.getInt("delay");
+        if (tag.contains("orientation")) {
+            ListTag list = tag.getList("orientation", 5);
+            this.orientation.set(list.getFloat(0), list.getFloat(1), list.getFloat(2), list.getFloat(3));
+        } else {
+            orientation.rotationYXZ(-getYRot() * Mth.DEG_TO_RAD, getXRot() * Mth.DEG_TO_RAD, (tag.contains("roll") ? tag.getFloat("roll") : 0f) * Mth.DEG_TO_RAD);
+        }
         refreshDimensions();
     }
 
@@ -143,12 +162,17 @@ public class GroundBone extends AbstractBone<GroundBone> {
     public void writeSpawnData(RegistryFriendlyByteBuf buf) {
         super.writeSpawnData(buf);
         buf.writeInt(this.delay);
+        buf.writeFloat(orientation.x);
+        buf.writeFloat(orientation.y);
+        buf.writeFloat(orientation.z);
+        buf.writeFloat(orientation.w);
     }
 
     @Override
     public void readSpawnData(RegistryFriendlyByteBuf buf) {
         super.readSpawnData(buf);
         this.delay = buf.readInt();
+        orientation.set(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat());
         refreshDimensions();
     }
 

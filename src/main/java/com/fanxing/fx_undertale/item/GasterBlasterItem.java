@@ -18,6 +18,8 @@ import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -25,6 +27,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -89,10 +92,10 @@ public class GasterBlasterItem extends Item implements GeoItem {
                 player.startUsingItem(hand);
                 return InteractionResultHolder.consume(itemStack);
             } else {
-                HitResult hitResult = ProjectileUtils.getHitResultOnViewVector(player, entity -> entity.isPickable() && entity != player.getVehicle(), GasterBlaster.DEFAULT_LENGTH);
+                HitResult hitResult = ProjectileUtils.getHitResultOnViewVector(player, entity -> entity.isPickable() && entity != player.getVehicle() && !(entity instanceof TraceableEntity traceable && traceable.getOwner() != player), GasterBlaster.DEFAULT_LENGTH);
                 GasterBlaster blaster = new GasterBlaster(level, player);
                 double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
-                blaster.setPos(player.position().add(RotUtils.rotateYXZ(new Vec3(0, safeDistance, 0), player.getYRot(), player.getXRot(), player.getRandom().nextFloat() * 180f - 90f)));
+                blaster.setPos(player.position().add(RotUtils.rotateYXZ(new Vec3(0, safeDistance, 0), player.getYRot(), player.getXRot(), player.getRandom().nextFloat() * 180f -90f)));
                 if (hitResult instanceof EntityHitResult entityHitResult) {
                     Entity target = entityHitResult.getEntity();
                     blaster.target(target).aimSmoothSpeed(0.15f);

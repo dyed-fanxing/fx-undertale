@@ -309,7 +309,6 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
     }
 
     @Override
-
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         log.info("readAdditionalSaveData 开始：{}", orientation);
         super.readAdditionalSaveData(tag);
@@ -324,8 +323,6 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
         }
         if (tag.contains("orientation")) {
             ListTag list = tag.getList("orientation", 5);
-
-            log.info("readAdditionalSaveData 从 NTag 读取 orientation：({}, {}, {}, {})", list.getFloat(0), list.getFloat(1), list.getFloat(2), list.getFloat(3));
             this.orientation.set(list.getFloat(0), list.getFloat(1), list.getFloat(2), list.getFloat(3));
         } else {
             orientation.rotationYXZ(-getYRot() * Mth.DEG_TO_RAD, getXRot() * Mth.DEG_TO_RAD, (tag.contains("roll") ? tag.getFloat("roll") : 0f) * Mth.DEG_TO_RAD);

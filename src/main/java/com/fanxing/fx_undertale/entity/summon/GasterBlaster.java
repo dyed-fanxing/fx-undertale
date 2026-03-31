@@ -222,7 +222,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
             float powerExp = 2.5f;     // 急降段幂指数
 
             float velSpeed;
-            if (t < rise) velSpeed = (float) (30 * Math.pow(1 - t, 19)) * 0.2f;
+            if (t < rise) velSpeed = (float) (30 * Math.pow(1 - t, 19)) * 0.1f;
             else if (t < slowEnd) velSpeed = (slowEndY - 1f) / (slowEnd - rise) * 0.25f;
             else {
                 float v = (t - slowEnd) / (1 - slowEnd);

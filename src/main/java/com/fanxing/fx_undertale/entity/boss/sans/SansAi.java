@@ -91,21 +91,21 @@ public class SansAi {
                         return entity.getPhaseID() == Sans.FIRST_PHASE;
                     }
                 },
-//                new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-//                        Pair.of(new AttackSchedulerBehavior<>(createSingleSkills(), MemoryModuleTypes.COOLDOWN_1.get()), 3),
-//                        Pair.of(new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-//                                Pair.of(new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-//                                        Pair.of(createSecondPhaseComboBehavior(), 9)
-////                                        Pair.of(createComboSkillBehavior(), 9)
-//                                )), 10)
-////                                Pair.of(createPersistentSkillBehavior(), 5)
-//                        )), 10)
-//                )) {
-//                    @Override
-//                    protected boolean checkExtraStartConditions(ServerLevel level, Sans entity) {
-//                        return entity.getPhaseID() == Sans.SECOND_PHASE;
-//                    }
-//                },
+                new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
+                        Pair.of(new AttackSchedulerWithBuiltInCoolingBehavior<>(createSingleSkills(), MemoryModuleTypes.COOLDOWN_1.get()), 3),
+                        Pair.of(new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
+                                Pair.of(new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
+                                        Pair.of(createSecondPhaseComboBehavior(), 9)
+//                                        Pair.of(createComboSkillBehavior(), 9)
+                                )), 10)
+//                                Pair.of(createPersistentSkillBehavior(), 5)
+                        )), 10)
+                )) {
+                    @Override
+                    protected boolean checkExtraStartConditions(ServerLevel level, Sans entity) {
+                        return entity.getPhaseID() == Sans.SECOND_PHASE;
+                    }
+                },
                 new RecoverDownGravity(),
                 new RunOneExtra<>(GateBehavior.OrderPolicy.ORDERED, ImmutableList.of(
                         Pair.of(createTeleportIfOutOfFollowRange(), 1),
@@ -309,7 +309,7 @@ public class SansAi {
                 // 飞行骨
                 new AttackNode<>((byte) 8, 3, Sans::shootBoneRingVolley, 30, 40)
                         .weight((a,t)-> WeightMath.linearIncrease(a.distanceTo(t),0,a.getFollowRange())),
-                new AttackNode<Sans>((byte) 9, 4, (a, t) -> a.shootArcSweepVolley(), 30, 40)
+                new AttackNode<Sans>((byte) 9, 4, Sans::shootArcSweepVolley, 30, 40)
                         .weight((a,t)->WeightMath.linearDecrease(a.distanceTo(t),0,a.getFollowRange())*(1 + getTargetSpeed(t)*2)),
                 new AttackNode<Sans>((byte) 11, 100, (a, t, tick) -> {
                     if (tick == 20) {
@@ -582,6 +582,23 @@ public class SansAi {
         Gravity.applyGravity(target, Direction.DOWN);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), Direction.DOWN, 0));
     }
+
+
+
+    public static class MercyPhase extends AttackSchedulerWithoutBuiltlnCoolingBehavior<Sans> {
+        public MercyPhase() {
+            super(List.of(),(a)->List.of(gravitySlamSinge(a,false)));
+        }
+
+        @Override
+        protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull Sans mob) {
+            return super.checkExtraStartConditions(level, mob) && mob.getPhaseID() == Sans.MERCY_PHASE;
+        }
+
+    }
+
+
+
 
     public static class RecoverDownGravity extends AttackSchedulerWithoutBuiltlnCoolingBehavior<Sans> {
         protected Direction lastGravity = Direction.DOWN;

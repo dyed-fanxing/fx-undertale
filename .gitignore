@@ -140,3 +140,8 @@ UT.7z
 /已筛选音效包/羊爸开幕背身移动戳决心的移动音效.wav
 /src/main/resources/assets/fx_undertale/geo/entity/pig_talisman.bbmodel
 /src/main/resources/assets/fx_undertale/geo/entity/pig_talisman.png
+/src/main/resources/assets/fx_undertale/geo/entity/pig_talisman_glow.png
+/src/main/resources/assets/fx_undertale/geo/entity/pig_talisman - Converted.bbmodel
+/src/main/java/com/fanxing/fx_undertale/entity/summon/RotationBone.java.current
+/src/main/java/com/fanxing/fx_undertale/entity/summon/RotationBone.java.before_entitydata
+/docs
