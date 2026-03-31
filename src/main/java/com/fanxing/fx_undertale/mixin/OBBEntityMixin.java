@@ -7,8 +7,6 @@ import com.fanxing.fx_undertale.utils.RotUtils;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * key 以下涉及到需要根据角度插值计算的，都必须用Rotlerp角度插值去计算，不然会导致插值的角度在标准化的时候反向插值
+ * KEY 以下涉及到需要根据角度插值计算的，都必须用Rotlerp角度插值去计算，不然会导致插值的角度在标准化的时候反向插值
  *  在 180 -> -180转换时，由于旧指还是原来的180 而新值变成了-180，如果是lerp插值就会在这一Tick内，从180反向插值到-180，反向绕了整整一圈
  *  由于欧拉角旋转会导致轴方向变反，导致OBB CCD旋转判定的扫掠方向滞后，而不是向着旋转方向的未来扫掠，所以只要涉及需要随意自由旋转的，必须使用四元数，而不能使用欧拉角
  */

@@ -216,7 +216,7 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
             } else {
                 damageSource = new DamageSource(damageSources().damageTypes.getHolderOrThrow(net.minecraft.world.damagesource.DamageTypes.MOB_PROJECTILE), this, owner, hitResult.getLocation());
             }
-            // key 这里的造成伤害仅仅只是判断的伤害值是否小于0，而不是判断目标是否被受伤，但没有掉血
+            // KEY 这里的造成伤害仅仅只是判断的伤害值是否小于0，而不是判断目标是否被受伤，但没有掉血
             boolean hurt = livingTarget.hurt(damageSource, damage) && livingTarget.isDamageSourceBlocked(damageSource);
             // 只有是盾牌碰撞检测成功的且线速度和目标方向不同，则判定可以反弹
             Vec3 location = hitResult.getLocation();

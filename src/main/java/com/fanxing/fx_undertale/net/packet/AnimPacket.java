@@ -18,12 +18,12 @@ import org.slf4j.LoggerFactory;
  * @author FanXing
  * @since 2025-11-19 20:02
  */
-public record AnimPacket(int entityId, byte id,float speed) implements CustomPacketPayload{
+public record AnimPacket(int entityId, int id,float speed) implements CustomPacketPayload{
     public static final CustomPacketPayload.Type<AnimPacket> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "anim_id_packet"));
     public static final StreamCodec<RegistryFriendlyByteBuf, AnimPacket> STREAM_CODEC = CustomPacketPayload.codec(AnimPacket::write, AnimPacket::new);
     private static final Logger log = LoggerFactory.getLogger(AnimPacket.class);
 
-    public AnimPacket(int entityId, byte id) {
+    public AnimPacket(int entityId, int id) {
         this(entityId, id, 1.0f);
     }
     public AnimPacket(FriendlyByteBuf buf) {

@@ -5,8 +5,10 @@ import com.fanxing.fx_undertale.entity.ai.behavior.StartAttacking;
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.net.packet.AnimPacket;
 import com.fanxing.fx_undertale.net.packet.GravityPacket;
+import com.fanxing.fx_undertale.net.packet.TimeJumpTeleportPacket;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
 import com.fanxing.fx_undertale.common.phys.LocalDirection;
@@ -30,6 +32,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.behavior.*;
 import net.minecraft.world.entity.ai.behavior.declarative.BehaviorBuilder;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
 import net.minecraft.world.phys.Vec3;
@@ -77,6 +80,9 @@ public class SansAi {
                         SansAi::clearTargetTag,false
                 ),
                 createOpeningBehavior(),
+                new MercyAttack(),
+                new RecoverDownGravity(),
+
                 new RunOneExtra<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
                         Pair.of(createComboSkillBehavior(), 9),
                         Pair.of(RestartableTryAllBehavior.Order(ImmutableList.of(
@@ -106,7 +112,7 @@ public class SansAi {
                         return entity.getPhaseID() == Sans.SECOND_PHASE;
                     }
                 },
-                new RecoverDownGravity(),
+
                 new RunOneExtra<>(GateBehavior.OrderPolicy.ORDERED, ImmutableList.of(
                         Pair.of(createTeleportIfOutOfFollowRange(), 1),
                         Pair.of(new SpellCastingMoveInFollowRange<>(sans, CLOSE_RANGE_FACTOR, MID_RANGE_FACTOR, 1.0f) {
@@ -169,7 +175,7 @@ public class SansAi {
                     } else if (tick >= 5 && t.onGround()) {
                         a.applyGravityControlTag(t, false);
                         int difficulty = a.level().getDifficulty().getId();
-                        a.summonCircleGroundBoneSpine(t, 5 + 2 * difficulty, 4.5f, 10, 10);
+                        a.summonCircleGroundBoneSpine(t, 5 + 2 * difficulty, 4.5f, 10, 10,-1);
                         a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
                         PacketDistributor.sendToPlayersTrackingEntity(a, new AnimPacket(a.getId(), (byte) 0));
                         return true;
@@ -309,14 +315,14 @@ public class SansAi {
                 // 飞行骨
                 new AttackNode<>((byte) 8, 3, Sans::shootBoneRingVolley, 30, 40)
                         .weight((a,t)-> WeightMath.linearIncrease(a.distanceTo(t),0,a.getFollowRange())),
-                new AttackNode<Sans>((byte) 9, 4, Sans::shootArcSweepVolley, 30, 40)
+                new AttackNode<>((byte) 9, 12, Sans::shootArcSweepVolley, 30, 40)
                         .weight((a,t)->WeightMath.linearDecrease(a.distanceTo(t),0,a.getFollowRange())*(1 + getTargetSpeed(t)*2)),
                 new AttackNode<Sans>((byte) 11, 100, (a, t, tick) -> {
                     if (tick == 20) {
                         a.shootRotationBone(t, 1F, 10F);
                     }
                     if (tick == 26) {
-//                        a.shootRotationBone(t, -1F, -10F);
+                        a.shootRotationBone(t, -1F, -10F);
                     }
                     return tick >= 30;
                 }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange()) * (1 + getTargetSpeed(t) * 2))
@@ -422,7 +428,7 @@ public class SansAi {
                 if (factor >= 0.3F && a.getRandom().nextFloat() < factor * 0.5f) {
                     a.summonGBAtTargetHeight(t, 4, a.getRandom().nextInt(4) * 22.5f, a.getJumpBoostPower() + 5.5f);
                 }
-                a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor, 7, 10);
+                a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor, 7, 10,-1);
                 a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
                 duration[0] = tick;
                 a.applyGravityControlTag(t, false);
@@ -504,14 +510,14 @@ public class SansAi {
             int[] duration = new int[1];
             curr = curr.then(new AttackNode<>((byte) index, 50, (a, t, tick) -> {
                 if (tick == 3) {
-                    a.gravitySlam(t, LocalDirection.values()[4], 0.8f + factor * 0.1f);
+                    a.gravitySlam(t, LocalDirection.values()[index], 0.8f + factor * 0.1f);
                 }
                 if (tick > 3 && state[0] && t.onGround()) {
                     state[0] = false;
                     if (factor >= 0.3F && a.getRandom().nextFloat() < factor * 0.5f) {
                         a.summonGBAtTargetHeight(t, 4, a.getRandom().nextInt(4) * 22.5f, a.getJumpBoostPower() + 5.5f);
                     }
-                    a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor * 3f, 7, 10);
+                    a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor * 3f, 7, 10,-1);
                     a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
                     duration[0] = tick;
                     a.applyGravityControlTag(t, false);
@@ -533,7 +539,7 @@ public class SansAi {
                 if (factor >= 0.3F && a.getRandom().nextFloat() < factor * 0.5f) {
                     a.summonGBAtTargetHeight(t, 4, a.getRandom().nextInt(4) * 22.5f, a.getJumpBoostPower() + 5.5f);
                 }
-                a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor * 3f, 7, 10);
+                a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor * 3f, 7, 10,-1);
                 a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
                 duration[0] = tick;
                 a.applyGravityControlTag(t, false);
@@ -585,20 +591,66 @@ public class SansAi {
 
 
 
-    public static class MercyPhase extends AttackSchedulerWithoutBuiltlnCoolingBehavior<Sans> {
-        public MercyPhase() {
-            super(List.of(),(a)->List.of(gravitySlamSinge(a,false)));
+    public static class MercyAttack extends Behavior<Sans> {
+        protected int tick;
+        private int slamTick;
+        private boolean isSlam;
+        public static final int DURATION = 400;
+
+        public MercyAttack() {
+            super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT),DURATION);
         }
 
         @Override
         protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull Sans mob) {
-            return super.checkExtraStartConditions(level, mob) && mob.getPhaseID() == Sans.MERCY_PHASE;
+            return super.checkExtraStartConditions(level, mob) && mob.getPhaseID() == Sans.MERCY_PHASE && mob.isMercyTriggered();
         }
 
+        @Override
+        protected boolean canStillUse(@NotNull ServerLevel level, @NotNull Sans a, long p_22547_) {
+            return true ;
+        }
+
+        @Override
+        protected void tick(@NotNull ServerLevel level, @NotNull Sans a, long time) {
+            a.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(t -> {
+                if((isSlam || tick > 10) && t.position().subtract(a.originPos).lengthSqr() > 0.25){
+                    a.setIsEyeBlink(true);
+                    a.level().playSound(null,t.getX(),t.getY(),t.getZ(),SoundEvnets.SANS_EYE_BLINK.get(),SoundSource.HOSTILE);
+                    t.teleportTo(a.originPos.x, a.originPos.y, a.originPos.z);
+                }else{
+                    a.setIsEyeBlink(false);
+                }
+                if(tick == 0){
+                    PacketDistributor.sendToPlayersTrackingEntity(a, new TimeJumpTeleportPacket(t.getId(), 2));
+                    t.teleportTo(a.originPos.x, a.originPos.y, a.originPos.z);
+                    a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_TELEPORT_TIME_JUMP.get(), SoundSource.HOSTILE);
+                    a.setIsEyeBlink(true);
+                    PacketDistributor.sendToPlayersTrackingEntity(a,new AnimPacket(a.getId(),1));
+                }else if (tick == 2) {
+                    t.teleportTo(a.originPos.x, a.originPos.y+5, a.originPos.z);
+                }else if(tick == 3){
+                    a.gravitySlam(t, LocalDirection.DOWN, 10f);
+                }else if(tick >= 5 && t.onGround() && !isSlam){
+                    a.applyGravityControlTag(t, false);
+                    a.summonCircleGroundBoneSpine(t, 10, 8f, DURATION, 10,0.999999999f,50f);
+                    a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
+                    PacketDistributor.sendToPlayersTrackingEntity(a, new AnimPacket(a.getId(), (byte) 0));
+                    slamTick = tick;
+                    isSlam = true;
+                }else if(tick == slamTick + 10 && isSlam){
+                    a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
+                    a.summonGBAroundTarget(t,8,16,DURATION);
+                }
+            });
+            tick++;
+        }
+
+        @Override
+        protected void stop(@NotNull ServerLevel level, Sans a, long time) {
+            a.setPhaseID(Sans.SECOND_PHASE);
+        }
     }
-
-
-
 
     public static class RecoverDownGravity extends AttackSchedulerWithoutBuiltlnCoolingBehavior<Sans> {
         protected Direction lastGravity = Direction.DOWN;

@@ -186,16 +186,6 @@
 		"charge": {
 			"animation_length": 1,
 			"bones": {
-				"root": {
-					"scale": {
-						"0.0": {
-							"vector": [0, 0, 0]
-						},
-						"0.0417": {
-							"vector": [1, 1, 1]
-						}
-					}
-				},
 				"head": {
 					"rotation": {
 						"0.0": {
@@ -486,6 +476,21 @@
 						},
 						"1.0": {
 							"vector": [0, 0, 0]
+						}
+					}
+				}
+			}
+		},
+		"fadeIn": {
+			"animation_length": 0.0417,
+			"bones": {
+				"root": {
+					"scale": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.0417": {
+							"vector": [1, 1, 1]
 						}
 					}
 				}

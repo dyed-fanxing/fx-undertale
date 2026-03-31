@@ -22,13 +22,29 @@
   "gui.fx_undertale.close": "关闭",
   "mount.onboard.double.key.dismount": "双击 %1$s 来脱离",
 
-  "death.attack.fx_undertale.frame.player": "%1$s 被 %2$s 使用 帧伤 杀死了",
-  "death.attack.fx_undertale.frame.frame_blockable.player": "%1$s 被 %2$s 使用 帧伤 杀死了",
-  "death.attack.fx_undertale.frame.flying_bone": "%1$s 被 %2$s 使用 魔法骨头 射穿了",
-  "death.attack.fx_undertale.frame.ground_bone": "%1$s 被 %2$s 使用 魔法骨头 刺穿了",
+  "death.attack.fx_undertale.frame_blockable.player": "%1$s 被 %2$s 使用 帧伤 折磨死了",
+  "death.attack.fx_undertale.frame_blockable.rotation_bone.player": "%1$s 被 %2$s 使用 魔法骨头 砸死了",
+  "death.attack.fx_undertale.frame_blockable.flying_bone.player": "%1$s 被 %2$s 使用 魔法骨头 射穿了",
+  "death.attack.fx_undertale.frame.ground_bone.player": "%1$s 被 %2$s 使用 魔法骨头 刺穿了",
+  "death.attack.fx_undertale.frame.gaster_blaster.player": "%1$s 被 %2$s 使用 加斯特冲击波 轰成了渣渣",
+
+
+
 
   "fx_undertale.debug.ccd.on": "CCD扫掠: 显示",
   "fx_undertale.debug.ccd.off": "CCD扫掠: 关闭",
+
+
+
+
+  "dialogue.fx_undertale.entity.mercy": "%1$s正在%2$s你",
+  "dialogue.fx_undertale.mercy": "饶恕",
+
+
+
+
+
+
 
 
 

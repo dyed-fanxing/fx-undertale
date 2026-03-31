@@ -169,11 +169,11 @@ public class CurvesUtils {
     /**
      * 幂函数上升曲线（先快后慢）：y = 1 - (1 - t)^n
      * @param t 参数 [0,1]
-     * @param power 指数，>0。越大，前期越快、后期越平坦
+     * @param pow 指数，>0。越大，前期越快、后期越平坦
      * @return 高度值
      */
-    public static float powerRiseFastFirst(float t, float power) {
-        return 1 - (float) Math.pow(1 - t, power);
+    public static float powRiseEaseOut(float t, float pow) {
+        return 1 - (float) Math.pow(1 - t, pow);
     }
 
     /**
@@ -194,7 +194,7 @@ public class CurvesUtils {
      * @param power 指数，越大前期越平坦
      * @return 高度值
      */
-    public static float powerFall(float t, float power) {
+    public static float powerFallEaseIn(float t, float power) {
         return 1 - (float) Math.pow(t, power);
     }
     /**
@@ -209,11 +209,44 @@ public class CurvesUtils {
         return -power * (float) Math.pow(t, power - 1);
     }
     // ==================== 幂函数（先快后慢）下降 ====================
-    public static float powerFallFastFirst(float t, float power) {
+    public static float powerFallEaseOut(float t, float power) {
         return (float) Math.pow(1 - t, power);
     }
     public static float powerFallFastFirstDerivative(float t, float power) {
         if (t >= 1) return 0f;
         return -power * (float) Math.pow(1 - t, power - 1);
+    }
+
+    // ==================== 分段贝塞尔曲线 ====================
+
+    /**
+     * 分段贝塞尔曲线：两段都是二次贝塞尔
+     * 第一段：从 (0,0) 快速上升到 (midX, 1)
+     * 第二段：从 (midX, 1) 缓慢下降到 (1, 0)
+     * @param t 输入时间 [0,1]
+     * @param midX 分段点，第一段从0到midX，第二段从midX到1
+     * @param p10y 第一段控制点的y值（x自动为midX/2）
+     * @param p20y 第二段控制点的y值
+     * @param p20xRatio 第二段控制点的x坐标比例 [0,1]，控制点x = midX + (1-midX) * p20xRatio
+     * @return 曲线值 [0,1]
+     */
+    public static float piecewiseBezier(
+            float t,
+            float midX,      // 分段点
+            float p10y,      // 第一段控制点y值
+            float p20y,      // 第二段控制点y值
+            float p20xRatio  // 第二段控制点x比例
+    ) {
+        if (t < midX) {
+            // 第一段：二次贝塞尔 (0,0) → (midX/2, p10y) → (midX, 1)
+            float t1 = t / midX;  // 映射到 [0,1]
+            float oneMinusT1 = 1 - t1;
+            return oneMinusT1 * oneMinusT1 * 0 + 2 * oneMinusT1 * t1 * p10y + t1 * t1 * 1;
+        } else {
+            // 第二段：二次贝塞尔 (midX,1) → (midX + (1-midX)*p20xRatio, p20y) → (1, 0)
+            float t2 = (t - midX) / (1 - midX);  // 映射到 [0,1]
+            float oneMinusT2 = 1 - t2;
+            return oneMinusT2 * oneMinusT2 * 1 + 2 * oneMinusT2 * t2 * p20y + t2 * t2 * 0;
+        }
     }
 }

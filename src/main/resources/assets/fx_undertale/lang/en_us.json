@@ -27,6 +27,10 @@
   "fx_undertale.debug.ccd.on": "CCD Debug: ON",
   "fx_undertale.debug.ccd.off": "CCD Debug: OFF",
 
+
+  "dialogue.fx_undertale.entity.mercy": "%1$s正在%2$s你",
+  "dialogue.fx_undertale.mercy": "饶恕",
+
   "config.fx_undertale.general": "通用",
   "config.fx_undertale.general.segments": "圆段数",
   "config.fx_undertale.general.expPerLevel": "每级所需经验基数",

@@ -70,8 +70,12 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     protected int decayTick = 47;           // 开始衰退Tick点
 
     protected float holdTimeScale;
-    private static final float DIST = 8f;
-    private Entity target;
+    public static final float DIST = 8f;
+    protected Entity target;
+
+    // 动画插值位置
+    protected Vec3 startPos;
+    protected Vec3 endPos;
 
     // 骑乘相关
     private static final EntityDataAccessor<Boolean> DATA_MOUNTABLE = SynchedEntityData.defineId(GasterBlaster.class, EntityDataSerializers.BOOLEAN);
@@ -101,22 +105,29 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     public GasterBlaster(Level level, LivingEntity owner, float damage, float size, int shot) {
         this(level, owner,damage, size,17,shot,100);
     }
-    public GasterBlaster(Level level, LivingEntity owner, float damage, float size, int shot,float health) {
-        this(level, owner,damage, size,17,shot,health);
-    }
     public GasterBlaster(Level level, LivingEntity owner, float damage, float size, int charge, int shot,float health) {
         super(EntityTypes.GASTER_BLASTER.get(), level,owner);
         super.setNoGravity(true);
         this.setCustomNameVisible(false);
         Objects.requireNonNull(this.getAttribute(Attributes.ATTACK_DAMAGE)).setBaseValue(damage);
         this.size = size;
-        this.fireTick = charge;
+        this.fireTick = charge-1;
         this.shotTick = fireTick + 2;
         this.decayTick =  (shotTick + shot);
         // 设置最大生命值属性
         Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(health);
         this.setHealth(this.getMaxHealth());
     }
+    public GasterBlaster charge(int charge){
+        this.fireTick = charge-1;
+        this.shotTick = fireTick + 2;
+        return this;
+    }
+    public GasterBlaster shot(int shot){
+        this.decayTick =  (shotTick + shot);
+        return this;
+    }
+
     public GasterBlaster follow(Vec3 relativePos) {
         this.isFollow = true;
         this.relativePos = relativePos;
@@ -147,7 +158,8 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     }
 
     public void restAnimPos(){
-        setPos(this.position().add(this.getLookAngle().scale(-DIST)));
+        endPos = this.position();
+        startPos = this.position().add(this.getLookAngle().scale(-DIST));
     }
 
     /**
@@ -213,27 +225,19 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
                 return;
             }
         }else{
-            int discardTick = decayTick + DECAY;
-            float t = (float) tickCount / discardTick;
-            float rise = (float) shotTick / discardTick;
-            // 与HTML滑块对应的参数（可自由调整）
-            float slowEnd = 0.9f;      // 缓降结束时间
-            float slowEndY = 0.9f;     // 缓降结束时高度
-            float powerExp = 2.5f;     // 急降段幂指数
-
-            float velSpeed;
-            if (t < rise) velSpeed = (float) (30 * Math.pow(1 - t, 19)) * 0.1f;
-            else if (t < slowEnd) velSpeed = (slowEndY - 1f) / (slowEnd - rise) * 0.25f;
-            else {
-                float v = (t - slowEnd) / (1 - slowEnd);
-                float dt = 1 - slowEnd;
-                // 局部导数 * 全局时间缩放
-                float localDeriv = -slowEndY * powerExp * (float) Math.pow(v, powerExp - 1);
-                velSpeed = localDeriv / dt * 0.2f;
+            if(startPos != null && endPos != null){
+                int discardTick = decayTick + DECAY;
+                float t = (float) tickCount / discardTick;
+                float rise = (float) shotTick / discardTick;
+                float pv;
+                if(t < rise){
+                    pv = CurvesUtils.powRiseEaseOut(t/rise, 8F);
+                }else{
+                    float tt = (t-rise)/(1-rise);
+                    pv = CurvesUtils.powerFallEaseIn(tt,4);
+                }
+                setPos(startPos.lerp(endPos, pv));
             }
-            Vec3 velocity = getLookAngle().scale(velSpeed);
-            setDeltaMovement(velocity);
-            setPos(this.position().add(velocity));
             if(owner instanceof Player player && target != null && this.canHitEntity(target)){
                 if(tickCount < shotTick) aim(target);
                 else if(tickCount < decayTick) aimSmoothly(target);
@@ -472,6 +476,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         buffer.writeFloat(maxLength);
         buffer.writeFloat(aimSmoothSpeed);
         buffer.writeBoolean(this.isFollow);
+        buffer.writeBoolean(this.isMountable());
         if(relativePos != null) {
             buffer.writeBoolean(true);
             buffer.writeDouble(this.relativePos.x);
@@ -494,11 +499,16 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         this.maxLength = buffer.readFloat();
         this.aimSmoothSpeed = buffer.readFloat();
         this.isFollow = buffer.readBoolean();
+        setMountable(buffer.readBoolean());
         if(buffer.readBoolean()) {
             this.relativePos = new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble());
         }
         this.holdTimeScale = buffer.readFloat();
         if(buffer.readBoolean()) this.target = this.level().getEntity(buffer.readInt());
+        if(!isFollow && !isMountable()){
+            restAnimPos();
+            this.setPos(startPos);
+        }
         this.refreshDimensions();
     }
 
@@ -518,6 +528,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         return cache;
     }
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private static final RawAnimation FADE_IN_ANIM = RawAnimation.begin().thenPlay("fadeIn");
     private static final RawAnimation CHARGE_ANIM = RawAnimation.begin().thenPlay("charge");
     private static final RawAnimation FIRE_ANIM = RawAnimation.begin().thenPlayAndHold("fire");
     private static final RawAnimation SHOT_ANIM = RawAnimation.begin().thenPlayAndHold("shot");
@@ -527,9 +538,11 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         if(!this.isMountable()){
             controllers.add(new AnimationController<>(this, "attack", state -> {
                 AnimationController<GasterBlaster> controller = state.getController();
-                if (this.tickCount < fireTick) {
+                if(this.tickCount < 1){
+                    controller.setAnimation(FADE_IN_ANIM);
+                }else if(this.tickCount < fireTick) {
                     controller.setAnimation(CHARGE_ANIM);
-                    controller.setAnimationSpeed(20.0 / fireTick);
+                    controller.setAnimationSpeed(20.0 / (fireTick - 1));
                     controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundEvnets.GASTER_BLASTER_CHARGE.get(), SoundSource.NEUTRAL, 1, 1));
                 } else if (this.tickCount < shotTick) {
                     controller.setAnimation(FIRE_ANIM);

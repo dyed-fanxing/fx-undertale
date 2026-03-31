@@ -93,7 +93,11 @@ public class StopAndSwitchTargetIfTargetInvalidAndSelfNoAttacking {
                 if(checkTired && tiredSince.isPresent() && level.getGameTime()-tiredSince.get() > TIMEOUT){
                     onTimeout.accept(mob,target);
                 }else{
-                    onAttackTarget.accept(mob,target);
+                    //TODO
+                    //KEY 这里有问题！！！，这里不应该一直应用目标有效的回调，
+                    // 因为Sans有效方法会一直给目标上重力标签，导致开场杀目标有时候不需要重力会被覆盖掉
+                    // 但是我之所以写了这个，是因为有时候会丢失目标仇恨导致，无法执行攻击，这个得再测测
+//                    onAttackTarget.accept(mob,target);
                     return true;
                 }
             }
