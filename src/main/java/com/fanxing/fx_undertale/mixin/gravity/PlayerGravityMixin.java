@@ -56,7 +56,7 @@ public abstract class PlayerGravityMixin {
             cir.cancel();
             AABB aabb = self.getBoundingBox();
             cir.setReturnValue(switch (gravity) {
-                case UP -> self.level().noCollision(self, new AABB(aabb.minX + dx, aabb.minY, aabb.minZ + dz, aabb.maxX + dx, aabb.maxY + maxUpStep+1.0E-5F, aabb.maxZ + dz));
+                case UP -> self.level().noCollision(self, new AABB(aabb.minX - dx, aabb.minY, aabb.minZ + dz, aabb.maxX - dx, aabb.maxY + maxUpStep-1.0E-5F, aabb.maxZ + dz));
 
                 case EAST -> self.level().noCollision(self,new AABB(aabb.minX, aabb.minY+dz, aabb.minZ-dx, aabb.maxX + maxUpStep+1.0E-5F, aabb.maxY+dz, aabb.maxZ-dx));
                 case WEST -> self.level().noCollision(self,new AABB(aabb.minX - maxUpStep-1.0E-5F, aabb.minY+dz, aabb.minZ+dx, aabb.maxX, aabb.maxY+dz, aabb.maxZ+dx));
