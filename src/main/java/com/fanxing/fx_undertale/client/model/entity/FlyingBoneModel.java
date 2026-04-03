@@ -14,6 +14,6 @@ public class FlyingBoneModel extends DefaultedEntityGeoModel<FlyingBone> {
 
     @Override
     public @Nullable RenderType getRenderType(FlyingBone animatable, ResourceLocation texture) {
-        return RenderType.entityTranslucentEmissive(texture);
+        return RenderType.entityTranslucent(texture);
     }
 }

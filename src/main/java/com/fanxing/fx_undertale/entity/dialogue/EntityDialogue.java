@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.entity.dialogue;
 
+import com.fanxing.fx_undertale.FxUndertale;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -19,7 +20,7 @@ import java.util.*;
  * 支持自定义名字（Component）和翻译键
  */
 public class EntityDialogue {
-
+    public static final String CLICK_COMMAND_PACKET_PRE = "#packet:"+FxUndertale.MOD_ID+":";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Map<String, DialogueData> DIALOGUES = new HashMap<>();
 

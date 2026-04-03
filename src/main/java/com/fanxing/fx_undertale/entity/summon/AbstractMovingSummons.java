@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity.summon;
 
-import com.fanxing.fx_undertale.utils.collsion.ProjectileUtils;
+import com.fanxing.fx_undertale.utils.collsion.AABBCCDUtils;
 import com.fanxing.fx_undertale.utils.RotUtils;
 import com.fanxing.fx_undertale.utils.collsion.TimeOfImpactUtils;
 import net.minecraft.network.protocol.Packet;
@@ -15,7 +15,6 @@ import net.minecraft.world.phys.*;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractMovingSummons extends Summons {
@@ -56,7 +55,7 @@ public abstract class AbstractMovingSummons extends Summons {
         return TimeOfImpactUtils.getBlockHitResult(this.level(), this.getBoundingBox(),this.getDeltaMovement(), getClipType(), ClipContext.Fluid.NONE, CollisionContext.of(this));
     }
     protected List<EntityHitResult> getEntityHitResults(Vec3 to){
-        return ProjectileUtils.getEntityHitResults(this,this.getBoundingBox().getCenter(),to,this::canHitEntity);
+        return AABBCCDUtils.getEntityHitResults(this,this.getBoundingBox().getCenter(),to,this::canHitEntity);
     }
 
     protected ClipContext.Block getClipType() {

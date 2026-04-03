@@ -1,10 +1,10 @@
 package com.fanxing.fx_undertale.item;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.common.phys.LocalDirection;
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.menu.GravitySelectionMenu;
 import com.fanxing.fx_undertale.net.packet.GravityPacket;
+import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -17,19 +17,16 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-public class GravityTestItem extends Item {
+public class GravityDebugStick extends Item {
 
     private static final String TAG_GRAVITY = "GravityDirection";
 
-    public GravityTestItem(Properties properties) {
+    public GravityDebugStick(Properties properties) {
         super(properties.stacksTo(1));
     }
 
@@ -37,15 +34,9 @@ public class GravityTestItem extends Item {
     public boolean onLeftClickEntity(@NotNull ItemStack stack, Player player, @NotNull Entity entity) {
         if (!player.level().isClientSide) {
             // 从物品NBT中读取保存的重力方向
-            LocalDirection gravity = getGravityDirection(stack);
-            Gravity gravityData = Gravity.applyRelativeGravity(player, entity, gravity);
-            PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new GravityPacket(player.getId(), gravityData.getGravity()));
-            // 发送提示消息
-            player.sendSystemMessage(
-                    Component.translatable(String.format("message.%s.gravity_applied",FxUndertale.MOD_ID),
-                            Component.translatable(String.format("direction.%s.%s",FxUndertale.MOD_ID,gravity.name().toLowerCase()),
-                            entity.getName())
-            ));
+            Direction gravity = getGravityDirection(stack);
+            Gravity.applyGravity(entity, gravity);
+            PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity, new GravityPacket(entity.getId(), gravity));
         }
         return super.onLeftClickEntity(stack, player, entity);
     }
@@ -66,7 +57,7 @@ public class GravityTestItem extends Item {
                         Component.translatable("menu." + FxUndertale.MOD_ID + ".gravity_selection")
                 ));
             }else{
-                Gravity gravityData = Gravity.applyRelativeGravity(player, player, getGravityDirection(player.getItemInHand(hand)));
+                Gravity gravityData = Gravity.applyGravity(player, getGravityDirection(player.getItemInHand(hand)));
                 PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new GravityPacket(player.getId(), gravityData.getGravity()));
             }
         }
@@ -76,7 +67,7 @@ public class GravityTestItem extends Item {
 
 
     // 从物品NBT中获取重力方向
-    public LocalDirection getGravityDirection(ItemStack stack) {
+    public Direction getGravityDirection(ItemStack stack) {
         // 使用 getOrDefault 获取 CustomData
         CustomData customData = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
         // 使用 getUnsafe 或 copyTag
@@ -85,27 +76,20 @@ public class GravityTestItem extends Item {
         if (!tag.isEmpty() && tag.contains(TAG_GRAVITY)) {
             String directionName = tag.getString(TAG_GRAVITY);
             try {
-                return LocalDirection.valueOf(directionName.toUpperCase());
+                return Direction.valueOf(directionName.toUpperCase());
             } catch (IllegalArgumentException e) {
-                return LocalDirection.UP;
+                return Direction.DOWN;
             }
         }
-        return LocalDirection.UP;
+        return Direction.DOWN;
     }
 
     // 保存重力方向到物品NBT
-    public void setGravityDirection(ItemStack stack, LocalDirection direction) {
+    public void setGravityDirection(ItemStack stack, Direction direction) {
         CompoundTag tag = new CompoundTag();
         tag.putString(TAG_GRAVITY, direction.name());
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
     }
 
-    @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, context, tooltip, flag);
-        // 显示当前保存的重力方向
-        LocalDirection direction = getGravityDirection(stack);
-        tooltip.add(Component.translatable("tooltip.fx_undertale.current_direction",
-                Component.translatable("direction.fx_undertale." + direction.name().toLowerCase())));
-    }
+
 }

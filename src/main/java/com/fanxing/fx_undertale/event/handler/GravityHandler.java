@@ -1,17 +1,21 @@
 package com.fanxing.fx_undertale.event.handler;
 
 import com.fanxing.fx_undertale.FxUndertale;
+import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.persistentData.SoulMode;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingFallEvent;
+import net.neoforged.neoforge.event.level.ExplosionKnockbackEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spongepowered.asm.mixin.injection.At;
 
 @EventBusSubscriber(modid = FxUndertale.MOD_ID)
 public class GravityHandler {
@@ -31,4 +35,17 @@ public class GravityHandler {
             event.setCanceled(true);
         }
     }
+
+
+
+
+    @SubscribeEvent
+    public static void onExplosionKnockback(ExplosionKnockbackEvent event) {
+        Entity affectedEntity = event.getAffectedEntity();
+        Gravity data = affectedEntity.getData(AttachmentTypes.GRAVITY);
+        if(data.getGravity() != Direction.DOWN){
+            event.setKnockbackVelocity(data.worldToLocal(event.getKnockbackVelocity()));
+        }
+    }
+
 }

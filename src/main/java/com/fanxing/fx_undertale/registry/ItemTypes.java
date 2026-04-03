@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.registry;
 
 import com.fanxing.fx_undertale.item.GasterBlasterItem;
-import com.fanxing.fx_undertale.item.GravityTestItem;
+import com.fanxing.fx_undertale.item.GravityDebugStick;
 import com.fanxing.fx_undertale.item.MagicBone;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -26,7 +26,7 @@ public class ItemTypes {
     }
 
     public static final Supplier<GasterBlasterItem> GASTER_BLASTER = ITEMS.registerItem("gaster_blaster", GasterBlasterItem::new);//使用注册器注册物品，并返回注册的物品
-    public static final Supplier<GravityTestItem> GRAVITY_DEBUG_STICK = ITEMS.registerItem("gravity_debug_stick", GravityTestItem::new);//使用注册器注册物品，并返回注册的物品
+    public static final Supplier<GravityDebugStick> GRAVITY_DEBUG_STICK = ITEMS.registerItem("gravity_debug_stick", GravityDebugStick::new);//使用注册器注册物品，并返回注册的物品
     public static final Supplier<MagicBone> MAGIC_BONE = ITEMS.registerItem("bone", MagicBone::new);//使用注册器注册物品，并返回注册的物品
 
     // 创建创造标签页，并添加物品，放置在战斗标签页之后

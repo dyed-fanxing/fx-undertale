@@ -8,16 +8,32 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 
 public class RenderUtils {
 
     // ========== 立方体 ==========
-
     /**
-     * 立方体：中心点渲染，带UV缩放，与 renderCubeOutline 的顶点定义一致
+     * 立方体：中心点渲染，带UV缩放（指定中心点位置）
+     *
+     * @param pose     姿态
+     * @param consumer  顶点消费者
+     * @param center   立方体中心点（局部坐标）
+     * @param length   X轴长度
+     * @param width    Z轴宽度
+     * @param height   Y轴高度
+     * @param r        红色 (0-255)
+     * @param g        绿色 (0-255)
+     * @param b        蓝色 (0-255)
+     * @param a        透明度 (0-255)
+     * @param overlay  覆盖纹理
+     * @param light    光照值
+     * @param uScale   U轴纹理缩放
+     * @param vScale   V轴纹理缩放
      */
-    public static void renderCube(PoseStack.Pose pose, VertexConsumer builder, float length, float width, float height,
+    public static void renderCube(PoseStack.Pose pose, VertexConsumer consumer, Vector3f center,
+                                  float length, float width, float height,
                                   int r, int g, int b, int a, int overlay, int light,
                                   float uScale, float vScale) {
         Matrix4f matrix = pose.pose();
@@ -25,48 +41,51 @@ public class RenderUtils {
         float w = width * 0.5f;
         float h = height * 0.5f;
 
-        // 每个面的 UV 坐标乘以缩放系数
+        float cx = center.x;
+        float cy = center.y;
+        float cz = center.z;
+
         // 前面 (Z-)
-        builder.addVertex(matrix, -l, -w, -h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
-        builder.addVertex(matrix, -l, w, -h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
-        builder.addVertex(matrix, l, w, -h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
-        builder.addVertex(matrix, l, -w, -h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
+        consumer.addVertex(matrix, -l + cx, -w + cy, -h + cz).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
+        consumer.addVertex(matrix, -l + cx, w + cy, -h + cz).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
+        consumer.addVertex(matrix, l + cx, w + cy, -h + cz).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
+        consumer.addVertex(matrix, l + cx, -w + cy, -h + cz).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, -1);
         // 后面 (Z+)
-        builder.addVertex(matrix, -l, -w, h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
-        builder.addVertex(matrix, l, -w, h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
-        builder.addVertex(matrix, l, w, h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
-        builder.addVertex(matrix, -l, w, h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
+        consumer.addVertex(matrix, -l + cx, -w + cy, h + cz).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
+        consumer.addVertex(matrix, l + cx, -w + cy, h + cz).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
+        consumer.addVertex(matrix, l + cx, w + cy, h + cz).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
+        consumer.addVertex(matrix, -l + cx, w + cy, h + cz).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 0, 1);
         // 左面 (X-)
-        builder.addVertex(matrix, -l, -w, -h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
-        builder.addVertex(matrix, -l, -w, h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
-        builder.addVertex(matrix, -l, w, h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
-        builder.addVertex(matrix, -l, w, -h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
+        consumer.addVertex(matrix, -l + cx, -w + cy, -h + cz).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
+        consumer.addVertex(matrix, -l + cx, -w + cy, h + cz).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
+        consumer.addVertex(matrix, -l + cx, w + cy, h + cz).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
+        consumer.addVertex(matrix, -l + cx, w + cy, -h + cz).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, -1, 0, 0);
         // 右面 (X+)
-        builder.addVertex(matrix, l, -w, -h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
-        builder.addVertex(matrix, l, w, -h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
-        builder.addVertex(matrix, l, w, h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
-        builder.addVertex(matrix, l, -w, h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
+        consumer.addVertex(matrix, l + cx, -w + cy, -h + cz).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
+        consumer.addVertex(matrix, l + cx, w + cy, -h + cz).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
+        consumer.addVertex(matrix, l + cx, w + cy, h + cz).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
+        consumer.addVertex(matrix, l + cx, -w + cy, h + cz).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 1, 0, 0);
         // 上面 (Y+)
-        builder.addVertex(matrix, -l, w, -h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
-        builder.addVertex(matrix, -l, w, h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
-        builder.addVertex(matrix, l, w, h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
-        builder.addVertex(matrix, l, w, -h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
+        consumer.addVertex(matrix, -l + cx, w + cy, -h + cz).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
+        consumer.addVertex(matrix, -l + cx, w + cy, h + cz).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
+        consumer.addVertex(matrix, l + cx, w + cy, h + cz).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
+        consumer.addVertex(matrix, l + cx, w + cy, -h + cz).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, 1, 0);
         // 下面 (Y-)
-        builder.addVertex(matrix, -l, -w, -h).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
-        builder.addVertex(matrix, l, -w, -h).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
-        builder.addVertex(matrix, l, -w, h).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
-        builder.addVertex(matrix, -l, -w, h).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
+        consumer.addVertex(matrix, -l + cx, -w + cy, -h + cz).setColor(r, g, b, a).setUv(0, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
+        consumer.addVertex(matrix, l + cx, -w + cy, -h + cz).setColor(r, g, b, a).setUv(uScale, 0).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
+        consumer.addVertex(matrix, l + cx, -w + cy, h + cz).setColor(r, g, b, a).setUv(uScale, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
+        consumer.addVertex(matrix, -l + cx, -w + cy, h + cz).setColor(r, g, b, a).setUv(0, vScale).setOverlay(overlay).setLight(light).setNormal(pose, 0, -1, 0);
     }
 
-    public static void renderCube(PoseStack.Pose pose, VertexConsumer builder, float length, float width, float height,
+    /**
+     * 立方体：中心点渲染（默认UV缩放1.0）
+     */
+    public static void renderCube(PoseStack.Pose pose, VertexConsumer consumer,Vector3f center,
+                                  float length, float width, float height,
                                   int r, int g, int b, int a, int overlay, int light) {
-        renderCube(pose, builder, length, width, height, r, g, b, a, overlay, light, 1f, 1f);
+        renderCube(pose, consumer, center, length, width, height, r, g, b, a, overlay, light, 1f, 1f);
     }
 
-    public static void renderCube(PoseStack.Pose pose, VertexConsumer builder, float size,
-                                  int r, int g, int b, int a, int overlay, int light) {
-        renderCube(pose, builder, size, size, size, r, g, b, a, overlay, light, 1f, 1f);
-    }
 
     /**
      * 立方体：端面中心向前渲染，带UV缩放，与 renderCubeOutline 的顶点定义一致
@@ -452,7 +471,7 @@ public class RenderUtils {
         poseStack.mulPose(Axis.YP.rotationDegrees(obb.getYaw()));
         poseStack.mulPose(Axis.XP.rotationDegrees(obb.getPitch()));
         PoseStack.Pose pose = poseStack.last();
-        renderCube(pose, consumer, obb.getLength(), obb.getWidth(), obb.getHeight(),
+        renderCube(pose, consumer,new Vector3f(), obb.getLength(), obb.getWidth(), obb.getHeight(),
                 r, g, b, a, OverlayTexture.NO_OVERLAY, packedLight);
         poseStack.popPose();
     }
@@ -616,9 +635,6 @@ public class RenderUtils {
                 r, g, b, a, overlay, light);
     }
 
-
-
-    // ========== 私有辅助：带逐顶点法线的四边形 ==========
     public static void renderQuad(PoseStack.Pose pose, VertexConsumer consumer,
                                  float x1, float y1, float z1,
                                  float x2, float y2, float z2,
@@ -724,33 +740,97 @@ public class RenderUtils {
     }
 
     /**
-     * 绘制单个三角形，连续
+     * 渲染一个三角形，指定三个顶点、法线、UV、颜色和光照
+     *
+     * @param pose     姿态
+     * @param consumer 顶点消费者
+     * @param u1       p1 的 U 坐标
+     * @param v1       p1 的 V 坐标
+     * @param u2       p2 的 U 坐标
+     * @param v2       p2 的 V 坐标
+     * @param u3       p3 的 U 坐标
+     * @param v3       p3 的 V 坐标
+     * @param r        红色分量 (0-255)
+     * @param g        绿色分量 (0-255)
+     * @param b        蓝色分量 (0-255)
+     * @param a        透明度 (0-255)
+     * @param overlay  覆盖纹理
+     * @param light    光照值
      */
-    private static void drawTriangle(PoseStack.Pose pose, VertexConsumer consumer,
-                                     Vec3 p1, Vec3 p2, Vec3 p3,
-                                     float nx, float ny, float nz,
-                                     int r, int g, int b, int a,
-                                     int overlay, int light) {
+    public static void renderTriangle(PoseStack.Pose pose, VertexConsumer consumer, Vector3f p1, Vector3f p2, Vector3f p3,
+                                      Vector3f normal,
+                                      float u1, float v1, float u2, float v2, float u3, float v3,
+                                      float r, float g, float b, float a, int overlay, int light) {
         Matrix4f matrix = pose.pose();
-        consumer.addVertex(matrix, (float) p1.x, (float) p1.y, (float) p1.z)
-                .setNormal(pose, nx, ny, nz)
-                .setUv(0, 0) // 纯色纹理，UV任意
+        consumer.addVertex(matrix, p1.x, p1.y, p1.z)
+                .setNormal(pose, normal.x, normal.y, normal.z)
+                .setUv(u1, v1)
                 .setColor(r, g, b, a)
                 .setOverlay(overlay)
                 .setLight(light);
-        consumer.addVertex(matrix, (float) p2.x, (float) p2.y, (float) p2.z)
-                .setNormal(pose, nx, ny, nz)
-                .setUv(0, 0)
+        consumer.addVertex(matrix, p2.x, p2.y, p2.z)
+                .setNormal(pose, normal.x, normal.y, normal.z)
+                .setUv(u2, v2)
                 .setColor(r, g, b, a)
                 .setOverlay(overlay)
                 .setLight(light);
-        consumer.addVertex(matrix, (float) p3.x, (float) p3.y, (float) p3.z)
-                .setNormal(pose, nx, ny, nz)
-                .setUv(0, 0)
+        consumer.addVertex(matrix, p3.x, p3.y, p3.z)
+                .setNormal(pose, normal.x, normal.y, normal.z)
+                .setUv(u3, v3)
                 .setColor(r, g, b, a)
                 .setOverlay(overlay)
                 .setLight(light);
     }
+
+    /**
+     * 渲染一个三角形，使用相同的 UV 坐标（通常用于纯色或简单纹理）
+     */
+    public static void renderTriangle(PoseStack.Pose pose, VertexConsumer consumer,
+                                      Vector3f p1, Vector3f p2, Vector3f p3,
+                                      Vector3f normal,
+                                      float u, float v,
+                                      int r, int g, int b, int a, int overlay, int light) {
+        renderTriangle(pose, consumer, p1, p2, p3, normal, u, v, u, v, u, v, r, g, b, a, overlay, light);
+    }
+
+    /**
+     * 渲染一个三角形，使用相同的 UV 坐标（通常用于纯色或简单纹理）
+     */
+    public static void renderTriangle(PoseStack.Pose pose, VertexConsumer consumer,
+                                      Vector3f p1, Vector3f p2, Vector3f p3,
+                                      Vector3f normal,
+                                      int r, int g, int b, int a, int overlay, int light) {
+        renderTriangle(pose, consumer, p1, p2, p3, normal, 0, 1, 0, 1, 0, 1, r, g, b, a, overlay, light);
+    }
+
+
+    /**
+     * 渲染一个三角形，自动计算法线（使用顶点叉积），并允许指定 UV 坐标
+     */
+    public static void renderTriangle(PoseStack.Pose pose, VertexConsumer consumer,
+                                      Vector3f p1, Vector3f p2, Vector3f p3,
+                                      float u1, float v1, float u2, float v2, float u3, float v3,
+                                      int r, int g, int b, int a, int overlay, int light) {
+        // 计算法线：(p2-p1) × (p3-p1)
+        Vector3f e1 = new Vector3f(p2).sub(p1);
+        Vector3f e2 = new Vector3f(p3).sub(p1);
+        Vector3f normal = e1.cross(e2).normalize();
+        if (normal.lengthSquared() < 1e-6) {
+            normal = new Vector3f(0, 1, 0);
+        }
+        renderTriangle(pose, consumer, p1, p2, p3, normal, u1, v1, u2, v2, u3, v3, r, g, b, a, overlay, light);
+    }
+
+    /**
+     * 渲染一个三角形，自动计算法线，使用相同的 UV 坐标
+     */
+    public static void renderTriangle(PoseStack.Pose pose, VertexConsumer consumer,
+                                      Vector3f p1, Vector3f p2, Vector3f p3,
+                                      float u, float v,
+                                      int r, int g, int b, int a, int overlay, int light) {
+        renderTriangle(pose, consumer, p1, p2, p3, u, v, u, v, u, v, r, g, b, a, overlay, light);
+    }
+
 
     /**
      * 线段  *********************************************************************************************

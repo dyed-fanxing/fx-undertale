@@ -190,6 +190,7 @@ public interface RenderTypes {
                     .setOverlayState(OVERLAY)
                     .createCompositeState(false)
     ));
+    RenderType ENERGY_TRIANGLE_STRIP_WHITE = ENERGY_TRIANGLE_STRIP.apply(ResourceLocations.WHITE_TEXTURE, true);
 
 
     // ========== ENERGY_SWIRL 能量漩涡静态方法（带偏移） ==========

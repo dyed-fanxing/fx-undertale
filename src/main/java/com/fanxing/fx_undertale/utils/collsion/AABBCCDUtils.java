@@ -12,10 +12,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-public class ProjectileUtils {
+public class AABBCCDUtils {
 
-    private static final Logger log = LoggerFactory.getLogger(ProjectileUtils.class);
+    private static final Logger log = LoggerFactory.getLogger(AABBCCDUtils.class);
 
     /**
      * 获取弹射物在移动方向上的碰撞结果列表，默认自身范围，无额外扩大碰撞检测
@@ -119,5 +120,9 @@ public class ProjectileUtils {
         }
 
         return hitresult;
+    }
+
+    public static List<EntityHitResult> getHitResultsOnStill(Level level,Class<? extends Entity> entity,AABB boundingBox,Predicate<Entity> validFilter) {
+        return level.getEntitiesOfClass(entity,boundingBox,validFilter).stream().map(e -> new EntityHitResult(e, e.position())).collect(Collectors.toList());
     }
 }

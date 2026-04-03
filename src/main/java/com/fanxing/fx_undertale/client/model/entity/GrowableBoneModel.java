@@ -39,6 +39,6 @@ public abstract class GrowableBoneModel<T extends GeoAnimatable & Growable> exte
 
     @Override
     public @Nullable RenderType getRenderType(T animatable, ResourceLocation texture) {
-        return RenderType.entityTranslucentEmissive(texture);
+        return RenderType.entityTranslucent(texture);
     }
 }

@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity;
 
-import com.fanxing.fx_undertale.utils.collsion.ProjectileUtils;
+import com.fanxing.fx_undertale.utils.collsion.AABBCCDUtils;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -84,7 +84,7 @@ public abstract class AbstractPosDrivenEntity extends Entity implements IEntityW
     protected abstract Vec3 computeDesiredPos();
 
     protected List<EntityHitResult> getEntityHitResults(Vec3 from, Vec3 to) {
-        return ProjectileUtils.getEntityHitResults(this, from, to, this.getBoundingBox().expandTowards(to.subtract(from)), this::canHitEntity);
+        return AABBCCDUtils.getEntityHitResults(this, from, to, this.getBoundingBox().expandTowards(to.subtract(from)), this::canHitEntity);
     }
     /**
      * 判断是否可击中某实体。子类可重写。

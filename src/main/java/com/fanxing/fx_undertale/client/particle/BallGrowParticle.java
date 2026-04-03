@@ -2,7 +2,6 @@ package com.fanxing.fx_undertale.client.particle;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.fanxing.fx_undertale.particle.options.GrowTrackEntityOption;
-import com.fanxing.fx_undertale.utils.AnimationUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;

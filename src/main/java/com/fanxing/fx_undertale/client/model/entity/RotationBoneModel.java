@@ -6,6 +6,6 @@ import net.minecraft.resources.ResourceLocation;
 
 public class RotationBoneModel extends GrowableBoneModel<RotationBone> {
     public RotationBoneModel() {
-        super(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "bone"));
+        super(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "rotation_bone"));
     }
 }

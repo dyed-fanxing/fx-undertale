@@ -1,4 +1,4 @@
-package com.fanxing.fx_undertale.client.render;
+package com.fanxing.fx_undertale.client.render.projectile;
 
 import com.fanxing.fx_undertale.client.model.entity.FlyingBoneModel;
 import com.fanxing.fx_undertale.entity.projectile.FlyingBone;

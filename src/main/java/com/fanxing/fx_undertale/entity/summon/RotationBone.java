@@ -123,9 +123,15 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
     @Override
     public float getGrowProgress(float partialTick) {
         if (tickCount <= lifetime) {
-            return CurvesUtils.parametricHeight((tickCount + partialTick) / lifetime, holdTimeScale, 0.8f);
+            return CurvesUtils.riseHoldFallBezier((tickCount + partialTick) / lifetime, holdTimeScale, 0.8f);
         }
         return 1f;
+    }
+
+    @Override
+    public void refreshDimensions() {
+        super.refreshDimensions();
+        updateOBB();
     }
 
     @Override
@@ -221,7 +227,6 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
             // 只有是盾牌碰撞检测成功的且线速度和目标方向不同，则判定可以反弹
             Vec3 location = hitResult.getLocation();
             if (getAngularVelocity().lengthSquared() > 0) {
-                boolean isInvulnerableTo = livingTarget.isInvulnerableTo(damageSource);
                 boolean isBlocked = livingTarget.isDamageSourceBlocked(damageSource);
                 // 格挡成功，判断是否反弹
                 boolean shouldBounce = false;
@@ -240,13 +245,13 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
                         shouldBounce = dotProduct < 0;
                     }
                 }
-                log.debug("反弹判断总结：!hurt={}, !isInvulnerableTo={}, isBlocked={}, shouldBounce={}", !hurt, !isInvulnerableTo, isBlocked, shouldBounce);
+//                log.debug("反弹判断总结：!hurt={}, !isInvulnerableTo={}, isBlocked={}, shouldBounce={}", !hurt, !isInvulnerableTo, isBlocked, shouldBounce);
                 if (!hurt && livingTarget.isDamageSourceBlocked(damageSource) && shouldBounce) {
                     // 格挡成功，反弹
                     if (hitResult instanceof EntityHitResultTimed hitResultTimed) {
                         if (!this.level().isClientSide) {
                             Vector3f currentVel = getAngularVelocity();
-                            Vector3f newVel = new Vector3f(currentVel).negate();
+                            Vector3f newVel = new Vector3f(currentVel).negate().mul(0.7f);
                             setAngularVelocity(newVel);
                             // 发送强制同步数据包，确保客户端立即收到更新
                             QuaternionSyncPacket packet = new QuaternionSyncPacket(getId(), orientation.x, orientation.y, orientation.z, orientation.w, newVel.x, newVel.y, newVel.z);
@@ -310,7 +315,6 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
-        log.info("readAdditionalSaveData 开始：{}", orientation);
         super.readAdditionalSaveData(tag);
         this.motion = PhysicsMotionModel.fromTag(tag);
         if (tag.contains("targetPos")) {

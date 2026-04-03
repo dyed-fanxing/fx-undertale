@@ -1,34 +1,38 @@
 package com.fanxing.fx_undertale.utils;
 
+import java.util.function.Function;
+
 public class CurvesUtils {
-    public static float parametricHeight(float t, float holdTimeScale,float ease) {
-        return parametricHeight(t, holdTimeScale, ease,ease);
+    public static Function<Float, Float> riseHoldFallBezierCurve(float holdTimeScale,float riseEase,float fallEase) {
+        return (t) -> riseHoldFallBezier(t,holdTimeScale,riseEase,fallEase);
+    }
+
+    public static float riseHoldFallBezier(float t, float holdTimeScale,float ease) {
+        return riseHoldFallBezier(t, holdTimeScale, ease,ease);
     }
     /**
      * 分段参数方程实现
      * @param t 时间 (0到1)
      * @param holdTimeScale 停留时间比例 (0到1)
-     * @return 高度 (0到1)
+     * @param riseEase 值0 缓入	值1 缓出
+     * @param fallEase 值0 缓出	值1 缓入
      */
-    public static float parametricHeight(float t, float holdTimeScale,float riseEase,float fallEase) {
+    public static float riseHoldFallBezier(float t, float holdTimeScale,float riseEase,float fallEase) {
         // 定义分段
         float riseTime = (1.0f - holdTimeScale) / 2.0f;
         if (t < riseTime) {
-            // 上升阶段：使用二次贝塞尔曲线
             return bezier(t / riseTime, 0, riseEase, 1);
         } else if (t < riseTime + holdTimeScale) {
-            // 停留阶段
             return 1.0f;
         } else {
-            // 下降阶段：也使用二次贝塞尔曲线（反向）
             float t2 = (t - riseTime - holdTimeScale) / riseTime;
             return bezier(t2, 1, fallEase, 0);  // 从1到0的贝塞尔曲线
         }
     }
-    public static float parametricDerivative(float t, float holdTimeScale, float ease) {
-        return parametricDerivative(t, holdTimeScale, ease,ease);
+    public static float riseHoldFallDerivative(float t, float holdTimeScale, float ease) {
+        return riseHoldFallDerivative(t, holdTimeScale, ease,ease);
     }
-    public static float parametricDerivative(float t, float holdTimeScale, float riseEase, float fallEase) {
+    public static float riseHoldFallDerivative(float t, float holdTimeScale, float riseEase, float fallEase) {
         float riseTime = (1.0f - holdTimeScale) / 2.0f;
         if (t < riseTime) {
             // 上升阶段：h(u) = bezier(u, 0, riseEase, 1), u = t/riseTime

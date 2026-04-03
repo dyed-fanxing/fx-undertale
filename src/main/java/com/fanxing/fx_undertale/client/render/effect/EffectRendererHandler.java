@@ -1,4 +1,4 @@
-package com.fanxing.fx_undertale.client.effect;
+package com.fanxing.fx_undertale.client.render.effect;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.fanxing.fx_undertale.FxUndertale;
@@ -12,7 +12,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,8 +49,6 @@ public class EffectRendererHandler {
             Vec3 cameraPos = camera.getPosition();
             poseStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
             float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
-            // 清空之前的错误
-            while (GL11.glGetError() != GL11.GL_NO_ERROR) {}
             for (Effect effect : EFFECTS) {
                 if (!effect.isRemoved()) {
                     if (effect.shouldRender(frustum,cameraPos.x, cameraPos.y, cameraPos.z)) {

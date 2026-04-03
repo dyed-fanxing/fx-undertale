@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.entity.ai.behavior;
 
+import com.fanxing.fx_undertale.registry.MemoryModuleTypes;
 import com.google.common.collect.ImmutableMap;
 import com.fanxing.fx_undertale.entity.ai.tracker.IgnoringSensorEntityTracker;
 import net.minecraft.core.BlockPos;
@@ -55,6 +56,11 @@ public class SpellCastingMoveInFollowRange<T extends Mob> extends Behavior<T> {
     }
 
     @Override
+    protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull T mob) {
+        return mob.getBrain().getMemory(MemoryModuleTypes.MOVE_LOCKING.get()).isEmpty();
+    }
+
+    @Override
     protected void start(@NotNull ServerLevel level, @NotNull T mob, long gameTime) {
         right = 1;
         isSticky = false;
@@ -67,7 +73,6 @@ public class SpellCastingMoveInFollowRange<T extends Mob> extends Behavior<T> {
     protected void tick(@NotNull ServerLevel level, @NotNull T mob, long gameTime) {
         mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> {
             disSqr = mob.distanceToSqr(target);
-            mob.getBrain().setMemory(MemoryModuleType.LOOK_TARGET,new IgnoringSensorEntityTracker(target, true));
             if(!mob.hasLineOfSight(target)){
                 mob.getBrain().setMemory(MemoryModuleType.WALK_TARGET,new WalkTarget(new IgnoringSensorEntityTracker(target, false), speedModifier, 5));
             }else{
@@ -86,7 +91,13 @@ public class SpellCastingMoveInFollowRange<T extends Mob> extends Behavior<T> {
 
     @Override
     protected boolean canStillUse(@NotNull ServerLevel level, @NotNull T mob, long gameTime) {
-        return disSqr <= followRangeSqr;
+        return disSqr <= followRangeSqr && checkExtraStartConditions(level,mob);
+    }
+
+    @Override
+    protected void stop(@NotNull ServerLevel level, T mob, long gameTime) {
+        mob.getMoveControl().strafe(0, 0);
+        super.stop(level, mob, gameTime);
     }
 
     /**

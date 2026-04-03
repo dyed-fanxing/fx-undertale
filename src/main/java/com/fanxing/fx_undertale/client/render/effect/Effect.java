@@ -1,4 +1,4 @@
-package com.fanxing.fx_undertale.client.effect;
+package com.fanxing.fx_undertale.client.render.effect;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;

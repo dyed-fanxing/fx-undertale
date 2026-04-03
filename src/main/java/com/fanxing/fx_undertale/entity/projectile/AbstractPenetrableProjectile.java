@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity.projectile;
 
-import com.fanxing.fx_undertale.utils.collsion.ProjectileUtils;
+import com.fanxing.fx_undertale.utils.collsion.AABBCCDUtils;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -105,7 +105,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         return this.level().clip(new ClipContext(from, from.add(velocity), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
     }
     protected List<EntityHitResult> getEntityHitResults(Vec3 to) {
-        return ProjectileUtils.getEntityHitResults(this, this.getBoundingBox().getCenter(), to, this::canHitEntity);
+        return AABBCCDUtils.getEntityHitResults(this, this.getBoundingBox().getCenter(), to, this::canHitEntity);
     }
 
     @Override

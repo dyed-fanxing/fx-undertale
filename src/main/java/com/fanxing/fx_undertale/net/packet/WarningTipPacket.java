@@ -1,10 +1,14 @@
 package com.fanxing.fx_undertale.net.packet;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.client.effect.EffectRendererHandler;
-import com.fanxing.fx_undertale.client.effect.WarningTip;
+import com.fanxing.fx_undertale.client.render.effect.EffectRendererHandler;
+import com.fanxing.fx_undertale.client.render.effect.WarningTip;
 import com.fanxing.fx_undertale.utils.ByteBufUtils;
 import com.fanxing.fx_undertale.utils.ParametricCurveType;
+import com.fanxing.fx_undertale.utils.RotUtils;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.Direction;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -145,13 +149,11 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
     public static class Quad extends WarningTipPacket {
         public static final Type<Quad> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "warning_tip_quad_packet"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Quad> STREAM_CODEC = CustomPacketPayload.codec(Quad::write, Quad::new);
+        protected final float length;
+        protected final float width;
+        protected final float yaw;
 
-
-        private final float length;
-        private final float width;
-        private final float yaw;
-
-        public Quad(float x, float y, float z, float length, float width, float yaw, int lifetime, int color) {
+        public Quad(float x, float y, float z, int lifetime, int color, float length, float width, float yaw) {
             super(x, y, z, lifetime, color);
             this.length = length;
             this.width = width;
@@ -173,7 +175,7 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
         }
 
         public static void handle(Quad packet, IPayloadContext context) {
-            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.Quad(packet.x, packet.y, packet.z, packet.length, packet.width, packet.yaw, packet.lifetime, packet.color)));
+            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.Quad(packet.x, packet.y, packet.z, packet.lifetime, packet.color, packet.length, packet.width, packet.yaw)));
         }
 
         @Override
@@ -181,19 +183,70 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
             return TYPE;
         }
     }
+    public static class QuadPrecession extends Quad {
+        public static final Type<QuadPrecession> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "warning_tip_quad_precession_packet"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, QuadPrecession> STREAM_CODEC = CustomPacketPayload.codec(QuadPrecession::write, QuadPrecession::new);
 
+        public QuadPrecession(float x, float y, float z, int lifetime, int color, float length, float width, float yaw) {
+            super(x, y, z, lifetime, color,length,width,yaw);
+        }
+        public QuadPrecession(FriendlyByteBuf buf) {
+            super(buf);
+        }
+
+        public static void handle(Quad packet, IPayloadContext context) {
+            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.QuadPrecession(packet.x, packet.y, packet.z, packet.lifetime, packet.color, packet.length, packet.width, packet.yaw)));
+        }
+        @Override
+        public @NotNull Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
     public static class Circle extends WarningTipPacket {
         public static final Type<Circle> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "warning_tip_circle_packet"));
         public static final StreamCodec<RegistryFriendlyByteBuf, Circle> STREAM_CODEC = CustomPacketPayload.codec(Circle::write, Circle::new);
-
-        private final float radius;
-
-        public Circle(float x, float y, float z, float radius, int lifetime, int color) {
+        protected float radius;
+        protected int delay;
+        public Circle(float x, float y, float z, int lifetime, int color, float radius,int delay) {
             super(x, y, z, lifetime, color);
             this.radius = radius;
+            this.delay = delay;
+        }
+        public Circle(float x, float y, float z, int lifetime, int color, float radius) {
+            this(x, y, z, lifetime, color, radius, 0);
         }
 
         public Circle(FriendlyByteBuf buf) {
+            super(buf);
+            this.radius = buf.readFloat();
+            this.delay = buf.readVarInt();
+        }
+
+        public void write(FriendlyByteBuf buf) {
+            super.write(buf);
+            buf.writeFloat(radius);
+            buf.writeVarInt(delay);
+        }
+
+        public static void handle(Circle packet, IPayloadContext context) {
+            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.Circle(packet.x, packet.y, packet.z, packet.lifetime, packet.color, packet.radius,packet.delay)));
+        }
+
+        @Override
+        public @NotNull Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
+    public static class QuadCirclePrecession extends Quad {
+        public static final Type<QuadCirclePrecession> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "warning_tip_quad_circle_precession_packet"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, QuadCirclePrecession> STREAM_CODEC = CustomPacketPayload.codec(QuadCirclePrecession::write, QuadCirclePrecession::new);
+
+        protected float radius;
+        public QuadCirclePrecession(float x, float y, float z, int lifetime, int color, float length, float width, float yaw,float radius) {
+            super(x, y, z, lifetime, color,length,width,yaw);
+            this.radius = radius;
+        }
+        public QuadCirclePrecession(FriendlyByteBuf buf) {
             super(buf);
             this.radius = buf.readFloat();
         }
@@ -203,8 +256,8 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
             buf.writeFloat(radius);
         }
 
-        public static void handle(Circle packet, IPayloadContext context) {
-            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.Circle(packet.x, packet.y, packet.z, packet.radius, packet.lifetime, packet.color)));
+        public static void handle(QuadCirclePrecession packet, IPayloadContext context) {
+            context.enqueueWork(() -> EffectRendererHandler.addDecoration(new WarningTip.QuadCirclePrecession(packet.x, packet.y, packet.z, packet.lifetime, packet.color, packet.length, packet.width, packet.yaw,packet.radius)));
         }
 
         @Override
@@ -212,7 +265,7 @@ public abstract class WarningTipPacket implements CustomPacketPayload {
             return TYPE;
         }
     }
-
+    
     public static class CurveStrip extends WarningTipPacket {
         public static final Type<CurveStrip> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "warning_tip_curve_strip_packet"));
         public static final StreamCodec<FriendlyByteBuf, CurveStrip> STREAM_CODEC = CustomPacketPayload.codec(CurveStrip::write, CurveStrip::new);

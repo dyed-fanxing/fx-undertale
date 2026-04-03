@@ -125,7 +125,6 @@ public class MagicBone extends Item implements GeoItem {
             }
         });
     }
-
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return this.cache;

@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.entity.summon;
 
+import com.fanxing.fx_undertale.client.render.component.SphereEffectEmitter;
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.capability.Mountable;
 import com.fanxing.fx_undertale.mixin.LivingEntityAccessor;
@@ -13,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -512,6 +514,12 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         this.refreshDimensions();
     }
 
+    @Override
+    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        sphereRayEmitter.setSeed(packet.getUUID());
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
         return PathfinderMob.createMobAttributes()
                 .add(Attributes.FLYING_SPEED, 0.5)
@@ -559,4 +567,18 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
             }));
         }
     }
+
+
+
+
+
+
+
+
+
+    // 客户端特效
+
+
+    public final SphereEffectEmitter sphereRayEmitter = new SphereEffectEmitter();
+
 }

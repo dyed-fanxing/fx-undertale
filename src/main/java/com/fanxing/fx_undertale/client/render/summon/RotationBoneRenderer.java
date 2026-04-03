@@ -1,10 +1,10 @@
-package com.fanxing.fx_undertale.client.render;
+package com.fanxing.fx_undertale.client.render.summon;
 
 import com.fanxing.fx_undertale.client.model.entity.RotationBoneModel;
 import com.fanxing.fx_undertale.entity.summon.RotationBone;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import org.joml.Quaternionf;
+import net.minecraft.core.BlockPos;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.util.Color;
@@ -24,6 +24,11 @@ public class RotationBoneRenderer extends GeoEntityRenderer<RotationBone> {
         super.scaleModelForRender(animatable.getScale(), animatable.getScale(), poseStack, animatable, model, isReRender, partialTick, packedLight, packedOverlay);
     }
 
+    @Override
+    protected int getBlockLightLevel(RotationBone entity, BlockPos pos) {
+        return 15;
+    }
+    
     @Override
     protected void applyRotations(RotationBone animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
         poseStack.mulPose(animatable.getLerpOrientation(partialTick));

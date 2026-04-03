@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.client.render.summon;
 
+import com.fanxing.fx_undertale.client.render.component.LightRay;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.fanxing.fx_undertale.Config;
@@ -48,7 +49,6 @@ public class GasterBlasterBeamRenderer {
             {200, 80, 0, 100}       // 外层：暗橙半透明
     };
     private static final Logger log = LoggerFactory.getLogger(GasterBlasterBeamRenderer.class);
-
     /**
      * 渲染 GB
      *
@@ -73,8 +73,8 @@ public class GasterBlasterBeamRenderer {
             RenderUtils.renderSphere(poseStack.last(), buffer.getBuffer(BEAM_NO_TRANSPARENCY), partialSize * 0.5f, segments, color[0][0], color[0][1], color[0][2], color[0][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
             poseStack.popPose();
             RenderUtils.renderSphere(poseStack.last(), buffer.getBuffer(BEAM_ENERGY_SWIRL), partialSize, segments, color[1][0], color[1][1], color[1][2], color[1][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
-
-            renderLightRay(poseStack,buffer,animatable.getUUID(),radius*(animatable.isFollow()?1.5f:1f),animTick,partialSize,color);
+            animatable.sphereRayEmitter.stretchCircleRender(poseStack, buffer.getBuffer(RAY), animTick,radius*(animatable.isFollow()?1.5f:1f), partialSize,color[1]);
+//            renderLightRay(poseStack,buffer,animatable.getUUID(),radius,animTick,partialSize,color);
         } else {
             float offset = animTick * 0.3f;
             float length = animatable.getLength();
@@ -99,6 +99,7 @@ public class GasterBlasterBeamRenderer {
         poseStack.popPose();
     }
     public static void renderLightRay(PoseStack poseStack, MultiBufferSource buffer, UUID uuid, float radius, float animTick, float partialSize,int[][] color) {
+
         // 使用实体UUID作为基础随机种子
         long seed = uuid.getMostSignificantBits() ^ uuid.getLeastSignificantBits();
         // 渲染所有在生命周期内的光线
@@ -114,9 +115,11 @@ public class GasterBlasterBeamRenderer {
             float rayProgress = (animTick - startTime) / rayLifeTime;
             if (rayProgress > 1) continue;  // 已经结束的光线不渲染
 
+
+
             //光线长度
             float rayOuterLength = radius*(rayRandom.nextFloat()*3.0f+1.5f);                   // 光线外端点距离球心的长度
-            float rayWidth = radius * rayRandom.nextFloat()*0.03f+0.03f;                       // 光线宽度
+            float rayWidth = radius * rayRandom.nextFloat()*0.03f+0.01f;                       // 光线宽度
             float rayLength = rayOuterLength-partialSize;                                      // 光线长度
             float partialRayLength = Mth.lerp(rayProgress, rayLength, 0);
             double theta = rayRandom.nextDouble() * 2 * Math.PI;
@@ -142,5 +145,6 @@ public class GasterBlasterBeamRenderer {
             poseStack.popPose();
         }
     }
+
 
 }

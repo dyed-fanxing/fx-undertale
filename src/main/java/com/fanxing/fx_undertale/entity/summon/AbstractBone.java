@@ -80,12 +80,6 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
     }
 
     @Override
-    public void refreshDimensions() {
-        super.refreshDimensions();
-        updateOBB();
-    }
-
-    @Override
     public void updateOBB() {
         this.obb = OBB.fromFoot(this);
     }

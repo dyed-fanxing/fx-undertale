@@ -2,11 +2,13 @@ package com.fanxing.fx_undertale.client.screen;
 
 import com.fanxing.fx_undertale.FxUndertale;
 import com.fanxing.fx_undertale.common.phys.LocalDirection;
+import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.menu.GravitySelectionMenu;
 import com.fanxing.fx_undertale.net.packet.GravitySelectionPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
@@ -34,25 +36,20 @@ public class GravitySelectionScreen extends AbstractContainerScreen<GravitySelec
     @Override
     protected void init() {
         super.init();
-        addDirectionButton(LocalDirection.UP, Component.translatable("direction." + FxUndertale.MOD_ID + ".up"), 0, 0);
-        addDirectionButton(LocalDirection.DOWN, Component.translatable("direction." + FxUndertale.MOD_ID + ".down"), 0, 1);
-        addDirectionButton(LocalDirection.LEFT, Component.translatable("direction." + FxUndertale.MOD_ID + ".left"), 1, 0);
-        addDirectionButton(LocalDirection.RIGHT, Component.translatable("direction." + FxUndertale.MOD_ID + ".right"), 1, 1);
-        addDirectionButton(LocalDirection.FRONT, Component.translatable("direction." + FxUndertale.MOD_ID + ".front"), 2, 0);
-        addDirectionButton(LocalDirection.BACK, Component.translatable("direction." + FxUndertale.MOD_ID + ".back"), 2, 1);
-        this.addRenderableWidget(Button.builder(
-                Component.translatable("gui." + FxUndertale.MOD_ID + ".close"),
-                button -> this.onClose()
-        ).bounds(this.leftPos + this.imageWidth - 60, this.topPos + this.imageHeight - 30, 50, 20).build());
+        addDirectionButton(Direction.UP, Component.translatable("direction." + FxUndertale.MOD_ID + ".up"), 0, 0);
+        addDirectionButton(Direction.DOWN, Component.translatable("direction." + FxUndertale.MOD_ID + ".down"), 0, 1);
+        addDirectionButton(Direction.EAST, Component.translatable("direction." + FxUndertale.MOD_ID + ".east"), 1, 0);
+        addDirectionButton(Direction.WEST, Component.translatable("direction." + FxUndertale.MOD_ID + ".west"), 1, 1);
+        addDirectionButton(Direction.SOUTH, Component.translatable("direction." + FxUndertale.MOD_ID + ".south"), 2, 0);
+        addDirectionButton(Direction.NORTH, Component.translatable("direction." + FxUndertale.MOD_ID + ".north"), 2, 1);
     }
 
-    private void addDirectionButton(LocalDirection direction, Component text, int column, int row) {
+    private void addDirectionButton(Direction direction, Component text, int column, int row) {
         int x = this.leftPos + START_X + column * COLUMN_WIDTH;
         int y = this.topPos + START_Y + row * ROW_HEIGHT;
 
         this.addRenderableWidget(Button.builder(text, button -> {
             PacketDistributor.sendToServer(new GravitySelectionPacket(direction));
-            System.out.println("发送方向: " + direction.name());
             this.onClose();
         }).bounds(x, y, BUTTON_WIDTH, BUTTON_HEIGHT).build());
     }
@@ -72,8 +69,5 @@ public class GravitySelectionScreen extends AbstractContainerScreen<GravitySelec
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0x404040, false);
-        guiGraphics.drawString(this.font,
-                Component.translatable("gui." + FxUndertale.MOD_ID + ".select_direction"),
-                8, 6, 0x404040, false);
     }
 }

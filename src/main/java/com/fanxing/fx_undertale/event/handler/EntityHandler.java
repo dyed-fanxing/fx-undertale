@@ -1,8 +1,6 @@
 package com.fanxing.fx_undertale.event.handler;
 
-import com.fanxing.fx_undertale.entity.capability.SyncablePhysicsMotion;
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
-import com.fanxing.fx_undertale.entity.summon.GroundBone;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;

@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.client.render.summon;
 
+import com.fanxing.fx_undertale.entity.summon.RotationBone;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -14,6 +15,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -92,7 +94,10 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
         }
         return OverlayTexture.NO_OVERLAY;
     }
-
+    @Override
+    protected int getBlockLightLevel(GasterBlaster entity, BlockPos pos) {
+        return 15;
+    }
     public static class GasterBlasterEyesLayer<T extends Entity & GeoAnimatable & IGasterBlaster> extends AnimatedGlowingLayer<T> {
         public GasterBlasterEyesLayer(GeoRenderer<T> entityRendererIn) {
             super(entityRendererIn, SHOT_EYES);

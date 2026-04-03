@@ -4,8 +4,8 @@ import com.fanxing.fx_undertale.FxUndertale;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.projectile.FlyingBone;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
+import com.fanxing.fx_undertale.entity.summon.GroundBoneOBB;
 import com.fanxing.fx_undertale.entity.summon.GroundBone;
-import com.fanxing.fx_undertale.entity.summon.MovingGroundBone;
 import com.fanxing.fx_undertale.entity.summon.RotationBone;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -45,14 +45,14 @@ public class EntityTypes {
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位)
     );
 
-    public static final DeferredHolder<EntityType<?>, EntityType<GroundBone>> GROUND_BONE = register("ground_bone",
-            EntityType.Builder.<GroundBone>of(GroundBone::new, MobCategory.MISC)
+    public static final DeferredHolder<EntityType<?>, EntityType<GroundBoneOBB>> GROUND_BONE_OBB = register("ground_bone_obb",
+            EntityType.Builder.<GroundBoneOBB>of(GroundBoneOBB::new, MobCategory.MISC)
                     .sized(0.25f, 1.0f)  // 碰撞箱
                     .eyeHeight(0.5f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位
     );
-    public static final DeferredHolder<EntityType<?>, EntityType<MovingGroundBone>> MOVING_GROUND_BONE = register("moving_ground_bone",
-            EntityType.Builder.<MovingGroundBone>of(MovingGroundBone::new, MobCategory.MISC)
+    public static final DeferredHolder<EntityType<?>, EntityType<GroundBone>> GROUND_BONE = register("ground_bone",
+            EntityType.Builder.<GroundBone>of(GroundBone::new, MobCategory.MISC)
                     .sized(0.25f, 1.0f)  // 碰撞箱
                     .eyeHeight(0.5f)
                     .clientTrackingRange(4)  // 客户端同步范围，以区块为单位

@@ -8,6 +8,7 @@ import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -72,25 +73,28 @@ public class Gravity {
     public static Gravity applyGravity(Entity target, Direction gravity) {
         Gravity gravityData = get(gravity);
         Gravity oldGravity = target.getData(AttachmentTypes.GRAVITY);
+        if(oldGravity.getGravity() == gravity ) return oldGravity;
         target.setData(AttachmentTypes.GRAVITY, gravityData);
         if (!(target instanceof OBBHolder)){
             Vec3 localPos = switch (oldGravity.getGravity()) {
                 case DOWN -> target.position();
-                case UP -> target.position().add(0, -target.getBbHeight(), 0);
-                case EAST -> target.position().add(-target.getBbHeight() * 0.5f, -target.getBbWidth() * 0.5f, 0);
-                case WEST -> target.position().add(target.getBbHeight() * 0.5f, -target.getBbWidth() * 0.5f, 0);
-                case SOUTH -> target.position().add(0, -target.getBbWidth() * 0.5f, -target.getBbHeight() * 0.5f);
-                case NORTH -> target.position().add(0, -target.getBbWidth() * 0.5f, target.getBbHeight() * 0.5f);
+                case UP -> target.position().add(0, -target.getBbHeight()+0.01f, 0);
+                case EAST -> target.position().add(-target.getBbHeight() * 0.5f+0.01f, -target.getBbWidth() * 0.5f, 0);
+                case WEST -> target.position().add(target.getBbHeight() * 0.5f-0.01f, -target.getBbWidth() * 0.5f, 0);
+                case SOUTH -> target.position().add(0, -target.getBbWidth() * 0.5f, -target.getBbHeight() * 0.5f+0.01f);
+                case NORTH -> target.position().add(0, -target.getBbWidth() * 0.5f, target.getBbHeight() * 0.5f-0.01f);
             };
+            // KEY 减去一点高度，放置直接穿过方块
             switch (gravityData.gravity) {
                 case DOWN -> target.setPos(localPos);
-                case UP -> target.setPos(localPos.add(0, target.getBbHeight(), 0));
-                case EAST -> target.setPos(localPos.add(target.getBbHeight() * 0.5f, target.getBbWidth() * 0.5f, 0));
-                case WEST -> target.setPos(localPos.add(-target.getBbHeight() * 0.5f, target.getBbWidth() * 0.5f, 0));
-                case SOUTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, target.getBbHeight() * 0.5f));
-                case NORTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, -target.getBbHeight() * 0.5f));
+                case UP -> target.setPos(localPos.add(0, target.getBbHeight()-0.01f, 0));
+                case EAST -> target.setPos(localPos.add(target.getBbHeight() * 0.5f-0.01f, target.getBbWidth() * 0.5f, 0));
+                case WEST -> target.setPos(localPos.add(-target.getBbHeight() * 0.5f+0.01f, target.getBbWidth() * 0.5f, 0));
+                case SOUTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, target.getBbHeight() * 0.5f-0.01f));
+                case NORTH -> target.setPos(localPos.add(0, target.getBbWidth() * 0.5f, -target.getBbHeight() * 0.5f+0.01f));
             }
         }
+        target.move(MoverType.SELF, Vec3.ZERO);
 //        log.debug("gravity：{},target之前世界坐标系的位置：{}，之后世界坐标系的位置：{}", gravity, localPos, target.position());
         return gravityData;
     }
