@@ -33,6 +33,7 @@
     "TimeJumpTeleportMixin",
     "gravity.CameraGravityMixin",
     "gravity.EntityRenderDispatcherGravityMixin",
+    "gravity.EntityRendererGravityMixin",
     "gravity.GeoEntityRendererGravityMixin",
     "gravity.LivingEntityRendererGravityMixin",
     "gravity.LocalPlayerGravityMixin",

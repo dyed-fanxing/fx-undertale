@@ -239,4 +239,10 @@ public class Gravity {
             case Z -> new Vec3(0,0,1);
         };
     }
+    public static Vec3 localToWorld(Entity entity,Vec3 offset){
+        return entity.getData(AttachmentTypes.GRAVITY).localToWorld(offset);
+    }
+    public static Vec3 worldToLocal(Entity entity,Vec3 offset){
+        return entity.getData(AttachmentTypes.GRAVITY).worldToLocal(offset);
+    }
 }

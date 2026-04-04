@@ -93,9 +93,18 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Scalable
                 // 跟随拥有者
                 if (isFollow && relativePos != null) {
                     this.setPos(owner.position().add(RotUtils.rotateYX(relativePos, owner.getYHeadRot(), owner.getXRot())));
-                    Vec3 viewVector = owner.getViewVector(1.0f);
-                    RotUtils.lookVecShoot(this, viewVector);
-                    shotVec = viewVector;
+                    if(owner instanceof Targeting targeting){
+                        LivingEntity target = targeting.getTarget();
+                        if(target != null){
+                            Vec3 viewVector = target.getEyePosition().subtract(owner.getEyePosition()).normalize();
+                            RotUtils.lookVecShoot(this, viewVector);
+                            shotVec = viewVector;
+                        }
+                    }else{
+                        Vec3 viewVector = owner.getViewVector(1.0f);
+                        RotUtils.lookVecShoot(this, viewVector);
+                        shotVec = viewVector;
+                    }
                 }
                 // 瞄准目标
                 if (isAim && owner instanceof Targeting targeting) {

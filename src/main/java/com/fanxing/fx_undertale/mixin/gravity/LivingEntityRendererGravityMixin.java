@@ -21,8 +21,7 @@ public abstract class LivingEntityRendererGravityMixin {
     private void onSetupRotations(LivingEntity entity, PoseStack poseStack,float ageInTicks, float rotationYaw,float partialTicks, float scale, CallbackInfo ci) {
         if (entity instanceof OBBHolder)return;
         Gravity data = entity.getData(AttachmentTypes.GRAVITY);
-        Direction gravity = data.getGravity();
-        if (gravity != Direction.DOWN) {
+        if (data.getGravity() != Direction.DOWN) {
             poseStack.mulPose(data.getLocalToWorld());
         }
     }

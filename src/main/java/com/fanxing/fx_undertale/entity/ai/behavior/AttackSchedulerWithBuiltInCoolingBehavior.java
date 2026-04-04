@@ -254,7 +254,7 @@ public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> e
 //                } else {
 //                    log.debug("选中节点：{}，权重：{}，剩余随机值：{}，距离：{},目标速度：{}，目标水平速度：{}", node, weight, r, mob.distanceTo(target), target.getDeltaMovement().length(), target.getDeltaMovement().horizontalDistance());
 //                }
-                log.debug("选中节点：{}，概率：{},剩余随机值：{}", node,weight/total, r);
+                log.debug("选中节点：{}，概率：{},剩余随机值：{}，距离：{}", node,weight/total, r,mob.distanceTo(target));
                 return node;
             }
             r -= weight;

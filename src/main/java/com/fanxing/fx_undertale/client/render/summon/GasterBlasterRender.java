@@ -40,6 +40,14 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     }
 
     @Override
+    public void preRender(PoseStack poseStack, GasterBlaster animatable, BakedGeoModel model, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
+        if(!isReRender){
+            GasterBlasterBeamRenderer.render(animatable, partialTick, poseStack, bufferSource, packedLight,GasterBlasterBeamRenderer.SANS_BLUE);
+        }
+        super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
+    }
+
+    @Override
     protected void applyRotations(GasterBlaster animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
         if(animatable.isDeadOrDying()){
             poseStack.mulPose(Axis.YP.rotationDegrees(180f - rotationYaw));
@@ -54,14 +62,6 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     @Override
     public void scaleModelForRender(float widthScale, float heightScale, PoseStack poseStack, GasterBlaster animatable, BakedGeoModel model, boolean isReRender, float partialTick, int packedLight, int packedOverlay) {
         super.scaleModelForRender(animatable.getSize(), animatable.getSize(), poseStack, animatable, model, isReRender, partialTick, packedLight, packedOverlay);
-    }
-
-    @Override
-    public void preRender(PoseStack poseStack, GasterBlaster animatable, BakedGeoModel model, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
-        if(!isReRender && !animatable.isMountable()) {
-            GasterBlasterBeamRenderer.render(animatable, partialTick, poseStack, bufferSource, packedLight,GasterBlasterBeamRenderer.SANS_BLUE);
-        }
-        super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
     }
 
     @Override

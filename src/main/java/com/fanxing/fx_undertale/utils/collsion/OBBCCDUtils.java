@@ -1201,7 +1201,7 @@ public class OBBCCDUtils {
             bestPoint = obb.getCenter();
         }
         
-        log.debug("SAT碰撞点计算：特征数={}, 选择点={}, 穿透深度={}", contactFeatures.size(), bestPoint, maxPenetration);
+//        log.debug("SAT碰撞点计算：特征数={}, 选择点={}, 穿透深度={}", contactFeatures.size(), bestPoint, maxPenetration);
         return bestPoint;
     }
     

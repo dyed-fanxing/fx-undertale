@@ -28,6 +28,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -118,9 +119,9 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             MemoryModuleTypes.ACTIVE_ATTACK_NODES.get()
     );
 
-    private float maxStamina;   // 最大体力/耐力
+    private float maxStamina;       // 最大体力/耐力
     private int animId = -1;
-    public Vec3 originPos;     // 存储生成的原点
+    public Vec3 originPos;          // 存储生成的原点
     private boolean mercyTriggered = false;  // 仁慈触发标记
 
     // 添加BOSS条相关字段
@@ -160,6 +161,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     private int phantomStartTick;       // 残影开始的游戏tick
     private boolean phantomActive = false;  // 残影是否激活
     public static final int PHANTOM_DURATION = 15; // 持续15 tick（可根据需要调整）
+
 
     @Override
     public void tick() {
@@ -240,10 +242,10 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         } else {
             power *= 0.5f;
             if (source.is(DamageTypeTags.IS_PROJECTILE)) {
-                power *= 0.8f;
+                power *= 0.9f;
             }
             if (source.is(Tags.DamageTypes.IS_MAGIC)) {
-                power *= 0.9f;
+                power *= 0.95f;
             }
             if (source.is(Tags.DamageTypes.IS_PHYSICAL)) {
                 power *= 0.6f;
@@ -562,21 +564,20 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         tag.putFloat("stamina", this.getStamina());
         tag.putByte("phaseId", this.getPhaseID());
         tag.putBoolean("mercyTriggered", this.mercyTriggered);
+        tag.put("originPos",this.newDoubleList(originPos.x, originPos.y, originPos.z)) ;
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("maxStamina")) {
-            this.maxStamina = tag.getFloat("maxStamina");
-        }
-        if (tag.contains("stamina")) {
-            setStamina(tag.getFloat("stamina"));
-        }
-        if (tag.contains("phaseId")) {
-            this.entityData.set(PHASE_ID, tag.getByte("phaseId"));
-        }
+        if(tag.contains("maxStamina")) this.maxStamina = tag.getFloat("maxStamina");
+        if(tag.contains("stamina")) setStamina(tag.getFloat("stamina"));
+        if(tag.contains("phaseId")) this.entityData.set(PHASE_ID, tag.getByte("phaseId"));
         if(tag.contains("mercyTriggered")) this.mercyTriggered = tag.getBoolean("mercyTriggered");
+        if(tag.contains("originPos")) {
+            ListTag list = tag.getList("originPos", 6);
+            this.originPos = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
+        }
         setPersistenceRequired();
     }
 
@@ -695,7 +696,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             FlyingBone bone = createFlyingBone(attackTypeUUID, scale, growScale);
             bone.aimShoot(delay, speed);
             LevelUtils.addFreshProjectile(this.level(), bone, RotUtils.rotateYX(x, 1.5f, 0, this.getYHeadRot(), this.getXRot()).add(this.getX(), this.getY(0.5f), this.getZ()), target);
-            for (int l = 0; l < 2; l++) {
+            for (int l = 0; l < 2+2*phaseFactor; l++) {
                 delay += 5 - difficulty - phaseFactor;
                 int count = (l + 1) * (6 + difficulty);
                 float radius = (l + 1) * scale*0.5f;
@@ -735,7 +736,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         for (int k = 0; k < yawLayer; k++) {
             int count = difficulty * 8 + 1 + k; // 或1，确保是奇数
             float centerOffset = (count - 1) * 0.5f;
-            float pitchLayerAngle = -pitchLayer * 0.5f;
+            float pitchLayerAngle = -pitchLayer * 0.5f*4;
             for (int j = 0; j < pitchLayer; j++, pitchLayerAngle += 4) {
                 float angle = -centerOffset * interval;
                 for (int i = 0; i < count; i++, angle += interval) {
@@ -857,7 +858,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         level().addFreshEntity(bone);
 
 
-        RotationBone bone1 = createRotationBone(UUID.randomUUID().toString(), scale, growScale, 300).angularVelocity(new Vector3f(0,angularVelocity*Mth.DEG_TO_RAD,0)).holdTimeScale(0.9F).motion(motionModel,
+        RotationBone bone1 = createRotationBone(UUID.randomUUID().toString(), scale, growScale, 300+ 100*getPhaseID()).angularVelocity(new Vector3f(0,angularVelocity*Mth.DEG_TO_RAD,0)).holdTimeScale(0.9F).motion(motionModel,
                 targetGroundPos.add(targetData.localToWorld(RotUtils.rotateYXZ(scale * growScale * isRightHand, (float) targetHalfBbHeight, 0, getYHeadRot(), 0,0))));
         bone1.setPos(this.position().add(RotUtils.rotateYXZ(bbWidth * isRightHand, (float) targetHalfBbHeight, bbWidth * 2, getYHeadRot(), 0,0)));
         bone1.initOrientation(0,-90f,0);
@@ -941,15 +942,16 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         int delay = 0;
         int layer = 3;
         int startOffsetLayer = -layer-4;
+        float holdTimeScale = 0.8F;
         // 矩形左右边
         for (int r = startOffsetLayer; r < rows+layer; r++) {
             for (int i = 0; i < layer; i++) {
-                GroundBone lBone = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(0.995F);
+                GroundBone lBone = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(holdTimeScale);
                 lBone.setPos(centerPos.add(RotUtils.yRot(new Vec3(-xOffset-i*iSpacing, 0, r * iSpacing), yRot)));
                 RotUtils.lookVec(lBone, perpendicular);
                 level.addFreshEntity(lBone);
 
-                GroundBone rBone = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(0.995F);
+                GroundBone rBone = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(holdTimeScale);
                 rBone.setPos(centerPos.add(RotUtils.yRot(new Vec3(xOffset+i*iSpacing, 0, r * iSpacing), yRot)));
                 RotUtils.lookVec(rBone, perpendicular);
                 level.addFreshEntity(rBone);
@@ -960,23 +962,23 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         for (int c = 0; c < halfCols; c++) {
             for (int i = 0; i < layer; i++) {
                 // 起始边
-                GroundBone lBone = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(0.995F);
+                GroundBone lBone = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(holdTimeScale);
                 lBone.setPos(centerPos.add(RotUtils.yRot(new Vec3(xOffset - c * iSpacing, 0, (i+startOffsetLayer)*iSpacing), yRot)));
                 RotUtils.lookVec(lBone, lookVector);
                 level.addFreshEntity(lBone);
 
-                GroundBone rBone = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(0.995F);
+                GroundBone rBone = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(holdTimeScale);
                 rBone.setPos(centerPos.add(RotUtils.yRot(new Vec3(-xOffset + c * iSpacing, 0, (i+startOffsetLayer)*iSpacing), yRot)));
                 RotUtils.lookVec(rBone, lookVector);
                 level.addFreshEntity(rBone);
 
                 // 目标后方边
-                GroundBone lBoneF = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(0.995F);
+                GroundBone lBoneF = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(holdTimeScale);
                 lBoneF.setPos(centerPos.add(RotUtils.yRot(new Vec3(xOffset - c * iSpacing, 0, length+i*iSpacing), yRot)));
                 RotUtils.lookVec(lBoneF, lookVector);
                 level.addFreshEntity(lBoneF);
 
-                GroundBone rBoneF = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(0.995F);
+                GroundBone rBoneF = createGroundBone(attackTypeUUID, iScale, 6F,lifetime).delay(delay).holdTimeScale(holdTimeScale);
                 rBoneF.setPos(centerPos.add(RotUtils.yRot(new Vec3(-xOffset + c * iSpacing, 0, length+i*iSpacing), yRot)));
                 RotUtils.lookVec(rBoneF, lookVector);
                 level.addFreshEntity(rBoneF);
@@ -1493,6 +1495,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             // 计算圆形上的位置
             double xOffset = Math.sin(currentAngle * Mth.DEG_TO_RAD) * radius;
             double zOffset = -Math.cos(currentAngle * Mth.DEG_TO_RAD) * radius;
+            Gravity.applyGravity(target,target.getData(AttachmentTypes.GRAVITY).getGravity());
             gb.setPos(position.add(gravity.localToWorld(xOffset, height, zOffset)));
             gb.aim(position.add(gravity.localToWorld(0.0, height, 0.0)));
             gb.restAnimPos();
@@ -1552,8 +1555,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
 
     public void timeJumpTeleport(LivingEntity target, int duration) {
         PacketDistributor.sendToPlayersTrackingEntity(this, new TimeJumpTeleportPacket(target.getId(), duration));
-        this.teleportTo(originPos.x, originPos.y, originPos.z);
-        target.teleportTo(originPos.x, originPos.y, originPos.z + getFollowRange() * 0.5f);
+        target.teleportTo(originPos.x + getFollowRange() * 0.5f, originPos.y, originPos.z );
         this.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvnets.SANS_TELEPORT_TIME_JUMP.get(), SoundSource.HOSTILE);
     }
 

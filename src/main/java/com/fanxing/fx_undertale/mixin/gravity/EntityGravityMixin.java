@@ -3,6 +3,8 @@ package com.fanxing.fx_undertale.mixin.gravity;
 import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
+import com.fanxing.fx_undertale.utils.GravityUtils;
+import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
 import it.unimi.dsi.fastutil.floats.FloatArrays;
@@ -15,6 +17,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -33,12 +36,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
+import static com.fanxing.fx_undertale.utils.GravityUtils.FLOOR_EPSILON;
 import static net.minecraft.world.entity.Entity.collideBoundingBox;
 
 /**
@@ -93,12 +98,7 @@ public abstract class EntityGravityMixin {
     private EntityInLevelCallback levelCallback;
 
     @Shadow
-    private static List<VoxelShape> collectColliders(@org.jetbrains.annotations.Nullable Entity p_344804_, Level p_345583_, List<VoxelShape> p_345198_, AABB p_345837_) {
-        return null;
-    }
-
-    @Shadow
-    private static Vec3 collideWithShapes(Vec3 p_198901_, AABB p_198902_, List<VoxelShape> p_198903_) {
+    private static List<VoxelShape> collectColliders(@Nullable Entity p_344804_, Level p_345583_, List<VoxelShape> p_345198_, AABB p_345837_) {
         return null;
     }
 
@@ -106,6 +106,12 @@ public abstract class EntityGravityMixin {
     @Shadow public abstract EntityDimensions getDimensions(Pose p_19975_);
 
     @Shadow public abstract boolean isNoGravity();
+
+    @Shadow public abstract float maxUpStep();
+
+    @Shadow private boolean onGround;
+
+    @Shadow public abstract boolean onGround();
 
     @Inject(method = "calculateViewVector", at = @At("RETURN"), cancellable = true)
     public void calculateViewVector(float xRot, float yRot, CallbackInfoReturnable<Vec3> cir) {
@@ -131,16 +137,11 @@ public abstract class EntityGravityMixin {
             EntityDimensions dimensions = getDimensions(null);
             double halfWidth = dimensions.width() * 0.5f;
             cir.setReturnValue(switch (gravity) {
-                case UP ->
-                        new AABB(position.x - halfWidth, position.y - self.getBbHeight(), position.z - halfWidth, position.x + halfWidth, position.y, position.z + halfWidth);
-                case EAST ->
-                        new AABB(position.x, position.y - halfWidth, position.z - halfWidth, position.x - self.getBbHeight(), position.y + halfWidth, position.z + halfWidth);
-                case WEST ->
-                        new AABB(position.x, position.y - halfWidth, position.z - halfWidth, position.x + self.getBbHeight(), position.y + halfWidth, position.z + halfWidth);
-                case SOUTH ->
-                        new AABB(position.x - halfWidth, position.y - halfWidth, position.z, position.x + halfWidth, position.y + halfWidth, position.z - self.getBbHeight());
-                case NORTH ->
-                        new AABB(position.x - halfWidth, position.y - halfWidth, position.z, position.x + halfWidth, position.y + halfWidth, position.z + self.getBbHeight());
+                case UP -> new AABB(position.x - halfWidth, position.y - self.getBbHeight(), position.z - halfWidth, position.x + halfWidth, position.y, position.z + halfWidth);
+                case EAST -> new AABB(position.x, position.y - halfWidth, position.z - halfWidth, position.x - self.getBbHeight(), position.y + halfWidth, position.z + halfWidth);
+                case WEST -> new AABB(position.x, position.y - halfWidth, position.z - halfWidth, position.x + self.getBbHeight(), position.y + halfWidth, position.z + halfWidth);
+                case SOUTH -> new AABB(position.x - halfWidth, position.y - halfWidth, position.z, position.x + halfWidth, position.y + halfWidth, position.z - self.getBbHeight());
+                case NORTH -> new AABB(position.x - halfWidth, position.y - halfWidth, position.z, position.x + halfWidth, position.y + halfWidth, position.z + self.getBbHeight());
                 default -> throw new IllegalStateException("Unexpected value: " + gravity);
             });
         }
@@ -241,9 +242,9 @@ public abstract class EntityGravityMixin {
         if (this.position.x != x || this.position.y != y || this.position.z != z) {
             this.position = new Vec3(x, y, z);
             // blockPosition 是玩家下身所在的那个方块，由于方块是以默认世界坐标系的点来取的，所以需要进行调整
-            int i = normal.getY() < 0 ? Mth.floor(x) : Mth.floor(x - 1.0E-6); // 以xMin代表这个方块
-            int j = normal.getY() < 0 ? Mth.floor(y) : Mth.floor(y - 1.0E-6); // 以yMin代表这个方块
-            int k = normal.getZ() < 0 ? Mth.floor(z) : Mth.floor(z - 1.0E-6); // 以zMin代表这个方块
+            int i = normal.getY() < 0 ? Mth.floor(x) : Mth.floor(x - FLOOR_EPSILON); // 以xMin代表这个方块
+            int j = normal.getY() < 0 ? Mth.floor(y) : Mth.floor(y - FLOOR_EPSILON); // 以yMin代表这个方块
+            int k = normal.getZ() < 0 ? Mth.floor(z) : Mth.floor(z - FLOOR_EPSILON); // 以zMin代表这个方块
             if (i != this.blockPosition.getX() || j != this.blockPosition.getY() || k != this.blockPosition.getZ()) {
                 this.blockPosition = new BlockPos(i, j, k);
                 this.inBlockState = null;
@@ -262,7 +263,6 @@ public abstract class EntityGravityMixin {
 
     /**
      * 根据重力方向检查脚下的可支撑方块位置mainSupportingBlockPos
-     * 默认坐标系下为向下对齐，所以需要修正
      */
     @Inject(method = "checkSupportingBlock", at = @At("HEAD"), cancellable = true)
     private void checkSupportingBlock(boolean verticalCollisionBelow, Vec3 deltaMovement, CallbackInfo ci) {
@@ -273,7 +273,7 @@ public abstract class EntityGravityMixin {
         if (verticalCollisionBelow) {
             AABB aabb = self.getBoundingBox();
             Vec3i normal = gravity.getNormal();
-            AABB aabb1 = aabb.expandTowards(new Vec3(normal.getZ(), normal.getY(), normal.getZ()).scale(1.0E-6));
+            AABB aabb1 = aabb.expandTowards(new Vec3(normal.getZ(), normal.getY(), normal.getZ()).scale(FLOOR_EPSILON));
             Optional<BlockPos> optional = this.level.findSupportingBlock(self, aabb1);
             if (optional.isEmpty() && !this.onGroundNoBlocks) {
                 if (deltaMovement != null) {
@@ -318,16 +318,16 @@ public abstract class EntityGravityMixin {
                 Vec3 offsetPos = this.position.add(gravityVec3.scale(dy));
                 //由于LevelChunk.getBlockState取方块默认是以方块底部的坐标为准，这里由于重力向上向上取方块，取到了这个方块的顶部，所以取的是上一个方块，所以需要调整
                 cir.setReturnValue((!((double) dy <= 0.5) || !blockstate.collisionExtendsVertically(self.level(), blockpos, self)) ? new BlockPos(
-                        normal.getX() == 0 ? blockpos.getX() : (normal.getY() < 0 ? Mth.floor(offsetPos.x) : Mth.floor(offsetPos.x - 1.0E-6)),
-                        normal.getY() == 0 ? blockpos.getY() : (normal.getY() < 0 ? Mth.floor(offsetPos.y) : Mth.floor(offsetPos.y - 1.0E-6)),
-                        normal.getZ() == 0 ? blockpos.getZ() : (normal.getZ() < 0 ? Mth.floor(offsetPos.z) : Mth.floor(offsetPos.z - 1.0E-6))
+                        normal.getX() == 0 ? blockpos.getX() : (normal.getY() < 0 ? Mth.floor(offsetPos.x) : Mth.floor(offsetPos.x - FLOOR_EPSILON)),
+                        normal.getY() == 0 ? blockpos.getY() : (normal.getY() < 0 ? Mth.floor(offsetPos.y) : Mth.floor(offsetPos.y - FLOOR_EPSILON)),
+                        normal.getZ() == 0 ? blockpos.getZ() : (normal.getZ() < 0 ? Mth.floor(offsetPos.z) : Mth.floor(offsetPos.z - FLOOR_EPSILON))
                 ) : blockpos);
             }
         } else {
             Vec3 offsetPos = this.position.add(gravityVec3.scale(dy));
-            int i = normal.getY() < 0 ? Mth.floor(offsetPos.x) : Mth.floor(offsetPos.x - 1.0E-6); // 以xMin代表这个方块
-            int j = normal.getY() < 0 ? Mth.floor(offsetPos.y) : Mth.floor(offsetPos.y - 1.0E-6); // 以yMin代表这个方块
-            int k = normal.getZ() < 0 ? Mth.floor(offsetPos.z) : Mth.floor(offsetPos.z - 1.0E-6); // 以zMin代表这个方块
+            int i = normal.getX() < 0 ? Mth.floor(offsetPos.x) : Mth.floor(offsetPos.x - FLOOR_EPSILON); // 以xMin代表这个方块
+            int j = normal.getY() < 0 ? Mth.floor(offsetPos.y) : Mth.floor(offsetPos.y - FLOOR_EPSILON); // 以yMin代表这个方块
+            int k = normal.getZ() < 0 ? Mth.floor(offsetPos.z) : Mth.floor(offsetPos.z - FLOOR_EPSILON); // 以zMin代表这个方块
             cir.setReturnValue(new BlockPos(i, j, k));
         }
     }
@@ -351,15 +351,17 @@ public abstract class EntityGravityMixin {
         args.set(2, posZ + vec3.z);
     }
 
+
     /**
      * 根据重力方向重写碰撞检测
      */
     @Inject(method = "collide", at = @At("HEAD"), cancellable = true)
     private void collide(Vec3 logicDD, CallbackInfoReturnable<Vec3> cir) {
+
         Entity self = (Entity) (Object) this;
         Gravity gravityData = self.getData(AttachmentTypes.GRAVITY.get());
         Direction gravity = gravityData.getGravity();
-        if (gravity == Direction.DOWN) return; // 标准重力
+        if (gravity == Direction.DOWN) return;
         cir.cancel();
         Vec3 collidedWorldDD;
         AABB aabb;
@@ -374,7 +376,8 @@ public abstract class EntityGravityMixin {
             // 1. 将位移转换为全局，用于碰撞检测判断
             list = self.level().getEntityCollisions(self, aabb.expandTowards(worldDD));
             // 检测出来的可以进行移动的世界位移
-            collidedWorldDD = collideBoundingBox(self, worldDD, aabb, self.level(), list);
+            List<VoxelShape> collideShapes = collectColliders(self, level, list, aabb.expandTowards(worldDD));
+            collidedWorldDD = undertale$gravityCollideWithShapes(worldDD, aabb, collideShapes,gravity);
         }
         // 3. 将世界位移转换到局部位移系用于逻辑判断
         Vec3 collidedLogicDD = gravityData.worldToLocal(collidedWorldDD);
@@ -382,35 +385,52 @@ public abstract class EntityGravityMixin {
         double diffX = logicDD.x - collidedLogicDD.x;
         double diffY = logicDD.y - collidedLogicDD.y;
         double diffZ = logicDD.z - collidedLogicDD.z;
-        boolean collidedX = !(diffX * diffX <= 1.0E-7);
-        boolean collidedY = !(diffY * diffY <= 1.0E-7);
-        boolean collidedZ = !(diffZ * diffZ <= 1.0E-7);
-        boolean isFall = collidedY && logicDD.y < 0.0;
+        boolean collidedX = !(diffX * diffX <= GravityUtils.COLLIED_EPSILON); // KEY 是否发生碰撞的精度要大些，但不能完全用等于，因为重力转换会有精度误差
+        boolean collidedY = !(diffY * diffY <= GravityUtils.COLLIED_EPSILON);
+        boolean collidedZ = !(diffZ * diffZ <= GravityUtils.COLLIED_EPSILON);
+        boolean isLanding = collidedY && logicDD.y < (double) 0.0F; // 是否正好落地
+        log.debug("collidedX：{},collidedY：{}，collidedZ：{}，isFall：{} ",collidedX,collidedY,collidedZ,isLanding);
+
         collidedLogicDD = new Vec3(collidedX ? collidedLogicDD.x : logicDD.x, collidedY ? collidedLogicDD.y : logicDD.y, collidedZ ? collidedLogicDD.z : logicDD.z);
+        if(collidedLogicDD.lengthSqr() == logicDD.lengthSqr()) collidedWorldDD = worldDD;
+        else collidedWorldDD = gravityData.localToWorld(collidedLogicDD);
+
+//        log.info("以防误差，如果在精度范围内，则使用原来局部位移，而不是碰撞检测出来的允许移动的位移，newCollideLogicDD：{} ",newCollideLogicDD);
         // 4. 使用局部坐标进行逻辑判断
         float maxUpStep = self.maxUpStep();
-        if (maxUpStep > 0.0F && (isFall || self.onGround()) && (collidedX || collidedZ)) {
+        if (maxUpStep > 0.0F && (isLanding || self.onGround()) && (collidedX || collidedZ)) {
             Vec3i normal = gravity.getNormal();
             Vec3 gravityVec3 = new Vec3(normal.getX(), normal.getY(), normal.getZ());
-            AABB aabb1 = isFall ? aabb.move(gravityVec3.multiply(collidedWorldDD)) : aabb;
+            //碰撞世界位移 在重力轴上的分量
+            Vec3 collidedWorldDDGravityPortion = new Vec3(
+                    gravity.getAxis() == Direction.Axis.X ? collidedWorldDD.x : 0,
+                    gravity.getAxis() == Direction.Axis.Y ? collidedWorldDD.y : 0,
+                    gravity.getAxis() == Direction.Axis.Z ? collidedWorldDD.z : 0
+            );
+            //只取碰撞位移上的重力分量进行移动aabb得到aabb1
+            AABB aabb1 = isLanding ? aabb.move(collidedWorldDDGravityPortion) : aabb;
             AABB aabb2 = aabb1.expandTowards(gravityVec3.x == 0 ? worldDD.x : -gravityVec3.x * maxUpStep, gravityVec3.y == 0 ? worldDD.y : -gravityVec3.y * maxUpStep, gravityVec3.z == 0 ? worldDD.z : -gravityVec3.z * maxUpStep);
-            if (!isFall) {
-                aabb2 = aabb2.expandTowards(gravityVec3.scale(1.0E-5F));
-            }
+            if (!isLanding)    aabb2 = aabb2.expandTowards(gravityVec3.scale(Mth.EPSILON));
 
             List<VoxelShape> list1 = collectColliders(self, self.level(), list, aabb2);
+//            log.info("使用aabb2再对list进行碰撞检测的list1列表：{}",list1);
             // float f = (float)vec3.y; 取重力方向上碰撞后可移动的速度
-            float[] afloat = undertale$collectCandidateStepUpHeights(aabb1, list1, maxUpStep, gravity, (float) collidedWorldDD.multiply(gravityVec3).length());
-
+            float[] afloat = undertale$collectCandidateStepUpHeights(aabb1, list1, maxUpStep, gravity, (float) collidedWorldDDGravityPortion.length());
             log.info("可上升的高度列表：{}", afloat);
             for (float f1 : afloat) {
-                // 尝试"上升"0.5，检测水平是否可以移动，如果可以则上升走过去
-                Vec3 shapeCollideWorldDD = collideWithShapes(new Vec3(gravityVec3.x == 0 ? worldDD.x : -f1 * gravityVec3.x, gravityVec3.y == 0 ? worldDD.y : -f1 * gravityVec3.y, gravityVec3.z == 0 ? worldDD.z : -f1 * gravityVec3.z), aabb1, list1);
+                // 尝试抬升能走过的最大高度，检测水平是否可以移动，如果可以则上升走过去
+                Vec3 vec3 = new Vec3(gravityVec3.x == 0 ? worldDD.x : -f1 * gravityVec3.x, gravityVec3.y == 0 ? worldDD.y : -f1 * gravityVec3.y, gravityVec3.z == 0 ? worldDD.z : -f1 * gravityVec3.z);
+                Vec3 shapeCollideWorldDD = undertale$gravityCollideWithShapes(vec3, aabb1, list1,gravity);
+
                 Vec3 shapeCollideLogicDD = gravityData.worldToLocal(shapeCollideWorldDD);
-                if (shapeCollideLogicDD.horizontalDistanceSqr() > collidedLogicDD.horizontalDistanceSqr()) {
+                // KEY 台阶检测的精度要小些
+                if (Mth.abs((float) (shapeCollideLogicDD.horizontalDistanceSqr()-collidedLogicDD.horizontalDistanceSqr())) >= Mth.EPSILON ) {
                     // 这里没测出来，放在原版里感觉-d0 = vec3.y 感觉直接用vec3.y也对，也就是直接用检测出的重力方向上可移动的位移
-//                        double d0 = aabb.minY - aabb1.minY;
-                    cir.setReturnValue(shapeCollideLogicDD.add(collidedLogicDD));
+                    // 这一步是为了检测，对于不同面有不同的高度的方块
+//                    double d0 = aabb.minY - aabb1.minY;
+//                    log.info("偏移：{}",fx_undertale$getOffsetVec(aabb,aabb1,gravity));
+//                    log.info("最后计算的速度：{}",shapeCollideLogicDD.add(fx_undertale$getOffsetVec(aabb,aabb1,gravity)));
+                    cir.setReturnValue(shapeCollideLogicDD.add(fx_undertale$getOffsetVec(aabb,aabb1,gravity)));
                     return;
                 }
             }
@@ -418,56 +438,6 @@ public abstract class EntityGravityMixin {
         cir.setReturnValue(collidedLogicDD);
     }
 
-    @Unique
-    private Vec3 undertale$gravityCollideWithShapes(Vec3 movement, AABB bb, List<VoxelShape> shapes,
-                                                    Direction.Axis heightAxis, Direction.Axis h1, Direction.Axis h2, Direction gravity) {
-        // 先处理高度轴
-        double height = movement.get(heightAxis);
-        if (height != 0) {
-            height = Shapes.collide(heightAxis, bb, shapes, height);
-            bb = bb.move(
-                    heightAxis == Direction.Axis.X ? height : 0,
-                    heightAxis == Direction.Axis.Y ? height : 0,
-                    heightAxis == Direction.Axis.Z ? height : 0
-            );
-        }
-
-        // 处理水平轴（优先较小的位移）
-        double move1 = movement.get(h1);
-        double move2 = movement.get(h2);
-        boolean flag = Math.abs(move1) < Math.abs(move2);
-
-        if (flag && move2 != 0) {
-            move2 = Shapes.collide(h2, bb, shapes, move2);
-            bb = bb.move(
-                    h2 == Direction.Axis.X ? move2 : 0,
-                    h2 == Direction.Axis.Y ? move2 : 0,
-                    h2 == Direction.Axis.Z ? move2 : 0
-            );
-        }
-
-        if (move1 != 0) {
-            move1 = Shapes.collide(h1, bb, shapes, move1);
-            if (!flag && move1 != 0) {
-                bb = bb.move(
-                        h1 == Direction.Axis.X ? move1 : 0,
-                        h1 == Direction.Axis.Y ? move1 : 0,
-                        h1 == Direction.Axis.Z ? move1 : 0
-                );
-            }
-        }
-
-        if (!flag && move2 != 0) {
-            move2 = Shapes.collide(h2, bb, shapes, move2);
-        }
-
-        // 重新组合结果向量
-        return new Vec3(
-                h1 == Direction.Axis.X ? move1 : (h2 == Direction.Axis.X ? move2 : (heightAxis == Direction.Axis.X ? height : 0)),
-                h1 == Direction.Axis.Y ? move1 : (h2 == Direction.Axis.Y ? move2 : (heightAxis == Direction.Axis.Y ? height : 0)),
-                h1 == Direction.Axis.Z ? move1 : (h2 == Direction.Axis.Z ? move2 : (heightAxis == Direction.Axis.Z ? height : 0))
-        );
-    }
 
     /**
      * 根据重力方向重收集可以走上 <=maxUpStep高度方块 的高度列表
@@ -486,12 +456,14 @@ public abstract class EntityGravityMixin {
                 double d0 = coords.getDouble(i);
                 float f = 0;
                 switch (gravity) {
+                    case DOWN -> f = (float) (d0 - aabb.minY);
                     case UP -> f = (float) (aabb.maxY - d0);
                     case EAST -> f = (float) (aabb.maxX - d0);
                     case WEST -> f = (float) (d0 - aabb.minX);
                     case SOUTH -> f = (float) (aabb.maxZ - d0);
                     case NORTH -> f = (float) (d0 - aabb.minZ);
                 }
+                log.info("当前重力方向：{}，高度f：{}",gravity,f);
                 if (!(f < 0.0F) && f != dy) {
                     if (f > maxUpStep) {
                         break;
@@ -505,4 +477,48 @@ public abstract class EntityGravityMixin {
         return afloat;
     }
 
+    /**
+     * 优先检测重力轴方向，代替原版的  collideWithShapes方法
+     */
+    @Unique
+    private Vec3 undertale$gravityCollideWithShapes(Vec3 movement, AABB bb, List<VoxelShape> shapes, Direction gravity) {
+        if (shapes.isEmpty()) return movement;
+        Direction.Axis axis = gravity.getAxis();
+        double x = movement.x, y = movement.y, z = movement.z;
+        AABB aabb = bb;
+        if (axis == Direction.Axis.Y) {
+            if (y != 0) { y = Shapes.collide(Direction.Axis.Y, aabb, shapes, y); aabb = aabb.move(0, y, 0); }
+            boolean flag = Math.abs(x) < Math.abs(z);
+            if (flag && z != 0) { z = Shapes.collide(Direction.Axis.Z, aabb, shapes, z); aabb = aabb.move(0, 0, z); }
+            if (x != 0) { x = Shapes.collide(Direction.Axis.X, aabb, shapes, x); if (!flag && x != 0) aabb = aabb.move(x, 0, 0); }
+            if (!flag && z != 0) z = Shapes.collide(Direction.Axis.Z, aabb, shapes, z);
+            return new Vec3(x, y, z);
+        } else if (axis == Direction.Axis.X) {
+            if (x != 0) { x = Shapes.collide(Direction.Axis.X, aabb, shapes, x); aabb = aabb.move(x, 0, 0); }
+            boolean flag = Math.abs(y) < Math.abs(z);
+            if (flag && z != 0) { z = Shapes.collide(Direction.Axis.Z, aabb, shapes, z); aabb = aabb.move(0, 0, z); }
+            if (y != 0) { y = Shapes.collide(Direction.Axis.Y, aabb, shapes, y); if (!flag && y != 0) aabb = aabb.move(0, y, 0); }
+            if (!flag && z != 0) z = Shapes.collide(Direction.Axis.Z, aabb, shapes, z);
+            return new Vec3(x, y, z);
+        } else { // Z
+            if (z != 0) { z = Shapes.collide(Direction.Axis.Z, aabb, shapes, z); aabb = aabb.move(0, 0, z); }
+            boolean flag = Math.abs(x) < Math.abs(y);
+            if (flag && y != 0) { y = Shapes.collide(Direction.Axis.Y, aabb, shapes, y); aabb = aabb.move(0, y, 0); }
+            if (x != 0) { x = Shapes.collide(Direction.Axis.X, aabb, shapes, x); if (!flag && x != 0) aabb = aabb.move(x, 0, 0); }
+            if (!flag && y != 0) y = Shapes.collide(Direction.Axis.Y, aabb, shapes, y);
+            return new Vec3(x, y, z);
+        }
+    }
+
+    @Unique
+    private Vec3 fx_undertale$getOffsetVec(AABB oldAABB, AABB newAABB, Direction gravity) {
+        return switch (gravity) {
+            case DOWN -> new Vec3(0, oldAABB.minY - newAABB.minY, 0);
+            case UP -> new Vec3(0, -(oldAABB.maxY - newAABB.maxY), 0);
+            case EAST -> new Vec3(-(oldAABB.maxX - newAABB.maxX), 0, 0);
+            case WEST -> new Vec3(oldAABB.minX - newAABB.minX, 0, 0);
+            case SOUTH -> new Vec3(0, 0, -(oldAABB.maxZ - newAABB.maxZ));
+            case NORTH -> new Vec3(0, 0, oldAABB.minZ - newAABB.minZ);
+        };
+    }
 }

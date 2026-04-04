@@ -89,8 +89,9 @@ public class SansAi {
 
 
                 new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-                        Pair.of(createFirstComboSkillBehavior(), 10),
-                        Pair.of(createContinuousSkillBehavior(), 5),
+                        Pair.of(createFirstComboSkillBehavior(), 15),
+                        Pair.of(createContinuousOffHandSkillBehavior(), 5),
+                        Pair.of(createContinuousSkillBehavior(), 3),
                         Pair.of(new AttackSchedulerWithBuiltInCoolingBehavior<>(createFirstPhaseSingleSkills(), (a) -> List.of(gravitySlamSinge(a, true)), MemoryModuleTypes.COOLDOWN_1.get(), 10) {
                             @Override
                             protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
@@ -105,7 +106,8 @@ public class SansAi {
                 },
                 new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
                         Pair.of(createSecondComboSkillBehavior(), 15),
-                        Pair.of(createContinuousSkillBehavior(), 5),
+                        Pair.of(createContinuousOffHandSkillBehavior(), 5),
+                        Pair.of(createContinuousSkillBehavior(), 3),
                         Pair.of(new AttackSchedulerWithBuiltInCoolingBehavior<>(createSecondPhaseSingleSkills(), MemoryModuleTypes.COOLDOWN_1.get(), 0.0888887f,0) {
                             @Override
                             protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
@@ -189,23 +191,22 @@ public class SansAi {
     public static final String OPENING_SKILL = "opening_skill";
     public static final String GRAVITY_SLAM = "gravity_slam";
     public static final String TIME_JUMP = "time_jump";
+    public static final String AIMED_BARRAGE_BONE = "aimed_barrage_bone";
+    public static final String FORWARD_BARRAGE_BONE = "forward_barrage_bone";
 
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createOpeningBehavior() {
         int[] delay = new int[1];
         return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(new AttackNode<Sans>(OPENING_SKILL, 20, (a, t, tick) -> {
             if (tick == 0) {
                 a.timeJumpTeleport(t, 2);
+                a.teleportTo(a.originPos.x, a.originPos.y, a.originPos.z);
                 a.controlSoulMode(t, SoulMode.GRAVITY);
                 a.setIsEyeBlink(true);
-            } else if (tick == 2) {
-                Vec3 pos = RotUtils.rotateYX(0f, 5f, 12f, a.getYHeadRot(), 0).add(a.position());
-                t.teleportTo(pos.x, pos.y, pos.z);
-            }
+            } else if (tick == 2) t.teleportRelative(0, 5, 0);
             return tick >= 3;
         }).then(new AttackNode<>(OPENING_SKILL, 1, 20, (a, t, tick) -> {
-                    if (tick == 3) {
-                        a.gravitySlam(t, LocalDirection.DOWN, 0.5f);
-                    } else if (tick >= 5 && t.onGround()) {
+                    if (tick == 3) a.gravitySlam(t, LocalDirection.DOWN, 0.5f);
+                    else if (tick >= 5 && t.onGround()) {
                         a.applyGravityControlTag(t, false);
                         int difficulty = a.level().getDifficulty().getId();
                         a.summonCircleGroundBoneSpine(t, 5 + 2 * difficulty, 4.5f, 10, 10, -1);
@@ -215,23 +216,17 @@ public class SansAi {
                     }
                     return false;
                 })).then(new AttackNode<>(OPENING_SKILL, 4, 20, (a, t, tick) -> {
-                    if (tick == 10) {
-                        a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
-                    }
+                    if (tick == 10) a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
                     if (tick == 13) {
                         a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_EYE_BLINK.get(), SoundSource.HOSTILE);
                         delay[0] = a.summonLateralBoneMatrix(t, 0f);
                     }
-                    if (tick >= 18 && t.onGround()) {
-                        a.controlSoulMode(t, SoulMode.DEFAULT);
-                    }
+                    if (tick >= 18 && t.onGround()) a.controlSoulMode(t, SoulMode.DEFAULT);
                     return tick >= 20 && tick >= delay[0] + 20;
                 })).then(new AttackNode<>(OPENING_SKILL, 6, 4, (a, t) -> a.summonGBAroundTarget(t, 4, 0f), 20, 100))
                 .then(new AttackNode<>(OPENING_SKILL, 6, 4, (a, t) -> a.summonGBAroundTarget(t, 4, 45f), 20, 100))
                 .then(new AttackNode<>(OPENING_SKILL, 6, 20, (a, t, tick) -> {
-                    if (tick == 4) {
-                        a.summonGBAroundTarget(t, 2, 0f);
-                    }
+                    if (tick == 4) a.summonGBAroundTarget(t, 2, 0f);
                     if (tick >= 20) {
                         a.controlSoulMode(t, SoulMode.GRAVITY);
                         return true;
@@ -265,15 +260,15 @@ public class SansAi {
     }
 
     // 可连续的可脱手的攻击
-    private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createContinuousSkillBehavior() {
+    private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createContinuousOffHandSkillBehavior() {
         int[] delay = new int[2];
         return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(
-                new AttackNode<Sans>("aimed_barrage_bone", 6, 200, (a, t, tick) -> {
+                new AttackNode<Sans>(AIMED_BARRAGE_BONE, 6, 200, (a, t, tick) -> {
                     if (tick == 4) delay[0] = a.shootAimedBarrage(t);
                     return tick > 30 + delay[0];
                 }).weight((a, t) -> WeightMath.linearIncrease(a.distanceTo(t), 12, a.getFollowRange()))
                         .allowConcurrent().priority(1),
-                new AttackNode<Sans>("forward_barrage_bone", 6, 200, (a, t, tick) -> {
+                new AttackNode<Sans>(FORWARD_BARRAGE_BONE, 6, 200, (a, t, tick) -> {
                     if (tick == 4) delay[1] = a.shootForwardBarrage(t);
                     return tick > 30 + delay[1];
                 }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 12, a.getFollowRange()))
@@ -308,8 +303,7 @@ public class SansAi {
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createFirstComboSkillBehavior() {
         int[] delay = new int[2];
         return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(
-//                CONTROL_GB,
-                new AttackNode<Sans>("white_aqua_ground_bone_wall",6, 100, (a, t, tick) -> {
+                new AttackNode<Sans>("white_aqua_ground_bone_wall",6, 200, (a, t, tick) -> {
                     if (tick == 4) {
                         int difficulty = a.level().getDifficulty().getId();
                         delay[0] = 1;
@@ -323,21 +317,24 @@ public class SansAi {
                         a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
                     }
                     return tick >= delay[0] + 10;
-                }).condition(SansAi::isSameGravity).allowConcurrent(BONE_RING_VOLLEY,ARC_SWEEP_VOLLEY,RANDOM_GB,SELF_GB).weight(0.4F),
-                new AttackNode<Sans>("white_ground_bone_wall",6, 100, (a, t, tick) -> {
+                }).mutex().condition(SansAi::isSameGravity).weight(0.4F),
+                new AttackNode<Sans>("white_ground_bone_wall",6, 200, (a, t, tick) -> {
                     if (tick == 4) {
                         delay[1] = 1;
                         for (int i = 0; i < 6; i++) {
                             float growScale = 1f + 2.5f*a.getRandom().nextFloat();
-                            a.summonGroundBoneWall(t, ColorAttack.WHITE, 1.3f,growScale, LocalDirection.FRONT, delay[1], 12.0);
+                            int count = (int)(growScale*1.5f);
+                            for (int j = 0; j < count; j++) {
+                                a.summonGroundBoneWall(t, ColorAttack.WHITE, 1.3f,growScale, LocalDirection.FRONT, delay[1]+j, 12.0+j);
+                            }
                             delay[1] += 15 + Mth.ceil(growScale*5)-2*a.getStaminaFactor();
                         }
                         a.summonGroundBoneArrange(t,1.3f,12.0,delay[1]);
                         a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
                     }
                     return tick >= delay[1] + 10;
-                }).condition(SansAi::isSameGravity).allowConcurrent(BONE_RING_VOLLEY,ARC_SWEEP_VOLLEY,RANDOM_GB,SELF_GB,CROSS_GB).weight(0.4F)
-              ), MemoryModuleTypes.COOLDOWN_4.get(), 200) {
+                }).mutex().condition(SansAi::isSameGravity).weight(0.4F)
+              ), MemoryModuleTypes.COOLDOWN_4.get(), 50) {
             @Override
             protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
                 this.totalCooldown -= (int) (totalCooldown * 0.3f * mob.getPhaseFactor());
@@ -346,8 +343,17 @@ public class SansAi {
         };
     }
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createSecondComboSkillBehavior() {
-//        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(CONTROL_GB), (a) -> List.of(timeJumpSkill(), gravitySlam(a),parametricGroundBoneSpineWaves()), MemoryModuleTypes.COOLDOWN_3.get(),10);
-        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(), (a) -> List.of( gravitySlam(a)), MemoryModuleTypes.COOLDOWN_3.get(),10);
+//        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(), (a) -> List.of(timeJumpSkill(), gravitySlam(a),parametricGroundBoneSpineWaves()), MemoryModuleTypes.COOLDOWN_3.get(),10);
+        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(), (a) -> List.of( timeJumpSkill()), MemoryModuleTypes.COOLDOWN_3.get(),10);
+    }
+    private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createContinuousSkillBehavior() {
+        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(CONTROL_GB), MemoryModuleTypes.COOLDOWN_4.get(),200){
+            @Override
+            protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
+                if(mob.getPhaseFactor() == Sans.SECOND_PHASE) totalCooldown -= (int) (totalCooldown * 0.2f);
+                super.stop(level, mob, gameTime);
+            }
+        };
     }
 
     private static AttackNode<Sans> gravitySlam(Sans mob) {
@@ -402,7 +408,7 @@ public class SansAi {
                 a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
             }
             return tick >= duration[0] + 12 - difficulty && !state[0];
-        }).mutex());
+        }).addAllowConcurrent(AIMED_BARRAGE_BONE,FORWARD_BARRAGE_BONE));
         return root;
     }
     private static AttackNode<Sans> timeJumpSkill() {
@@ -479,7 +485,7 @@ public class SansAi {
                 a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
             }
             return tick >= duration[0] + 12 - difficulty && !state[0];
-        }).weight((a, t) -> 5 + a.getStaminaFactor()*5.0);
+        }).weight((a, t) -> 7 +(a.distanceTo(t)<7.0?10:0)+ a.getStaminaFactor()*5.0);
     }
 
     private static Optional<? extends LivingEntity> findNearestValidAttackTarget(Sans mob) {
@@ -614,7 +620,7 @@ public class SansAi {
 
     // 双旋转骨
     public static final AttackNode<Sans> DOUBLE_SPIN_BONE = new AttackNode<Sans>(
-            "double_spin_bone", 11, 150, (a, t, tick) -> {
+            "double_spin_bone", 11, 50, (a, t, tick) -> {
         if (tick == 20) a.shootRotationBone(t, 1F, 10F);
         if (tick == 26) a.shootRotationBone(t, -1F, -10F);
         return tick >= 30;
