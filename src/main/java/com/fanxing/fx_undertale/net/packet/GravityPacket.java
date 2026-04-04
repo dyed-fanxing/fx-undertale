@@ -45,9 +45,9 @@ public record GravityPacket(int entityId, Direction gravity,float acceleration) 
                 Entity entity = level.getEntity(packet.entityId);
                 if (entity != null) {
                     Gravity.applyGravity(entity, packet.gravity);
+                    entity.addDeltaMovement(new Vec3(0,-packet.acceleration,0));
                     //矫正位置
                     entity.move(net.minecraft.world.entity.MoverType.SELF, Vec3.ZERO);
-                    entity.addDeltaMovement(new Vec3(0,-packet.acceleration,0));
                 }
             }
         });

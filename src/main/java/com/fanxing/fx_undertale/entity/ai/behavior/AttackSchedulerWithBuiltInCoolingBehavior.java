@@ -30,43 +30,45 @@ public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> e
     protected final List<AttackNode<T>> nodes;                // 静态节点列表
     protected final Function<T, List<AttackNode<T>>> dynamicFactory;                // 动态节点列表
     protected MemoryModuleType<Unit> cooldownMemory = null;    // 内置冷却
-    protected final float attackCoolingDownFactor;               // 全局冷却因子
-    protected int totalCooldown;                              // 内置总冷却
+    protected final int globalCoolDown;               // 全局冷却因子
+    protected int innerCooldown;                              // 内置总冷却
     protected AttackNode<T> currentNode;                      // 当前节点
     protected int tick;                                       // 计数器
+    protected int postStartDelay;                             // 启动后置延迟，设置该延迟，可以在选择攻击时候设置全局攻击冷却，从而阻止其他调度器在同一时刻内一起启动
     protected List<AttackNode<T>> cachedCandidates;
-    protected int initialDelay;
 
 
-    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, MemoryModuleType<Unit> cooldownMemory,int initialDelay) {
-        this(nodes, mob -> List.of(), cooldownMemory,initialDelay);
+    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, MemoryModuleType<Unit> cooldownMemory,int postStartDelay) {
+        this(nodes, mob -> List.of(), cooldownMemory,postStartDelay);
     }
-    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, MemoryModuleType<Unit> cooldownMemory,float attackCoolingDownFactor,int initialDelay) {
-        this(nodes, mob -> List.of(), cooldownMemory,attackCoolingDownFactor,initialDelay);
+    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, MemoryModuleType<Unit> cooldownMemory,int globalCoolDown,int postStartDelay) {
+        this(nodes, mob -> List.of(), cooldownMemory,globalCoolDown,postStartDelay);
     }
-    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory,int initialDelay) {
-        this(nodes, dynamicFactory, cooldownMemory, 0.16667f,initialDelay);
+    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory,int postStartDelay) {
+        this(nodes, dynamicFactory, cooldownMemory, 20,postStartDelay);
     }
 
-    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory, float attackCoolingDownFactor,int initialDelay) {
+    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, MemoryModuleType<Unit> cooldownMemory, int globalCoolDown,int postStartDelay) {
         super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryStatus.VALUE_ABSENT, MemoryModuleTypes.ATTACKING.get(), MemoryStatus.REGISTERED, MemoryModuleTypes.MOVE_LOCKING.get(), MemoryStatus.REGISTERED, cooldownMemory, MemoryStatus.VALUE_ABSENT), Integer.MAX_VALUE);
         this.nodes = nodes;
         this.dynamicFactory = dynamicFactory;
         this.cooldownMemory = cooldownMemory;
-        this.attackCoolingDownFactor = attackCoolingDownFactor;
-        this.initialDelay = initialDelay;
+        this.globalCoolDown = globalCoolDown;
+        this.postStartDelay = postStartDelay;
     }
+
+
 
 
     public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory) {
-        this(nodes, dynamicFactory, 0.16667f);
+        this(nodes, dynamicFactory, 20);
     }
 
-    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, float attackCoolingDownFactor) {
+    public AttackSchedulerWithBuiltInCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory, int globalCoolDown) {
         super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryStatus.VALUE_ABSENT, MemoryModuleTypes.MOVE_LOCKING.get(), MemoryStatus.REGISTERED, MemoryModuleTypes.ATTACKING.get(), MemoryStatus.VALUE_ABSENT), Integer.MAX_VALUE);
         this.nodes = nodes;
         this.dynamicFactory = dynamicFactory;
-        this.attackCoolingDownFactor = attackCoolingDownFactor;
+        this.globalCoolDown = globalCoolDown;
     }
 
     /**
@@ -107,10 +109,6 @@ public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> e
 
     @Override
     protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull T mob) {
-        if(initialDelay > 0){
-            initialDelay--;
-            return false;
-        }
         Optional<LivingEntity> targetOpt = mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET);
         if (targetOpt.isEmpty()) {
             cachedCandidates = null;
@@ -122,7 +120,6 @@ public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> e
 
     @Override
     protected void start(@NotNull ServerLevel level, @NotNull T mob, long gameTime) {
-        mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ATTACK_COOLING_DOWN, true, 5);
         if (cachedCandidates == null || cachedCandidates.isEmpty()) {
             doStop(level, mob, gameTime);
             return;
@@ -147,8 +144,8 @@ public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> e
         }
         mob.getBrain().setMemory(MemoryModuleTypes.ATTACKING.get(), Unit.INSTANCE);
         tick = 0;
-        totalCooldown = 0;
-
+        innerCooldown = 0;
+        mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ATTACK_COOLING_DOWN,true,postStartDelay);
     }
 
     @Override
@@ -161,7 +158,7 @@ public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> e
         if (targetOptional.isPresent()) {
             LivingEntity target = targetOptional.get();
             if (tick == 0) {
-                totalCooldown += currentNode.getCooldown();
+                innerCooldown += currentNode.getCooldown();
                 if (currentNode.getAnimId() != null) {
                     Set<AttackNode<?>> activeNodes = mob.getBrain().getMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get()).orElse(Collections.emptySet());
                     int maxPriority = activeNodes.stream().mapToInt(AttackNode::getPriority).max().orElse(0);
@@ -196,7 +193,7 @@ public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> e
                 }
                 doStop(level, mob, gameTime);
             } else if (tick > 2000) {
-                totalCooldown += currentNode.getCooldown();
+                innerCooldown += currentNode.getCooldown();
                 doStop(level, mob, gameTime);
             }
             tick++;
@@ -226,8 +223,8 @@ public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> e
         }
 
 
-        mob.getBrain().setMemoryWithExpiry(cooldownMemory, Unit.INSTANCE, totalCooldown);
-        mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ATTACK_COOLING_DOWN, true, (int) (totalCooldown * attackCoolingDownFactor));
+        mob.getBrain().setMemoryWithExpiry(cooldownMemory, Unit.INSTANCE, innerCooldown);
+        mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ATTACK_COOLING_DOWN, true, globalCoolDown);
 
         mob.getBrain().eraseMemory(MemoryModuleTypes.ATTACKING.get());
         mob.getBrain().eraseMemory(MemoryModuleTypes.MOVE_LOCKING.get());

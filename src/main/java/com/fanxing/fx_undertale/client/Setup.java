@@ -99,7 +99,7 @@ public class Setup {
 
 
         registrar.playToClient(GravityPacket.TYPE,GravityPacket.STREAM_CODEC, GravityPacket::handle);
-        registrar.playToClient(GravityControlTagPacket.TYPE,GravityControlTagPacket.STREAM_CODEC, GravityControlTagPacket::handle);
+        registrar.playToClient(GravityAccPacket.TYPE, GravityAccPacket.STREAM_CODEC, GravityAccPacket::handle);
 
 
         registrar.playToClient(KaramPacket.TYPE,KaramPacket.STREAM_CODEC, KaramPacket::handle);

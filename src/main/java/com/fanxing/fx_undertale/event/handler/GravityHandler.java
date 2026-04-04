@@ -24,9 +24,10 @@ public class GravityHandler {
     @SubscribeEvent
     public static void onEntityTickPre(EntityTickEvent.Pre event) {
         Entity entity = event.getEntity();
-        if(entity.getData(AttachmentTypes.GRAVITY_CONTROL_TAG.get())) {
-            entity.addDeltaMovement(new Vec3(0,-0.08F,0));
-        }
+//        if(entity.getData(AttachmentTypes.GRAVITY_ACC.get()) != null) {
+//            entity.addDeltaMovement(new Vec3(0,-0.08F,0));
+//        }
+        entity.addDeltaMovement(new Vec3(0,-entity.getData(AttachmentTypes.GRAVITY_ACC.get()),0));
     }
     @SubscribeEvent
     public static void onLivingFall(LivingFallEvent event) {

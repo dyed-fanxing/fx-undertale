@@ -36,7 +36,8 @@ import java.util.List;
  */
 public class GroundBone extends AbstractBone<GroundBone> implements Growable, ColoredAttacker, IEntityWithComplexSpawn, GeoEntity {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-    private int delay = 10;
+    private int delay;          // 整体延迟
+    private int shotDelay;      // 射击延迟，在整体延迟结束后开始
     private float speed;
 
     public GroundBone(EntityType<? extends GroundBone> type, Level level) {
@@ -52,8 +53,8 @@ public class GroundBone extends AbstractBone<GroundBone> implements Growable, Co
         this.delay = delay;
         return this;
     }
-    public GroundBone delayShoot(int delay, float speed) {
-        this.delay = delay;
+    public GroundBone delayShoot(int shotDelay, float speed) {
+        this.shotDelay = shotDelay;
         this.speed = speed;
         return this;
     }
@@ -66,32 +67,30 @@ public class GroundBone extends AbstractBone<GroundBone> implements Growable, Co
 
     @Override
     public float getGrowProgress(float partialTick) {
-        if (this.speed != 0 || this.getDeltaMovement().lengthSqr() != 0) {
-            if(delay <= 10) return CurvesUtils.riseHoldFallBezier((10-delay + partialTick) / lifetime, holdTimeScale, 0.8f);
-            else return 0f;
-        } else{
-            if (delay >= -lifetime && delay < 0) {
-                if (holdTimeScale == -1f) { // 特殊值-1f使用sin曲线，这个比较符合重力猛摔后的骨刺刺出并返回的效果
-                    return Mth.sin(((-delay + partialTick) / lifetime) * Mth.PI);
-                } else {
-                    return CurvesUtils.riseHoldFallBezier((-delay + partialTick) / lifetime, holdTimeScale, 0.8f);
-                }
-            }else return 0f;
-        }
+        if (delay >= -lifetime && delay < 0) {
+            if (holdTimeScale == -1f) { // 特殊值-1f使用sin曲线，这个比较符合重力猛摔后的骨刺刺出并返回的效果
+                return Mth.sin(((-delay + partialTick) / lifetime) * Mth.PI);
+            } else {
+                return CurvesUtils.riseHoldFallBezier((-delay + partialTick) / lifetime, holdTimeScale, 0.8f);
+            }
+        }else return 0f;
     }
 
 
     @Override
     public void tick() {
         delay--;
-        if (delay < -lifetime) {
-            this.discard();
-        }
-        this.refreshDimensions();
-        super.tick();
-        if (delay == 0 && !this.level().isClientSide) {
-            this.setDeltaMovement(this.getLookAngle().scale(speed));
-            this.hasImpulse = true;
+        if (delay <= 0 ) {
+            shotDelay--;
+            this.refreshDimensions();
+            super.tick();
+            if (shotDelay == 0 && !this.level().isClientSide) {
+                this.setDeltaMovement(this.getLookAngle().scale(speed));
+                this.hasImpulse = true;
+            }
+            if (delay < -lifetime) {
+                this.discard();
+            }
         }
     }
 
