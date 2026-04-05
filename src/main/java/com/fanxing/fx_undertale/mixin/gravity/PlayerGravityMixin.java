@@ -1,6 +1,5 @@
 package com.fanxing.fx_undertale.mixin.gravity;
 
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.EntityDimensions;
@@ -23,7 +22,7 @@ public abstract class PlayerGravityMixin {
     @Inject(method = "canPlayerFitWithinBlocksAndEntitiesWhen", at = @At("HEAD"), cancellable = true)
     protected void canPlayerFitWithinBlocksAndEntitiesWhen(Pose pose, CallbackInfoReturnable<Boolean> cir) {
         Player self = (Player) (Object) (this);
-        Direction gravity = self.getData(AttachmentTypes.GRAVITY).getGravity();
+        Direction gravity = self.getData(AttachmentTypes.GRAVITY);
         if (gravity != Direction.DOWN) {
             cir.cancel();
             Vec3 position = self.position();
@@ -50,8 +49,7 @@ public abstract class PlayerGravityMixin {
     @Inject(method = "canFallAtLeast", at = @At("HEAD"), cancellable = true)
     protected void canFallAtLeast(double dx, double dz, float maxUpStep, CallbackInfoReturnable<Boolean> cir) {
         Player self = (Player) (Object) (this);
-        Gravity data = self.getData(AttachmentTypes.GRAVITY);
-        Direction gravity = data.getGravity();
+        Direction gravity = self.getData(AttachmentTypes.GRAVITY);
         if (gravity != Direction.DOWN){
             cir.cancel();
             AABB aabb = self.getBoundingBox();

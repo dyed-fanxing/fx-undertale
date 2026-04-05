@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.mixin.gravity.projectile;
 
+import com.fanxing.fx_undertale.utils.GravityUtils;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,9 +21,9 @@ public abstract class ThrowableProjectileGravityMixin {
     @ModifyArgs(method = "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/Level;)V",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/ThrowableProjectile;<init>(Lnet/minecraft/world/entity/EntityType;DDDLnet/minecraft/world/level/Level;)V"))
     private static void setPosByOwnerEyePos(Args args, @Local(ordinal = 0, argsOnly = true) LivingEntity owner) {
-        Gravity data = owner.getData(AttachmentTypes.GRAVITY);
-        if(data.getGravity() != Direction.DOWN){
-            Vec3 eyePos = data.localToWorld(0, owner.getEyeHeight()-0.1, 0).add(owner.position());
+        Direction gravity = owner.getData(AttachmentTypes.GRAVITY);
+        if(gravity != Direction.DOWN){
+            Vec3 eyePos = GravityUtils.localToWorld(gravity,0, owner.getEyeHeight()-0.1, 0).add(owner.position());
             args.set(1, eyePos.x);
             args.set(2, eyePos.y);
             args.set(3, eyePos.z);

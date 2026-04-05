@@ -2,13 +2,12 @@ package com.fanxing.fx_undertale.entity.boss.sans;
 
 import com.fanxing.fx_undertale.entity.ai.behavior.*;
 import com.fanxing.fx_undertale.entity.ai.behavior.StartAttacking;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.summon.RotationBone;
 import com.fanxing.fx_undertale.net.packet.AnimPacket;
 import com.fanxing.fx_undertale.net.packet.GravityPacket;
 import com.fanxing.fx_undertale.net.packet.TimeJumpTeleportPacket;
-import com.fanxing.fx_undertale.net.packet.WarningTipPacket;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
+import com.fanxing.fx_undertale.utils.GravityUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -17,13 +16,11 @@ import com.fanxing.fx_undertale.common.phys.LocalDirection;
 import com.fanxing.fx_undertale.entity.ai.AttackNode;
 import com.fanxing.fx_undertale.entity.ai.WeightMath;
 import com.fanxing.fx_undertale.entity.ai.sensing.SensorTargeting;
-import com.fanxing.fx_undertale.entity.ai.tracker.IgnoringSensorEntityTracker;
 import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.entity.persistentData.SoulMode;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.registry.MemoryModuleTypes;
 import com.fanxing.fx_undertale.registry.SoundEvnets;
-import com.fanxing.fx_undertale.utils.RotUtils;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -39,7 +36,6 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -373,11 +369,11 @@ public class SansAi {
         AttackNode<Sans> root = new AttackNode<Sans>(GRAVITY_SLAM, 0, (a, t, tick) -> tick >= 0)
                 .weight(6);
         AttackNode<Sans> curr = root;
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 20; i++) {
             int index = mob.getRandom().nextInt(directions.length - 1);
             boolean[] state = new boolean[]{true};
             int[] duration = new int[1];
-            curr = curr.then(new AttackNode<Sans>(GRAVITY_SLAM, index, 50, (a, t, tick) -> {
+            curr = curr.then(new AttackNode<Sans>(GRAVITY_SLAM, index, 2, (a, t, tick) -> {
                 if (tick == 3) {
                     a.gravitySlam(t, LocalDirection.values()[index], 0.8f + factor * 0.1f);
                 }
@@ -523,7 +519,7 @@ public class SansAi {
         mob.setTargetId(-1);
         mob.applyKarma(target, false);
         mob.applyGravityControlAcc(target, 0F);
-        Gravity.applyGravity(target, Direction.DOWN);
+        GravityUtils.applyGravity(target, Direction.DOWN);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), Direction.DOWN, 0));
     }
 
@@ -534,7 +530,7 @@ public class SansAi {
     }
 
     public static boolean isSameGravity(LivingEntity a, LivingEntity t) {
-        return a.getData(AttachmentTypes.GRAVITY).getGravity() == t.getData(AttachmentTypes.GRAVITY).getGravity();
+        return a.getData(AttachmentTypes.GRAVITY) == t.getData(AttachmentTypes.GRAVITY);
     }
 
     public static class MercyAttack extends Behavior<Sans> {
@@ -609,7 +605,7 @@ public class SansAi {
         protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull Sans mob) {
             Brain<Sans> brain = mob.getBrain();
             mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> {
-                Direction gravity = target.getData(AttachmentTypes.GRAVITY).getGravity();
+                Direction gravity = target.getData(AttachmentTypes.GRAVITY);
                 if (lastGravity != gravity) {
                     lastGravity = gravity;
                     targetNotDownwardGravityTick = 0;
@@ -649,7 +645,7 @@ public class SansAi {
         int count = 1 + a.getRandom().nextInt(1 + difficulty + a.getPhaseFactor());
         a.summonGBFront(t, count, 60f / count, 17);
     }, 30, 40
-    ).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange() * CLOSE_RANGE_FACTOR, 0, 16));
+    ).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange() * CLOSE_RANGE_FACTOR, 0, 16)-a.getPhaseFactor()*5);
 
     // 十字 GB
     public static final AttackNode<Sans> CROSS_GB = new AttackNode<Sans>(
@@ -662,7 +658,7 @@ public class SansAi {
         int difficulty = a.level().getDifficulty().getId();
         a.summonGBAroundSelf(t, 1 + a.getPhaseFactor() + difficulty / 3, 1.0f + difficulty * 0.25f);
     }, 30, 40
-    ).weight((a, t) -> 12.0);
+    ).weight((a, t) -> 12.0-a.getPhaseFactor()*5);
 
     // 自身地面骨刺
     public static final AttackNode<Sans> SELF_GROUND_BONE_SPINE = new AttackNode<Sans>(

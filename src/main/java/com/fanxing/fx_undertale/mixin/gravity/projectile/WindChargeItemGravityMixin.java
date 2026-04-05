@@ -1,6 +1,5 @@
 package com.fanxing.fx_undertale.mixin.gravity.projectile;
 
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
@@ -21,8 +20,8 @@ public abstract class WindChargeItemGravityMixin {
     @ModifyArgs(method = "use",at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/windcharge/WindCharge;<init>(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/Level;DDD)V"))
     private void setPosByOwnerEyePos(Args args){
         Player player = args.get(0);
-        Gravity data = player.getData(AttachmentTypes.GRAVITY);
-        if(data.getGravity() != Direction.DOWN){
+        Direction gravity = player.getData(AttachmentTypes.GRAVITY);
+        if(gravity != Direction.DOWN){
             Vec3 eyePosition = player.getEyePosition();
             args.set(2, eyePosition.x());
             args.set(3, eyePosition.y());

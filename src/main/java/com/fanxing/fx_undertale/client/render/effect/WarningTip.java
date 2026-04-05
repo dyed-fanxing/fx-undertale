@@ -1,14 +1,13 @@
 package com.fanxing.fx_undertale.client.render.effect;
 
 import com.fanxing.fx_undertale.utils.CurvesUtils;
-import com.fanxing.fx_undertale.utils.RotUtils;
+import com.fanxing.fx_undertale.utils.GravityUtils;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.fanxing.fx_undertale.Config;
 import com.fanxing.fx_undertale.common.RenderTypes;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.utils.RenderUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.LightTexture;
@@ -91,7 +90,7 @@ public abstract class WarningTip extends Effect {
             super(x, y, z, lifetime, color);
             this.radius = radius;
             this.height = height;
-            this.localToWorld = Gravity.getRotation(gravity);
+            this.localToWorld = GravityUtils.getLocalToWorldF(gravity);
         }
 
         @Override
@@ -509,7 +508,7 @@ public abstract class WarningTip extends Effect {
 
         public CurveStripPrecessionGravity(float x, float y, float z, int lifetime, int color, float radius, float width, float yaw, int segments, Function<Float, Vec3> curve, Direction gravity) {
             super(x, y, z, lifetime, color, radius, width, yaw, segments, curve);
-            this.localToWorld = Gravity.getRotation(gravity);
+            this.localToWorld = GravityUtils.getLocalToWorldF(gravity);
         }
 
         @Override

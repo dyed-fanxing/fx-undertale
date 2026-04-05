@@ -1,8 +1,6 @@
 package com.fanxing.fx_undertale.client.screen;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.common.phys.LocalDirection;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.menu.GravitySelectionMenu;
 import com.fanxing.fx_undertale.net.packet.GravitySelectionPacket;
 import net.minecraft.client.gui.GuiGraphics;

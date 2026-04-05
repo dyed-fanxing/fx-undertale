@@ -1,11 +1,11 @@
 package com.fanxing.fx_undertale.entity.summon;
 
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.capability.QuaternionRotatable;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.utils.CurvesUtils;
+import com.fanxing.fx_undertale.utils.GravityUtils;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -18,6 +18,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Quaterniond;
 import org.joml.Quaternionf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +59,7 @@ public class GroundBoneOBB extends AbstractBone<GroundBoneOBB> implements Quater
     }
     @Override
     public GroundBoneOBB gravity(Direction gravity) {
-        Quaternionf gravityRotation = Gravity.getRotation(gravity);
+        Quaternionf gravityRotation = GravityUtils.getLocalToWorldF(gravity);
         orientation = gravityRotation.mul(orientation, new Quaternionf());
         return this;
     }

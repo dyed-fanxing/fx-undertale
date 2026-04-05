@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.mixin.gravity.projectile;
 
+import com.fanxing.fx_undertale.utils.GravityUtils;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
@@ -22,9 +22,9 @@ public abstract class ProjectileGravityMixin {
 
     @ModifyArgs(method = "shootFromRotation", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/projectile/Projectile;shoot(DDDFF)V"))
     public void shootFromRotation(Args args, @Local(ordinal = 0, argsOnly = true) Entity shooter) {
-        Gravity data = shooter.getData(AttachmentTypes.GRAVITY);
-        if (data.getGravity() != Direction.DOWN) {
-            Vec3 shootVec3 = data.localToWorld((double) args.get(0), args.get(1), args.get(2));
+        Direction gravity = shooter.getData(AttachmentTypes.GRAVITY);
+        if (gravity != Direction.DOWN) {
+            Vec3 shootVec3 = GravityUtils.localToWorld(gravity,(double) args.get(0), args.get(1), args.get(2));
             args.set(0, shootVec3.x);
             args.set(1, shootVec3.y);
             args.set(2, shootVec3.z);

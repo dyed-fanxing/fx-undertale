@@ -2,12 +2,11 @@ package com.fanxing.fx_undertale.entity.summon;
 
 import com.fanxing.fx_undertale.common.phys.OBB;
 import com.fanxing.fx_undertale.entity.ColoredAttacker;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.capability.Growable;
 import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import com.fanxing.fx_undertale.entity.capability.Scalable;
 import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
-import com.fanxing.fx_undertale.registry.AttachmentTypes;
+import com.fanxing.fx_undertale.utils.GravityUtils;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -18,7 +17,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Quaterniond;
 import org.joml.Quaternionf;
+import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,7 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         // 1. 当前姿态的四元数（YXZ 顺序）
         Quaternionf qCurrent = new Quaternionf().rotationYXZ(this.getYRot()*Mth.DEG_TO_RAD, this.getXRot()*Mth.DEG_TO_RAD, 0);
         // 3. 新姿态 = qGravity * qCurrent （左乘：先应用当前姿态，再整体旋转到新重力坐标系），转回欧拉角
-        Vector3f euler = Gravity.getRotation(gravity).mul(qCurrent).getEulerAnglesYXZ(new Vector3f());
+        Vector3f euler = GravityUtils.getLocalToWorldF(gravity).mul(qCurrent).getEulerAnglesYXZ(new Vector3f());
         setYRot(euler.y * Mth.RAD_TO_DEG);
         setXRot(euler.x * Mth.RAD_TO_DEG);
         return (T) this;

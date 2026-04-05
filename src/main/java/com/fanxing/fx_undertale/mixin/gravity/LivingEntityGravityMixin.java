@@ -31,7 +31,7 @@ public abstract class LivingEntityGravityMixin {
     @ModifyVariable(method = "tick", at = @At(value = "STORE"), ordinal = 0)
     private double d1_dx(double d1) {
         LivingEntity self = (LivingEntity) (Object) this;
-        Direction gravity = self.getData(AttachmentTypes.GRAVITY).getGravity();
+        Direction gravity = self.getData(AttachmentTypes.GRAVITY);
         return switch (gravity) {
             case DOWN, SOUTH, NORTH -> d1;                // 局部x -> 世界x
             case UP -> -(self.getX() - self.xo);    // 局部x -> 世界x 取反
@@ -46,7 +46,7 @@ public abstract class LivingEntityGravityMixin {
     @ModifyVariable(method = "tick", at = @At(value = "STORE"), ordinal = 1)
     private double d0_dz(double d0) {
         LivingEntity self = (LivingEntity) (Object) this;
-        Direction gravity = self.getData(AttachmentTypes.GRAVITY).getGravity();
+        Direction gravity = self.getData(AttachmentTypes.GRAVITY);
         return switch (gravity) {
             case DOWN, UP -> d0;                         // 局部z -> 世界z
             case EAST, WEST -> self.getY() - self.yo;  // 局部z -> 世界z，且Y不变
@@ -61,7 +61,7 @@ public abstract class LivingEntityGravityMixin {
     @ModifyVariable(method = "calculateEntityAnimation", at = @At(value = "STORE"), ordinal = 0)
     private float onCalculateEntityAnimation(float f, @Local(ordinal = 0, argsOnly = true) boolean flying) {
         LivingEntity self = (LivingEntity) (Object) this;
-        Direction gravity = self.getData(AttachmentTypes.GRAVITY).getGravity();
+        Direction gravity = self.getData(AttachmentTypes.GRAVITY);
         return switch (gravity) {
             case UP, DOWN -> f; // XZ平面
             case SOUTH, NORTH -> (float) Mth.length(self.getX() - self.xo, self.getY() - self.yo, flying ? self.getZ() - self.zo : 0);  // XY平面

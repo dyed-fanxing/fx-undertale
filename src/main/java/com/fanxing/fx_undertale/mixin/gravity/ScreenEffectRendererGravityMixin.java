@@ -1,6 +1,5 @@
 package com.fanxing.fx_undertale.mixin.gravity;
 
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.client.renderer.ScreenEffectRenderer;
 import net.minecraft.core.BlockPos;
@@ -23,8 +22,8 @@ public abstract class ScreenEffectRendererGravityMixin {
      */
     @Inject(method = "getOverlayBlock", at = @At("HEAD"), cancellable = true)
     private static void onGetOverlayBlock(Player player, CallbackInfoReturnable<Pair<BlockState, BlockPos>> cir) {
-        Gravity data = player.getData(AttachmentTypes.GRAVITY);
-        if (data.getGravity() == Direction.DOWN) return;
+        Direction gravity = player.getData(AttachmentTypes.GRAVITY);
+        if (gravity == Direction.DOWN) return;
         cir.cancel();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         Vec3 eyePos = player.getEyePosition(1.0F);
@@ -34,7 +33,7 @@ public abstract class ScreenEffectRendererGravityMixin {
             double offsetX = ((float)((i) % 2) - 0.5F) * width;
             double offsetY = ((float)((i >> 1) % 2) - 0.5F) * scale;
             double offsetZ = ((float)((i >> 2) % 2) - 0.5F) * width;
-            switch (data.getGravity()) {
+            switch (gravity) {
                 // 高度轴是 Y 负方向
                 case UP -> pos.set(eyePos.x + offsetX,eyePos.y - offsetY,eyePos.z + offsetZ);
                 // 高度轴是 Z，水平面是 XY

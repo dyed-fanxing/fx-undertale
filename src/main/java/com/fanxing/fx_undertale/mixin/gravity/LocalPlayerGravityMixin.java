@@ -1,6 +1,5 @@
 package com.fanxing.fx_undertale.mixin.gravity;
 
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -25,12 +24,12 @@ public abstract class LocalPlayerGravityMixin {
                     ordinal = 0, opcode = Opcodes.GETFIELD)
     )
     private boolean redirectNoPhysics(LocalPlayer player) {
-        Gravity data = player.getData(AttachmentTypes.GRAVITY);
-        if (data.getGravity() == Direction.DOWN) {
+        Direction gravity = player.getData(AttachmentTypes.GRAVITY);
+        if (gravity == Direction.DOWN) {
             return player.noPhysics;  // 原版逻辑
         }
         double w = player.getBbWidth() * 0.35;
-        switch (data.getGravity()) {
+        switch (gravity) {
             case SOUTH, NORTH -> {
                 this.moveTowardsClosestSpace(player.getX() - w, player.getY() + w);
                 this.moveTowardsClosestSpace(player.getX() - w, player.getY() - w);
@@ -50,19 +49,19 @@ public abstract class LocalPlayerGravityMixin {
     @Inject(method = "moveTowardsClosestSpace", at = @At("HEAD"), cancellable = true)
     private void onMoveTowardsClosestSpace(double x, double z, CallbackInfo ci) {
         LocalPlayer player = (LocalPlayer)(Object)this;
-        Gravity data = player.getData(AttachmentTypes.GRAVITY);
-        if (data.getGravity() == Direction.DOWN) return;
+        Direction gravity = player.getData(AttachmentTypes.GRAVITY);
+        if (gravity == Direction.DOWN) return;
         ci.cancel();
-        switch (data.getGravity()) {
+        switch (gravity) {
             case SOUTH, NORTH -> {
                 // 水平面是 XY，高度是 Z
                 BlockPos blockpos = BlockPos.containing(x, z, player.getZ());
-                gravity$moveTowardsClosestSpace(player, blockpos, data.getGravity());
+                gravity$moveTowardsClosestSpace(player, blockpos, gravity);
             }
             case EAST, WEST -> {
                 // 水平面是 YZ，高度是 X
                 BlockPos blockpos = BlockPos.containing(player.getX(), x, z);
-                gravity$moveTowardsClosestSpace(player, blockpos, data.getGravity());
+                gravity$moveTowardsClosestSpace(player, blockpos, gravity);
             }
         }
     }

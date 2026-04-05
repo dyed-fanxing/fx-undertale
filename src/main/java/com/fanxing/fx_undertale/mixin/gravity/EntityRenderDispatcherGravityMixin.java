@@ -1,10 +1,10 @@
 package com.fanxing.fx_undertale.mixin.gravity;
 
 import com.fanxing.fx_undertale.entity.capability.OBBHolder;
+import com.fanxing.fx_undertale.utils.GravityUtils;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
@@ -36,9 +36,9 @@ public class EntityRenderDispatcherGravityMixin {
             ordinal = 0)
     private Vec3 modifyRenderOffset(Vec3 offset, Entity entity) {
         if(entity instanceof OBBHolder) return offset;
-        Gravity data = entity.getData(AttachmentTypes.GRAVITY);
-        if (data.getGravity() == Direction.DOWN) return offset;
-        else return data.localToWorld(offset);
+        Direction gravity = entity.getData(AttachmentTypes.GRAVITY);
+        if (gravity == Direction.DOWN) return offset;
+        else return GravityUtils.localToWorld(gravity,offset);
     }
 
     @Redirect(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V",
@@ -46,8 +46,8 @@ public class EntityRenderDispatcherGravityMixin {
                     ordinal = 0))
     private static void onRenderEyeLineBox(PoseStack poseStack, VertexConsumer consumer, double minX, double minY, double minZ, double maxX, double maxY, double maxZ, float r, float g, float b, float a, @Local(ordinal = 0, argsOnly = true) Entity entity,@Local(ordinal = 0) AABB aabb){
         if(entity instanceof OBBHolder) return;
-        Gravity data = entity.getData(AttachmentTypes.GRAVITY);
-        switch (data.getGravity()){
+        Direction gravity = entity.getData(AttachmentTypes.GRAVITY);
+        switch (gravity){
             case DOWN -> LevelRenderer.renderLineBox(poseStack, consumer, minX, minY,minZ, maxX,maxY, maxZ, r, g, b, a);
             case UP -> LevelRenderer.renderLineBox(poseStack, consumer, minX, -maxY,minZ, maxX,-minY, maxZ,  r, g, b, a);
             case EAST ->  LevelRenderer.renderLineBox(poseStack, consumer, -maxY, aabb.minY,minZ,-minY,aabb.maxY, maxZ,  r, g, b, a);
@@ -61,25 +61,25 @@ public class EntityRenderDispatcherGravityMixin {
             at = @At(value = "INVOKE",target = "Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;renderVector(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lorg/joml/Vector3f;Lnet/minecraft/world/phys/Vec3;I)V"),index = 2)
     private static Vector3f viewVectorEyeHeightVector3f(Vector3f eyePosOffset, @Local(argsOnly = true, ordinal = 0) Entity entity) {
         if(entity instanceof OBBHolder) return eyePosOffset;
-        Gravity data = entity.getData(AttachmentTypes.GRAVITY);
-        if(data.getGravity() == Direction.DOWN) return eyePosOffset;
-        else return data.localToWorld(eyePosOffset);
+        Direction gravity = entity.getData(AttachmentTypes.GRAVITY);
+        if(gravity == Direction.DOWN) return eyePosOffset;
+        else return GravityUtils.localToWorld(gravity,eyePosOffset);
     }
 
 
     @Inject(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V", at = @At("TAIL"))
     private static void onRenderHitbox(PoseStack poseStack, VertexConsumer consumer, Entity entity, float partialTicks, float r, float g, float b, CallbackInfo ci) {
         if(entity instanceof OBBHolder) return;
-        Gravity data = entity.getData(AttachmentTypes.GRAVITY);
-        if(data.getGravity() != Direction.DOWN) {
-            Vec3i gravity = data.getGravity().getNormal();
-            Vector3f up = data.getUp();
-            Vector3f forward = data.getForward();
-            Vector3f right = data.getRight();
+        Direction gravity = entity.getData(AttachmentTypes.GRAVITY);
+        if(gravity != Direction.DOWN) {
+            Vec3i normal = gravity.getNormal();
+            Vector3f up = GravityUtils.getUp(gravity);
+            Vector3f forward = GravityUtils.getForward(gravity);
+            Vector3f right = GravityUtils.getRight(gravity);
             LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,right.x, right.y, right.z,1.0F, 0, 0, 1.0F);
             LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,up.x, up.y, up.z,0, 1.0F, 0, 1.0F);
             LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,forward.x, forward.y, forward.z,0, 0, 1.0F, 1.0F);
-            LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,gravity.getX(), gravity.getY(), gravity.getZ(),0, 0, 0F, 1.0F);
+            LevelRenderer.renderLineBox(poseStack, consumer,0,0,0,normal.getX(), normal.getY(), normal.getZ(),0, 0, 0F, 1.0F);
         }
     }
 

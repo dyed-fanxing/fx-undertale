@@ -1,7 +1,6 @@
 package com.fanxing.fx_undertale.registry;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.attachment.KaramJudge;
 import com.fanxing.fx_undertale.entity.attachment.Karam;
 import com.fanxing.fx_undertale.entity.attachment.PlayerSoul;
@@ -41,8 +40,11 @@ public class AttachmentTypes {
     public static final Supplier<AttachmentType<KaramJudge>> KARMA_ATTACK = ATTACHMENT_TYPES.register(
             "karma_judge", () -> AttachmentType.builder(KaramJudge::new).serialize(KaramJudge.CODEC).build()
     );
-    public static final Supplier<AttachmentType<Gravity>> GRAVITY = ATTACHMENT_TYPES.register(
-            "gravity", () -> AttachmentType.builder(()->new Gravity()).serialize(Gravity.CODEC).build()
+//    public static final Supplier<AttachmentType<Gravity>> GRAVITY = ATTACHMENT_TYPES.register(
+//            "gravity", () -> AttachmentType.builder(()->new Gravity()).serialize(Gravity.CODEC).build()
+//    );
+    public static final Supplier<AttachmentType<Direction>> GRAVITY = ATTACHMENT_TYPES.register(
+            "gravity", () -> AttachmentType.builder(()->Direction.DOWN).serialize(Direction.CODEC).build()
     );
     public static final Supplier<AttachmentType<Boolean>> KARMA_TAG = ATTACHMENT_TYPES.register(
             "karma_tag", () -> AttachmentType.builder(()->false).build()
@@ -62,18 +64,18 @@ public class AttachmentTypes {
     public static void onStartTracking(PlayerEvent.StartTracking event) {
         Entity target = event.getTarget();
         ServerPlayer player = (ServerPlayer) event.getEntity();
-        Gravity data = target.getData(AttachmentTypes.GRAVITY);
-        if(data.getGravity() != Direction.DOWN){
-            PacketDistributor.sendToPlayer(player,new GravityPacket(target.getId(), data.getGravity()));
+        Direction gravity = target.getData(AttachmentTypes.GRAVITY);
+        if(gravity != Direction.DOWN){
+            PacketDistributor.sendToPlayer(player,new GravityPacket(target.getId(), gravity));
         }
     }
 
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         ServerPlayer player = (ServerPlayer) event.getEntity();
-        Gravity data = player.getData(AttachmentTypes.GRAVITY);
-        if (data.getGravity() != Direction.DOWN) {
-            PacketDistributor.sendToPlayer(player,new GravityPacket(player.getId(), data.getGravity()));
+        Direction gravity = player.getData(AttachmentTypes.GRAVITY);
+        if (gravity != Direction.DOWN) {
+            PacketDistributor.sendToPlayer(player,new GravityPacket(player.getId(),gravity));
         }
     }
 }

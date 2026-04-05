@@ -1,6 +1,5 @@
 package com.fanxing.fx_undertale.level.pathfinder;
 
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -36,8 +35,8 @@ public class GravityAwareNodeEvaluator extends NodeEvaluator {
     private Mob mob;
 
     public GravityAwareNodeEvaluator(Mob mob) {
-        Gravity data = mob.getData(AttachmentTypes.GRAVITY.get());
-        this.gravityDir = data.getGravity();
+        Direction gravity = mob.getData(AttachmentTypes.GRAVITY.get());
+        this.gravityDir = gravity;
         this.down = gravityDir.getNormal();
         this.up = gravityDir.getOpposite().getNormal();
         this.gravityAxis = gravityDir.getAxis();

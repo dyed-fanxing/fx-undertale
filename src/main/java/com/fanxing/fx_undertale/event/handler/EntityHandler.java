@@ -1,6 +1,5 @@
 package com.fanxing.fx_undertale.event.handler;
 
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
@@ -24,9 +23,6 @@ public class EntityHandler {
     public static void onEntityRefreshDimension(EntityEvent.Size event){
         EntityDimensions newSize = event.getNewSize();
         Entity entity = event.getEntity();
-        Gravity data = entity.getData(AttachmentTypes.GRAVITY);
-        if(data.getGravity() != Direction.DOWN){
-        }
     }
 
     @SubscribeEvent

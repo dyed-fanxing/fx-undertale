@@ -1,28 +1,24 @@
 package com.fanxing.fx_undertale.commands;
 
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.FloatArgumentType;
-import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
+import com.fanxing.fx_undertale.net.packet.GravityPacket;
+import com.fanxing.fx_undertale.utils.GravityUtils;
+import com.mojang.brigadier.arguments.*;
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
-import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Collection;
 
@@ -84,7 +80,7 @@ public class DebugCommand {
 
                                                             Direction direction = Direction.valueOf(directionStr.toUpperCase());
                                                             for (Entity target : targets) {
-                                                                Gravity.applyGravity(target, direction);
+                                                                GravityUtils.applyGravity(target, direction);
                                                             }
                                                             ctx.getSource().sendSuccess(() ->
                                                                             Component.literal("应用重力方向 " + directionStr + " 到 " + targets.size() + " 个实体"),
@@ -102,7 +98,7 @@ public class DebugCommand {
                                                         .executes(ctx -> {
                                                             Collection<? extends Entity> targets = EntityArgument.getEntities(ctx, "targets");
                                                             for (Entity target : targets) {
-                                                                Gravity.applyGravity(target,Direction.DOWN);
+                                                                GravityUtils.applyGravity(target,Direction.DOWN);
                                                             }
                                                             return 1;
                                                         })
@@ -116,7 +112,7 @@ public class DebugCommand {
                                                         .executes(ctx -> {
                                                             Collection<? extends Entity> targets = EntityArgument.getEntities(ctx, "targets");
                                                             for (Entity target : targets) {
-                                                                Gravity.applyGravity(target,Direction.UP);
+                                                                GravityUtils.applyGravity(target,Direction.UP);
                                                             }
                                                             return 1;
                                                         })
@@ -125,4 +121,145 @@ public class DebugCommand {
         );
     }
 
+
+
+
+    @SubscribeEvent
+    public static void onRegisterCommandsG(RegisterCommandsEvent event) {
+        // 定义 direction 参数（可复用）
+        ArgumentType<String> directionArg = StringArgumentType.word();
+        // 定义速度参数
+        ArgumentType<Double> dxArg = DoubleArgumentType.doubleArg();
+        ArgumentType<Double> dyArg = DoubleArgumentType.doubleArg();
+        ArgumentType<Double> dzArg = DoubleArgumentType.doubleArg();
+
+        event.getDispatcher().register(
+                Commands.literal("gravity")
+                        .requires(css -> css.hasPermission(2))
+                        // 主命令：/gravity <targets> <direction> [velocity <dx> <dy> <dz>]
+                        .then(
+                                Commands.argument("targets", EntityArgument.entities())
+                                        .then(
+                                                Commands.argument("direction", directionArg)
+                                                        .suggests((ctx, builder) -> {
+                                                            for (Direction dir : Direction.values()) {
+                                                                builder.suggest(dir.name());
+                                                            }
+                                                            return builder.buildFuture();
+                                                        })
+                                                        // 分支1：不带速度，只切换重力
+                                                        .executes(ctx -> {
+                                                            Collection<? extends Entity> targets = EntityArgument.getEntities(ctx, "targets");
+                                                            String directionStr = StringArgumentType.getString(ctx, "direction");
+                                                            Direction direction = Direction.valueOf(directionStr.toUpperCase());
+                                                            for (Entity target : targets) {
+                                                                GravityUtils.applyGravity(target, direction);
+                                                                PacketDistributor.sendToPlayersTrackingEntityAndSelf(target,new GravityPacket(target.getId(),direction));
+                                                            }
+                                                            ctx.getSource().sendSuccess(() ->
+                                                                            Component.literal("应用重力方向 " + directionStr + " 到 " + targets.size() + " 个实体"),
+                                                                    true
+                                                            );
+                                                            return 1;
+                                                        })
+                                                        // 分支2：带速度，切换重力后设置速度
+                                                        .then(
+                                                                Commands.literal("velocity")
+                                                                        .then(
+                                                                                Commands.argument("dx", dxArg)
+                                                                                        .then(
+                                                                                                Commands.argument("dy", dyArg)
+                                                                                                        .then(
+                                                                                                                Commands.argument("dz", dzArg)
+                                                                                                                        .executes(ctx -> {
+                                                                                                                            Collection<? extends Entity> targets = EntityArgument.getEntities(ctx, "targets");
+                                                                                                                            String directionStr = StringArgumentType.getString(ctx, "direction");
+                                                                                                                            Direction direction = Direction.valueOf(directionStr.toUpperCase());
+                                                                                                                            double dx = DoubleArgumentType.getDouble(ctx, "dx");
+                                                                                                                            double dy = DoubleArgumentType.getDouble(ctx, "dy");
+                                                                                                                            double dz = DoubleArgumentType.getDouble(ctx, "dz");
+                                                                                                                            for (Entity target : targets) {
+                                                                                                                                GravityUtils.applyGravity(target, direction);
+                                                                                                                                target.setDeltaMovement(dx, dy, dz);
+                                                                                                                                PacketDistributor.sendToPlayersTrackingEntityAndSelf(target,new GravityPacket(target.getId(),direction, (float) dy));
+                                                                                                                                // 2. 设置速度
+                                                                                                                                if (target instanceof ServerPlayer player) {
+                                                                                                                                    player.connection.send(new ClientboundSetEntityMotionPacket(player));
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                            ctx.getSource().sendSuccess(() ->
+                                                                                                                                            Component.literal("应用重力方向 " + directionStr + " 到 " + targets.size() + " 个实体，并设置速度为 (" + dx + ", " + dy + ", " + dz + ")"),
+                                                                                                                                    true
+                                                                                                                            );
+                                                                                                                            return 1;
+                                                                                                                        })
+                                                                                                        )
+                                                                                        )
+                                                                        )
+                                                        )
+                                        )
+                        )
+                        // 原有的 /gravity down <targets> 快捷方式（可选保留）
+                        .then(
+                                Commands.literal("down")
+                                        .then(
+                                                Commands.argument("targets", EntityArgument.entities())
+                                                        .executes(ctx -> {
+                                                            Collection<? extends Entity> targets = EntityArgument.getEntities(ctx, "targets");
+                                                            for (Entity target : targets) {
+                                                                GravityUtils.applyGravity(target, Direction.DOWN);
+                                                            }
+                                                            return 1;
+                                                        })
+                                        )
+                        )
+                        .then(
+                                Commands.literal("up")
+                                        .then(
+                                                Commands.argument("targets", EntityArgument.entities())
+                                                        .executes(ctx -> {
+                                                            Collection<? extends Entity> targets = EntityArgument.getEntities(ctx, "targets");
+                                                            for (Entity target : targets) {
+                                                                GravityUtils.applyGravity(target, Direction.UP);
+                                                            }
+                                                            return 1;
+                                                        })
+                                        )
+                        )
+                        // 原有的 /gravity velocity 子命令（独立设置速度，不改变重力）
+                        .then(
+                                Commands.literal("velocity")
+                                        .then(
+                                                Commands.argument("targets", EntityArgument.entities())
+                                                        .then(
+                                                                Commands.argument("dx", DoubleArgumentType.doubleArg())
+                                                                        .then(
+                                                                                Commands.argument("dy", DoubleArgumentType.doubleArg())
+                                                                                        .then(
+                                                                                                Commands.argument("dz", DoubleArgumentType.doubleArg())
+                                                                                                        .executes(ctx -> {
+                                                                                                            Collection<? extends Entity> targets = EntityArgument.getEntities(ctx, "targets");
+                                                                                                            double dx = DoubleArgumentType.getDouble(ctx, "dx");
+                                                                                                            double dy = DoubleArgumentType.getDouble(ctx, "dy");
+                                                                                                            double dz = DoubleArgumentType.getDouble(ctx, "dz");
+                                                                                                            for (Entity target : targets) {
+                                                                                                                target.setDeltaMovement(dx, dy, dz);
+                                                                                                                target.hasImpulse = true;
+                                                                                                                if (target instanceof ServerPlayer player) {
+                                                                                                                    player.connection.send(new ClientboundSetEntityMotionPacket(player));
+                                                                                                                }
+                                                                                                            }
+                                                                                                            ctx.getSource().sendSuccess(() ->
+                                                                                                                            Component.literal("设置 " + targets.size() + " 个实体的速度为 (" + dx + ", " + dy + ", " + dz + ")"),
+                                                                                                                    true
+                                                                                                            );
+                                                                                                            return 1;
+                                                                                                        })
+                                                                                        )
+                                                                        )
+                                                        )
+                                        )
+                        )
+        );
+    }
 }

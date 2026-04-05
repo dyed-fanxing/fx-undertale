@@ -1,9 +1,9 @@
 package com.fanxing.fx_undertale.item;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.menu.GravitySelectionMenu;
 import com.fanxing.fx_undertale.net.packet.GravityPacket;
+import com.fanxing.fx_undertale.utils.GravityUtils;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -35,7 +35,7 @@ public class GravityDebugStick extends Item {
         if (!player.level().isClientSide) {
             // 从物品NBT中读取保存的重力方向
             Direction gravity = getGravityDirection(stack);
-            Gravity.applyGravity(entity, gravity);
+            GravityUtils.applyGravity(entity, gravity);
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity, new GravityPacket(entity.getId(), gravity));
         }
         return super.onLeftClickEntity(stack, player, entity);
@@ -57,8 +57,8 @@ public class GravityDebugStick extends Item {
                         Component.translatable("menu." + FxUndertale.MOD_ID + ".gravity_selection")
                 ));
             }else{
-                Gravity gravityData = Gravity.applyGravity(player, getGravityDirection(player.getItemInHand(hand)));
-                PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new GravityPacket(player.getId(), gravityData.getGravity()));
+                Direction gravity = GravityUtils.applyGravity(player, getGravityDirection(player.getItemInHand(hand)));
+                PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new GravityPacket(player.getId(),gravity));
             }
         }
 

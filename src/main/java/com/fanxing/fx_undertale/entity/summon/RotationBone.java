@@ -2,7 +2,6 @@ package com.fanxing.fx_undertale.entity.summon;
 
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.common.phys.motion.PhysicsMotionModel;
-import com.fanxing.fx_undertale.entity.attachment.Gravity;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.capability.OBBRotationCollider;
 import com.fanxing.fx_undertale.entity.capability.QuaternionRotatable;
@@ -10,6 +9,7 @@ import com.fanxing.fx_undertale.entity.capability.SyncablePhysicsMotion;
 import com.fanxing.fx_undertale.net.packet.QuaternionSyncPacket;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.utils.CurvesUtils;
+import com.fanxing.fx_undertale.utils.GravityUtils;
 import com.fanxing.fx_undertale.utils.collsion.EntityHitResultTimed;
 import com.fanxing.fx_undertale.utils.collsion.OBBCCDUtils;
 import net.minecraft.core.Direction;
@@ -30,6 +30,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Quaterniond;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
@@ -78,7 +79,7 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
 
     @Override
     public RotationBone gravity(Direction gravity) {
-        Quaternionf gravityRotation = Gravity.getRotation(gravity);
+        Quaternionf gravityRotation = GravityUtils.getLocalToWorldF(gravity);
         orientation = gravityRotation.mul(orientation, new Quaternionf());
         Vector3f currentAngularVel = new Vector3f(getAngularVelocity());  // 创建副本
         Vector3f temp = new Vector3f(currentAngularVel);
