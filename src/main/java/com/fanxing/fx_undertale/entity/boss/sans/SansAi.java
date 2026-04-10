@@ -1,12 +1,12 @@
 package com.fanxing.fx_undertale.entity.boss.sans;
 
+import com.fanxing.fx_undertale.client.render.effect.WarningTip;
 import com.fanxing.fx_undertale.entity.ai.behavior.*;
 import com.fanxing.fx_undertale.entity.ai.behavior.StartAttacking;
 import com.fanxing.fx_undertale.entity.summon.RotationBone;
-import com.fanxing.fx_undertale.net.packet.AnimPacket;
-import com.fanxing.fx_undertale.net.packet.GravityPacket;
-import com.fanxing.fx_undertale.net.packet.TimeJumpTeleportPacket;
+import com.fanxing.fx_undertale.net.packet.*;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
+import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.utils.GravityUtils;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -21,11 +21,15 @@ import com.fanxing.fx_undertale.entity.persistentData.SoulMode;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.registry.MemoryModuleTypes;
 import com.fanxing.fx_undertale.registry.SoundEvnets;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
@@ -36,13 +40,17 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.schedule.Activity;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.logging.Level;
 
 public class SansAi {
     private static final Logger log = LoggerFactory.getLogger(SansAi.class);
@@ -80,10 +88,15 @@ public class SansAi {
                         SansAi::clearTargetTag, false
                 ),
                 SetEntityLookAtAttackTarget.createIgnoringSensor(),
+                createTeleportIfOutOfFollowRange(),
+                createMovingBehavior(sans),
+
                 createOpeningBehavior(),
                 new MercyAttack(),
                 new RecoverDownGravity(),
 
+                new SpecialAttack(sans),
+                createSpecialPhaseSingleSkills(),
 
                 new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
                         Pair.of(createFirstComboSkillBehavior(), 15),
@@ -97,50 +110,18 @@ public class SansAi {
                     }
                 },
                 new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-                        Pair.of(createSecondComboSkillBehavior(), 15),
-                        Pair.of(createContinuousOffHandSkillBehavior(), 5),
-                        Pair.of(createContinuousSkillBehavior(), 1),
-                        Pair.of(createSecondPhaseSingleSkills(), 9)
+//                        Pair.of(createSecondComboSkillBehavior(), 15),
+//                        Pair.of(createContinuousOffHandSkillBehavior(), 5),
+//                        Pair.of(createContinuousSkillBehavior(), 1),
+//                        Pair.of(createSecondPhaseSingleSkills(), 9)
                 )) {
                     @Override
                     protected boolean checkExtraStartConditions(ServerLevel level, Sans entity) {
                         return entity.getPhaseID() == Sans.SECOND_PHASE;
                     }
-                },
-
-                createTeleportIfOutOfFollowRange(),
-                new SpellCastingMoveInFollowRange<>(sans, CLOSE_RANGE_FACTOR, MID_RANGE_FACTOR, 1.0f) {
-                    @Override
-                    protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull Sans a) {
-                        return super.checkExtraStartConditions(level, a) && (a.getPhaseID() != Sans.MERCY_PHASE || a.isMercyTriggered());
-                    }
-
-                    @Override
-                    protected void handleUnableToMove(Sans mob, LivingEntity t) {
-                        if (unableMoveTime > 100) {
-                            mob.teleportTowards(t);
-                        }
-                    }
-
-                    @Override
-                    protected void handleMidRange(Sans mob, LivingEntity target, double disSqr) {
-                        GasterBlaster gb = mob.getControllerAimGB();
-                        if (gb == null) {
-                            super.handleMidRange(mob, target, disSqr);
-                        } else if (gb.isRemoved()) {
-                            mob.setControllerAimGB(null);
-                            super.handleMidRange(mob, target, disSqr);
-                        } else {
-                            mob.setYRot(mob.yHeadRot);
-                            mob.getMoveControl().strafe(0, 0);
-                        }
-                    }
-
-                    @Override
-                    public boolean enableFrontAndBack() {
-                        return false;
-                    }
                 }
+
+
         ), MemoryModuleType.ATTACK_TARGET);
 
 
@@ -164,7 +145,7 @@ public class SansAi {
                 ).apply(instance, (lookTarget, attackTarget) -> (level, mob, time) -> {
                     LivingEntity t = instance.get(attackTarget);
                     double range = mob.getAttributeValue(Attributes.FOLLOW_RANGE);
-                    if (mob.distanceToSqr(t) > range * range && (mob.getPhaseID() != Sans.MERCY_PHASE || mob.isMercyTriggered())) {
+                    if (mob.distanceToSqr(t) > range * range && (mob.getPhaseID() != Sans.MERCY_PHASE || mob.isMercyTriggered()) && mob.getBrain().getMemory(MemoryModuleTypes.MOVE_LOCKING.get()).isEmpty() && mob.getPhaseID() != Sans.END_PHASE) {
                         mob.teleportTowards(t);
                         return true;
                     } else {
@@ -172,6 +153,40 @@ public class SansAi {
                     }
                 })
         );
+    }
+    public static BehaviorControl<Sans> createMovingBehavior(Sans sans) {
+        return new SpellCastingMoveInFollowRange<>(sans, CLOSE_RANGE_FACTOR, MID_RANGE_FACTOR, 1.0f) {
+            @Override
+            protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull Sans a) {
+                return super.checkExtraStartConditions(level, a) && (a.getPhaseID() != Sans.MERCY_PHASE || a.isMercyTriggered()) && a.getPhaseID() < Sans.SPECIAL_ATTACK;
+            }
+
+            @Override
+            protected void handleUnableToMove(Sans mob, LivingEntity t) {
+                if (unableMoveTime > 100) {
+                    mob.teleportTowards(t);
+                }
+            }
+
+            @Override
+            protected void handleMidRange(Sans mob, LivingEntity target, double disSqr) {
+                GasterBlaster gb = mob.getControllerAimGB();
+                if (gb == null) {
+                    super.handleMidRange(mob, target, disSqr);
+                } else if (gb.isRemoved()) {
+                    mob.setControllerAimGB(null);
+                    super.handleMidRange(mob, target, disSqr);
+                } else {
+                    mob.setYRot(mob.yHeadRot);
+                    mob.getMoveControl().strafe(0, 0);
+                }
+            }
+
+            @Override
+            public boolean enableFrontAndBack() {
+                return false;
+            }
+        };
     }
 
     public static final String OPENING_SKILL = "opening_skill";
@@ -185,9 +200,9 @@ public class SansAi {
         return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(new AttackNode<Sans>(OPENING_SKILL, 20, (a, t, tick) -> {
             if (tick == 0) {
                 a.timeJumpTeleport(t, 2);
-                a.teleportTo(a.originPos.x + a.getFollowRange()*0.5F, a.originPos.y, a.originPos.z);
+                a.teleportTo(a.originPos.x + a.getFollowRange() * 0.5F, a.originPos.y, a.originPos.z);
                 t.teleportTo(a.originPos.x, a.originPos.y, a.originPos.z);
-                t.lookAt(EntityAnchorArgument.Anchor.EYES,a.getEyePosition());
+                t.lookAt(EntityAnchorArgument.Anchor.EYES, a.getEyePosition());
                 a.controlSoulMode(t, SoulMode.GRAVITY);
                 a.setIsEyeBlink(true);
             } else if (tick == 2) t.teleportRelative(0, 5, 0);
@@ -242,7 +257,7 @@ public class SansAi {
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createFirstPhaseSingleSkills() {
         return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(
                 BONE_RING_VOLLEY, ARC_SWEEP_VOLLEY, DOUBLE_SPIN_BONE, SELF_GB, CROSS_GB, RANDOM_GB, SELF_GROUND_BONE_SPINE, GROUND_BONE_SPINE_WAVE, PARAMETRIC_GROUND_BONE_SPINE
-        ), (a) -> List.of(gravitySlamSinge(a, true)), MemoryModuleTypes.COOLDOWN_1.get(), 10) {
+        ), (a) -> List.of(gravitySlam(a, true)), MemoryModuleTypes.COOLDOWN_1.get(), 10) {
             @Override
             protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
                 super.stop(level, mob, gameTime);
@@ -253,7 +268,7 @@ public class SansAi {
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createSecondPhaseSingleSkills() {
         return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(
                 BONE_RING_VOLLEY, ARC_SWEEP_VOLLEY, DOUBLE_SPIN_BONE, SELF_GB, CROSS_GB, RANDOM_GB, SELF_GROUND_BONE_SPINE, GROUND_BONE_SPINE_WAVE
-        ), (a) -> List.of(gravitySlamSinge(a, true)), MemoryModuleTypes.COOLDOWN_1.get(), 0) {
+        ), (a) -> List.of(gravitySlam(a, true)), MemoryModuleTypes.COOLDOWN_1.get(), 0) {
             @Override
             protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
                 innerCooldown -= (int) (innerCooldown * 0.3F * mob.getPhaseFactor());
@@ -262,6 +277,18 @@ public class SansAi {
         };
 
     }
+
+    private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createSpecialPhaseSingleSkills() {
+        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(
+                BONE_RING_VOLLEY.copy(), ARC_SWEEP_VOLLEY, SPECIAL_CROSS_GB
+        ), (a) -> List.of(gravitySlam(a, true)), MemoryModuleTypes.COOLDOWN_1.get(),0, 10) {
+            @Override
+            protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull Sans mob) {
+                return super.checkExtraStartConditions(level, mob) && mob.getPhaseID() == Sans.SPECIAL_ATTACK;
+            }
+        };
+    }
+
 
     // 可连续的可脱手的攻击
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createContinuousOffHandSkillBehavior() {
@@ -285,6 +312,7 @@ public class SansAi {
             }
         };
     }
+
     private static AttackNode<Sans> continuousGBSkill() {
         int[] counter = new int[]{0};
         AttackNode<Sans> root = new AttackNode<Sans>("continuous_gb", 7, 45, (a, t, tick) -> {
@@ -310,11 +338,11 @@ public class SansAi {
                 new AttackNode<Sans>("white_aqua_ground_bone_wall", 6, 300, (a, t, tick) -> {
                     if (tick == 4) {
                         int difficulty = a.level().getDifficulty().getId();
-                        delay[0]=0;
+                        delay[0] = 0;
                         for (int i = 0; i < 6; i++) {
-                            a.summonGroundBoneWall(t, ColorAttack.WHITE, 1.1F, 1f, LocalDirection.FRONT, delay[0],5, 12.0);
+                            a.summonGroundBoneWall(t, ColorAttack.WHITE, 1.1F, 1f, LocalDirection.FRONT, delay[0], 5, 12.0);
                             delay[0] += 10 - difficulty - a.getStaminaFactor();
-                            a.summonGroundBoneWall(t, ColorAttack.AQUA, 1.3f, 5f, LocalDirection.FRONT, delay[0],5, 12.0);
+                            a.summonGroundBoneWall(t, ColorAttack.AQUA, 1.3f, 5f, LocalDirection.FRONT, delay[0], 5, 12.0);
                             delay[0] += 18 - difficulty - a.getStaminaFactor();
                         }
                         a.summonGroundBoneArrange(t, 1.3f, 12.0, delay[0]);
@@ -329,7 +357,7 @@ public class SansAi {
                             float growScale = 1f + 2.1F * a.getRandom().nextFloat();
                             int count = 1 + Mth.ceil(4F - growScale);
                             for (int j = 0; j < count; j++) {
-                                a.summonGroundBoneWall(t, ColorAttack.WHITE, 1.5F, growScale, LocalDirection.FRONT, delay[1],7, 12.0 + j);
+                                a.summonGroundBoneWall(t, ColorAttack.WHITE, 1.5F, growScale, LocalDirection.FRONT, delay[1], 7, 12.0 + j);
                             }
                             delay[1] += 15 + Mth.ceil(growScale * 5) - 2 * a.getStaminaFactor();
                         }
@@ -348,12 +376,12 @@ public class SansAi {
     }
 
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createSecondComboSkillBehavior() {
-//        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(), (a) -> List.of(timeJumpSkill(), gravitySlam(a), parametricGroundBoneSpineWaves()), MemoryModuleTypes.COOLDOWN_3.get(), 30);
-        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(), (a) -> List.of( gravitySlam(a)), MemoryModuleTypes.COOLDOWN_3.get(),30,10);
+        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(), (a) -> List.of(timeJumpSkill(), gravitySlam(a, 8)), MemoryModuleTypes.COOLDOWN_3.get(), 30);
+//        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(), (a) -> List.of( gravitySlam(a,8,0.7f)), MemoryModuleTypes.COOLDOWN_3.get(),30,10);
     }
 
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createContinuousSkillBehavior() {
-        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(CONTROL_GB), MemoryModuleTypes.COOLDOWN_4.get(),10) {
+        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(CONTROL_GB), MemoryModuleTypes.COOLDOWN_4.get(), 10) {
             @Override
             protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
                 if (mob.getPhaseFactor() == Sans.SECOND_PHASE) innerCooldown -= (int) (innerCooldown * 0.2f);
@@ -362,59 +390,11 @@ public class SansAi {
         };
     }
 
-    private static AttackNode<Sans> gravitySlam(Sans mob) {
-        LocalDirection[] directions = LocalDirection.values();
-        float factor = 1f - mob.getStamina() * 2f / mob.getMaxStamina();
-        int difficulty = mob.level().getDifficulty().getId();
-        AttackNode<Sans> root = new AttackNode<Sans>(GRAVITY_SLAM, 0, (a, t, tick) -> tick >= 0)
-                .weight(6);
+    private static AttackNode<Sans> gravitySlam(Sans mob, int count) {
+        AttackNode<Sans> root = new AttackNode<Sans>(GRAVITY_SLAM, 0, (a, t, tick) -> tick >= 0).weight(6);
         AttackNode<Sans> curr = root;
-        for (int i = 0; i < 20; i++) {
-            int index = mob.getRandom().nextInt(directions.length - 1);
-            boolean[] state = new boolean[]{true};
-            int[] duration = new int[1];
-            curr = curr.then(new AttackNode<Sans>(GRAVITY_SLAM, index, 2, (a, t, tick) -> {
-                if (tick == 3) {
-                    a.gravitySlam(t, LocalDirection.values()[index], 0.8f + factor * 0.1f);
-                }
-                if (tick > 3 && state[0] && t.onGround()) {
-                    state[0] = false;
-                    if (factor >= 0.3F && a.getRandom().nextFloat() < factor * 0.5f) {
-                        a.summonGBAtTargetHeight(t, 4, a.getRandom().nextInt(4) * 22.5f, a.getJumpBoostPower() + 5.5f);
-                    }
-                    a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor * 3f, 7, 10, -1);
-                    a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
-                    duration[0] = tick;
-                    a.applyGravityControlAcc(t, 0f);
-                }
-                if (!state[0] && tick == duration[0] + 10) {
-                    a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
-                }
-                return tick >= duration[0] + 12 - difficulty && (!state[0] || tick > 100);
-            }).mutex());
-        }
-        boolean[] state = new boolean[]{true};
-        int[] duration = new int[1];
-        int index = mob.getRandom().nextFloat() < 0.7 ? 1 : mob.getRandom().nextInt(directions.length - 1);
-        curr.then(new AttackNode<Sans>(GRAVITY_SLAM, index, 50, (a, t, tick) -> {
-            if (tick == 3) {
-                a.gravitySlam(t, LocalDirection.values()[index], 0.8f + factor * 0.1f);
-            }
-            if (tick > 3 && state[0] && t.onGround()) {
-                state[0] = false;
-                if (factor >= 0.3F && a.getRandom().nextFloat() < factor * 0.5f) {
-                    a.summonGBAtTargetHeight(t, 4, a.getRandom().nextInt(4) * 22.5f, a.getJumpBoostPower() + 5.5f);
-                }
-                a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor * 3f, 7, 10, -1);
-                a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
-                duration[0] = tick;
-                a.applyGravityControlAcc(t, 0F);
-            }
-            if (!state[0] && tick == duration[0] + 10) {
-                a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
-            }
-            return tick >= duration[0] + 12 - difficulty && !state[0];
-        }).addAllowConcurrent(AIMED_BARRAGE_BONE, FORWARD_BARRAGE_BONE));
+        for (int i = 0; i < count; i++) curr = curr.then(gravitySlam(mob, true));
+        curr.then(mob.getRandom().nextFloat() <= 0.7f ? gravitySlam(mob, true) : gravitySlam(mob, false));
         return root;
     }
 
@@ -424,7 +404,7 @@ public class SansAi {
         AttackNode<Sans> root = new AttackNode<Sans>(TIME_JUMP, 20, (a, t, tick) -> {
             if (tick == 0) {
                 a.timeJumpTeleport(t, 5);
-                t.teleportTo(a.originPos.x, a.originPos.y, a.originPos.z );
+                t.teleportTo(a.originPos.x, a.originPos.y, a.originPos.z);
             }
             return tick >= 10;
         }).condition((a, t) -> SansAi.isSameGravity(a, t) && counter[0]++ < 5).weight(3).mutex();
@@ -457,80 +437,65 @@ public class SansAi {
     }
 
     private static AttackNode<Sans> parametricGroundBoneSpineWaves() {
-        int[] counter = new int[]{1};
         int[] delay = new int[1];
-        AttackNode<Sans> root = new AttackNode<Sans>(
+        return new AttackNode<Sans>(
                 "parametric_ground_bone_spine", 6, 40, (a, t, tick) -> {
             if (tick == 4) delay[0] = a.summonHugeParametricGroundBoneSpineWave(t);
             if (tick == 20) a.level().playSound(null, t, SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE, 1, 1);
             return tick >= 20 + delay[0];
-        }).mutex().condition((a, t) -> counter[0]++ < 8)
-                .weight(2);
-        root.then(root);
-        return root;
+        }).mutex().weight(2);
     }
 
-
-    private static AttackNode<Sans> gravitySlamSinge(Sans mob, boolean isRandom) {
+    public static AttackNode<Sans> gravitySlam(Sans mob, boolean isRandom) {
         LocalDirection[] directions = LocalDirection.values();
-        float factor = mob.getPhaseFactor();
+        float factor = mob.getPhaseID() == Sans.FIRST_PHASE ? 1f : 1f - mob.getStamina() * 2f / (mob.getMaxStamina() + Mth.EPSILON);
         int difficulty = mob.level().getDifficulty().getId();
         int index = isRandom ? mob.getRandom().nextInt(directions.length - 1) : 1;
         boolean[] state = new boolean[]{true};
         int[] duration = new int[1];
-        return new AttackNode<Sans>(GRAVITY_SLAM, index, 50, (a, t, tick) -> {
-            if (tick == 3) {
-                a.gravitySlam(t, LocalDirection.values()[index], 0.8f + factor * 0.1f);
-            }
+        return new AttackNode<Sans>(GRAVITY_SLAM, index, 30, (a, t, tick) -> {
+            if (tick == 3)
+                a.gravitySlam(t, LocalDirection.values()[index], 0.8f + factor * 0.1f + a.getPhaseID() == Sans.SPECIAL_ATTACK ? 1F : 0F);
             if (tick > 3 && state[0] && t.onGround()) {
                 state[0] = false;
                 if (factor >= 0.3F && a.getRandom().nextFloat() < factor * 0.5f) {
                     a.summonGBAtTargetHeight(t, 4, a.getRandom().nextInt(4) * 22.5f, a.getJumpBoostPower() + 5.5f);
                 }
-                a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor, 7, 10, -1);
+                a.summonCircleGroundBoneSpine(t, 4 * difficulty, 1f + factor * 3f, 7, 10, -1);
                 a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
                 duration[0] = tick;
-                a.applyGravityControlAcc(t, 0F);
+                a.applyGravityControlAcc(t, 0f);
             }
             if (!state[0] && tick == duration[0] + 10) {
                 a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
             }
-            return tick >= duration[0] + 12 - difficulty && !state[0];
-        }).weight((a, t) -> 7 + (a.distanceTo(t) < 7.0 ? 10 : 0) + a.getStaminaFactor() * 5.0);
+            return tick >= duration[0] + 12 - difficulty && (!state[0] || tick > 100);
+        }).allowConcurrent(SELF_GB, RANDOM_GB).addAllowConcurrent(AIMED_BARRAGE_BONE, FORWARD_BARRAGE_BONE);
     }
 
-    private static Optional<? extends LivingEntity> findNearestValidAttackTarget(Sans mob) {
-        Optional<LivingEntity> optional = BehaviorUtils.getLivingEntityFromUUIDMemory(mob, MemoryModuleType.ANGRY_AT);
-        if (optional.isPresent() && SensorTargeting.isEntityAttackableIgnoringLineOfSightByFollowRange(mob, optional.get())) {
-            return optional;
-        } else {
-            return Optional.empty();
+    public static class RecoverDownGravity extends AttackSchedulerWithoutBuiltlnCoolingBehavior<Sans> {
+        protected Direction lastGravity = Direction.DOWN;
+        protected int targetNotDownwardGravityTick;
+
+        public RecoverDownGravity() {
+            super((a) -> List.of(gravitySlam(a, false)));
         }
-    }
 
-    public static void applyTargetTag(Sans mob, LivingEntity target) {
-        mob.controlSoulMode(target, SoulMode.GRAVITY);
-        mob.setTargetId(target.getId());
-        mob.applyKarma(target, true);
-    }
-
-    public static void clearTargetTag(Sans mob, LivingEntity target) {
-        mob.controlSoulMode(target, SoulMode.DEFAULT);
-        mob.setTargetId(-1);
-        mob.applyKarma(target, false);
-        mob.applyGravityControlAcc(target, 0F);
-        GravityUtils.applyGravity(target, Direction.DOWN);
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), Direction.DOWN, 0));
-    }
-
-
-    public static double getTargetSpeed(LivingEntity target) {
-        if (target instanceof Player player) return player.getKnownMovement().length();
-        else return target.getDeltaMovement().length();
-    }
-
-    public static boolean isSameGravity(LivingEntity a, LivingEntity t) {
-        return a.getData(AttachmentTypes.GRAVITY) == t.getData(AttachmentTypes.GRAVITY);
+        @Override
+        protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull Sans mob) {
+            Brain<Sans> brain = mob.getBrain();
+            mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> {
+                Direction gravity = target.getData(AttachmentTypes.GRAVITY);
+                if (lastGravity != gravity) {
+                    lastGravity = gravity;
+                    targetNotDownwardGravityTick = 0;
+                }
+                if (gravity != Direction.DOWN) {
+                    targetNotDownwardGravityTick++;
+                }
+            });
+            return super.checkExtraStartConditions(level, mob) && targetNotDownwardGravityTick >= 400 && !brain.hasMemoryValue(MemoryModuleTypes.ATTACKING.get());
+        }
     }
 
     public static class MercyAttack extends Behavior<Sans> {
@@ -593,31 +558,101 @@ public class SansAi {
         }
     }
 
-    public static class RecoverDownGravity extends AttackSchedulerWithoutBuiltlnCoolingBehavior<Sans> {
-        protected Direction lastGravity = Direction.DOWN;
-        protected int targetNotDownwardGravityTick;
-
-        public RecoverDownGravity() {
-            super(List.of(), (a) -> List.of(gravitySlamSinge(a, false)));
+    public static class SpecialAttack extends AttackSchedulerWithoutBuiltlnCoolingBehavior<Sans> {
+        public SpecialAttack(Sans mob) {
+            super(List.of(), (a) -> List.of(createSpecialAttack(mob)), 30000);
         }
 
         @Override
         protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull Sans mob) {
-            Brain<Sans> brain = mob.getBrain();
-            mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> {
-                Direction gravity = target.getData(AttachmentTypes.GRAVITY);
-                if (lastGravity != gravity) {
-                    lastGravity = gravity;
-                    targetNotDownwardGravityTick = 0;
-                }
-                if (gravity != Direction.DOWN) {
-                    targetNotDownwardGravityTick++;
-                }
+            return super.checkExtraStartConditions(level, mob) && mob.getBrain().getMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get()).isEmpty() && mob.getPhaseID() == Sans.SPECIAL_ATTACK;
+        }
+
+        @Override
+        protected void start(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
+            super.start(level, mob, gameTime);
+        }
+
+        @Override
+        protected void stop(@NotNull ServerLevel level, @NotNull Sans a, long time) {
+            super.stop(level, a, time);
+            a.setPhaseID(Sans.END_PHASE);
+            a.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(t-> {
+                a.applyGravityControlAcc(t, 0F);
+                a.controlSoulMode(t,SoulMode.DEFAULT);
             });
-            return super.checkExtraStartConditions(level, mob) && targetNotDownwardGravityTick >= 400 && !brain.hasMemoryValue(MemoryModuleTypes.ATTACKING.get());
         }
     }
 
+    public static AttackNode<Sans> createSpecialAttack(Sans mob) {
+        AttackNode<Sans> root = gravitySlam(mob, true);
+        AttackNode<Sans> curr = root;
+        for (int i = 0; i < 3; i++) {
+            curr = curr.then(gravitySlam(mob, true).mutex());
+        }
+        curr = curr.then(gravitySlam(mob, false).mutex());
+        curr = curr.then(new AttackNode<Sans>(TIME_JUMP, 20, (a, t, tick) -> {
+            if (tick == 0) {
+                a.timeJumpTeleport(t, 5);
+                t.teleportTo(a.originPos.x, a.originPos.y, a.originPos.z);
+                a.teleportTo(a.originPos.x - 39, a.originPos.y, a.originPos.z);
+            }
+            return tick >= 10;
+        }).controlMove().mutex());
+        for (int i = 0; i < 5; i++) {
+            curr = curr.then(parametricGroundBoneSpineWaves().controlMove().mutex());
+        }
+        curr = curr.then(new AttackNode<Sans>("bone_ocean", 6, 10).tick((a, t, tick) -> {
+            if (tick == 0) {
+                a.timeJumpTeleport(t, 5);
+                t.teleportTo(a.originPos.x + 35, a.originPos.y, a.originPos.z);
+                a.getBrain().eraseMemory(MemoryModuleType.HURT_BY);
+            }
+            if (tick == 4) a.summonSpecialGlobalGroundBoneMatrix(t);
+            Optional<DamageSource> memory = a.getBrain().getMemory(MemoryModuleType.HURT_BY);
+            if (tick > 20000 || (tick>4&&memory.isPresent() && memory.get().isDirect())) {
+                a.timeJumpTeleport(t, 3);
+                t.teleportTo(a.originPos.x, a.originPos.y, a.originPos.z);
+                AABB aabb = new AABB(a.originPos.x - 40, a.originPos.y-1, a.originPos.z - 20, a.originPos.x + 40, a.originPos.y + 30, a.originPos.z + 20);
+                a.level().getEntities(a, aabb, p -> p.getType() == EntityTypes.PLATFORM_BLOCK_ENTITY.get() || p.getType() == EntityTypes.GROUND_BONE.get() || p.getType() == EntityTypes.ROTATION_BONE.get())
+                        .forEach(Entity::discard);
+                return true;
+            }
+            return false;
+        }).controlMove().allowConcurrent(SPECIAL_CROSS_GB, ARC_SWEEP_VOLLEY, BONE_RING_VOLLEY));
+        curr = curr.then(new AttackNode<>("",6,0,(a,t)->{},10,4)).mutex().controlMove();
+        for (int i = 0; i < 5; i++) {
+            int count = 40;
+            float step = 360f/count;
+            for (int j = 0; j < count; j++) {
+                int finalJ = j;
+                curr = curr.then(new AttackNode<>("windmill_gb",0,(a, t)->a.summonGBAimOriginPos(t,1, finalJ *step,1.25f),i<3?2:1,10)).mutex().controlMove();
+            }
+        }
+        curr = curr.then(new AttackNode<>("",6,0,(a,t)->{},10,4)).mutex().controlMove();
+        for (int i = 0; i < 30; i++) {
+            curr = curr.then(specialGravitySlam(mob,8f,true));
+        }
+        for (int i = 0; i < 5; i++) {
+            curr = curr.then(specialGravitySlam(mob,0.1f*(5-i),true));
+        }
+        curr.then(specialGravitySlam(mob,0f,false));
+        return root;
+    }
+
+    public static AttackNode<Sans> specialGravitySlam(Sans mob,float acc,boolean isRandom) {
+        LocalDirection[] directions = LocalDirection.values();
+        int index = isRandom?mob.getRandom().nextInt(directions.length - 1):1;
+        return new AttackNode<Sans>(GRAVITY_SLAM, index, 30, (a, t, tick) -> {
+            if(tick == 3) a.gravitySlam(t, LocalDirection.values()[index], acc);
+            if(tick > 3 && t.onGround()){
+                a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_SLAM.get(), SoundSource.HOSTILE);
+                t.hurt(a.damageSources().fall(),1f);
+                return true;
+            }
+            return false;
+        }).mutex();
+    }
 
     // 飞行骨
     public static final AttackNode<Sans> BONE_RING_VOLLEY = new AttackNode<>(
@@ -645,20 +680,33 @@ public class SansAi {
         int count = 1 + a.getRandom().nextInt(1 + difficulty + a.getPhaseFactor());
         a.summonGBFront(t, count, 60f / count, 17);
     }, 30, 40
-    ).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange() * CLOSE_RANGE_FACTOR, 0, 16)-a.getPhaseFactor()*5);
+    ).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange() * CLOSE_RANGE_FACTOR, 0, 16) - a.getPhaseFactor() * 5);
 
     // 十字 GB
     public static final AttackNode<Sans> CROSS_GB = new AttackNode<Sans>(
             "cross_gb", 6, 4, Sans::summonGBAroundTarget, 30, 40
     ).weight((a, t) -> 8 + 12 * Math.pow(getTargetSpeed(t), 0.25f));
-
+    // 一字 GB
+//    public static final AttackNode<Sans> SPECIAL_CROSS_GB = new AttackNode<Sans>(
+//            "cross_gb", 6, 4, (a, t) -> {
+//        boolean b = a.getRandom().nextBoolean();
+//        a.summonGBAroundTarget(t, b ? 2 : 4, b ? (a.getRandom().nextInt(4) * 45f) : 0f);
+//    }, 30, 40
+//    ).weight((a, t) -> 8 + 12 * Math.pow(getTargetSpeed(t), 0.25f));
+    // 一字 GB
+    public static final AttackNode<Sans> SPECIAL_CROSS_GB = new AttackNode<Sans>(
+            "cross_gb", 6, 4, (a, t) -> {
+        boolean b = a.getRandom().nextBoolean();
+        a.summonGBAroundTarget(t, 2, b ? 0 : 90f);
+    }, 30, 40
+    ).weight((a, t) -> 8 + 12 * Math.pow(getTargetSpeed(t), 0.25f));
     // 随机 GB
     public static final AttackNode<Sans> RANDOM_GB = new AttackNode<Sans>(
             "random_gb", 6, 4, (a, t) -> {
         int difficulty = a.level().getDifficulty().getId();
         a.summonGBAroundSelf(t, 1 + a.getPhaseFactor() + difficulty / 3, 1.0f + difficulty * 0.25f);
     }, 30, 40
-    ).weight((a, t) -> 12.0-a.getPhaseFactor()*5);
+    ).weight((a, t) -> 12.0 - a.getPhaseFactor() * 5);
 
     // 自身地面骨刺
     public static final AttackNode<Sans> SELF_GROUND_BONE_SPINE = new AttackNode<Sans>(
@@ -699,4 +747,39 @@ public class SansAi {
         GasterBlaster gb = a.getControllerAimGB();
         return gb == null || tick > gb.getDecayTick() || gb.isRemoved();
     }).weight(0.2F).allowConcurrent(SELF_GB, CROSS_GB, RANDOM_GB).priority(15);
+
+
+    private static Optional<? extends LivingEntity> findNearestValidAttackTarget(Sans mob) {
+        Optional<LivingEntity> optional = BehaviorUtils.getLivingEntityFromUUIDMemory(mob, MemoryModuleType.ANGRY_AT);
+        if (optional.isPresent() && SensorTargeting.isEntityAttackableIgnoringLineOfSightByFollowRange(mob, optional.get())) {
+            return optional;
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    public static void applyTargetTag(Sans mob, LivingEntity target) {
+        mob.controlSoulMode(target, SoulMode.GRAVITY);
+        mob.setTargetId(target.getId());
+        mob.applyKarma(target, true);
+    }
+
+    public static void clearTargetTag(Sans mob, LivingEntity target) {
+        mob.controlSoulMode(target, SoulMode.DEFAULT);
+        mob.setTargetId(-1);
+        mob.applyKarma(target, false);
+        mob.applyGravityControlAcc(target, 0F);
+        GravityUtils.applyGravity(target, Direction.DOWN);
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), Direction.DOWN, 0));
+    }
+
+
+    public static double getTargetSpeed(LivingEntity target) {
+        if (target instanceof Player player) return player.getKnownMovement().length();
+        else return target.getDeltaMovement().length();
+    }
+
+    public static boolean isSameGravity(LivingEntity a, LivingEntity t) {
+        return a.getData(AttachmentTypes.GRAVITY) == t.getData(AttachmentTypes.GRAVITY);
+    }
 }

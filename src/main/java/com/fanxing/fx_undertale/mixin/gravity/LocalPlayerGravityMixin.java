@@ -1,12 +1,15 @@
 package com.fanxing.fx_undertale.mixin.gravity;
 
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.objectweb.asm.Opcodes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -17,6 +20,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LocalPlayer.class)
 public abstract class LocalPlayerGravityMixin {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalPlayerGravityMixin.class);
 
     @Shadow protected abstract void moveTowardsClosestSpace(double p_108705_, double p_108706_);
 
@@ -141,4 +146,8 @@ public abstract class LocalPlayerGravityMixin {
         };
         return player.level().collidesWithSuffocatingBlock(player, checkBox.deflate(1.0E-7));
     }
+
+
+
+
 }

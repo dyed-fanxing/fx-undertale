@@ -143,7 +143,7 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
         // 保存上一帧的四元数（用于插值）
         previousOrientation.set(orientation);
 
-        this.setDeltaMovement(motion.update(this.position(), this.getDeltaMovement(), targetPos, null, 1f));
+        this.setDeltaMovement(motion.update(this.position(), this.getDeltaMovement(), targetPos, tickCount));
         // 1. 碰撞检测 ，检测到了，速度取反
         super.tick();
 
@@ -264,6 +264,10 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
         }
     }
 
+    @Override
+    public boolean shouldBeSaved() {
+        return false;
+    }
 
     @Override
     public boolean isPickable() {

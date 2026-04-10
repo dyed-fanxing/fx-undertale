@@ -33,7 +33,7 @@ public class ProportionalNavigationModel extends PhysicsMotionModel {
     }
 
     @Override
-    public Vec3 update(Vec3 currentPos, Vec3 currentVel, @Nullable Vec3 targetPos, @Nullable Vec3 targetVel, double deltaTime) {
+    public Vec3 update(Vec3 currentPos, Vec3 currentVel, @Nullable Vec3 targetPos, int ticks) {
         if (targetPos == null) return currentVel;
 
         Vec3 toTarget = targetPos.subtract(currentPos);
@@ -121,12 +121,4 @@ public class ProportionalNavigationModel extends PhysicsMotionModel {
 
 
 
-
-    @Override
-    protected String getType() {
-        return "proportionalNavigation";
-    }
-    static {
-        register("proportionalNavigation",ProportionalNavigationModel::new,ProportionalNavigationModel::new);
-    }
 }

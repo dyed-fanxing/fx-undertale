@@ -206,4 +206,15 @@ public class ParametricCurveUtils {
     public static Function<Float, Vec3> wavefold(float... params) {
         return wavefold(params[0],params[1],params[2]);
     }
+
+
+
+
+
+
+
+
+
+
+
 }

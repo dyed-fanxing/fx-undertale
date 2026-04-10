@@ -19,7 +19,7 @@ import software.bernie.geckolib.renderer.GeoItemRenderer;
 import software.bernie.geckolib.renderer.GeoRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
-import static com.fanxing.fx_undertale.client.render.summon.GasterBlasterRender.EYES_GLOW;
+import static com.fanxing.fx_undertale.client.render.entity.summon.GasterBlasterRender.EYES_GLOW;
 
 public class GasterBlasterItemRender extends GeoItemRenderer<GasterBlasterItem> {
     public GasterBlasterItemRender() {

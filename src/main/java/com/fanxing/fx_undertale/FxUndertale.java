@@ -61,8 +61,7 @@ public class FxUndertale {
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         }
-        PhysicsMotionModel.init();
-
+        PhysicsMotionModel.registry();
     }
 
     // 通用设置方法

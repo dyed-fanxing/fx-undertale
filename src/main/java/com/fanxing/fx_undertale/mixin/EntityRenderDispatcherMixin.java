@@ -53,6 +53,8 @@ public class EntityRenderDispatcherMixin {
         if (entity instanceof OBBHolder obbEntity && obbEntity.getOBB() != null) {
             ci.cancel();
             OBB obb = obbEntity.getOBB(partialTicks).move(entity.position().reverse());
+//            AABB boundingAABB = obb.getBoundingAABB();
+//            LevelRenderer.renderLineBox(poseStack,consumer,boundingAABB,1.0F, 0.0F, 0.0F, 1.0F);
             RenderUtils.renderOBBOutline(poseStack.last(), consumer, obb, r, g, b, 1.0f);
             // 2. 如果是多部分实体，渲染各部分（保持原版逻辑）
             if (entity.isMultipartEntity()) {

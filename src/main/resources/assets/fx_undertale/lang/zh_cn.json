@@ -3,13 +3,18 @@
   "item.fx_undertale.gaster_blaster": "加斯特冲击波",
   "item.fx_undertale.gravity_debug_stick": "重力调试棍",
 
+  "block.fx_undertale.platform": "平台",
+  "entity.fx_undertale.platform_block_entity": "平台",
+
   "entity.fx_undertale.sans": "杉斯",
   "entity.fx_undertale.gaster_blaster": "加斯特冲击波",
   "entity.fx_undertale.flying_bone": "魔法骨头",
   "entity.fx_undertale.rotation_bone": "魔法骨头",
   "entity.fx_undertale.ground_bone": "魔法骨头",
+  "entity.fx_undertale.ground_bone_obb": "魔法骨头",
   "effect.fx_undertale.karma": "业力",
   "effect.fx_undertale.gravity": "重力",
+
 
   "direction.fx_undertale.up":"上",
   "direction.fx_undertale.down":"下",
@@ -21,6 +26,7 @@
   "gui.fx_undertale.select_direction": "请选择重力方向：",
   "gui.fx_undertale.close": "关闭",
   "mount.onboard.double.key.dismount": "双击 %1$s 来脱离",
+
 
   "death.attack.fx_undertale.frame_blockable.player": "%1$s 被 %2$s 使用 帧伤 折磨死了",
   "death.attack.fx_undertale.frame_blockable.rotation_bone.player": "%1$s 被 %2$s 使用 魔法骨头 砸死了",

@@ -33,11 +33,10 @@ public class PhysicsMotionModel {
      * @param currentPos    实体当前位置
      * @param currentVel    实体当前速度
      * @param targetPos     目标当前位置
-     * @param targetVel     目标当前速度
-     * @param time          t时间
+     * @param ticks         持续的tick数
      * @return 更新后的速度向量（实体应调用 setDeltaMovement）
      */
-    public Vec3 update(Vec3 currentPos, Vec3 currentVel,@Nullable Vec3 targetPos, @Nullable Vec3 targetVel,double time){
+    public Vec3 update(Vec3 currentPos, Vec3 currentVel,@Nullable Vec3 targetPos,int ticks){
         return currentVel;
     }
 
@@ -45,7 +44,7 @@ public class PhysicsMotionModel {
      * 保存状态到NBT（用于实体存档）
      */
     public void addAdditionalSaveData(CompoundTag tag) {
-        tag.putString("motionType", getType());
+        tag.putString("motionType", getClassKey(this.getClass()));
     }
     // NBT加载，需要子类实现根据Tag构造
 
@@ -53,7 +52,7 @@ public class PhysicsMotionModel {
      * 写入生成数据包（用于客户端同步）
      */
     public void writeSpawnData(RegistryFriendlyByteBuf buf) {
-        buf.writeUtf(getType());
+        buf.writeUtf(getClassKey(this.getClass()));
     }
 
     // 读取生成数据包，需要子类实现根据Buf去写构造方法
@@ -85,13 +84,14 @@ public class PhysicsMotionModel {
     public float getTotalEnergy(){
         return 0f;
     }
-    protected String getType(){
-        return "default";
-    }
 
 
     // 注册表：类型标识 -> 工厂（提供从 Tag 和 Buf 创建实例的方法）
     private static final Map<String, MotionModelFactory> REGISTRY = new HashMap<>();
+
+
+
+
 
     // 工厂接口
     private interface MotionModelFactory {
@@ -100,17 +100,32 @@ public class PhysicsMotionModel {
     }
 
     // 注册方法，由子类在静态初始化块中调用
-    protected static void register(String type, Function<CompoundTag, PhysicsMotionModel> tagFactory, Function<RegistryFriendlyByteBuf, PhysicsMotionModel> bufFactory) {
-        REGISTRY.put(type, new MotionModelFactory() {
-            @Override
-            public PhysicsMotionModel fromTag(CompoundTag tag) {
-                return tagFactory.apply(tag);
-            }
-            @Override
-            public PhysicsMotionModel fromBuf(RegistryFriendlyByteBuf buf) {
-                return bufFactory.apply(buf);
-            }
-        });
+    protected static<T extends PhysicsMotionModel>  void register(Class<T> clazz) {
+        String key = getClassKey(clazz);
+        try {
+            java.lang.reflect.Constructor<T> tagCtor = clazz.getDeclaredConstructor(CompoundTag.class);
+            java.lang.reflect.Constructor<T> bufCtor = clazz.getDeclaredConstructor(RegistryFriendlyByteBuf.class);
+            REGISTRY.put(key, new MotionModelFactory() {
+                @Override
+                public PhysicsMotionModel fromTag(CompoundTag tag) {
+                    try {
+                        return tagCtor.newInstance(tag);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to create " + clazz + " from tag", e);
+                    }
+                }
+                @Override
+                public PhysicsMotionModel fromBuf(RegistryFriendlyByteBuf buf) {
+                    try {
+                        return bufCtor.newInstance(buf);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to create " + clazz + " from buf", e);
+                    }
+                }
+            });
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(clazz + " must have constructors: (CompoundTag) and (RegistryFriendlyByteBuf)", e);
+        }
     }
 
     // 从 NBT 反序列化
@@ -136,12 +151,25 @@ public class PhysicsMotionModel {
         return factory.fromBuf(buf);
     }
 
-    static {
-        register("default", PhysicsMotionModel::new, PhysicsMotionModel::new);
+
+    private static String getClassKey(Class<?> clazz) {
+        String name = clazz.getSimpleName();
+        int idx = name.indexOf("Motion");
+        if (idx > 0) {
+            name = name.substring(0, idx);
+        }
+        // 转小驼峰：首字母小写
+        return Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
-    public static void init() {
-        // 创建实例触发静态块
-        new SpringMotionModel(1.0f);
-        new RoseSpiralMotionModel(1.0f,1.0f);
+
+
+
+    public static void registry() {
+        register(PhysicsMotionModel.class);
+        register(SpringMotionModel.class);
+        register(RoseSpiralMotionModel.class);
+        register(CircularMotionModel.class);
+        register(ProportionalNavigationModel.class);
+        register(GravityMotionModel.class);
     }
 }

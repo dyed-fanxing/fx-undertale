@@ -16,6 +16,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Quaterniond;
@@ -82,6 +83,11 @@ public class GroundBoneOBB extends AbstractBone<GroundBoneOBB> implements Quater
         updateOBB();
     }
 
+    @Override
+    public void setPos(double p_20210_, double p_20211_, double p_20212_) {
+        super.setPos(p_20210_, p_20211_, p_20212_);
+    }
+
     // ========== 核心逻辑 ==========
     @Override
     public void tick() {
@@ -133,12 +139,18 @@ public class GroundBoneOBB extends AbstractBone<GroundBoneOBB> implements Quater
     }
 
     @Override
+    public boolean shouldBeSaved() {
+        return false;
+    }
+
+    @Override
     protected double getDefaultGravity() {
         return 0f;
     }
     public int getDelay() {
         return delay;
     }
+
 
     // ========== 数据同步 ==========
     @Override

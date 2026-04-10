@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import static net.minecraft.util.Mth.HALF_PI;
 
 public class GravityUtils {
+    private static final Logger log = LoggerFactory.getLogger(GravityUtils.class);
     public static double COLLIED_EPSILON = 1.0E-12;
     public static double FLOOR_EPSILON = 1.0E-6;
 
@@ -113,7 +114,7 @@ public class GravityUtils {
     public static Vec3 findGround(Level level, Vec3 pos, Direction gravity) {
         Vec3i normal = gravity.getNormal();
         Vec3 g = new Vec3(normal.getX(), normal.getY(), normal.getZ());
-        BlockPos searchPos = getContaining(pos,gravity);
+        BlockPos searchPos = getContaining(gravity,pos);
         int step = gravity.getAxisDirection().getStep();
         int height = searchPos.get(gravity.getAxis())+step*256;
         double collisionHeight = 0.0;
@@ -131,7 +132,7 @@ public class GravityUtils {
                         collisionHeight = collisionShape.max(gravity.getAxis());
                     }
                 }
-                return compose(pos,getSurfaceBlockHeight(searchPos,gravity).add(g.scale(collisionHeight)));
+                return compose(getSurfaceBlockHeight(searchPos,gravity).add(g.scale(collisionHeight)),pos);
             }
             // 继续向下搜索
             searchPos = searchPos.relative(gravity);
@@ -168,11 +169,11 @@ public class GravityUtils {
      * 获取指定重力方向上的方块位置
      * @param offset 偏移
      */
-    public static BlockPos getContaining(Vec3 offset,Direction gravity){
+    public static BlockPos getContaining(Direction gravity,Vec3 offset){
         Vec3i normal = gravity.getNormal();
         return BlockPos.containing(offset.x + (normal.getX()<0?-FLOOR_EPSILON:0), offset.y+(normal.getY()>0?-FLOOR_EPSILON:0), offset.z+(normal.getZ()>0?-FLOOR_EPSILON:0));
     }
-    public static BlockPos getContaining(double x, double y,double z,Direction gravity){
+    public static BlockPos getContaining(Direction gravity,double x, double y,double z){
         Vec3i normal = gravity.getNormal();
         return BlockPos.containing(x+(normal.getX()>0?-FLOOR_EPSILON:0), y+(normal.getY()>0?-FLOOR_EPSILON:0), z+(normal.getZ()>0?-FLOOR_EPSILON:0));
     }

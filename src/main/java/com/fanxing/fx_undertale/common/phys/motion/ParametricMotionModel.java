@@ -40,9 +40,9 @@ public abstract class ParametricMotionModel extends PhysicsMotionModel {
     protected abstract Vec3 getDerivative(double theta);
 
     @Override
-    public Vec3 update(Vec3 currentPos, Vec3 currentVel, @Nullable Vec3 targetPos, @Nullable Vec3 targetVel, double time) {
+    public Vec3 update(Vec3 currentPos, Vec3 currentVel, @Nullable Vec3 targetPos,int ticks) {
         // 忽略传入的 targetVel，只用 targetPos 和参数方程
-        double theta = getTheta(time);
+        double theta = getTheta(ticks);
         Vec3 relPos = getPosition(theta);
 
         // 如果没有目标，按参数方程运动

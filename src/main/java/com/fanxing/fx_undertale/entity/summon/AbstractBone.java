@@ -81,6 +81,11 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
     }
 
     @Override
+    protected @NotNull AABB makeBoundingBox() {
+        return obb == null ?super.makeBoundingBox():obb.getBoundingAABB();
+    }
+
+    @Override
     public void updateOBB() {
         this.obb = OBB.fromFoot(this);
     }
@@ -104,6 +109,7 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
     protected boolean canHitEntity(Entity entity) {
         return super.canHitEntity(entity) && colorAttack.canHitEntity(entity);
     }
+    
 
     @Override
     public float getScale() {

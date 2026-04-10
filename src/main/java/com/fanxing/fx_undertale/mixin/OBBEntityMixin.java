@@ -1,11 +1,13 @@
 package com.fanxing.fx_undertale.mixin;
 
+import com.fanxing.fx_undertale.common.phys.OBB;
 import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import com.fanxing.fx_undertale.entity.capability.QuaternionRotatable;
 import com.fanxing.fx_undertale.entity.capability.Rollable;
 import com.fanxing.fx_undertale.utils.RotUtils;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -179,4 +181,5 @@ public abstract class OBBEntityMixin {
             }
         }
     }
+
 }

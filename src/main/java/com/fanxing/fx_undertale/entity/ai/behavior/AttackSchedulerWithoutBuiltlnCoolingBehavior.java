@@ -18,9 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 
@@ -31,56 +29,104 @@ public class AttackSchedulerWithoutBuiltlnCoolingBehavior<T extends LivingEntity
     private static final Logger log = LoggerFactory.getLogger(AttackSchedulerWithoutBuiltlnCoolingBehavior.class);
     protected final List<AttackNode<T>> nodes;                          // 静态节点列表
     protected final Function<T, List<AttackNode<T>>> dynamicFactory;    // 动态节点列表
-    protected int totalCooldown;                                        // 总冷却
     protected AttackNode<T> currentNode;                                // 当前节点
     protected int tick;                                                 // 计数器
-
+    protected List<AttackNode<T>> cachedCandidates;
+    protected int timeout;
     public AttackSchedulerWithoutBuiltlnCoolingBehavior(AttackNode<T> node) {
         this(node, mob -> List.of());
     }
-
-    public AttackSchedulerWithoutBuiltlnCoolingBehavior(AttackNode<T> node, Function<T, List<AttackNode<T>>> dynamicFactory) {
-        this(List.of(node), dynamicFactory);
+    public AttackSchedulerWithoutBuiltlnCoolingBehavior(Function<T, List<AttackNode<T>>> dynamicFactory) {
+        this(List.of(), dynamicFactory,2000);
     }
-
-    public AttackSchedulerWithoutBuiltlnCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory) {
+    public AttackSchedulerWithoutBuiltlnCoolingBehavior(AttackNode<T> node, Function<T, List<AttackNode<T>>> dynamicFactory) {
+        this(List.of(node), dynamicFactory,2000);
+    }
+    public AttackSchedulerWithoutBuiltlnCoolingBehavior(AttackNode<T> node, Function<T, List<AttackNode<T>>> dynamicFactory,int timeout) {
+        this(List.of(node), dynamicFactory,timeout);
+    }
+    public AttackSchedulerWithoutBuiltlnCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory,int timeout) {
         super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryStatus.VALUE_ABSENT,MemoryModuleTypes.ATTACKING.get(), MemoryStatus.VALUE_ABSENT),Integer.MAX_VALUE);
         this.nodes = nodes;
         this.dynamicFactory = dynamicFactory;
+        this.timeout = timeout;
+    }
+
+    /**
+     * 获取允许启动的候选节点（满足 canUse 且被所有活跃节点允许）
+     */
+    private List<AttackNode<T>> getPermittedCandidates(T mob, LivingEntity target) {
+        // 1. 收集所有满足 canUse 的节点（静态 + 动态）
+        List<AttackNode<T>> candidates = new ArrayList<>();
+        for (AttackNode<T> node : nodes) {
+            if (node.canUse(mob, target)) candidates.add(node);
+        }
+        List<AttackNode<T>> dynamicNodes = dynamicFactory.apply(mob);
+        if (dynamicNodes != null) {
+            for (AttackNode<T> node : dynamicNodes) {
+                if (node.canUse(mob, target)) candidates.add(node);
+            }
+        }
+        if (candidates.isEmpty()) return Collections.emptyList();
+
+        // 2. 获取当前活跃节点集合（存储节点引用）
+        Set<AttackNode<? extends LivingEntity>> activeNodes = mob.getBrain().getMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get()).orElse(Collections.emptySet());
+        if (activeNodes.isEmpty()) return candidates;
+
+        // 3. 过滤：候选节点必须被所有活跃节点允许
+        List<AttackNode<T>> permitted = new ArrayList<>();
+        for (AttackNode<T> candidate : candidates) {
+            boolean allowedByAll = true;
+            for (AttackNode<? extends LivingEntity> active : activeNodes) {
+                if (!active.isConcurrentAllowed(candidate.getId())) {
+                    allowedByAll = false;
+                    break;
+                }
+            }
+            if (allowedByAll) permitted.add(candidate);
+        }
+        return permitted;
     }
 
     @Override
     protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull T mob) {
-        return true;
+        Optional<LivingEntity> targetOpt = mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET);
+        if (targetOpt.isEmpty()) {
+            cachedCandidates = null;
+            return false;
+        }
+        cachedCandidates = getPermittedCandidates(mob, targetOpt.get());
+        return !cachedCandidates.isEmpty();
     }
 
     @Override
     protected void start(@NotNull ServerLevel level, @NotNull T mob, long gameTime) {
-        currentNode = null;
+        if (cachedCandidates == null || cachedCandidates.isEmpty()) {
+            doStop(level, mob, gameTime);
+            return;
+        }
+        LivingEntity target = mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null);
+        if (target == null) {
+            doStop(level, mob, gameTime);
+            return;
+        }
+
+        currentNode = selectNodeByWeight(cachedCandidates, mob, target, mob.getRandom());
+        cachedCandidates = null;
+        // 加入活跃集合
+        Set<AttackNode<?>> activeSet = mob.getBrain()
+                .getMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get())
+                .orElse(new HashSet<>());
+        activeSet.add(currentNode);
+        mob.getBrain().setMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get(), activeSet);
+
+        if (currentNode.isControlMove()) {
+            mob.getBrain().setMemory(MemoryModuleTypes.MOVE_LOCKING.get(), Unit.INSTANCE);
+        }
+        mob.getBrain().setMemory(MemoryModuleTypes.ATTACKING.get(), Unit.INSTANCE);
         tick = 0;
-        totalCooldown = 0;
-        mob.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent((target) -> {
-            List<AttackNode<T>> candidates = new ArrayList<>();
-            // 添加静态节点
-            for (AttackNode<T> node : nodes) {
-                if (node.canUse(mob, target)) {
-                    candidates.add(node);
-                }
-            }
-            // 添加动态节点
-            List<AttackNode<T>> dynamicNodes = dynamicFactory.apply(mob);
-            if (dynamicNodes != null) {
-                for (AttackNode<T> node : dynamicNodes) {
-                    if (node.canUse(mob, target)) {
-                        candidates.add(node);
-                    }
-                }
-            }
-            if (candidates.isEmpty()) return;
-            currentNode = selectNodeByWeight(candidates, mob, target, mob.getRandom());
-            mob.getBrain().setMemory(MemoryModuleTypes.ATTACKING.get(),Unit.INSTANCE);
-        });
     }
+
 
     @Override
     protected void tick(@NotNull ServerLevel level, @NotNull T mob, long gameTime) {
@@ -92,9 +138,12 @@ public class AttackSchedulerWithoutBuiltlnCoolingBehavior<T extends LivingEntity
         if (targetOptional.isPresent()) {
             LivingEntity target = targetOptional.get();
             if (tick == 0) {
-                totalCooldown += currentNode.getCooldown();
                 if (currentNode.getAnimId() != null) {
-                    PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimPacket(mob.getId(), currentNode.getAnimId()));
+                    Set<AttackNode<?>> activeNodes = mob.getBrain().getMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get()).orElse(Collections.emptySet());
+                    int maxPriority = activeNodes.stream().mapToInt(AttackNode::getPriority).max().orElse(0);
+                    if (currentNode.getPriority() >= maxPriority) {
+                        PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimPacket(mob.getId(), currentNode.getAnimId()));
+                    }
                 }
             }
             if (currentNode.tick(mob, target, tick)) {
@@ -109,14 +158,26 @@ public class AttackSchedulerWithoutBuiltlnCoolingBehavior<T extends LivingEntity
                     if (available.isEmpty()) {
                         doStop(level, mob, gameTime);
                     } else {
+                        // 移除旧节点
+                        Set<AttackNode<?>> activeSet = mob.getBrain().getMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get()).orElse(new HashSet<>());
+                        activeSet.remove(currentNode);
+                        // 选择新节点（子节点）
                         currentNode = selectNodeByWeight(available, mob, target, mob.getRandom());
+                        if (activeSet.stream().noneMatch(AttackNode::isControlMove)){
+                            mob.getBrain().eraseMemory(MemoryModuleTypes.MOVE_LOCKING.get());
+                        }
+                        if (currentNode.isControlMove()) {
+                            mob.getBrain().setMemory(MemoryModuleTypes.MOVE_LOCKING.get(), Unit.INSTANCE);
+                        }
+                        // 添加新节点
+                        activeSet.add(currentNode);
+                        mob.getBrain().setMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get(), activeSet);
                         tick = 0;
                     }
                     return;
                 }
                 doStop(level, mob, gameTime);
-            } else if (tick > 2000) {
-                totalCooldown += currentNode.getCooldown();
+            } else if (tick > timeout) {
                 doStop(level, mob, gameTime);
             }
             tick++;
@@ -132,9 +193,28 @@ public class AttackSchedulerWithoutBuiltlnCoolingBehavior<T extends LivingEntity
 
     @Override
     protected void stop(@NotNull ServerLevel level, @NotNull T mob, long gameTime) {
-        mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ATTACK_COOLING_DOWN,true,totalCooldown);
+        // 从活跃集合中移除当前节点
+        Set<AttackNode<?>> activeSet = mob.getBrain().getMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get()).orElse(new HashSet<>());
+        int remainingMaxPriority = activeSet.stream().mapToInt(AttackNode::getPriority).max().orElse(-1);
+        log.debug("Stop: activeNodes：{},maxPriority: {},currentNode.getPriority：{},current.animId：{}",activeSet,remainingMaxPriority,currentNode.getPriority(),currentNode.getAnimId());
+        if (currentNode != null) {
+//            Set<AttackNode<?>> activeSet = mob.getBrain().getMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get()).orElse(new HashSet<>());
+//            int remainingMaxPriority = activeSet.stream().mapToInt(AttackNode::getPriority).max().orElse(-1);
+            log.debug("Stop: activeNodes：{},maxPriority: {},currentNode.getPriority：{},current.animId：{}",activeSet,remainingMaxPriority,currentNode.getPriority(),currentNode.getAnimId());
+            if (currentNode.getPriority() == remainingMaxPriority) {
+                PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimPacket(mob.getId(),-1));
+            }
+            activeSet.remove(currentNode);
+            if (activeSet.isEmpty()) mob.getBrain().eraseMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get());
+            else mob.getBrain().setMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get(), activeSet);
+        }
+
         mob.getBrain().eraseMemory(MemoryModuleTypes.ATTACKING.get());
-        PacketDistributor.sendToPlayersTrackingEntity(mob, new AnimPacket(mob.getId(), (byte) -1));
+        if (activeSet.stream().noneMatch(AttackNode::isControlMove)){
+            mob.getBrain().eraseMemory(MemoryModuleTypes.MOVE_LOCKING.get());
+        }
+
+
         currentNode = null;
     }
 

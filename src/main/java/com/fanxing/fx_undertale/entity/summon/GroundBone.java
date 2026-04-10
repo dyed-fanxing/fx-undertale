@@ -6,6 +6,7 @@ import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.entity.ColoredAttacker;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.registry.EntityTypes;
+import com.fanxing.fx_undertale.registry.MemoryModuleTypes;
 import com.fanxing.fx_undertale.utils.CurvesUtils;
 import com.fanxing.fx_undertale.utils.RotUtils;
 import com.fanxing.fx_undertale.utils.collsion.AABBCCDUtils;
@@ -68,11 +69,10 @@ public class GroundBone extends AbstractBone<GroundBone> implements Growable, Co
     @Override
     public float getGrowProgress(float partialTick) {
         if (delay >= -lifetime && delay < 0) {
-            if (holdTimeScale == -1f) { // 特殊值-1f使用sin曲线，这个比较符合重力猛摔后的骨刺刺出并返回的效果
-                return Mth.sin(((-delay + partialTick) / lifetime) * Mth.PI);
-            } else {
-                return CurvesUtils.riseHoldFallBezier((-delay + partialTick) / lifetime, holdTimeScale, 0.8f);
-            }
+            if(holdTimeScale == -3f) return CurvesUtils.powerFallEaseOut(partialTick,10);
+            if(holdTimeScale == -2f) return (Mth.sin((-delay+partialTick)*0.2F)+1)/2;
+            else if (holdTimeScale == -1f) return Mth.sin(((-delay + partialTick) / lifetime) * Mth.PI);
+            else return CurvesUtils.riseHoldFallBezier((-delay + partialTick) / lifetime, holdTimeScale, 0.8f);
         }else return 0f;
     }
 
@@ -92,6 +92,11 @@ public class GroundBone extends AbstractBone<GroundBone> implements Growable, Co
                 this.discard();
             }
         }
+    }
+
+    @Override
+    public boolean shouldBeSaved() {
+        return false;
     }
 
     @Override

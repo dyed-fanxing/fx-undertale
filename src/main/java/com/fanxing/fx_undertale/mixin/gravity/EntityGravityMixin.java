@@ -3,7 +3,6 @@ package com.fanxing.fx_undertale.mixin.gravity;
 import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import com.fanxing.fx_undertale.utils.GravityUtils;
-import com.llamalad7.mixinextras.sugar.Local;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
 import it.unimi.dsi.fastutil.floats.FloatArrays;
@@ -13,11 +12,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityDimensions;
-import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -42,9 +37,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-import static com.fanxing.fx_undertale.utils.GravityUtils.COLLIED_EPSILON;
 import static com.fanxing.fx_undertale.utils.GravityUtils.FLOOR_EPSILON;
-import static net.minecraft.world.entity.Entity.collideBoundingBox;
 
 /**
  * @author Sakpeipei
@@ -123,6 +116,8 @@ public abstract class EntityGravityMixin {
     @Shadow public int tickCount;
 
     @Shadow public abstract AABB getBoundingBox();
+
+    @Shadow public abstract Vec3 getDeltaMovement();
 
     @Inject(method = "calculateViewVector", at = @At("RETURN"), cancellable = true)
     public void calculateViewVector(float xRot, float yRot, CallbackInfoReturnable<Vec3> cir) {
@@ -357,20 +352,7 @@ public abstract class EntityGravityMixin {
         double newX = posX + vec3.x;
         double newY = posY + vec3.y;
         double newZ = posZ + vec3.z;
-        log.info("原位置：{},计算出的：({},{},{})",self.position(), newX, newY, newZ);
-//        // 主动对齐：根据重力轴将对应坐标舍入到整数（方块边界）
-//        switch (gravity) {
-//            case UP -> {
-//                if (Math.abs(newY - Math.round(newY)) < COLLIED_EPSILON) newY = Math.round(newY);
-//            }
-//            case EAST,WEST -> {
-//                if (Math.abs(newX - Math.round(newX)) < COLLIED_EPSILON) newX = Math.round(newX);
-//            }
-//            case SOUTH, NORTH -> {
-//                if (Math.abs(newZ - Math.round(newZ)) < COLLIED_EPSILON) newZ = Math.round(newZ);
-//            }
-//        }
-//        log.info("精度取整数后的新位置：({},{},{})",newX, newY, newZ);
+//        log.info("原位置：{},计算出的：({},{},{})",self.position(), newX, newY, newZ);
         args.set(0, newX);
         args.set(1, newY);
         args.set(2, newZ);
@@ -581,65 +563,79 @@ public abstract class EntityGravityMixin {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//    @Inject(method = "collide", at = @At("RETURN"), cancellable = true)
+//    private void onCollideHead(Vec3 movement, CallbackInfoReturnable<Vec3> cir,@Local(ordinal = 1)Vec3 vec3) {
+//        // 只对玩家调试
+//        Entity self = (Entity)(Object)this;
+//        if (self instanceof Player) {
+//            log.info("================={}碰撞检测=================",self.getType());
+//            log.info("tickCount：{},输入的位移{}, 位置：{}",tickCount,movement,position);
+//            log.info("碰撞箱，minY:{},maxY:{}",getBoundingBox().minY,getBoundingBox().maxY);
+//            log.info("碰撞允许的位移：{}",vec3);
+//            Predicate<Entity> and = EntitySelector.NO_SPECTATORS.and(self::canCollideWith);
+//            AABB aabb = self.getBoundingBox();
+//            List<Entity> list = level.getEntities(self, aabb.expandTowards(self.getDeltaMovement()), and);
+//            Vec3 returnValue = cir.getReturnValue();
+//            AABB sBox = self.getBoundingBox();
+//            for (Entity entity : list) {
+//                AABB enBox = entity.getBoundingBox();
+//                log.info("检测到的碰撞实体：{}，碰撞箱：{}",entity,entity.getBoundingBox());
+//                log.info("允许的位移Y：{}，自身碰撞箱minY：{}，entity碰撞箱maxY：{}，entity.maxY-self.minY相减：{}",returnValue.y,sBox.minY,enBox.maxY,enBox.maxY-sBox.minY);
+////                cir.setReturnValue(new Vec3(returnValue.x,enBox.maxY-sBox.minY,returnValue.z));
+//            }
+//            List<VoxelShape> entityCollisions = level.getEntityCollisions(self,aabb.expandTowards(self.getDeltaMovement()));
+//            for (VoxelShape entityCollision : entityCollisions) {
+//                log.info("碰撞检测形状：{}",entityCollision);
+//            }
+//            List<VoxelShape> collectColliders = TestUtils.collectColliders(self, level, entityCollisions, aabb.expandTowards(movement));
+//            log.info("collectColliders之后的碰撞检测形状：{}",collectColliders);
+//            Vec3 vec4 = TestUtils.collideWithShapes(movement, aabb, collectColliders);
+//            log.info("collideWithShapes返回的碰撞允许位移：{}",vec4);
+//        }
+//    }
+//
+//
 //    @Inject(method = "move", at = @At(value = "HEAD"))
 //    private void onHead(MoverType moverType, Vec3 movement, CallbackInfo ci) {
 //        Entity self = (Entity) (Object) this;
-//        if (self instanceof IronGolem) {
-//            log.info("----------------------tick：{}，move: 输入的movement{},位置：{}，碰撞箱：{}",tickCount,movement,position,getBoundingBox());
+//        if (self instanceof Player) {
+//            StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+//            int lines = Math.min(3, stack.length);
+//            for (int i = 0; i < lines; i++) {
+//                System.err.println(stack[i]);
+//            }
+//
 //        }
 //    }
-//
+
 //    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setOnGroundWithMovement(ZLnet/minecraft/world/phys/Vec3;)V",shift =  At.Shift.BEFORE))
 //    private void onBeforeSetOnGroundWithMovement(MoverType moverType, Vec3 movement, CallbackInfo ci, @Local(ordinal = 1) Vec3 vec3) {
 //        Entity self = (Entity) (Object) this;
-//        if (self instanceof IronGolem) {
-//            log.info("move: before setOnGroundWithMovement, verticalCollision={}, verticalCollisionBelow={}, 碰撞后的 vec3={}",
-//                    self.verticalCollision, self.verticalCollisionBelow, vec3);
+//        if (self instanceof Player) {
+////            log.info("tick：{}，实体{}是否在地面之前： verticalCollision={}, verticalCollisionBelow={}, ！！！！允许的碰撞位移={}",
+////                    tickCount,self.getType(),self.verticalCollision, self.verticalCollisionBelow, vec3);
 //        }
 //    }
-//
-//    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setOnGroundWithMovement(ZLnet/minecraft/world/phys/Vec3;)V", shift = At.Shift.AFTER))
-//    private void onAfterSetOnGroundWithMovement(MoverType moverType, Vec3 movement, CallbackInfo ci,  @Local(ordinal = 1) Vec3 vec3) {
-//        Entity self = (Entity) (Object) this;
-//        if (self instanceof IronGolem) {
-//            log.info("move: after setOnGroundWithMovement, onGround={}, 碰撞后的vec3：{}，deltaMovement={}", self.onGround(),vec3, self.getDeltaMovement());
-//        }
-//    }
-//
+
 //    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;updateEntityAfterFallOn(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/world/entity/Entity;)V", shift = At.Shift.BEFORE))
 //    private void onBeforeUpdateEntityAfterFallOn(MoverType moverType, Vec3 movement, CallbackInfo ci) {
 //        Entity self = (Entity) (Object) this;
-//        if (self instanceof IronGolem) {
-//            log.info("move: before updateEntityAfterFallOn, deltaMovement={}, onGround={},", self.getDeltaMovement(), self.onGround());
+//        if (!self.level().noCollision(self)) {
+//            log.info("{}带着位移设置是否在地面之后：还未更新的位移deltaMovement={}, onGround={},",self, self.getDeltaMovement(), self.onGround());
 //        }
 //    }
 //    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;updateEntityAfterFallOn(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/world/entity/Entity;)V", shift = At.Shift.AFTER))
 //    private void onAfterUpdateEntityAfterFallOn(MoverType moverType, Vec3 movement, CallbackInfo ci) {
 //        Entity self = (Entity) (Object) this;
-//        if (self instanceof IronGolem) {
-//            log.info("move: after updateEntityAfterFallOn, deltaMovement={}, onGround={},", self.getDeltaMovement(), self.onGround());
+//        if (self instanceof Player) {
+//            log.info("摔落方块上之后的位移{}, onGround={},", self.getDeltaMovement(), self.onGround());
 //        }
 //    }
-//
+
 //    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;tryCheckInsideBlocks()V", shift = At.Shift.BEFORE))
 //    private void onBeforeTryCheckInsideBlocks(MoverType moverType, Vec3 movement, CallbackInfo ci) {
 //        Entity self = (Entity) (Object) this;
-//        if (self instanceof IronGolem) {
+//        if (self instanceof Player) {
 //            log.info("move: before tryCheckInsideBlocks, deltaMovement={}, position={},blockPosition：{}", self.getDeltaMovement(), self.position(),self.blockPosition());
 //        }
 //    }
@@ -647,15 +643,15 @@ public abstract class EntityGravityMixin {
 //    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;tryCheckInsideBlocks()V", shift = At.Shift.AFTER))
 //    private void onAfterTryCheckInsideBlocks(MoverType moverType, Vec3 movement, CallbackInfo ci) {
 //        Entity self = (Entity) (Object) this;
-//        if (self instanceof IronGolem) {
+//        if (self instanceof Player) {
 //            log.info("move: after tryCheckInsideBlocks, deltaMovement={}, onGround={}", self.getDeltaMovement(), self.onGround());
 //        }
 //    }
-//
+
 //    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V", shift = At.Shift.BEFORE, ordinal = 0))
 //    private void onBeforeApplySpeedFactor(MoverType moverType, Vec3 movement, CallbackInfo ci) {
 //        Entity self = (Entity) (Object) this;
-//        if (self instanceof IronGolem) {
+//        if (self instanceof Player) {
 //            log.info("move: before applying block speed factor, deltaMovement={}", self.getDeltaMovement());
 //        }
 //    }
@@ -663,29 +659,36 @@ public abstract class EntityGravityMixin {
 //    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V", shift = At.Shift.AFTER, ordinal = 0))
 //    private void onAfterApplySpeedFactor(MoverType moverType, Vec3 movement, CallbackInfo ci) {
 //        Entity self = (Entity) (Object) this;
-//        if (self instanceof IronGolem) {
+//        if (self instanceof Player) {
 //            log.info("move: after applying block speed factor, deltaMovement={}", self.getDeltaMovement());
 //        }
 //    }
-//
+
 //    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setPos(DDD)V", shift = At.Shift.BEFORE, ordinal = 1))
 //    private void onSetPosInMove(MoverType moverType, Vec3 movement, CallbackInfo ci,@Local(ordinal = 1) Vec3 vec3) {
 //        Entity self = (Entity) (Object) this;
-//        if (self instanceof IronGolem) {
-//            log.info("返回的碰撞位移大于1.E-7进入设置位置：位置之前：{}，局部位移为：{}，y轴相加：{}",position,vec3,position.y+vec3.y);
+//        if (self instanceof Player) {
+//            log.info("更新位置之前：{}，局部位移：{}，轴相加：{}",position,vec3,position.y+vec3.y);
+//        }
+//    }
+//    @Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;setPos(DDD)V", shift = At.Shift.AFTER, ordinal = 1))
+//    private void onSetPosAfterMove(MoverType moverType, Vec3 movement, CallbackInfo ci,@Local(ordinal = 1) Vec3 vec3) {
+//        Entity self = (Entity) (Object) this;
+//        if (self instanceof Player) {
+//            log.info("更新位置之后：{}",position);
 //        }
 //    }
 //    @Inject(method = "setPosRaw", at = @At("HEAD"))
 //    private void onSetPosRawHead(double x, double y, double z, CallbackInfo ci) {
 //        Entity self = (Entity)(Object)this;
-//        if(self instanceof IronGolem) {
+//        if(self instanceof Player) {
 //            log.info("设置位置前：原始位置：{}，碰撞箱：{}，要设置的位置：({},{},{})",position,self.getBoundingBox(),x,y,z);
 //        }
 //    }
 //    @Inject(method = "setPosRaw", at = @At("RETURN"))
 //    private void onSetPosRawReturn(double x, double y, double z, CallbackInfo ci) {
 //        Entity self = (Entity)(Object)this;
-//        if(self instanceof IronGolem) {
+//        if(self instanceof Player) {
 //            log.info("设置位置后的位置：{}，碰撞箱：{}",position,getBoundingBox());
 //            // 避免在构造函数或未完全初始化时检测
 //            if (self.level() == null || !self.isAddedToLevel()) return;

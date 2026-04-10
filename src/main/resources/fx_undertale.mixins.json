@@ -5,7 +5,8 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "AbstractArrowMixin",
-    "EntityTestMixin",
+    "EntityFreeMountMixin",
+    "LevelMixin",
     "LivingEntityAccessor",
     "LivingEntityBlockMixin",
     "MixinGeoRenderer",

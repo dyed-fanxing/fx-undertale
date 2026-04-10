@@ -6,9 +6,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 /**
@@ -18,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerImplGravityMixin {
+    private static final Logger log = LoggerFactory.getLogger(ServerGamePacketListenerImplGravityMixin.class);
     @Shadow
     public ServerPlayer player;
 
@@ -85,5 +91,4 @@ public abstract class ServerGamePacketListenerImplGravityMixin {
         args.set(1, logicDD.y);
         args.set(2, logicDD.z);
     }
-
 }

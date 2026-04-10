@@ -10,8 +10,10 @@ import com.fanxing.fx_undertale.Config;
 import com.fanxing.fx_undertale.common.RenderTypes;
 import com.fanxing.fx_undertale.utils.RenderUtils;
 import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
@@ -568,4 +570,16 @@ public abstract class WarningTip extends Effect {
             poseStack.popPose();
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
 }

@@ -145,10 +145,12 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
             d0 = 4.0F;
         }
 
-        d0 *= 64.0F;
+        d0 *= getViewDist();
         return r < d0 * d0;
     }
-
+    public double getViewDist(){
+        return 64f;
+    }
     /**
      * 获取实体添加进世界的数据包，将服务端实体的速度和拥有者也加入
      */

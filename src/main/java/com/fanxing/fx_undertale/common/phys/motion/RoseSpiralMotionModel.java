@@ -37,9 +37,7 @@ public class RoseSpiralMotionModel extends PhysicsMotionModel {
     }
 
     @Override
-    public Vec3 update(Vec3 currentPos, Vec3 currentVel,
-                       @Nullable Vec3 targetPos, @Nullable Vec3 targetVel,
-                       double deltaTime) {
+    public Vec3 update(Vec3 currentPos, Vec3 currentVel,@Nullable Vec3 targetPos,int ticks) {
         if (targetPos == null) return currentVel;
 
         Vec3 r = targetPos.subtract(currentPos);
@@ -81,13 +79,4 @@ public class RoseSpiralMotionModel extends PhysicsMotionModel {
         buf.writeFloat(inertia);
     }
 
-    @Override
-    protected String getType() {
-        return "rose_spiral";
-    }
-
-    static {
-        System.out.println("RoseSpiralMotionModel static block executed");
-        register("rose_spiral", RoseSpiralMotionModel::new, RoseSpiralMotionModel::new);
-    }
 }

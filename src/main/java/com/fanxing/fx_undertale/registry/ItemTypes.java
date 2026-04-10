@@ -8,11 +8,13 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.*;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import java.util.function.Supplier;
 
 import static com.fanxing.fx_undertale.FxUndertale.MOD_ID;
+import static com.fanxing.fx_undertale.registry.BlockTypes.PLATFORM_BLOCK;
 
 public class ItemTypes {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MOD_ID); // 物品注册器
@@ -29,6 +31,11 @@ public class ItemTypes {
     public static final Supplier<GravityDebugStick> GRAVITY_DEBUG_STICK = ITEMS.registerItem("gravity_debug_stick", GravityDebugStick::new);//使用注册器注册物品，并返回注册的物品
     public static final Supplier<MagicBone> MAGIC_BONE = ITEMS.registerItem("bone", MagicBone::new);//使用注册器注册物品，并返回注册的物品
 
+
+
+    public static final DeferredItem<BlockItem> PLATFORM_BLOCK_ITEM = ITEMS.registerSimpleBlockItem(PLATFORM_BLOCK);
+
+
     // 创建创造标签页，并添加物品，放置在战斗标签页之后
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS.register("fx_undertale_tab",
             () -> CreativeModeTab.builder()
@@ -39,5 +46,6 @@ public class ItemTypes {
                         output.accept(GASTER_BLASTER.get());
                         output.accept(GRAVITY_DEBUG_STICK.get());
                         output.accept(MAGIC_BONE.get());
+                        output.accept(PLATFORM_BLOCK_ITEM.get());
                     }).build());
 }

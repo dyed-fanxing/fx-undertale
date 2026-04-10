@@ -1,10 +1,11 @@
 package com.fanxing.fx_undertale.client;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.client.render.summon.RotationBoneRenderer;
-import com.fanxing.fx_undertale.client.render.summon.GasterBlasterRender;
-import com.fanxing.fx_undertale.client.render.summon.GroundBoneOBBRender;
-import com.fanxing.fx_undertale.client.render.summon.GroundBoneRender;
+import com.fanxing.fx_undertale.client.render.entity.block.PlatformBlockEntityRenderer;
+import com.fanxing.fx_undertale.client.render.entity.summon.RotationBoneRenderer;
+import com.fanxing.fx_undertale.client.render.entity.summon.GasterBlasterRender;
+import com.fanxing.fx_undertale.client.render.entity.summon.GroundBoneOBBRender;
+import com.fanxing.fx_undertale.client.render.entity.summon.GroundBoneRender;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.net.packet.*;
@@ -12,8 +13,8 @@ import com.fanxing.fx_undertale.client.particle.BallGrowParticle;
 import com.fanxing.fx_undertale.client.particle.CustomWhiteAshNoGravityParticle;
 import com.fanxing.fx_undertale.client.particle.CustomWhiteAshParticle;
 import com.fanxing.fx_undertale.client.particle.LightStreakParticle;
-import com.fanxing.fx_undertale.client.render.projectile.FlyingBoneRenderer;
-import com.fanxing.fx_undertale.client.render.boss.SansRender;
+import com.fanxing.fx_undertale.client.render.entity.projectile.FlyingBoneRenderer;
+import com.fanxing.fx_undertale.client.render.entity.boss.SansRender;
 import com.fanxing.fx_undertale.client.screen.GravitySelectionScreen;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.registry.MenuTypes;
@@ -49,6 +50,7 @@ public class Setup {
         event.registerEntityRenderer(EntityTypes.GROUND_BONE.get(), GroundBoneRender::new);
         event.registerEntityRenderer(EntityTypes.FLYING_BONE.get(), FlyingBoneRenderer::new);
         event.registerEntityRenderer(EntityTypes.ROTATION_BONE.get(), RotationBoneRenderer::new);
+        event.registerEntityRenderer(EntityTypes.PLATFORM_BLOCK_ENTITY.get(), PlatformBlockEntityRenderer::new);
     }
 
     /**
@@ -87,6 +89,7 @@ public class Setup {
 
         registrar.playToClient(SoulModePacket.TYPE, SoulModePacket.STREAM_CODEC, SoulModePacket::handle);
 
+        registrar.playToClient(WarningTipAABBPacket.TYPE, WarningTipAABBPacket.STREAM_CODEC, WarningTipAABBPacket::handle);
         registrar.playToClient(WarningTipPacket.Cylinder.TYPE, WarningTipPacket.Cylinder.STREAM_CODEC, WarningTipPacket.Cylinder::handle);
         registrar.playToClient(WarningTipPacket.Cube.TYPE, WarningTipPacket.Cube.STREAM_CODEC, WarningTipPacket.Cube::handle);
         registrar.playToClient(WarningTipPacket.Quad.TYPE, WarningTipPacket.Quad.STREAM_CODEC, WarningTipPacket.Quad::handle);

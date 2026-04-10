@@ -22,9 +22,9 @@ import org.slf4j.LoggerFactory;
  */
 public class SpringMotionModel extends PhysicsMotionModel {
     private static final Logger log = LoggerFactory.getLogger(SpringMotionModel.class);
-    private float frequency ;      // 弹簧刚度 k
+    private float frequency = 0.1f;      // 弹簧刚度 k
     private float damping = 1.0f;         // 每 tick 速度缩放因子 (1.0 无阻尼, <1 衰减)
-    private float mass;            // 质量，默认为 1.0
+    private float mass = 1.0f;            // 质量，默认为 1.0
 
     private double springForce; // 最近一次计算的弹簧力大小
     private double potentialEnergy; // 最近一次计算的势能
@@ -47,9 +47,9 @@ public class SpringMotionModel extends PhysicsMotionModel {
     }
 
     public SpringMotionModel(CompoundTag tag) {
-        this.frequency = tag.getFloat("frequency");
-        this.damping = tag.getFloat("damping");
-        this.mass = tag.contains("mass") ? tag.getFloat("mass") : 1.0f;
+        if(tag.contains("frequency")) this.frequency = tag.getFloat("frequency");
+        if(tag.contains("damping")) this.damping = tag.getFloat("damping");
+        if(tag.contains("mass")) this.mass = tag.getFloat("mass");
     }
 
     public SpringMotionModel(RegistryFriendlyByteBuf buf) {
@@ -59,7 +59,7 @@ public class SpringMotionModel extends PhysicsMotionModel {
     }
 
     @Override
-    public Vec3 update(Vec3 currentPos, Vec3 currentVel,@Nullable Vec3 targetPos, @Nullable Vec3 targetVel,double deltaTime) {
+    public Vec3 update(Vec3 currentPos, Vec3 currentVel,@Nullable Vec3 targetPos,int ticks) {
         if (targetPos == null) {
             // 无目标时，仅按阻尼衰减速度
             return currentVel.scale(damping);
@@ -141,12 +141,18 @@ public class SpringMotionModel extends PhysicsMotionModel {
         buf.writeFloat(mass);
     }
 
-    @Override
-    protected String getType() {
-        return "spring";
-    }
 
-    static {
-        register("spring", SpringMotionModel::new, SpringMotionModel::new);
+
+    @Override
+    public String toString() {
+        return "SpringMotionModel{" +
+                "frequency=" + frequency +
+                ", damping=" + damping +
+                ", mass=" + mass +
+                ", springForce=" + springForce +
+                ", potentialEnergy=" + potentialEnergy +
+                ", kineticEnergy=" + kineticEnergy +
+                ", totalEnergy=" + totalEnergy +
+                '}';
     }
 }

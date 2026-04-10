@@ -1,5 +1,7 @@
 package com.fanxing.fx_undertale.event.handler;
 
+import com.fanxing.fx_undertale.entity.block.PlatformBlockEntity;
+import com.fanxing.fx_undertale.entity.summon.GroundBone;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
@@ -28,7 +30,7 @@ public class EntityHandler {
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event){
         Entity entity = event.getEntity();
-//        if(entity instanceof GroundBone){
+//        if(entity instanceof PlatformBlockEntity){
 //            entity.discard();
 //            event.setCanceled(true);
 //        }

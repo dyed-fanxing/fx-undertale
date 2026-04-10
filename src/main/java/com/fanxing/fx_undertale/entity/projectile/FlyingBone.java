@@ -174,11 +174,21 @@ public class FlyingBone extends AbstractPenetrableProjectile implements Scalable
         return 0.88888f;
     }
 
+    @Override
+    public double getViewDist() {
+        return 128f;
+    }
 
     @Override
     protected double getDefaultGravity() {
         return 0.05F;
     }
+
+    @Override
+    public boolean shouldBeSaved() {
+        return false;
+    }
+
 
     @Override
     public boolean isPickable() {

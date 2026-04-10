@@ -184,6 +184,13 @@ public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> e
                         activeSet.remove(currentNode);
                         // 选择新节点（子节点）
                         currentNode = selectNodeByWeight(available, mob, target, mob.getRandom());
+                        if (activeSet.stream().noneMatch(AttackNode::isControlMove)){
+                            log.info("当前攻击节点集合{}，没有锁定移动的节点，删除移动锁定", activeSet);
+                            mob.getBrain().eraseMemory(MemoryModuleTypes.MOVE_LOCKING.get());
+                        }
+                        if (currentNode.isControlMove()) {
+                            mob.getBrain().setMemory(MemoryModuleTypes.MOVE_LOCKING.get(), Unit.INSTANCE);
+                        }
                         // 添加新节点
                         activeSet.add(currentNode);
                         mob.getBrain().setMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get(), activeSet);
@@ -210,8 +217,8 @@ public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> e
     @Override
     protected void stop(@NotNull ServerLevel level, @NotNull T mob, long gameTime) {
         // 从活跃集合中移除当前节点
+        Set<AttackNode<?>> activeSet = mob.getBrain().getMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get()).orElse(new HashSet<>());
         if (currentNode != null) {
-            Set<AttackNode<?>> activeSet = mob.getBrain().getMemory(MemoryModuleTypes.ACTIVE_ATTACK_NODES.get()).orElse(new HashSet<>());
             int remainingMaxPriority = activeSet.stream().mapToInt(AttackNode::getPriority).max().orElse(-1);
             log.debug("Stop: activeNodes：{},maxPriority: {},currentNode.getPriority：{},current.animId：{}",activeSet,remainingMaxPriority,currentNode.getPriority(),currentNode.getAnimId());
             if (currentNode.getPriority() == remainingMaxPriority) {
@@ -227,7 +234,9 @@ public class AttackSchedulerWithBuiltInCoolingBehavior<T extends LivingEntity> e
         mob.getBrain().setMemoryWithExpiry(MemoryModuleType.ATTACK_COOLING_DOWN, true, globalCoolDown);
 
         mob.getBrain().eraseMemory(MemoryModuleTypes.ATTACKING.get());
-        mob.getBrain().eraseMemory(MemoryModuleTypes.MOVE_LOCKING.get());
+        if (activeSet.stream().noneMatch(AttackNode::isControlMove)){
+            mob.getBrain().eraseMemory(MemoryModuleTypes.MOVE_LOCKING.get());
+        }
 
 
         currentNode = null;

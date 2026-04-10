@@ -1,8 +1,7 @@
 package com.fanxing.fx_undertale.item;
 
 import com.fanxing.fx_undertale.client.render.item.MagicBoneItemRender;
-import com.fanxing.fx_undertale.common.phys.motion.GravityMotion;    // 根据你的实际包路径调整
-import com.fanxing.fx_undertale.common.phys.motion.OscillationMotionModel;
+import com.fanxing.fx_undertale.common.phys.motion.GravityMotionModel;    // 根据你的实际包路径调整
 import com.fanxing.fx_undertale.common.phys.motion.ProportionalNavigationModel;
 import com.fanxing.fx_undertale.common.phys.motion.SpringMotionModel;
 import com.fanxing.fx_undertale.entity.summon.RotationBone;
@@ -73,7 +72,7 @@ public class MagicBone extends Item implements GeoItem {
                 float strength = data.getFloat("strength");
                 float softening = data.getFloat("softening");
                 float speed = data.getFloat("speed");
-                GravityMotion model = new GravityMotion(strength, 8F, (float) toTarget.length(), softening);
+                GravityMotionModel model = new GravityMotionModel(strength, 8F, (float) toTarget.length(), softening);
                 player.sendSystemMessage(Component.literal("生成引力骨骼，参数：" + strength + ", " + softening + ", " + speed));
             }
             if ("proportional".equals(modelType)) {
@@ -89,17 +88,6 @@ public class MagicBone extends Item implements GeoItem {
                 player.sendSystemMessage(Component.literal("生成比例导引骨骼，参数：turnRate=" + turnRate + ", speed=" + speed + ", angle=" + angle));
             }
 
-            if ("oscillation".equals(modelType)) {
-                float speed = data.getFloat("speed");
-                float angle = data.getFloat("angle");
-
-                // 计算速度方向（水平面内绕Y轴旋转）
-                Vec3 radial = toTarget.normalize();
-                Vec3 horizontalRadial = new Vec3(radial.x, 0, radial.z).normalize();
-                if (horizontalRadial.lengthSqr() < 1e-6) horizontalRadial = new Vec3(1, 0, 0);
-                OscillationMotionModel model = new OscillationMotionModel(speed);
-                player.sendSystemMessage(Component.literal("生成振荡骨骼，参数：speed=" + speed + ", angle=" + angle));
-            }
             level.addFreshEntity(bone);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
