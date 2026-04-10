@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 
@@ -28,24 +29,24 @@ import java.util.function.Function;
 public class AttackSchedulerWithoutBuiltlnCoolingBehavior<T extends LivingEntity> extends Behavior<T> {
     private static final Logger log = LoggerFactory.getLogger(AttackSchedulerWithoutBuiltlnCoolingBehavior.class);
     protected final List<AttackNode<T>> nodes;                          // 静态节点列表
-    protected final Function<T, List<AttackNode<T>>> dynamicFactory;    // 动态节点列表
+    protected final BiFunction<T,LivingEntity, List<AttackNode<T>>> dynamicFactory;    // 动态节点列表
     protected AttackNode<T> currentNode;                                // 当前节点
     protected int tick;                                                 // 计数器
     protected List<AttackNode<T>> cachedCandidates;
     protected int timeout;
     public AttackSchedulerWithoutBuiltlnCoolingBehavior(AttackNode<T> node) {
-        this(node, mob -> List.of());
+        this(node, (a,t) -> List.of());
     }
-    public AttackSchedulerWithoutBuiltlnCoolingBehavior(Function<T, List<AttackNode<T>>> dynamicFactory) {
+    public AttackSchedulerWithoutBuiltlnCoolingBehavior(BiFunction<T,LivingEntity, List<AttackNode<T>>> dynamicFactory) {
         this(List.of(), dynamicFactory,2000);
     }
-    public AttackSchedulerWithoutBuiltlnCoolingBehavior(AttackNode<T> node, Function<T, List<AttackNode<T>>> dynamicFactory) {
+    public AttackSchedulerWithoutBuiltlnCoolingBehavior(AttackNode<T> node, BiFunction<T,LivingEntity, List<AttackNode<T>>> dynamicFactory) {
         this(List.of(node), dynamicFactory,2000);
     }
-    public AttackSchedulerWithoutBuiltlnCoolingBehavior(AttackNode<T> node, Function<T, List<AttackNode<T>>> dynamicFactory,int timeout) {
+    public AttackSchedulerWithoutBuiltlnCoolingBehavior(AttackNode<T> node, BiFunction<T,LivingEntity, List<AttackNode<T>>> dynamicFactory,int timeout) {
         this(List.of(node), dynamicFactory,timeout);
     }
-    public AttackSchedulerWithoutBuiltlnCoolingBehavior(List<AttackNode<T>> nodes, Function<T, List<AttackNode<T>>> dynamicFactory,int timeout) {
+    public AttackSchedulerWithoutBuiltlnCoolingBehavior(List<AttackNode<T>> nodes, BiFunction<T,LivingEntity, List<AttackNode<T>>> dynamicFactory,int timeout) {
         super(ImmutableMap.of(MemoryModuleType.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT, MemoryModuleType.ATTACK_COOLING_DOWN, MemoryStatus.VALUE_ABSENT,MemoryModuleTypes.ATTACKING.get(), MemoryStatus.VALUE_ABSENT),Integer.MAX_VALUE);
         this.nodes = nodes;
         this.dynamicFactory = dynamicFactory;
@@ -61,7 +62,7 @@ public class AttackSchedulerWithoutBuiltlnCoolingBehavior<T extends LivingEntity
         for (AttackNode<T> node : nodes) {
             if (node.canUse(mob, target)) candidates.add(node);
         }
-        List<AttackNode<T>> dynamicNodes = dynamicFactory.apply(mob);
+        List<AttackNode<T>> dynamicNodes = dynamicFactory.apply(mob,target);
         if (dynamicNodes != null) {
             for (AttackNode<T> node : dynamicNodes) {
                 if (node.canUse(mob, target)) candidates.add(node);

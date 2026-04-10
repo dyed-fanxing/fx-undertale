@@ -94,10 +94,6 @@ public class GroundBone extends AbstractBone<GroundBone> implements Growable, Co
         }
     }
 
-    @Override
-    public boolean shouldBeSaved() {
-        return false;
-    }
 
     @Override
     protected List<EntityHitResult> getEntityHitResults(Vec3 to) {
@@ -117,6 +113,7 @@ public class GroundBone extends AbstractBone<GroundBone> implements Growable, Co
         entity.hurt(damageSource, damage);
     }
 
+    // 不需要持久化，攻击物不需要
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);

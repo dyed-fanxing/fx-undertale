@@ -4,6 +4,11 @@ import com.fanxing.fx_undertale.common.phys.motion.PhysicsMotionModel;
 import com.fanxing.fx_undertale.registry.*;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -18,6 +23,7 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.slf4j.Logger;
@@ -36,22 +42,26 @@ public class FxUndertale {
         modEventBus.addListener(this::commonSetup);
 
 
-        BlockTypes.register(modEventBus);           // 方块注册
-        ItemTypes.register(modEventBus);            // 物品注册
-        EntityTypes.register(modEventBus);          // 实体注册
-        MobEffectTypes.registry(modEventBus);       // buff注册
-        SoundEvnets.register(modEventBus);           // 声音注册
-        ParticleTypes.register(modEventBus);        // 粒子注册
-        MenuTypes.register(modEventBus);            // 菜单注册
-        AttachmentTypes.register(modEventBus);      // 附件注册
-        MemoryModuleTypes.register(modEventBus);      // 记忆注册
+        BlockTypes.register(modEventBus);               // 方块注册
+        ItemTypes.register(modEventBus);                // 物品注册
+
+        EntityTypes.register(modEventBus);              // 实体注册
+        MobEffectTypes.registry(modEventBus);           // buff注册
+
+        MemoryModuleTypes.register(modEventBus);        // 记忆注册
+        SoundEvnets.register(modEventBus);              // 声音注册
+        ParticleTypes.register(modEventBus);            // 粒子注册
+        AttachmentTypes.register(modEventBus);          // 附件注册
+        MenuTypes.register(modEventBus);                // 菜单注册
+
+
+        StructureProcessorTypes.register(modEventBus);  // 结构回调注册
 
         // 注册当前类以响应游戏事件
         NeoForge.EVENT_BUS.register(this);
 
         // 注册将物品添加到创造标签页的方法
         modEventBus.addListener(this::addCreative);
-
 
         // 注册模组的配置规范，以便FML可以创建和加载配置文件
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.COMMON_SPEC);
@@ -61,6 +71,10 @@ public class FxUndertale {
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modContainer.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         }
+
+
+
+
         PhysicsMotionModel.registry();
     }
 

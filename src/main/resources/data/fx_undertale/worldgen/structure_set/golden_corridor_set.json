@@ -1,0 +1,15 @@
+{
+  "structures": [
+    {
+      "structure": "fx_undertale:golden_corridor",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "salt": 123456789,
+    "spacing": 80,
+    "separation": 32,
+    "frequency": 0.1
+  }
+}

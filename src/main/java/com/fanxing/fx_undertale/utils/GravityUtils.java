@@ -8,7 +8,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -54,18 +53,20 @@ public class GravityUtils {
     /**
      * 对目标实体应用攻击者的相对重力
      */
-    public static Direction applyRelativeGravity(Entity attacker, Entity target, LocalDirection localGravity) {
+    public static Direction applyRelativeGravity(Entity attacker, Entity target, LocalDirection localDirection) {
+        return applyGravity(target,getDirection(attacker,localDirection));
+    }
+    public static Direction getDirection(Entity attacker,LocalDirection localDirection){
         Direction forward = Direction.fromYRot(attacker.getYHeadRot());
-        return applyGravity(target, switch (localGravity) {
+        return switch (localDirection) {
             case DOWN -> Direction.DOWN;
             case UP -> Direction.UP;
             case FRONT -> forward;
             case BACK -> forward.getOpposite();
             case LEFT -> forward.getCounterClockWise();
             case RIGHT -> forward.getClockWise();
-        });
+        };
     }
-
     /**
      * 对目标实体应用攻击者的相对重力
      */
@@ -109,8 +110,6 @@ public class GravityUtils {
         if(dy != 0) entity.setPos(entity.position().add(GravityUtils.projectToAxis(dy,gravity)));
     }
 
-
-
     public static Vec3 findGround(Level level, Vec3 pos, Direction gravity) {
         Vec3i normal = gravity.getNormal();
         Vec3 g = new Vec3(normal.getX(), normal.getY(), normal.getZ());
@@ -134,10 +133,14 @@ public class GravityUtils {
                 }
                 return compose(getSurfaceBlockHeight(searchPos,gravity).add(g.scale(collisionHeight)),pos);
             }
+//            log.info("blockPos：{}，blockState：{}，距离：{}", posBelow, blockBelow,pos.subtract(posBelow.getX(),posBelow.getY(),posBelow.getZ()).length());
             // 继续向下搜索
             searchPos = searchPos.relative(gravity);
         } while (-step*searchPos.get(gravity.getAxis()) >= -step*height);
         return new Vec3(normal.getX(),normal.getY(),normal.getZ()).add(g.scale(collisionHeight));
+    }
+    public static double findGroundHeight(Level level, Vec3 pos, Direction gravity) {
+        return findGround(level,pos,gravity).subtract(pos).length();
     }
 
     public static Vec3 getEntitySurfaceBlockPos(Entity entity, BlockPos blockPos, Vec3i up) {
@@ -156,6 +159,10 @@ public class GravityUtils {
                 blockPos.getZ()+(down.getZ()>0?1:0)
         );
     }
+
+    /**
+     * @param blockPos 此处的位置是踩着的那个方块的上表面的位置，而不是这个方块位置的原点的位置
+     */
     public static Vec3 getSurfaceBlockHeight(BlockPos blockPos, Direction gravity) {
         Vec3i down = gravity.getNormal();
         return new Vec3(
@@ -171,7 +178,7 @@ public class GravityUtils {
      */
     public static BlockPos getContaining(Direction gravity,Vec3 offset){
         Vec3i normal = gravity.getNormal();
-        return BlockPos.containing(offset.x + (normal.getX()<0?-FLOOR_EPSILON:0), offset.y+(normal.getY()>0?-FLOOR_EPSILON:0), offset.z+(normal.getZ()>0?-FLOOR_EPSILON:0));
+        return BlockPos.containing(offset.x + (normal.getX()>0?-FLOOR_EPSILON:0), offset.y+(normal.getY()>0?-FLOOR_EPSILON:0), offset.z+(normal.getZ()>0?-FLOOR_EPSILON:0));
     }
     public static BlockPos getContaining(Direction gravity,double x, double y,double z){
         Vec3i normal = gravity.getNormal();
@@ -228,6 +235,8 @@ public class GravityUtils {
                 Math.round(vec.z * factor) / factor
         );
     }
+
+
 
 
     public static Vec3 getVec3(Direction direction){

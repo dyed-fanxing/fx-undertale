@@ -21,7 +21,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import java.util.function.Supplier;
 
 public class EntityTypes {
-    private static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, FxUndertale.MOD_ID);
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, FxUndertale.MOD_ID);
     public static void register(IEventBus bus) {
         ENTITY_TYPES.register(bus);
     }

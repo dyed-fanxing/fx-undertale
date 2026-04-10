@@ -1,0 +1,16 @@
+{
+  "name": "fx_undertale:golden_corridor",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "fx_undertale:golden_corridor/2",
+        "projection": "rigid",
+        "joint": "aligned",
+        "processors": "minecraft:empty"
+      }
+    }
+  ]
+}

@@ -143,10 +143,12 @@ public class RotUtils {
     /**
      * 将向量（坐标）vec对齐MC世界Yaw航偏方向
      */
-    public static Vec3 yRot(Vec3 vec,float yaw) {
+    public static Vec3 rotateY(Vec3 vec,float yaw) {
         return vec.yRot(-yaw * Mth.DEG_TO_RAD);
     }
-
+    public static Vec3 rotateY(double dx,double dy,double dz,float yaw) {
+        return new Vec3(dx,dy,dz).yRot(-yaw * Mth.DEG_TO_RAD);
+    }
     public static Vec3 rotateYX(Vec3 pos,float yaw,float pitch){
         return rotateYX((float) pos.x, (float) pos.y, (float) pos.z,yaw,pitch);
     }

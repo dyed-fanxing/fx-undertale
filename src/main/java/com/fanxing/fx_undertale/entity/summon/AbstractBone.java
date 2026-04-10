@@ -90,6 +90,18 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
         this.obb = OBB.fromFoot(this);
     }
 
+
+
+    @Override
+    public @NotNull AABB getBoundingBoxForCulling() {
+        return obb == null ? super.getBoundingBoxForCulling() : obb.getBoundingAABB();
+    }
+
+    @Override
+    protected boolean canHitEntity(Entity entity) {
+        return super.canHitEntity(entity) && colorAttack.canHitEntity(entity);
+    }
+
     @Override
     public boolean fudgePositionAfterSizeChange(EntityDimensions p_347526_) {
         return false;
@@ -101,15 +113,9 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
     }
 
     @Override
-    public @NotNull AABB getBoundingBoxForCulling() {
-        return obb == null ? super.getBoundingBoxForCulling() : obb.getBoundingAABB();
+    public boolean shouldBeSaved() {
+        return false;
     }
-
-    @Override
-    protected boolean canHitEntity(Entity entity) {
-        return super.canHitEntity(entity) && colorAttack.canHitEntity(entity);
-    }
-    
 
     @Override
     public float getScale() {
@@ -138,6 +144,7 @@ public abstract class AbstractBone<T extends AbstractBone<T>> extends AbstractMo
     }
 
     // ========== 数据序列化（公共部分） ==========
+    // 攻击物不需要持久化
     @Override
     protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
