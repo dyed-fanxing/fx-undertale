@@ -186,6 +186,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             int colorB = 0xC0F6FD29;// 原本是 0xFFF6FD29
             this.level().addParticle(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.lerp(cycle, Sans.ENERGY_AQUA, colorB)), vec3.x, vec3.y, vec3.z, 0, 0, 0);
         }
+
     }
 
     @Override

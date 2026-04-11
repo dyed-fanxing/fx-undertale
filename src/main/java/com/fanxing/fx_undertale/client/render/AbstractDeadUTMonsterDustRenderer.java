@@ -8,21 +8,29 @@ import com.fanxing.fx_undertale.common.RenderTypes;
 import com.fanxing.fx_undertale.entity.AbstractUTMonster;
 import com.fanxing.fx_undertale.registry.ParticleTypes;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoAnimatable;
-import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.cache.object.*;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
+import software.bernie.geckolib.util.RenderUtil;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -30,33 +38,54 @@ import java.util.Objects;
  */
 public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMonster & GeoAnimatable> extends GeoEntityRenderer<T> {
 
+    private static final Logger log = LoggerFactory.getLogger(AbstractDeadUTMonsterDustRenderer.class);
+
     public AbstractDeadUTMonsterDustRenderer(EntityRendererProvider.Context renderManager, GeoModel<T> model) {
         super(renderManager, model);
     }
 
     @Override
+    public void createVerticesOfQuad(GeoQuad quad, Matrix4f poseState, Vector3f normal, VertexConsumer buffer,
+                                     int packedLight, int packedOverlay, int colour) {
+        T animatable = getAnimatable();
+        float progress = animatable.deathProgress;
+        if (progress <= 0) {
+            super.createVerticesOfQuad(quad, poseState, normal, buffer, packedLight, packedOverlay, colour);
+            return;
+        }
+        // 获取相机空间脚底 Y 和高度（你已经算好的）
+        float cameraY = (float) Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().y;
+        double entityBottomY = animatable.getY();
+        float cameraBottomY = (float) (entityBottomY - cameraY);
+        float bbHeight = animatable.getBbHeight();
+
+        for (GeoVertex vertex : quad.vertices()) {
+            Vector4f cam = poseState.transform(new Vector4f(vertex.position().x(), vertex.position().y(), vertex.position().z(), 1f));
+            float y = cam.y();
+            float normY = (y - cameraBottomY) / bbHeight;
+            normY = Mth.clamp(normY, 0f, 1f);
+
+            float alpha = 1f;
+            float threshold = 1f - progress;
+            if (normY > threshold) alpha = 0f;
+            else if (normY > threshold - 0.1f) alpha = 1f - (normY - (threshold - 0.1f)) / 0.1f;
+
+            // RGB 强制白色，alpha 渐变
+            int newColour = ((int)(alpha * 255) << 24) | 0x00FFFFFF;
+            buffer.addVertex(cam.x(), cam.y(), cam.z(), newColour, vertex.texU(), vertex.texV(),
+                    packedOverlay, packedLight, normal.x(), normal.y(), normal.z());
+        }
+    }
+    @Override
     public void actuallyRender(PoseStack poseStack, T animatable, BakedGeoModel model, RenderType renderType,
                                MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
                                float partialTick, int packedLight, int packedOverlay, int colour) {
         if (animatable.isDeadOrDying()) {
-            float progress = Math.min(1f, (animatable.deathTime + partialTick) / animatable.getDeathTime()); // 死亡时间
-            RenderType type = RenderTypes.TOP_FADE.apply(getTextureLocation(animatable), true);
-            VertexConsumer consumer = bufferSource.getBuffer(type);
-            ShaderInstance shader = Shaders.getTopFadeShader();
-            if (shader != null) {
-                Objects.requireNonNull(shader.getUniform("Progress")).set(progress);
-                // ****************************!!!important****************************************
-                // 这里必须要传递相机Y坐标，没测试出为什么
-                // 顶点着色器里的Position位置官方说是模型局部位置，但是测试时候发现这个位置会跟着玩家的相机位置变化，
-                // 如果是模型视图位置的话，它又要在顶点着色器里乘上ModelViewMat（模型视图矩阵），目前没测试出什么原因
-                // 我的理解如果顶点着色器Position是模型局部位置的话，直接传递进度和高度就可以了，但它好像不是，又好像是模型视图坐标
-                Objects.requireNonNull(shader.getUniform("CameraY")).set((float) Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().y);
-                Objects.requireNonNull(shader.getUniform("bottomY")).set((float) animatable.getY());
-                Objects.requireNonNull(shader.getUniform("bbHeight")).set(animatable.getBbHeight());
-            }
-            spawnDeathParticles(animatable, progress);
-            super.actuallyRender(poseStack, animatable, model, type, bufferSource, consumer,
-                    isReRender, partialTick, packedLight, packedOverlay, colour);
+            renderType = RenderType.ENTITY_TRANSLUCENT.apply(getTextureLocation(animatable), false);
+            animatable.deathProgress = Math.min(1f, (animatable.deathTime + partialTick) / animatable.getDeathTime());
+            spawnDeathParticles(animatable, animatable.deathProgress);
+            super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, bufferSource.getBuffer(renderType),
+                    isReRender, partialTick, LightTexture.FULL_SKY, packedOverlay, colour);
         } else {
             super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer,
                     isReRender, partialTick, packedLight, packedOverlay, colour);
@@ -66,8 +95,8 @@ public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMons
     /**
      * 生成死亡消散粒子
      *
-     * @param animatable  实体
-     * @param progress    消散进度 0~1
+     * @param animatable 实体
+     * @param progress   消散进度 0~1
      */
     private void spawnDeathParticles(T animatable, float progress) {
         // 控制生成频率，避免每帧生成过多（比如每2帧生成一次）
@@ -78,7 +107,6 @@ public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMons
         // 粒子数量随进度增加（例如 0~20 个/帧），但限制最高数量避免卡顿
         int count = Mth.ceil(bbWidth / 0.333334F);
         if (count <= 0) return;
-
 
         // 模型包围盒信息
         double x = animatable.getX();
@@ -105,9 +133,7 @@ public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMons
 
     @Override
     public boolean shouldRender(T animatable, @NotNull Frustum frustum, double p_114493_, double p_114494_, double p_114495_) {
-        if (animatable.isDeadOrDying()) {
-            return true;
-        }
+        if (animatable.isDeadOrDying()) return true;
         return super.shouldRender(animatable, frustum, p_114493_, p_114494_, p_114495_);
     }
 

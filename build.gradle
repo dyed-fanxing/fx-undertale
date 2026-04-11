@@ -124,11 +124,10 @@ repositories {
         name = "Jared's maven"
         url = "https://maven.blamejared.com/"
     }
-//    repositories {
-//        maven {
-//            name = "Iris Maven"
-//            url = "https://maven.irisshaders.dev/releases/"
-//        }
+//    maven {
+//        name = "Iris Maven"
+//        url = "https://www.cursemaven.com"
+//        url = "https://maven.irisshaders.net/releases/"
 //    }
     mavenCentral()
 }
@@ -149,7 +148,10 @@ dependencies {
     }
     // CURIOS *****************************************************************************************************
     implementation "top.theillusivec4.curios:curios-neoforge:${curios_version}+${minecraft_version}"
+
+
 //    compileOnly "net.irisshaders:iris-api:1.6.0+mc1.20.1"
+//    implementation "net.irisshaders.iris:iris-neoforge:${minecraft_version}"
 
 }
 

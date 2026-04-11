@@ -1,11 +1,13 @@
 package com.fanxing.fx_undertale.entity;
 
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
 
 
 public abstract class AbstractUTMonster extends Monster {
+    public float deathProgress;
     public AbstractUTMonster(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
     }
@@ -17,6 +19,12 @@ public abstract class AbstractUTMonster extends Monster {
             this.level().broadcastEntityEvent(this, (byte)60);
             this.remove(RemovalReason.KILLED);
         }
+    }
+
+    @Override
+    public void die(DamageSource p_21014_) {
+        super.die(p_21014_);
+        this.setNoAi(true);
     }
 
     public int getDeathTime(){

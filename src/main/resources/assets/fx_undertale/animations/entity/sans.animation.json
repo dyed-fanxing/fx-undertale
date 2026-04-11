@@ -2966,6 +2966,38 @@
 					}
 				}
 			}
+		},
+		"block.bone": {
+			"animation_length": 0.5,
+			"bones": {
+				"rotation_bone_left": {
+					"rotation": {
+						"0.0": {
+							"vector": ["-90-query.pitch;", "-query.yaw;s", 0]
+						},
+						"0.5": {
+							"vector": ["-90-query.pitch; ", "-query.yaw;", "math.cos(query.anim_time)*1080 "]
+						}
+					},
+					"position": {
+						"vector": [-8, 9, -15]
+					},
+					"scale": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.0833": {
+							"vector": [1, 1, 1]
+						},
+						"0.4167": {
+							"vector": [1, 1, 1]
+						},
+						"0.5": {
+							"vector": [0, 0, 0]
+						}
+					}
+				}
+			}
 		}
 	},
 	"geckolib_format_version": 2

@@ -6,6 +6,7 @@ import com.fanxing.fx_undertale.client.render.AbstractDeadUTMonsterDustRenderer;
 import com.fanxing.fx_undertale.client.render.layer.SansFatigueLayer;
 import com.fanxing.fx_undertale.common.RenderTypes;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
@@ -33,9 +34,11 @@ import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
     private static final RenderType EYES_EMISSIVE = RenderType.entityTranslucentEmissive(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_eyes.png"));
     private static final ResourceLocation EYES_BLINK = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_eyes_blink.png");
+    private static final ResourceLocation SANS_WHITE = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_white.png");
     private static final RenderType EYES_BLINK_EMISSIVE = RenderType.entityTranslucentEmissive(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_eyes_blink.png"));
     private static final Logger log = LoggerFactory.getLogger(SansRender.class);
-    RenderType whiteEntityType = RenderTypes.WHITE_ENTITY_TRANSLUCENT.apply(getTextureLocation(animatable), true);
+//    RenderType whiteEntityType = RenderTypes.WHITE_ENTITY_TRANSLUCENT.apply(getTextureLocation(animatable), true);
+    RenderType WHITE = RenderType.ENTITY_TRANSLUCENT.apply(SANS_WHITE, false);
 
 
     public SansRender(EntityRendererProvider.Context renderManager) {
@@ -70,7 +73,7 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
         poseStack.translate(offset.x, offset.y, offset.z);
         if (model != null) {
             int color = (0xFFFFFF) | ((int) (alpha * 255) << 24);
-            actuallyRender(poseStack, animatable, model, whiteEntityType, bufferSource, bufferSource.getBuffer(whiteEntityType), true, partialTick, packedLight, OverlayTexture.NO_OVERLAY, color);
+            actuallyRender(poseStack, animatable, model, WHITE, bufferSource, bufferSource.getBuffer(WHITE), true, partialTick, packedLight, OverlayTexture.NO_OVERLAY, color);
         }
         poseStack.popPose();
     }
