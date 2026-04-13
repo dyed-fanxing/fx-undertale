@@ -55,6 +55,7 @@ public class RotationBoneRenderer extends GeoEntityRenderer<RotationBone> {
             Vector3d localPos = down.get().getLocalPosition();
             animatable.trail1.addPoint(localPos, currentTime);
             VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.ENERGY_TRIANGLE_FAN_WHITE);
+            log.info("bufferSource：{}", bufferSource);
             animatable.trail1.render(poseStack,(MultiBufferSource.BufferSource) bufferSource, consumer, packedLight, currentTime);
         }
         super.renderFinal(poseStack, animatable, model, bufferSource, buffer, partialTick, packedLight, packedOverlay, colour);

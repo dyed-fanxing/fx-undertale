@@ -82,7 +82,7 @@ public class RadialBladeTrailStrip extends AbstractPointTrail{
             addVertex(consumer, matrix, outer, finalAlpha, u, 0, packedLight, dummyNormal);
             addVertex(consumer, matrix, inner, finalAlpha, u, 1, packedLight, dummyNormal);
         }
-        breakStrip(consumer);
+        breakStrip(poseStack,consumer);
     }
 
 

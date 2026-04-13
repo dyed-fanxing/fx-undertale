@@ -101,7 +101,7 @@ public class RadialPlaneTrailStrip extends AbstractPointTrail {
             addVertex(consumer,matrix,left,alpha,u,0f,packedLight,dummyNormal);
             addVertex(consumer,matrix,right,alpha,u,0f,packedLight,dummyNormal);
         }
-        breakStrip(consumer);
+        breakStrip(poseStack,consumer);
     }
 
     public void render(PoseStack poseStack, VertexConsumer consumer, int packedLight, float currentTime) {

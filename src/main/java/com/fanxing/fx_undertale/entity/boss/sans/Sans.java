@@ -186,7 +186,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             }
         }else{
             EntityHitResult hitResult = shield.tick((t)-> t.getOwner() != this);
-            float range = getPhaseID() == SPECIAL_ATTACK?1.0f:(getPhaseID()==SECOND_PHASE?0.5f:0.9f);
+            float range = getPhaseID() == SPECIAL_ATTACK?1.0f:(getPhaseID()==SECOND_PHASE?0.6F:0.9f);
             if (hitResult != null && random.nextFloat() <  range) {
                 Vec3 pos = hitResult.getLocation();
                 Entity entity = hitResult.getEntity();
@@ -1839,8 +1839,6 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     }
 
     public static int ENERGY_AQUA = 0xC061E5DF;
-    public boolean leftAnimPlaying;
-    public boolean allAnimPlaying;
 //    public final RadialBladeTrailStrip leftHandTrail = new RadialBladeTrailStrip(10f, ENERGY_AQUA, (t) -> CurvesUtils.powerFallEaseOut(t, 2)).tipInflate(0.2F);
     public final RadialPlaneTrailStrip leftHandTrail = new RadialPlaneTrailStrip(10f,ENERGY_AQUA, (t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
     public final RadialPlaneTrailStrip rightHandTrail = new RadialPlaneTrailStrip(10f, ENERGY_AQUA, (t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);

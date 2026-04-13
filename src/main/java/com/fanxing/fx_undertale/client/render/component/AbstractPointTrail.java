@@ -3,7 +3,6 @@ package com.fanxing.fx_undertale.client.render.component;
 import com.fanxing.fx_undertale.utils.Curve3DUtils;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.FastColor;
 import org.joml.Matrix4f;
@@ -105,11 +104,21 @@ public abstract class AbstractPointTrail {
         return smoothPoints;
     }
     
-    public void breakStrip(VertexConsumer consumer) {
+    public void breakStrip(PoseStack poseStack, VertexConsumer consumer) {
         if (points.isEmpty()) return;
+//        TrailPoint last = points.getLast();
+//        Matrix4f matrix4f = poseStack.last().pose();
+//        addVertex(consumer, matrix4f,last.position, 0, 0, 0, 0, new Vector3f());
+//        addVertex(consumer, matrix4f,last.position, 0, 0, 0, 0, new Vector3f());
+
+        // 利用单位矩阵直接将两个透明的顶点提交到世界坐标原点上，因为距离过远超出视锥体范围，会被剔除或遮挡的原理，隐藏和下一个条带形成的三角形
+        // 把这个两个用来断开的点叫做 AE1和A2E，而另一个条带的两个起点叫做BS1,BS2，
+        // 组成三角形为：AE1 AE2 BS1（退化成线段，不渲染），AE2 BS1 BS2（三角形，会渲染，但因为超出视锥体范围，被剔除或遮挡，所以也不渲染）
+        // 必须用单位矩阵，且用原点(0,0,0)，且必须完全透明才行，三个差一个都不对
+        Vector3f vector3f = new Vector3f(0, 0, 0);
         Matrix4f matrix4f = new Matrix4f();
-        addVertex(consumer, matrix4f, new Vector3f(0,0,0), 0, 0, 0, 0, new Vector3f());
-        addVertex(consumer, matrix4f, new Vector3f(0,0,0), 0, 0, 0, 0, new Vector3f());
+        addVertex(consumer, matrix4f, vector3f, 0F, 0, 0, 0, new Vector3f());
+        addVertex(consumer, matrix4f, new Vector3f(0, 0, 0), 0F, 0, 0, 0, new Vector3f());
     }
 
 
@@ -125,8 +134,10 @@ public abstract class AbstractPointTrail {
             gMul *= alpha;
             bMul *= alpha;
         }
+
         consumer.addVertex(matrix, pos.x, pos.y, pos.z)
-                .setColor(rMul, gMul, bMul, alpha)
+                .setColor(1.0f, 0.0f, 0.0f, 1.0f) // 完全不透明的红色
+//                .setColor(rMul, gMul, bMul, alpha)
                 .setUv(u, v)
                 .setOverlay(OverlayTexture.NO_OVERLAY)
                 .setLight(packedLight)

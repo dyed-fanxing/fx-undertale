@@ -53,6 +53,11 @@
 					]
 				},
 				{
+					"name": "top",
+					"parent": "up",
+					"pivot": [0, 8, 0]
+				},
+				{
 					"name": "body",
 					"parent": "root",
 					"pivot": [0, -6.5, 0],
@@ -105,11 +110,6 @@
 							}
 						}
 					]
-				},
-				{
-					"name": "top",
-					"parent": "root",
-					"pivot": [0, 8, 0]
 				}
 			]
 		}
