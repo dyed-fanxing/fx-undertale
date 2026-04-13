@@ -2,136 +2,51 @@ package com.fanxing.fx_undertale.client.render.component;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.util.FastColor;
-import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
-import org.joml.Vector3d;
 import org.joml.Vector3f;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
 /**
- * 径向平面条带：宽度方向垂直于径向和切线（即 rightDir = radial × tangent）。
- * 效果类似于飘带在径向平面上展开。
+ * 径向平面条带：宽度方向垂直于径向和切线（即 rightDir = radial × tangent），即副法线方向；
+ * 效果类似于飘带;
  */
-public class RadialPlaneTrailStrip {
-    private static final Logger log = LoggerFactory.getLogger(RadialPlaneTrailStrip.class);
-    public LinkedList<TrailPoint> points = new LinkedList<>();
-    public float lifetime;
+public class RadialPlaneTrailStrip extends AbstractPointTrail {
     public float width;
-    public int maxPoints;
-    public float r, g, b;
-    public Function<Float, Float> progressCurve;
-    public Vector3f center = new Vector3f();
 
-    public record TrailPoint(Vector3f position, float createTime) {
+    public RadialPlaneTrailStrip(float lifetime, float r, float g, float b, Function<Float, Float> progressCurve, Function<Float, Float> uAlphaCurve) {
+        super(lifetime, r, g, b, progressCurve, uAlphaCurve);
     }
 
-    public RadialPlaneTrailStrip(float lifetime, float width, int maxPoints,
-                                 float r, float g, float b,
-                                 Function<Float, Float> progressCurve) {
-        this.maxPoints = maxPoints;
+    public RadialPlaneTrailStrip(float lifetime, float r, float g, float b, Function<Float, Float> progressCurve) {
+        super(lifetime, r, g, b, progressCurve);
+    }
+
+    public RadialPlaneTrailStrip(float lifetime, int color, Function<Float, Float> progressCurve, Function<Float, Float> uAlphaCurve) {
+        super(lifetime, color, progressCurve, uAlphaCurve);
+    }
+
+    public RadialPlaneTrailStrip(float lifetime, int color, Function<Float, Float> progressCurve) {
+        super(lifetime, color, progressCurve);
+    }
+
+    public RadialPlaneTrailStrip(float lifetime, int color) {
+        super(lifetime, color);
+    }
+    public RadialPlaneTrailStrip width(float width) {
         this.width = width;
-        this.r = r;
-        this.g = g;
-        this.b = b;
-        this.lifetime = lifetime;
-        this.progressCurve = progressCurve;
+        return this;
     }
 
-    public RadialPlaneTrailStrip(float lifetime, float width, int maxPoints, int color,
-                                 Function<Float, Float> progressCurve) {
-        this(lifetime, width, maxPoints,
-                FastColor.ARGB32.red(color) / 255f,
-                FastColor.ARGB32.green(color) / 255f,
-                FastColor.ARGB32.blue(color) / 255f,
-                progressCurve);
-    }
-
-    public RadialPlaneTrailStrip(float lifetime, float width, int maxPoints, int color) {
-        this(lifetime, width, maxPoints, color, progress -> 1f - progress);
-    }
-
-    public void addPoint(Vector3f point, float time) {
-        if (!points.isEmpty()) {
-            Vector3f last = points.getLast().position;
-            if (last.distanceSquared(point) < 0.0025f) return;
-        }
-        points.addLast(new TrailPoint(point, time));
-        while (points.size() > maxPoints) points.removeFirst();
-    }
-
-    public void addPoint(Vector3d point, float time) {
-        addPoint(new Vector3f((float) point.x, (float) point.y, (float) point.z), time);
-    }
-
-    public void breakStrip() {
-        if (points.isEmpty()) return;
-        TrailPoint last = points.getLast();
-        points.addLast(new TrailPoint(new Vector3f(last.position), last.createTime));
-        points.addLast(new TrailPoint(new Vector3f(last.position), last.createTime));
-    }
-
-    /**
-     * 视觉上断开条带（插入两个重复点，形成退化三角形）
-     */
-    public void breakStrip(PoseStack poseStack, VertexConsumer consumer, int packedLight) {
-        if (points.isEmpty()) return;
-        Vector3f lastPos = points.getLast().position();
-        consumer.addVertex(poseStack.last().pose(), lastPos.x, lastPos.y, lastPos.z)
-                .setColor(0, 0, 0, 0)           // 完全透明
-                .setUv(0, 0)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(packedLight)
-                .setNormal(0, 1, 0);
-        consumer.addVertex(poseStack.last().pose(), lastPos.x, lastPos.y, lastPos.z)
-                .setColor(0, 0, 0, 0)           // 完全透明
-                .setUv(0, 0)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(packedLight)
-                .setNormal(0, 1, 0);
-    }
 
     public void render(Vector3f centerOverride, PoseStack poseStack, VertexConsumer consumer,
                        int packedLight, float currentTime) {
         if (centerOverride != null) this.center = centerOverride;
         points.removeIf(p -> currentTime - p.createTime > lifetime);
         if (points.size() < 2) return;
-
-        List<TrailPoint> rawPoints = new ArrayList<>(points);
-        // 自适应 Catmull-Rom 插值（同前）
-        List<TrailPoint> smoothPoints = new ArrayList<>();
-        float targetDistance = 0.06f;
-        for (int i = 0; i < rawPoints.size() - 1; i++) {
-            TrailPoint tp0 = rawPoints.get(i);
-            TrailPoint tp1 = rawPoints.get(i + 1);
-            Vector3f p0 = tp0.position, p1 = tp1.position;
-            float t0 = tp0.createTime, t1 = tp1.createTime;
-            float dist = p0.distance(p1);
-            int needed = (int) Math.ceil(dist / targetDistance) - 1;
-            int subdivisions = Math.min(needed, 20);
-            TrailPoint tpPrev = (i > 0) ? rawPoints.get(i - 1) : tp0;
-            TrailPoint tpNext = (i + 2 < rawPoints.size()) ? rawPoints.get(i + 2) : tp1;
-            Vector3f pPrev = tpPrev.position, pNext = tpNext.position;
-            smoothPoints.add(tp0);
-            if (subdivisions > 0) {
-                for (int s = 1; s <= subdivisions; s++) {
-                    float t = (float) s / (subdivisions + 1);
-                    Vector3f pos = catmullRom(pPrev, p0, p1, pNext, t);
-                    float time = t0 + (t1 - t0) * t;
-                    smoothPoints.add(new TrailPoint(pos, time));
-                }
-            }
-        }
-        smoothPoints.add(rawPoints.getLast());
-        List<TrailPoint> list = smoothPoints;
-
+        List<TrailPoint> list = getSmoothPoints();
         // 过滤过近点
         List<TrailPoint> filtered = new ArrayList<>();
         for (int i = 0; i < list.size(); i++) {
@@ -182,44 +97,14 @@ public class RadialPlaneTrailStrip {
             Vector3f right = new Vector3f(rightDir).mul(-halfWidth).add(p);
             float u = i / (float) (size - 1);
             float alpha = alphas[i];
-
             Vector3f dummyNormal = new Vector3f(0, 1, 0);
-            consumer.addVertex(matrix, left.x, left.y, left.z)
-                    .setColor(r, g, b, alpha)
-                    .setUv(u, 0)
-                    .setOverlay(OverlayTexture.NO_OVERLAY)
-                    .setLight(packedLight)
-                    .setNormal(poseStack.last(), dummyNormal.x, dummyNormal.y, dummyNormal.z);
-            consumer.addVertex(matrix, right.x, right.y, right.z)
-                    .setColor(r, g, b, alpha)
-                    .setUv(u, 1)
-                    .setOverlay(OverlayTexture.NO_OVERLAY)
-                    .setLight(packedLight)
-                    .setNormal(poseStack.last(), dummyNormal.x, dummyNormal.y, dummyNormal.z);
+            addVertex(consumer,matrix,left,alpha,u,0f,packedLight,dummyNormal);
+            addVertex(consumer,matrix,right,alpha,u,0f,packedLight,dummyNormal);
         }
+        breakStrip(consumer);
     }
 
     public void render(PoseStack poseStack, VertexConsumer consumer, int packedLight, float currentTime) {
         render(null, poseStack, consumer, packedLight, currentTime);
-    }
-
-
-    private Vector3f catmullRom(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, float t) {
-        float x = Mth.catmullrom(t, p0.x, p1.x, p2.x, p3.x);
-        float y = Mth.catmullrom(t, p0.y, p1.y, p2.y, p3.y);
-        float z = Mth.catmullrom(t, p0.z, p1.z, p2.z, p3.z);
-        return new Vector3f(x, y, z);
-    }
-
-    public void clear() {
-        points.clear();
-    }
-
-    public int getPointCount() {
-        return points.size();
-    }
-
-    public Vector3f getLastPosition() {
-        return points.isEmpty() ? null : points.getLast().position;
     }
 }

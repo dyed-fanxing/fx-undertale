@@ -2,10 +2,7 @@ package com.fanxing.fx_undertale.client;
 
 import com.fanxing.fx_undertale.FxUndertale;
 import com.fanxing.fx_undertale.client.render.entity.block.PlatformBlockEntityRenderer;
-import com.fanxing.fx_undertale.client.render.entity.summon.RotationBoneRenderer;
-import com.fanxing.fx_undertale.client.render.entity.summon.GasterBlasterRender;
-import com.fanxing.fx_undertale.client.render.entity.summon.GroundBoneOBBRender;
-import com.fanxing.fx_undertale.client.render.entity.summon.GroundBoneRender;
+import com.fanxing.fx_undertale.client.render.entity.summon.*;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.net.packet.*;
@@ -50,6 +47,7 @@ public class Setup {
         event.registerEntityRenderer(EntityTypes.GROUND_BONE.get(), GroundBoneRender::new);
         event.registerEntityRenderer(EntityTypes.FLYING_BONE.get(), FlyingBoneRenderer::new);
         event.registerEntityRenderer(EntityTypes.ROTATION_BONE.get(), RotationBoneRenderer::new);
+        event.registerEntityRenderer(EntityTypes.DISPLAY_BONE.get(), DisplayBoneRenderer::new);
         event.registerEntityRenderer(EntityTypes.PLATFORM_BLOCK_ENTITY.get(), PlatformBlockEntityRenderer::new);
     }
 

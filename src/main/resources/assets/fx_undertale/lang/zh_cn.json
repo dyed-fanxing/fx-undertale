@@ -12,6 +12,7 @@
   "entity.fx_undertale.rotation_bone": "魔法骨头",
   "entity.fx_undertale.ground_bone": "魔法骨头",
   "entity.fx_undertale.ground_bone_obb": "魔法骨头",
+  "entity.fx_undertale.display_bone": "魔法骨头",
   "effect.fx_undertale.karma": "业力",
   "effect.fx_undertale.gravity": "重力",
 

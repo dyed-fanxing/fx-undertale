@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.entity.summon;
 
+import com.fanxing.fx_undertale.client.render.component.TrailFan;
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.common.phys.motion.PhysicsMotionModel;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
@@ -57,6 +58,9 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
     private static final EntityDataAccessor<Vector3f> ANGULAR_VELOCITY_VECTOR = SynchedEntityData.defineId(RotationBone.class, EntityDataSerializers.VECTOR3);
     private static final EntityDataAccessor<Quaternionf> ORIENTATION_DATA = SynchedEntityData.defineId(RotationBone.class, EntityDataSerializers.QUATERNION);
 
+
+
+    public TrailFan trail1 = new TrailFan(5,Sans.ENERGY_AQUA);
     public RotationBone(EntityType<? extends AbstractBone<RotationBone>> type, Level level) {
         super(type, level);
     }
@@ -198,8 +202,7 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
     }
 
     @Override
-    void updateRotation(Vec3 velocity) {
-    }
+    void updateRotation(Vec3 velocity) {}
 
     @Override
     protected BlockHitResult getBlockHitResult() {
@@ -265,11 +268,6 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
     }
 
     @Override
-    public boolean shouldBeSaved() {
-        return false;
-    }
-
-    @Override
     public boolean isPickable() {
         return false;
     }
@@ -297,6 +295,7 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
         super.defineSynchedData(builder);
         builder.define(ANGULAR_VELOCITY_VECTOR, new Vector3f());
         builder.define(ORIENTATION_DATA, new Quaternionf(0, 0, 0, 1));
+
     }
 
     public void setOrientation(Quaternionf orientation) {
@@ -310,12 +309,8 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
         if (targetPos != null) tag.put("targetPos", this.newDoubleList(targetPos.x, targetPos.y, targetPos.z));
         // 保存角速度向量
         Vector3f angularVel = getAngularVelocity();
-        if (angularVel != null) {
-            tag.put("angularVelocity", this.newFloatList(angularVel.x, angularVel.y, angularVel.z));
-        }
-        if (orientation != null) {
-            tag.put("orientation", this.newFloatList(orientation.x, orientation.y, orientation.z, orientation.w));
-        }
+        if (angularVel != null) tag.put("angularVelocity", this.newFloatList(angularVel.x, angularVel.y, angularVel.z));
+        if (orientation != null) tag.put("orientation", this.newFloatList(orientation.x, orientation.y, orientation.z, orientation.w));
     }
 
     @Override
@@ -333,9 +328,7 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
         if (tag.contains("orientation")) {
             ListTag list = tag.getList("orientation", 5);
             this.orientation.set(list.getFloat(0), list.getFloat(1), list.getFloat(2), list.getFloat(3));
-        } else {
-            orientation.rotationYXZ(-getYRot() * Mth.DEG_TO_RAD, getXRot() * Mth.DEG_TO_RAD, (tag.contains("roll") ? tag.getFloat("roll") : 0f) * Mth.DEG_TO_RAD);
-        }
+        } else orientation.rotationYXZ(-getYRot() * Mth.DEG_TO_RAD, getXRot() * Mth.DEG_TO_RAD, (tag.contains("roll") ? tag.getFloat("roll") : 0f) * Mth.DEG_TO_RAD);
         // 同步 previousOrientation，避免 NullPointerException
         this.previousOrientation.set(this.orientation);
         syncEulerAnglesFromQuaternion();
@@ -368,9 +361,8 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
         super.readSpawnData(buf);
         this.motion = PhysicsMotionModel.fromBuf(buf);
         boolean hasTargetPos = buf.readBoolean();
-        if (hasTargetPos) {
-            this.targetPos = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
-        }
+        if (hasTargetPos) this.targetPos = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+
         setAngularVelocity(new Vector3f(buf.readFloat(), buf.readFloat(), buf.readFloat()));
         orientation.set(buf.readFloat(), buf.readFloat(), buf.readFloat(), buf.readFloat());
         // 同步 previousOrientation，避免 NullPointerException
@@ -378,6 +370,7 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
         // 加载后立即同步 OBB 和欧拉角
         syncEulerAnglesFromQuaternion();
         refreshDimensions();
+
     }
 
     @Override

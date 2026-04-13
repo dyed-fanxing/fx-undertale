@@ -4,10 +4,7 @@ import com.fanxing.fx_undertale.FxUndertale;
 import com.fanxing.fx_undertale.entity.block.PlatformBlockEntity;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.projectile.FlyingBone;
-import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
-import com.fanxing.fx_undertale.entity.summon.GroundBoneOBB;
-import com.fanxing.fx_undertale.entity.summon.GroundBone;
-import com.fanxing.fx_undertale.entity.summon.RotationBone;
+import com.fanxing.fx_undertale.entity.summon.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
@@ -70,6 +67,12 @@ public class EntityTypes {
             EntityType.Builder.<RotationBone>of(RotationBone::new, MobCategory.MISC)
                     .sized(0.25f,1.0f)
                     .eyeHeight(0.5f)
+                    .clientTrackingRange(16)  // 客户端同步范围，以区块为单位
+    );
+    public static final DeferredHolder<EntityType<?>, EntityType<DisplayBone>> DISPLAY_BONE = register("display_bone",
+            EntityType.Builder.<DisplayBone>of(DisplayBone::new, MobCategory.MISC)
+                    .sized(0.1F,0.1F)
+                    .eyeHeight(0.05F)
                     .clientTrackingRange(16)  // 客户端同步范围，以区块为单位
     );
 

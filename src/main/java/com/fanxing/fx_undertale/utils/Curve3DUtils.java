@@ -1,7 +1,10 @@
 package com.fanxing.fx_undertale.utils;
 
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3d;
+import org.joml.Vector3f;
 
 import java.util.function.Function;
 
@@ -97,5 +100,31 @@ public class Curve3DUtils {
             case Y -> new Vec3(center.x, center.y + offset, center.z);
             case Z -> new Vec3(center.x, center.y, center.z + offset);
         };
+    }
+
+
+
+
+
+
+
+
+
+    public static Vector3f catmullRom(Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3, float t) {
+        float t2 = t * t;
+        float t3 = t2 * t;
+        float x = 0.5f * ((2f * p1.x) +
+                        (-p0.x + p2.x) * t +
+                        (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 +
+                        (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3);
+        float y = 0.5f * ((2 * p1.y) +
+                        (-p0.y + p2.y) * t +
+                        (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 +
+                        (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3);
+        float z = 0.5f * ((2 * p1.z) +
+                        (-p0.z + p2.z) * t +
+                        (2 * p0.z - 5 * p1.z + 4 * p2.z - p3.z) * t2 +
+                        (-p0.z + 3 * p1.z - 3 * p2.z + p3.z) * t3);
+        return new Vector3f(x, y, z);
     }
 }

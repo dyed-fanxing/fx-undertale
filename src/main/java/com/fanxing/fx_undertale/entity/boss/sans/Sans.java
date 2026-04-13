@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity.boss.sans;
 
-import com.fanxing.fx_undertale.client.render.component.RadialBladeTrailStrip;
+import com.fanxing.fx_undertale.client.render.component.RadialPlaneTrailStrip;
 import com.fanxing.fx_undertale.client.render.effect.WarningTip;
 import com.fanxing.fx_undertale.common.phys.LocalDirection;
 import com.fanxing.fx_undertale.common.phys.motion.CircularMotionModel;
@@ -12,12 +12,10 @@ import com.fanxing.fx_undertale.entity.ai.control.PatchedMoveControl;
 import com.fanxing.fx_undertale.entity.attachment.KaramJudge;
 import com.fanxing.fx_undertale.entity.block.PlatformBlockEntity;
 import com.fanxing.fx_undertale.entity.capability.Animatable;
+import com.fanxing.fx_undertale.entity.component.EllipsoidShield;
 import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.entity.projectile.FlyingBone;
-import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
-import com.fanxing.fx_undertale.entity.summon.GroundBoneOBB;
-import com.fanxing.fx_undertale.entity.summon.GroundBone;
-import com.fanxing.fx_undertale.entity.summon.RotationBone;
+import com.fanxing.fx_undertale.entity.summon.*;
 import com.fanxing.fx_undertale.net.packet.*;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import com.fanxing.fx_undertale.registry.EntityTypes;
@@ -26,7 +24,6 @@ import com.fanxing.fx_undertale.registry.SoundEvnets;
 import com.fanxing.fx_undertale.utils.*;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Dynamic;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -57,6 +54,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.Tags;
@@ -64,7 +62,6 @@ import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
@@ -134,16 +131,16 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     private final Set<ServerPlayer> trackingPlayers = new HashSet<>();
 
     private GasterBlaster controllerAimGB = null;
-
+    private EllipsoidShield shield ;
 
     public Sans(EntityType<? extends Monster> type, Level level) {
         super(type, level);
-//        maxStamina = level.getDifficulty().getId() * 40;
-        maxStamina = 20;
+        maxStamina = level.getDifficulty().getId() * 150;
         setStamina(maxStamina);
         this.moveControl = new PatchedMoveControl(this);
         this.bossEvent = new ServerBossEvent(this.getDisplayName(), BossEvent.BossBarColor.WHITE, BossEvent.BossBarOverlay.PROGRESS);
         this.bossEvent.setPlayBossMusic(true).setDarkenScreen(false);
+        this.shield = new EllipsoidShield(this, getBbWidth()+0.8F, getBbHeight()+0.5F, getBbWidth()+0.8F);
     }
 
     @Override
@@ -172,21 +169,36 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     public void tick() {
         super.tick();
         // 客户端过期检查（可选，也可以在渲染器中判断）
-        if (level().isClientSide() && phantomActive) {
-            int elapsed = tickCount - phantomStartTick;
-            if (elapsed >= PHANTOM_DURATION) {
-                phantomActive = false;
-                phantomStartPos = null;
+        if (level().isClientSide()) {
+            if(phantomActive){
+                int elapsed = tickCount - phantomStartTick;
+                if (elapsed >= PHANTOM_DURATION) {
+                    phantomActive = false;
+                    phantomStartPos = null;
+                }
+            }
+            if (this.getIsEyeBlink() && this.tickCount % 2 == 0) {
+                Vec3 vec3 = RotUtils.rotateYX(this.getAttachments().get(EntityAttachment.WARDEN_CHEST, 0, 0), this.getYHeadRot(), this.getXRot()).add(this.position());
+                long time = this.tickCount;
+                float cycle = (Mth.sin(time * 1.0f) + 1.0f) / 2.0f; // 0.1f 控制变化速度
+                int colorB = 0xC0F6FD29;// 原本是 0xFFF6FD29
+                this.level().addParticle(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.lerp(cycle, Sans.ENERGY_AQUA, colorB)), vec3.x, vec3.y, vec3.z, 0, 0, 0);
+            }
+        }else{
+            EntityHitResult hitResult = shield.tick((t)-> t.getOwner() != this);
+            float range = getPhaseID() == SPECIAL_ATTACK?1.0f:(getPhaseID()==SECOND_PHASE?0.5f:0.9f);
+            if (hitResult != null && random.nextFloat() <  range) {
+                Vec3 pos = hitResult.getLocation();
+                Entity entity = hitResult.getEntity();
+                entity.setPos(pos);
+                entity.discard();
+                DisplayBone displayBone = new DisplayBone(this.level(), 10, 1.0f);
+                this.level().playSound(null,pos.x,pos.y,pos.z,SoundEvnets.BLOCK,SoundSource.HOSTILE,1.0f,1.0f);
+                displayBone.setPos(hitResult.getLocation());
+                RotUtils.lookVec(displayBone,pos.subtract(this.getBoundingBox().getCenter()));
+                this.level().addFreshEntity(displayBone);
             }
         }
-        if (this.getIsEyeBlink() && this.level().isClientSide && this.tickCount % 2 == 0) {
-            Vec3 vec3 = RotUtils.rotateYX(this.getAttachments().get(EntityAttachment.WARDEN_CHEST, 0, 0), this.getYHeadRot(), this.getXRot()).add(this.position());
-            long time = this.tickCount;
-            float cycle = (Mth.sin(time * 1.0f) + 1.0f) / 2.0f; // 0.1f 控制变化速度
-            int colorB = 0xC0F6FD29;// 原本是 0xFFF6FD29
-            this.level().addParticle(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.lerp(cycle, Sans.ENERGY_AQUA, colorB)), vec3.x, vec3.y, vec3.z, 0, 0, 0);
-        }
-
     }
 
     @Override
@@ -327,32 +339,27 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         return true;
     }
 
-
     @Override
-    public int getDeathTime() {
-        return 40;
-    }
+    public int getDeathTime() { return 40;}
 
     @Override
     public void remove(@NotNull RemovalReason removalReason) {
-        this.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> {
-            SansAi.clearTargetTag(this, target);
-        });
+        this.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> SansAi.clearTargetTag(this, target));
         super.remove(removalReason);
     }
 
     @Override
     public void onRemovedFromLevel() {
-        brain.getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> {
-            SansAi.clearTargetTag(this, target);
-        });
+        brain.getMemory(MemoryModuleType.ATTACK_TARGET).ifPresent(target -> SansAi.clearTargetTag(this, target));
         super.onRemovedFromLevel();
     }
 
     @Override
     public void onAddedToLevel() {
         super.onAddedToLevel();
-        if (originPos == null) originPos = this.position();
+        if (originPos == null) {
+            originPos = this.position();
+        }
     }
 
     private void rangedTeleport(@NotNull Entity entity) {
@@ -539,6 +546,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         return controllerAimGB;
     }
 
+
     @Override
     protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
         super.defineSynchedData(builder);
@@ -564,7 +572,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         tag.putFloat("maxStamina", this.maxStamina);
         tag.putFloat("stamina", this.getStamina());
         tag.putByte("phaseId", this.getPhaseID());
-        tag.put("originPos", this.newDoubleList(originPos.x, originPos.y, originPos.z));
+        if (originPos != null) tag.put("originPos", this.newDoubleList(originPos.x, originPos.y, originPos.z));
         tag.putFloat("structYaw",this.structYaw);
     }
 
@@ -1659,14 +1667,10 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         gravitySlam(target, gravity, acceleration);
     }
     public void gravitySlam(LivingEntity target, Direction direction, float acceleration) {
-        Direction gravity = GravityUtils.applyGravity(target, direction);
-        log.info("重力猛击加速度：{}",acceleration);
-        target.addDeltaMovement(new Vec3(0, -acceleration, 0));
-        PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), gravity, -acceleration));
-        applyGravityControlAcc(target, 0.08F);
+        gravitySlamDirect(target, GravityUtils.applyGravity(target, direction), acceleration);
     }
     public void gravitySlamDirect(LivingEntity target, Direction direction, float acceleration) {
-        log.info("重力猛击加速度：{}",acceleration);
+        log.debug("重力猛击加速度：{}",acceleration);
         target.addDeltaMovement(new Vec3(0, -acceleration, 0));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), direction, -acceleration));
         applyGravityControlAcc(target, 0.08F);
@@ -1684,7 +1688,6 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
 
     public Vec3 originRela(double dx, double dy, double dz) {
         Vec3 vec3 = RotUtils.rotateY(dx, dy, dz, structYaw);
-        log.info("使用偏转{}后的相对位移：{}",structYaw,vec3);
         return originPos.add(vec3);
     }
     public void teleportOrigin(LivingEntity target,double dx,double dy,double dz) {
@@ -1838,8 +1841,9 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     public static int ENERGY_AQUA = 0xC061E5DF;
     public boolean leftAnimPlaying;
     public boolean allAnimPlaying;
-    public final RadialBladeTrailStrip leftHandTrail = new RadialBladeTrailStrip(10f, 0.15F, 100, ENERGY_AQUA, (t) -> CurvesUtils.powerFallEaseOut(t, 2));
-    public final RadialBladeTrailStrip rightHandTrail = new RadialBladeTrailStrip(10f, 0.15F, 100, ENERGY_AQUA, (t) -> CurvesUtils.powerFallEaseOut(t, 2));
+//    public final RadialBladeTrailStrip leftHandTrail = new RadialBladeTrailStrip(10f, ENERGY_AQUA, (t) -> CurvesUtils.powerFallEaseOut(t, 2)).tipInflate(0.2F);
+    public final RadialPlaneTrailStrip leftHandTrail = new RadialPlaneTrailStrip(10f,ENERGY_AQUA, (t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
+    public final RadialPlaneTrailStrip rightHandTrail = new RadialPlaneTrailStrip(10f, ENERGY_AQUA, (t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
 
 }
 

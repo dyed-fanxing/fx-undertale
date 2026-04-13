@@ -1,35 +1,32 @@
 package com.fanxing.fx_undertale.entity.boss.sans;
 
-import com.fanxing.fx_undertale.client.render.effect.WarningTip;
-import com.fanxing.fx_undertale.entity.ai.behavior.*;
-import com.fanxing.fx_undertale.entity.ai.behavior.StartAttacking;
-import com.fanxing.fx_undertale.entity.summon.RotationBone;
-import com.fanxing.fx_undertale.net.packet.*;
-import com.fanxing.fx_undertale.registry.AttachmentTypes;
-import com.fanxing.fx_undertale.registry.EntityTypes;
-import com.fanxing.fx_undertale.utils.GravityUtils;
-import com.fanxing.fx_undertale.utils.RotUtils;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.mojang.datafixers.util.Pair;
 import com.fanxing.fx_undertale.common.phys.LocalDirection;
 import com.fanxing.fx_undertale.entity.ai.AttackNode;
 import com.fanxing.fx_undertale.entity.ai.WeightMath;
+import com.fanxing.fx_undertale.entity.ai.behavior.*;
+import com.fanxing.fx_undertale.entity.ai.behavior.StartAttacking;
 import com.fanxing.fx_undertale.entity.ai.sensing.SensorTargeting;
 import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.entity.persistentData.SoulMode;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
+import com.fanxing.fx_undertale.entity.summon.RotationBone;
+import com.fanxing.fx_undertale.net.packet.AnimPacket;
+import com.fanxing.fx_undertale.net.packet.GravityPacket;
+import com.fanxing.fx_undertale.net.packet.TimeJumpTeleportPacket;
+import com.fanxing.fx_undertale.registry.AttachmentTypes;
+import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.registry.MemoryModuleTypes;
 import com.fanxing.fx_undertale.registry.SoundEvnets;
-import net.minecraft.client.renderer.LevelRenderer;
+import com.fanxing.fx_undertale.utils.GravityUtils;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -49,10 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.logging.Level;
 
 public class SansAi {
     private static final Logger log = LoggerFactory.getLogger(SansAi.class);
@@ -112,9 +106,9 @@ public class SansAi {
                     }
                 },
                 new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-                        Pair.of(createSecondComboSkillBehavior(), 15),
-                        Pair.of(createContinuousOffHandSkillBehavior(), 5),
-                        Pair.of(createContinuousSkillBehavior(), 1),
+//                        Pair.of(createSecondComboSkillBehavior(), 15),
+//                        Pair.of(createContinuousOffHandSkillBehavior(), 5),
+//                        Pair.of(createContinuousSkillBehavior(), 1),
                         Pair.of(createSecondPhaseSingleSkills(), 9)
                 )) {
                     @Override
@@ -173,15 +167,11 @@ public class SansAi {
             @Override
             protected void handleMidRange(Sans mob, LivingEntity target, double disSqr) {
                 GasterBlaster gb = mob.getControllerAimGB();
-                if (gb == null) {
-                    super.handleMidRange(mob, target, disSqr);
-                } else if (gb.isRemoved()) {
+                if (gb == null) super.handleMidRange(mob, target, disSqr);
+                else if (gb.isRemoved()) {
                     mob.setControllerAimGB(null);
                     super.handleMidRange(mob, target, disSqr);
-                } else {
-                    mob.setYRot(mob.yHeadRot);
-                    mob.getMoveControl().strafe(0, 0);
-                }
+                } else super.markingTime(mob);
             }
 
             @Override
@@ -268,7 +258,8 @@ public class SansAi {
     }
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createSecondPhaseSingleSkills() {
         return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(
-                BONE_RING_VOLLEY, ARC_SWEEP_VOLLEY, DOUBLE_SPIN_BONE, SELF_GB, CROSS_GB, RANDOM_GB, SELF_GROUND_BONE_SPINE, GROUND_BONE_SPINE_WAVE
+                BONE_RING_VOLLEY
+//                , ARC_SWEEP_VOLLEY, DOUBLE_SPIN_BONE, SELF_GB, CROSS_GB, RANDOM_GB, SELF_GROUND_BONE_SPINE, GROUND_BONE_SPINE_WAVE
         ), (a,t) -> List.of(gravitySlam(a,t, true)), MemoryModuleTypes.COOLDOWN_1.get(), 0) {
             @Override
             protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
@@ -375,7 +366,7 @@ public class SansAi {
     }
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createSecondComboSkillBehavior() {
 //        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(), (a) -> List.of(timeJumpSkill(), gravitySlam(a, 8)), MemoryModuleTypes.COOLDOWN_3.get(), 30,10));
-        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(), (a,t) -> List.of( gravitySlam(a,t,8)), MemoryModuleTypes.COOLDOWN_3.get(),30,10);
+        return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(), (a,t) -> List.of( gravitySlam(a,t,20)), MemoryModuleTypes.COOLDOWN_3.get(),30,10);
     }
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createContinuousSkillBehavior() {
         return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(CONTROL_GB), MemoryModuleTypes.COOLDOWN_4.get(), 10) {
@@ -452,7 +443,7 @@ public class SansAi {
         Direction[] direction = new Direction[1];
         boolean[] state = new boolean[]{true};
         int[] duration = new int[1];
-        return new AttackNode<Sans>(GRAVITY_SLAM, -1, 30, (a, t, tick) -> {
+        return new AttackNode<Sans>(GRAVITY_SLAM, -1, 40, (a, t, tick) -> {
             if(tick == 0){
                 int count = 8;
                 int index;
@@ -461,7 +452,7 @@ public class SansAi {
                     direction[0] = GravityUtils.applyRelativeGravity(mob, t, LocalDirection.values()[index]);
                     h[0] = GravityUtils.findGroundHeight(mob.level(), target.position(), direction[0]);
                 }while (h[0] < 0.1F&& count -- >0);
-                PacketDistributor.sendToPlayersTrackingEntity(a,new AnimPacket(a.getId(),index));
+                PacketDistributor.sendToPlayersTrackingEntity(a,new AnimPacket(a.getId(),mob.getRandom().nextInt(directions.length - 1)));
             }
             if (tick == 3){
                 a.gravitySlamDirect(t, direction[0], (float) (h[0] *0.1f*(1f + factor*4.5F + (a.getPhaseID() == Sans.SPECIAL_ATTACK ? 1f : 0F))));
@@ -622,11 +613,7 @@ public class SansAi {
             if (tick > 20000 || (tick> 4 && a.position().subtract(t.position()).lengthSqr() <= 48)) {
                 a.timeJumpTeleport(t, 3);
                 t.teleportTo(a.originPos.x, a.originPos.y, a.originPos.z);
-                Vec3 min = a.originRela(-40, -1, -20);
-                Vec3 max = a.originRela(40, 25, 20);
-                AABB aabb = new AABB(min.x, min.y, min.z, max.x, max.y, max.z);
-                a.level().getEntities(a, aabb, p -> p.getType() == EntityTypes.PLATFORM_BLOCK_ENTITY.get() || p.getType() == EntityTypes.GROUND_BONE.get() || p.getType() == EntityTypes.ROTATION_BONE.get())
-                        .forEach(Entity::discard);
+                clearSpecialSummons(a);
                 return true;
             }
             return false;
@@ -678,7 +665,7 @@ public class SansAi {
 
     // 飞行骨
     public static final AttackNode<Sans> BONE_RING_VOLLEY = new AttackNode<>(
-            "bone_ring_volley", 8, 3, Sans::shootBoneRingVolley, 30, 30
+            "bone_ring_volley", 8, 3, Sans::shootBoneRingVolley, 30, 3
     ).weight((a, t) -> WeightMath.linearIncrease(a.distanceTo(t), 0, 32));
 
     // 弧扫弹幕
@@ -793,8 +780,16 @@ public class SansAi {
         mob.applyGravityControlAcc(target, 0F);
         GravityUtils.applyGravity(target, Direction.DOWN);
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), Direction.DOWN, 0));
-    }
+        if(mob.getPhaseID() == Sans.SPECIAL_ATTACK) clearSpecialSummons(mob);
 
+    }
+    public static void clearSpecialSummons(Sans a){
+        Vec3 min = a.originRela(-40, -1, -20);
+        Vec3 max = a.originRela(40, 25, 20);
+        AABB aabb = new AABB(min.x, min.y, min.z, max.x, max.y, max.z);
+        a.level().getEntities(a, aabb, p -> p.getType() == EntityTypes.PLATFORM_BLOCK_ENTITY.get() || p.getType() == EntityTypes.GROUND_BONE.get() || p.getType() == EntityTypes.ROTATION_BONE.get())
+                .forEach(Entity::discard);
+    }
 
     public static double getTargetSpeed(LivingEntity target) {
         if (target instanceof Player player) return player.getKnownMovement().length();

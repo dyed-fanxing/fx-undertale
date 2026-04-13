@@ -38,5 +38,10 @@
         "sounds": [
             "fx_undertale:gaster_blaster/fire"
         ]
+    },
+    "entity.block": {
+        "sounds": [
+            "fx_undertale:block"
+        ]
     }
 }

@@ -1,12 +1,12 @@
 package com.fanxing.fx_undertale.client.render.entity.boss;
 
 import com.fanxing.fx_undertale.FxUndertale;
+import com.fanxing.fx_undertale.client.model.entity.RotationBoneModel;
 import com.fanxing.fx_undertale.client.model.entity.SansModel;
 import com.fanxing.fx_undertale.client.render.AbstractDeadUTMonsterDustRenderer;
 import com.fanxing.fx_undertale.client.render.layer.SansFatigueLayer;
 import com.fanxing.fx_undertale.common.RenderTypes;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
@@ -19,8 +19,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3d;
-import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animation.AnimationController;
@@ -39,8 +37,8 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
     private static final Logger log = LoggerFactory.getLogger(SansRender.class);
 //    RenderType whiteEntityType = RenderTypes.WHITE_ENTITY_TRANSLUCENT.apply(getTextureLocation(animatable), true);
     RenderType WHITE = RenderType.ENTITY_TRANSLUCENT.apply(SANS_WHITE, false);
-
-
+    RenderType BALL_GLOW = RenderTypes.ENERGY_TRIANGLE_STRIP.apply(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,"textures/misc/circle_white.png"), true);
+    private RotationBoneModel rotationBoneModel;
     public SansRender(EntityRendererProvider.Context renderManager) {
         super(renderManager, new SansModel());
         addRenderLayer(new SansEyesLayer(this));
@@ -76,6 +74,7 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
             actuallyRender(poseStack, animatable, model, WHITE, bufferSource, bufferSource.getBuffer(WHITE), true, partialTick, packedLight, OverlayTexture.NO_OVERLAY, color);
         }
         poseStack.popPose();
+
     }
 
 
@@ -86,8 +85,7 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
         AnimationController<Sans> attackController = animatable.getAttackAnimController();
         RawAnimation currentRawAnimation = attackController.getCurrentRawAnimation();
         // 5. 渲染拖尾（使用 TRIANGLE_STRIP 模式的 RenderType）
-        VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_STRIP_WHITE);
-        Vector3d leftPos = new Vector3d();
+        VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.ENERGY_TRIANGLE_STRIP_WHITE);
         if(attackController.getAnimationState()== AnimationController.State.RUNNING && (Sans.isSameRawAnimation(currentRawAnimation,Sans.ANIM_BONE_PROJECTILE_LEFT)||Sans.isSameRawAnimation(currentRawAnimation,Sans.THROW_ANIMATIONS))){
             if(Sans.isSameRawAnimation(currentRawAnimation,Sans.ANIM_BONE_PROJECTILE_LEFT)){
                 animatable.leftHandTrail.setColor(255,255,255);
@@ -96,31 +94,24 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
                 animatable.leftHandTrail.setColor(Sans.ENERGY_AQUA);
             }
             GeoBone leftHand = attackController.getBoneAnimationQueues().get("left_hand").bone();
-            // 使用平滑后的位置添加点
+            GeoBone leftElbow = attackController.getBoneAnimationQueues().get("left_elbow").bone();
+            animatable.leftHandTrail.setCenter(leftElbow.getLocalPosition());;
             animatable.leftHandTrail.addPoint( leftHand.getLocalPosition(),animTick);
-            animatable.leftAnimPlaying=true;
-        }else if(animatable.leftAnimPlaying){
-            animatable.leftHandTrail.breakStrip();
-            animatable.leftAnimPlaying = false;
         }
-        Vector3d localPosition = new Vector3d();
         if(attackController.getAnimationState()== AnimationController.State.RUNNING && Sans.isSameRawAnimation(currentRawAnimation,Sans.ANIM_BONE_PROJECTILE)){
             animatable.leftHandTrail.setColor(255,255,255);
             animatable.rightHandTrail.setColor(255,255,255);
             GeoBone leftHand = attackController.getBoneAnimationQueues().get("left_hand").bone();
+            GeoBone leftElbow = attackController.getBoneAnimationQueues().get("left_elbow").bone();
+            animatable.leftHandTrail.setCenter(leftElbow.getLocalPosition());;
             animatable.leftHandTrail.addPoint(leftHand.getLocalPosition(),animTick);
             GeoBone rightHand = attackController.getBoneAnimationQueues().get("right_hand").bone();
+            GeoBone rightBelow = attackController.getBoneAnimationQueues().get("right_elbow").bone();
+            animatable.rightHandTrail.setCenter(rightBelow.getLocalPosition());
             animatable.rightHandTrail.addPoint(rightHand.getLocalPosition(),animTick);
-            animatable.allAnimPlaying = true;
-        }else if(animatable.allAnimPlaying){
-            animatable.leftHandTrail.breakStrip();
-            animatable.rightHandTrail.breakStrip();
-            animatable.allAnimPlaying = false;
         }
-
-        animatable.leftHandTrail.render(new Vector3f((float) leftPos.x, (float) leftPos.y, (float) leftPos.z),poseStack, consumer,packedLight,animTick);
-        animatable.leftHandTrail.breakStrip(poseStack,consumer,packedLight);
-        animatable.rightHandTrail.render(new Vector3f((float) localPosition.x, (float) localPosition.y, (float) localPosition.z),poseStack, consumer,packedLight,animTick);
+        animatable.leftHandTrail.render(poseStack, consumer,packedLight,animTick);
+        animatable.rightHandTrail.render(poseStack, consumer,packedLight,animTick);
     }
 
 

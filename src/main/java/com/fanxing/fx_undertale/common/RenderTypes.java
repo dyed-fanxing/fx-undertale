@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.lang3.function.TriFunction;
 
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static net.minecraft.client.renderer.RenderStateShard.*;
 
@@ -33,12 +34,12 @@ public interface RenderTypes {
         return RenderType.create(
                 "entity_translucent_emissive_adjustable", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, sortOnUpload,
                 RenderType.CompositeState.builder()
-                        .setShaderState(new RenderStateShard.ShaderStateShard(() -> {
+                        .setShaderState(new ShaderStateShard(() -> {
                             ShaderInstance shader = Shaders.getEntityTranslucentEmissiveAdjustableShader();
                             shader.safeGetUniform("uEmissiveStrength").set(strength);
                             return shader;
                         }))
-                        .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                        .setTextureState(new TextureStateShard(texture, false, false))
                         .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
                         .setCullState(NO_CULL)
                         .setWriteMaskState(COLOR_WRITE)
@@ -68,31 +69,56 @@ public interface RenderTypes {
      * 与原版beam的区别为 NO_CULL，因为这个GB炮是跟着实体渲染的，而原版的信标光束是跟着方块渲染的，顺序不一样
      * 如果使用原版的beam，会导致光束不会覆盖穿过的实体，而是会在光束中看到实体，且光束的两端会被GB炮覆盖导致透明
      */
-    BiFunction<ResourceLocation, Boolean, RenderType> ENTITY_BEAM_NO_CULL = Util.memoize((texture, translucent) -> RenderType.create(
-            "entity_beam", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, false, translucent,
+    BiFunction<ResourceLocation, Boolean, RenderType> BEAM_NO_CULL = Util.memoize((texture, translucent) -> RenderType.create(
+            "beam_no_cull", DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS, 1536, false, translucent,
             RenderType.CompositeState.builder()
                     .setShaderState(RENDERTYPE_BEACON_BEAM_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setTextureState(new TextureStateShard(texture, false, false))
                     .setTransparencyState(translucent ? TRANSLUCENT_TRANSPARENCY : NO_TRANSPARENCY)
                     .setWriteMaskState(translucent ? COLOR_WRITE : COLOR_DEPTH_WRITE) // 透明只写颜色，不透明写颜色+深度
                     .setCullState(NO_CULL)
                     .createCompositeState(false)
     ));
-    BiFunction<ResourceLocation, Boolean, RenderType> ENTITY_BEAM_NO_CULL_TRIANGLE_STRIP = Util.memoize((texture, translucent) -> RenderType.create(
-            "entity_beam_triangle_strip", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_STRIP, 1536, false, translucent,
+    BiFunction<ResourceLocation, Boolean, RenderType> BEAM_NO_CULL_TRIANGLE_STRIP = Util.memoize((texture, translucent) -> RenderType.create(
+            "beam_no_cull_triangle_strip", DefaultVertexFormat.BLOCK, VertexFormat.Mode.TRIANGLE_STRIP, 1536, false, translucent,
             RenderType.CompositeState.builder()
                     .setShaderState(RENDERTYPE_BEACON_BEAM_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setTextureState(new TextureStateShard(texture, false, false))
                     .setTransparencyState(translucent ? TRANSLUCENT_TRANSPARENCY : NO_TRANSPARENCY)
                     .setWriteMaskState(translucent ? COLOR_WRITE : COLOR_DEPTH_WRITE) // 透明只写颜色，不透明写颜色+深度
                     .setCullState(NO_CULL)
                     .createCompositeState(false)
     ));
     RenderType ENTITY_TRANSLUCENT_EMISSIVE_WHITE = ENTITY_TRANSLUCENT_EMISSIVE_DEPTH.apply(ResourceLocations.WHITE_TEXTURE, true);
+    /**
+     * ENERGY_BEAM_FLOW - 高亮能量流动效果（带偏移）
+     * 使用信标着色器 + 加法混合 + 无光照，颜色鲜艳且不受光影影响。
+     */
+    Function<ResourceLocation, RenderType> ENERGY_BEAM = Util.memoize((texture) -> RenderType.create("energy_beam",DefaultVertexFormat.BLOCK,VertexFormat.Mode.QUADS,1536,false,true,
+                RenderType.CompositeState.builder()
+                        .setShaderState(RENDERTYPE_BEACON_BEAM_SHADER)
+                        .setTextureState(new TextureStateShard(texture, false, false))
+                        .setTransparencyState(ADDITIVE_TRANSPARENCY)
+                        .setCullState(NO_CULL)
+                        .setWriteMaskState(COLOR_WRITE)          // 不写深度
+                        .createCompositeState(false)
+    ));
+    /**
+     * ENERGY_BEAM_FLOW_TRIANGLE_STRIP - 高亮能量流动效果（带偏移，条带模式）
+     * 使用信标着色器 + 加法混合 + 无光照，颜色鲜艳且不受光影影响。
+     */
+    Function<ResourceLocation, RenderType> ENERGY_BEAM_TRIANGLE_STRIP = Util.memoize((texture) -> RenderType.create("energy_beam_triangle_strip",DefaultVertexFormat.BLOCK,VertexFormat.Mode.TRIANGLE_STRIP,1536,false,true,
+                RenderType.CompositeState.builder()
+                        .setShaderState(RENDERTYPE_BEACON_BEAM_SHADER)
+                        .setTextureState(new TextureStateShard(texture, false, false))
+                        .setTransparencyState(ADDITIVE_TRANSPARENCY)
+                        .setCullState(NO_CULL)
+                        .setWriteMaskState(COLOR_WRITE)          // 不写深度
+                        .createCompositeState(false)
+    ));
 
 
     // ========== ENTITY_TRANSLUCENT_EMISSIVE 渲染类型 ==========
-
     /**
      * 适合渲染：圆，任意三角形网格等
      */
@@ -100,11 +126,10 @@ public interface RenderTypes {
             "entity_translucent_emissive_triangles", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLES, 1536, false, sortOnUpload,
             RenderType.CompositeState.builder()
                     .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setTextureState(new TextureStateShard(texture, false, false))
                     .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
                     .setCullState(NO_CULL)
                     .setWriteMaskState(COLOR_WRITE)
-                    .setOverlayState(OVERLAY)
                     .createCompositeState(false)
     ));
     RenderType ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_WHITE = ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLES.apply(ResourceLocations.WHITE_TEXTURE, true);
@@ -116,11 +141,10 @@ public interface RenderTypes {
             "entity_translucent_emissive_triangle_strip", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_STRIP, 1536, false, sortOnUpload,
             RenderType.CompositeState.builder()
                     .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setTextureState(new TextureStateShard(texture, false, false))
                     .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
                     .setCullState(NO_CULL)
                     .setWriteMaskState(COLOR_WRITE)
-                    .setOverlayState(OVERLAY)
                     .createCompositeState(false)
     ));
     RenderType ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_STRIP_WHITE = ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_STRIP.apply(ResourceLocations.WHITE_TEXTURE, true);
@@ -133,11 +157,10 @@ public interface RenderTypes {
             "entity_translucent_emissive_triangle_fan", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_FAN, 1536, false, sortOnUpload,
             RenderType.CompositeState.builder()
                     .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setTextureState(new TextureStateShard(texture, false, false))
                     .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
                     .setCullState(NO_CULL)
                     .setWriteMaskState(COLOR_WRITE)
-                    .setOverlayState(OVERLAY)
                     .createCompositeState(false)
     ));
     RenderType ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_FAN_WHITE = ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_FAN.apply(ResourceLocations.WHITE_TEXTURE, true);
@@ -148,14 +171,12 @@ public interface RenderTypes {
      * 能量效果 - 扇形模式
      */
     BiFunction<ResourceLocation, Boolean, RenderType> ENERGY_TRIANGLE_FAN = Util.memoize((texture, sortOnUpload) -> RenderType.create(
-            "energy_triangle_fan", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_FAN, 1536, false, sortOnUpload,
+            "energy_triangle_fan", DefaultVertexFormat.BLOCK, VertexFormat.Mode.TRIANGLE_FAN, 1536, false, sortOnUpload,
             RenderType.CompositeState.builder()
-                    .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setShaderState(RENDERTYPE_BEACON_BEAM_SHADER)
+                    .setTextureState(new TextureStateShard(texture, false, false))
                     .setTransparencyState(ADDITIVE_TRANSPARENCY)
                     .setCullState(NO_CULL)
-                    .setLightmapState(LIGHTMAP)
-                    .setOverlayState(OVERLAY)
                     .createCompositeState(false)
     ));
 
@@ -164,14 +185,12 @@ public interface RenderTypes {
      * 能量效果 - 三角形模式
      */
     BiFunction<ResourceLocation, Boolean, RenderType> ENERGY_TRIANGLES = Util.memoize((texture, sortOnUpload) -> RenderType.create(
-            "energy_triangles", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLES, 1536, false, sortOnUpload,
+            "energy_triangles", DefaultVertexFormat.BLOCK, VertexFormat.Mode.TRIANGLES, 1536, false, sortOnUpload,
             RenderType.CompositeState.builder()
-                    .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setShaderState(RENDERTYPE_BEACON_BEAM_SHADER)
+                    .setTextureState(new TextureStateShard(texture, false, false))
                     .setTransparencyState(ADDITIVE_TRANSPARENCY)
                     .setCullState(NO_CULL)
-                    .setLightmapState(LIGHTMAP)
-                    .setOverlayState(OVERLAY)
                     .createCompositeState(false)
     ));
 
@@ -180,34 +199,42 @@ public interface RenderTypes {
      * 能量效果 - 条带模式
      */
     BiFunction<ResourceLocation, Boolean, RenderType> ENERGY_TRIANGLE_STRIP = Util.memoize((texture, sortOnUpload) -> RenderType.create(
-            "energy_triangle_strip", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_STRIP, 1536, false, sortOnUpload,
+            "energy_triangle_strip", DefaultVertexFormat.BLOCK, VertexFormat.Mode.TRIANGLE_STRIP, 1536, false, sortOnUpload,
             RenderType.CompositeState.builder()
-                    .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
-                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setShaderState(RENDERTYPE_BEACON_BEAM_SHADER)
+                    .setTextureState(new TextureStateShard(texture, false, false))
                     .setTransparencyState(ADDITIVE_TRANSPARENCY)
                     .setCullState(NO_CULL)
-                    .setLightmapState(LIGHTMAP)
                     .setOverlayState(OVERLAY)
                     .createCompositeState(false)
     ));
     RenderType ENERGY_TRIANGLE_STRIP_WHITE = ENERGY_TRIANGLE_STRIP.apply(ResourceLocations.WHITE_TEXTURE, true);
+    RenderType ENERGY_TRIANGLE_FAN_WHITE = ENERGY_TRIANGLE_FAN.apply(ResourceLocations.WHITE_TEXTURE, true);
 
 
     // ========== ENERGY_SWIRL 能量漩涡静态方法（带偏移） ==========
-
+    static RenderType energySwirl(ResourceLocation resourceLocation, float uOffset, float vOffset) {
+        return RenderType.create("energy_swirl",DefaultVertexFormat.NEW_ENTITY,VertexFormat.Mode.QUADS,1536,false,true,
+                RenderType.CompositeState.builder()
+                        .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
+                        .setTextureState(new TextureStateShard(resourceLocation, false, false))
+                        .setTexturingState(new OffsetTexturingStateShard(uOffset, vOffset))
+                        .setTransparencyState(ADDITIVE_TRANSPARENCY)
+                        .setCullState(NO_CULL)
+                        .createCompositeState(false)
+        );
+    }
     /**
      * ENERGY_SWIRL_TRIANGLES - 能量漩涡效果（带偏移，三角形模式）
      */
-    static RenderType energySwirlTriangles(ResourceLocation resourceLocation, float xSpeed, float ySpeed) {
+    static RenderType energySwirlTriangles(ResourceLocation resourceLocation, float uOffset, float vOffset) {
         return RenderType.create("energy_swirl_triangles", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLES, 1536, false, true,
                 RenderType.CompositeState.builder()
                         .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
-                        .setTextureState(new RenderStateShard.TextureStateShard(resourceLocation, false, false))
-                        .setTexturingState(new RenderStateShard.OffsetTexturingStateShard(xSpeed, ySpeed))
+                        .setTextureState(new TextureStateShard(resourceLocation, false, false))
+                        .setTexturingState(new OffsetTexturingStateShard(uOffset, vOffset))
                         .setTransparencyState(ADDITIVE_TRANSPARENCY)
                         .setCullState(NO_CULL)
-                        .setLightmapState(LIGHTMAP)
-                        .setOverlayState(OVERLAY)
                         .createCompositeState(false)
         );
     }
@@ -215,16 +242,14 @@ public interface RenderTypes {
     /**
      * ENERGY_SWIRL_TRIANGLE_FAN - 能量漩涡效果（带偏移，扇形模式）
      */
-    static RenderType energySwirlTriangleFan(ResourceLocation resourceLocation, float xSpeed, float ySpeed) {
+    static RenderType energySwirlTriangleFan(ResourceLocation resourceLocation, float uOffset, float vOffset) {
         return RenderType.create("energy_swirl_triangle_fan", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_FAN, 1536, false, true,
                 RenderType.CompositeState.builder()
                         .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
-                        .setTextureState(new RenderStateShard.TextureStateShard(resourceLocation, false, false))
-                        .setTexturingState(new RenderStateShard.OffsetTexturingStateShard(xSpeed, ySpeed))
+                        .setTextureState(new TextureStateShard(resourceLocation, false, false))
+                        .setTexturingState(new OffsetTexturingStateShard(uOffset, vOffset))
                         .setTransparencyState(ADDITIVE_TRANSPARENCY)
                         .setCullState(NO_CULL)
-                        .setLightmapState(LIGHTMAP)
-                        .setOverlayState(OVERLAY)
                         .createCompositeState(false)
         );
     }
@@ -232,19 +257,20 @@ public interface RenderTypes {
     /**
      * ENERGY_SWIRL_TRIANGLE_STRIP - 能量漩涡效果（带偏移，条带模式）
      */
-    static RenderType energySwirlTriangleStrip(ResourceLocation resourceLocation, float xSpeed, float ySpeed) {
+    static RenderType energySwirlTriangleStrip(ResourceLocation resourceLocation, float uOffset, float vOffset) {
         return RenderType.create("energy_swirl_triangle_strip", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_STRIP, 1536, false, true,
                 RenderType.CompositeState.builder()
                         .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
-                        .setTextureState(new RenderStateShard.TextureStateShard(resourceLocation, false, false))
-                        .setTexturingState(new RenderStateShard.OffsetTexturingStateShard(xSpeed, ySpeed))
+                        .setTextureState(new TextureStateShard(resourceLocation, false, false))
+                        .setTexturingState(new OffsetTexturingStateShard(uOffset, vOffset))
                         .setTransparencyState(ADDITIVE_TRANSPARENCY)
                         .setCullState(NO_CULL)
-                        .setLightmapState(LIGHTMAP)
-                        .setOverlayState(OVERLAY)
                         .createCompositeState(false)
         );
     }
+
+
+
 
 
     /**
@@ -253,12 +279,12 @@ public interface RenderTypes {
     BiFunction<ResourceLocation, Boolean, RenderType> WHITE_ENTITY_TRANSLUCENT = Util.memoize((texture, sortOnUpload) -> RenderType.create(
             "white_entity_translucent", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, sortOnUpload,
             RenderType.CompositeState.builder()
-                    .setShaderState(new RenderStateShard.ShaderStateShard(Shaders::getWhiteEntityShader))
-                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setShaderState(new ShaderStateShard(Shaders::getWhiteEntityShader))
+                    .setTextureState(new TextureStateShard(texture, false, false))
                     .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                    .setLightmapState(RenderStateShard.LIGHTMAP)
-                    .setOverlayState(RenderStateShard.OVERLAY)
-                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(LIGHTMAP)
+                    .setOverlayState(OVERLAY)
+                    .setCullState(NO_CULL)
                     .createCompositeState(true)
     ));
     /**
@@ -267,12 +293,12 @@ public interface RenderTypes {
     BiFunction<ResourceLocation, Boolean, RenderType> FLY_BASIC = Util.memoize((texture, translucent) -> RenderType.create(
             "fly_basic", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, true,
             RenderType.CompositeState.builder()
-                    .setShaderState(new RenderStateShard.ShaderStateShard(Shaders::getFlyBasicShader))
-                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setShaderState(new ShaderStateShard(Shaders::getFlyBasicShader))
+                    .setTextureState(new TextureStateShard(texture, false, false))
                     .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                    .setLightmapState(RenderStateShard.LIGHTMAP)
-                    .setOverlayState(RenderStateShard.OVERLAY)
-                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(LIGHTMAP)
+                    .setOverlayState(OVERLAY)
+                    .setCullState(NO_CULL)
                     .createCompositeState(true)
     ));
 
@@ -283,12 +309,12 @@ public interface RenderTypes {
     BiFunction<ResourceLocation, Boolean, RenderType> TOP_FADE = Util.memoize((texture, translucent) -> RenderType.create(
             "top_fade", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, true,
             RenderType.CompositeState.builder()
-                    .setShaderState(new RenderStateShard.ShaderStateShard(Shaders::getTopFadeShader))
-                    .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
+                    .setShaderState(new ShaderStateShard(Shaders::getTopFadeShader))
+                    .setTextureState(new TextureStateShard(texture, false, false))
                     .setTransparencyState(translucent ? TRANSLUCENT_TRANSPARENCY : NO_TRANSPARENCY)
-                    .setLightmapState(RenderStateShard.LIGHTMAP)
-                    .setOverlayState(RenderStateShard.OVERLAY)
-                    .setCullState(RenderStateShard.NO_CULL)
+                    .setLightmapState(LIGHTMAP)
+                    .setOverlayState(OVERLAY)
+                    .setCullState(NO_CULL)
                     .createCompositeState(true)
     ));
 }

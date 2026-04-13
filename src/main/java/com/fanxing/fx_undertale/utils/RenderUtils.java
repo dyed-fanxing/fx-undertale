@@ -237,7 +237,45 @@ public class RenderUtils {
         renderCapsule(pose, sideConsumer, hemisphereConsumer,
                 radius, length, segments, r, g, b, a, overlay, light, 1f, 1f);
     }
+    public static void renderCapsule(PoseStack.Pose pose,
+                                     VertexConsumer sideConsumer,
+                                     VertexConsumer hemisphereConsumer,
+                                     float radius, float length, int segments,
+                                     int r, int g, int b, int a,
+                                     int overlay, int light,
+                                     float uScale, float vScale,
+                                     float vOffset) { // 新增 vOffset
+        int latSegments = segments / 2;
+        int hemiLatSegments = latSegments / 2;
+        if (hemiLatSegments < 1) hemiLatSegments = 1;
 
+        float deltaTheta = Mth.TWO_PI / segments;
+        float deltaPhi = Mth.PI / latSegments;
+
+        float[] ringRadius = new float[latSegments + 1];
+        float[] ringY = new float[latSegments + 1];
+        for (int i = 0; i <= latSegments; i++) {
+            float phi = i * deltaPhi - Mth.HALF_PI;
+            float cosPhi = Mth.cos(phi);
+            float sinPhi = Mth.sin(phi);
+            ringRadius[i] = radius * cosPhi;
+            ringY[i] = radius * sinPhi;
+        }
+        ringY[latSegments / 2] = 0;
+        ringRadius[latSegments / 2] = radius;
+
+        // 下半球（半球渲染内部也需要支持 vOffset? 半球通常不需要滚动，保持原样）
+        renderHemisphereWitOffset(pose, hemisphereConsumer, radius, ringRadius, ringY, latSegments, hemiLatSegments,
+                segments, deltaTheta, deltaPhi, 0, 0, r, g, b, a, overlay, light, uScale, vScale,vOffset);
+
+        // 圆柱侧面（使用支持偏移的版本）
+        renderCylinderSideWithOffset(pose, sideConsumer, radius, length, segments,
+                r, g, b, a, overlay, light, uScale, vScale, vOffset);
+
+        // 上半球
+        renderHemisphereWitOffset(pose, hemisphereConsumer, radius, ringRadius, ringY, latSegments, hemiLatSegments,
+                segments, deltaTheta, deltaPhi, length, 0.5f, r, g, b, a, overlay, light, uScale, vScale,vOffset);
+    }
 
 
 
@@ -296,7 +334,7 @@ public class RenderUtils {
                                           float uScale, float vScale) {
         float step = Mth.TWO_PI / segments;
         Matrix4f matrix = pose.pose();
-        float vBottom = 0.5f * vScale;
+        float vBottom = 0;
         // 交替排列：底、顶、底、顶、...
         for (int i = 0; i <= segments; i++) {
             float theta = i * step;
@@ -324,8 +362,42 @@ public class RenderUtils {
                                           int r, int g, int b, int a, int overlay, int light) {
         renderCylinderSide(pose, consumer, radius, height, segments, r, g, b, a, overlay, light, 1f, 1f);
     }
+    /**
+     * 圆柱侧面，支持纹理 V 方向滚动偏移
+     */
+    public static void renderCylinderSideWithOffset(PoseStack.Pose pose, VertexConsumer consumer,
+                                                    float radius, float height, int segments,
+                                                    int r, int g, int b, int a, int overlay, int light,
+                                                    float uScale, float vScale, float vOffset) {
+        float step = Mth.TWO_PI / segments;
+        Matrix4f matrix = pose.pose();
+        // 底部 V 坐标基准值（假设 0 是底部）
+        float vBottomBase = 0f;
+        for (int i = 0; i <= segments; i++) {
+            float theta = i * step;
+            float cos = Mth.cos(theta);
+            float sin = Mth.sin(theta);
+            float u = (float) i / segments * uScale;
 
+            // 底部顶点：V坐标 = 基准 + 偏移，不取模
+            float vBottom = vBottomBase + vOffset;
+            consumer.addVertex(matrix, radius * cos, 0, radius * sin)
+                    .setNormal(pose, cos, 0, sin)
+                    .setUv(u, vBottom)
+                    .setColor(r, g, b, a)
+                    .setOverlay(overlay)
+                    .setLight(light);
 
+            // 顶部顶点：V坐标 = vScale + 偏移
+            float vTop = vScale + vOffset;
+            consumer.addVertex(matrix, radius * cos, height, radius * sin)
+                    .setNormal(pose, cos, 0, sin)
+                    .setUv(u, vTop)
+                    .setColor(r, g, b, a)
+                    .setOverlay(overlay)
+                    .setLight(light);
+        }
+    }
 
 
 
@@ -384,33 +456,43 @@ public class RenderUtils {
                                     int r, int g, int b, int a, int overlay, int light) {
         renderSphere(pose, consumer, radius, segments, r, g, b, a, overlay, light, 1f, 1f);
     }
+
     /**
-     * 渲染半球（辅助方法，使用 QUADS 模式）
+     * 渲染半球（支持纹理 V 方向滚动，不取模）
      */
-    private static void renderHemisphere(PoseStack.Pose pose, VertexConsumer consumer,
-                                         float radius, float[] ringRadius, float[] ringY,
-                                         int latSegments, int hemiLatSegments,
-                                         int segments, float deltaTheta, float deltaPhi,
-                                         float yOffset, float vOffset,
-                                         int r, int g, int b, int a, int overlay, int light,
-                                         float uScale, float vScale) {
-        int startIndex = vOffset < 0.5f ? 0 : latSegments / 2;
-        int endIndex = vOffset < 0.5f ? latSegments / 2 : latSegments;
+    private static void renderHemisphereWitOffset(PoseStack.Pose pose, VertexConsumer consumer,
+                                                  float radius, float[] ringRadius, float[] ringY,
+                                                  int latSegments, int hemiLatSegments,
+                                                  int segments, float deltaTheta, float deltaPhi,
+                                                  float yOffset, float hemisphereSelect,
+                                                  int r, int g, int b, int a, int overlay, int light,
+                                                  float uScale, float vScale,
+                                                  float vOffset) {  // 纹理偏移放在最后
+        int startIndex = hemisphereSelect < 0.5f ? 0 : latSegments / 2;
+        int endIndex = hemisphereSelect < 0.5f ? latSegments / 2 : latSegments;
 
         Matrix4f matrix = pose.pose();
 
-        // 使用 QUADS 模式渲染每一层
         for (int i = startIndex; i < endIndex; i++) {
             float r1 = ringRadius[i];
             float r2 = ringRadius[i + 1];
             float y1 = ringY[i] + yOffset;
             float y2 = ringY[i + 1] + yOffset;
-            float v1 = (vOffset < 0.5f ?
-                    (float) i / hemiLatSegments * 0.5f :
-                    (0.5f + 0.5f * (i - latSegments / 2) / hemiLatSegments)) * vScale;
-            float v2 = (vOffset < 0.5f ?
-                    (float) (i + 1) / hemiLatSegments * 0.5f :
-                    (0.5f + 0.5f * (i + 1 - latSegments / 2) / hemiLatSegments)) * vScale;
+
+            float vBase1, vBase2;
+            if (hemisphereSelect < 0.5f) { // 下半球
+                vBase1 = (float) i / hemiLatSegments * 0.5f;
+                vBase2 = (float) (i + 1) / hemiLatSegments * 0.5f;
+            } else { // 上半球
+                vBase1 = 0.5f + 0.5f * (i - latSegments / 2f) / hemiLatSegments;
+                vBase2 = 0.5f + 0.5f * (i + 1 - latSegments / 2f) / hemiLatSegments;
+            }
+            vBase1 *= vScale;
+            vBase2 *= vScale;
+
+            // 直接加上偏移，不取模
+            float v1 = vBase1 + vOffset;
+            float v2 = vBase2 + vOffset;
 
             for (int j = 0; j < segments; j++) {
                 float theta1 = j * deltaTheta;
@@ -457,6 +539,18 @@ public class RenderUtils {
                         .setLight(light);
             }
         }
+    }
+    /**
+     * 渲染半球（辅助方法，使用 QUADS 模式）
+     */
+    private static void renderHemisphere(PoseStack.Pose pose, VertexConsumer consumer,
+                                         float radius, float[] ringRadius, float[] ringY,
+                                         int latSegments, int hemiLatSegments,
+                                         int segments, float deltaTheta, float deltaPhi,
+                                         float yOffset, float hemisphereSelect,
+                                         int r, int g, int b, int a, int overlay, int light,
+                                         float uScale, float vScale) {
+        renderHemisphereWitOffset(pose,consumer,radius,ringRadius,ringY,latSegments,hemiLatSegments,segments,deltaTheta,deltaPhi,yOffset,hemisphereSelect,r,g,b,a,overlay,light,uScale,vScale,0f);
     }
 
 
