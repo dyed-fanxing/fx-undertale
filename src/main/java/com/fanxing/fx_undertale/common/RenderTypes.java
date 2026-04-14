@@ -1,15 +1,11 @@
 package com.fanxing.fx_undertale.common;
 
-import com.fanxing.fx_undertale.FxUndertale;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.fanxing.fx_undertale.client.Shaders;
 import net.minecraft.Util;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
-import org.apache.commons.lang3.function.TriFunction;
 
 import java.util.OptionalDouble;
 import java.util.function.BiFunction;
@@ -22,33 +18,6 @@ import static net.minecraft.client.renderer.RenderStateShard.*;
  * @since 2026/1/6 13:50
  */
 public interface RenderTypes {
-    /**
-     * 半透明实体 + 可调节自发光强度 + 可控制排序
-     * 对应原版 ENTITY_TRANSLUCENT_EMISSIVE，添加 strength 和 sortOnUpload 参数
-     *
-     * @param texture 纹理
-     * @param sortOnUpload 是否启用排序（半透明需要 true，加法混合可用 false）
-     * @param strength 自发光强度 (0.0 - 1.0)
-     */
-    // ========== 核心创建方法 ==========
-    private static RenderType createEntityTranslucentEmissiveAdjustable(ResourceLocation texture, boolean sortOnUpload, float strength) {
-        return RenderType.create(
-                "entity_translucent_emissive_adjustable", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, sortOnUpload,
-                RenderType.CompositeState.builder()
-                        .setShaderState(new ShaderStateShard(() -> {
-                            ShaderInstance shader = Shaders.getEntityTranslucentEmissiveAdjustableShader();
-                            shader.safeGetUniform("uEmissiveStrength").set(strength);
-                            return shader;
-                        }))
-                        .setTextureState(new TextureStateShard(texture, false, false))
-                        .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                        .setCullState(NO_CULL)
-                        .setWriteMaskState(COLOR_WRITE)
-                        .setOverlayState(OVERLAY)
-                        .setLightmapState(LIGHTMAP)
-                        .createCompositeState(true)
-        );
-    }
     BiFunction<ResourceLocation, Boolean, RenderType> ENTITY_TRANSLUCENT_EMISSIVE_DEPTH = Util.memoize((texture, isAffectsOutline) ->
             RenderType.create("entity_translucent_emissive", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, true,
                     RenderType.CompositeState.builder()
@@ -60,11 +29,6 @@ public interface RenderTypes {
                     .setOverlayState(OVERLAY)
                     .createCompositeState(isAffectsOutline))
     );
-
-    BiFunction<ResourceLocation, Float, RenderType> ENTITY_TRANSLUCENT_EMISSIVE_ADJUSTABLE_SORT =
-            Util.memoize((texture, strength) -> createEntityTranslucentEmissiveAdjustable(texture, true, strength));
-    BiFunction<ResourceLocation, Float, RenderType> ENTITY_TRANSLUCENT_EMISSIVE_ADJUSTABLE_UNSORT =
-            Util.memoize((texture, strength) -> createEntityTranslucentEmissiveAdjustable(texture, false, strength));
 
     /**
      * 与原版beam的区别为 NO_CULL，因为这个GB炮是跟着实体渲染的，而原版的信标光束是跟着方块渲染的，顺序不一样
