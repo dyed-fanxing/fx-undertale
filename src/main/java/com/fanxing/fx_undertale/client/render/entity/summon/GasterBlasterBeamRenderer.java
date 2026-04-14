@@ -45,7 +45,7 @@ public class GasterBlasterBeamRenderer {
     };
     // 蓝色（激光风格）
     public static final int[][] SANS_BLUE = {
-            {226, 255, 255, 255},   // 内层 能量层：纯白（最亮）
+            {240, 255, 255, 255},   // 内层 能量层：纯白（最亮）
             {0, 50, 120, 255},      // 外层 泛光层：深蓝
             { 200,200,200, 150}    // 外层 流动条纹层：淡蓝
     };
@@ -71,7 +71,6 @@ public class GasterBlasterBeamRenderer {
         int decayTick = animatable.getDecayTick();
         int discardTick = decayTick + 3;
         float animTick = animatable.tickCount + partialTick;
-
         poseStack.translate(0, animatable.getEyeHeight(), 0);
         if (animatable.tickCount < fireTick) {
             partialSize = Mth.lerp(animTick/ fireTick, 0, radius * 0.75f);
@@ -97,7 +96,7 @@ public class GasterBlasterBeamRenderer {
             poseStack.pushPose();
             RenderUtils.renderCapsule(poseStack.last(), buffer.getBuffer(BEAM_NO_TRANSPARENCY_TRIANGLE_STRIP), buffer.getBuffer(BEAM_NO_TRANSPARENCY), partialSize * INNER_SCALE, length, segments, color[0][0], color[0][1], color[0][2], color[0][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
             RenderUtils.renderCapsule(poseStack.last(), buffer.getBuffer(BEAM_ENERGY_OUTER_TRIANGLE_STRIP), buffer.getBuffer(BEAM_ENERGY_OUTER), partialSize , length, segments, color[1][0], color[1][1], color[1][2], color[1][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
-            RenderUtils.renderCapsule(poseStack.last(), buffer.getBuffer(BEAM_FLOW_TRIANGLE_STRIP), buffer.getBuffer(BEAM_FLOW), partialSize , length, segments, color[1][0], color[1][1], color[1][2], color[1][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT,
+            RenderUtils.renderCapsule(poseStack.last(), buffer.getBuffer(BEAM_FLOW_TRIANGLE_STRIP), buffer.getBuffer(BEAM_FLOW), partialSize , length, segments, color[2][0], color[2][1], color[2][2], color[2][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT,
                     1f,length*0.5f,-offset);
             poseStack.popPose();
         }

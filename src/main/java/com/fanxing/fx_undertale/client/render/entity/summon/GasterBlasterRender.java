@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.client.render.entity.summon;
 
+import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -40,7 +41,7 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     @Override
     public void preRender(PoseStack poseStack, GasterBlaster animatable, BakedGeoModel model, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
         if(!isReRender && !animatable.isMountable()){
-            GasterBlasterBeamRenderer.render(animatable, partialTick, poseStack, bufferSource, packedLight,GasterBlasterBeamRenderer.SANS_BLUE);
+            GasterBlasterBeamRenderer.render(animatable, partialTick, poseStack, bufferSource, packedLight, animatable.color);
         }
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
     }

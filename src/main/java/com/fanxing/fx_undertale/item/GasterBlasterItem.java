@@ -3,6 +3,7 @@ package com.fanxing.fx_undertale.item;
 import com.fanxing.fx_undertale.FxUndertale;
 import com.fanxing.fx_undertale.client.PlayerAnimations;
 import com.fanxing.fx_undertale.client.render.item.GasterBlasterItemRender;
+import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.registry.ItemTypes;
 import com.fanxing.fx_undertale.utils.GravityUtils;
@@ -81,7 +82,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
         if (!level.isClientSide()) {
             if (player.isShiftKeyDown()) {
                 Vec3 relativePos = new Vec3(0, player.getEyeHeight(), 2f); // 玩家前方2格
-                GasterBlaster blaster = new GasterBlaster(level, player,1f,1f,getUseDuration(itemStack,player)).follow(relativePos);
+                GasterBlaster blaster = new GasterBlaster(level, player,1f,1f,getUseDuration(itemStack,player)).follow(relativePos).color(Sans.ENERGY_AQUA);
                 RotUtils.lookVec(blaster, player.getViewVector(1.0f));
                 level.addFreshEntity(blaster);
                 itemStack.set(DataComponents.CUSTOM_DATA, CustomData.of(new CompoundTag() {{
@@ -91,7 +92,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
                 return InteractionResultHolder.consume(itemStack);
             } else {
                 HitResult hitResult = AABBCCDUtils.getHitResultOnViewVector(player, entity -> entity.isPickable() && entity != player.getVehicle() && !(entity instanceof TraceableEntity traceable && traceable.getOwner() != player), GasterBlaster.DEFAULT_LENGTH);
-                GasterBlaster blaster = new GasterBlaster(level, player);
+                GasterBlaster blaster = new GasterBlaster(level, player).color(Sans.ENERGY_AQUA);
                 double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
                 blaster.setPos(player.position().add(GravityUtils.localToWorld(player,RotUtils.rotateYXZ(new Vec3(0, safeDistance, 0.3f), player.getYRot(), player.getXRot(), player.getRandom().nextFloat() * 180f -90f))));
                 if (hitResult instanceof EntityHitResult entityHitResult) {

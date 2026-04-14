@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.entity.summon;
 
+import com.fanxing.fx_undertale.client.render.component.LineTrailStrip;
 import com.fanxing.fx_undertale.client.render.component.TrailFan;
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.common.phys.motion.PhysicsMotionModel;
@@ -60,7 +61,7 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
 
 
 
-    public TrailFan trail1 = new TrailFan(5,Sans.ENERGY_AQUA);
+    public LineTrailStrip trail1 = new LineTrailStrip(5).color(Sans.ENERGY_AQUA[1]);
     public RotationBone(EntityType<? extends AbstractBone<RotationBone>> type, Level level) {
         super(type, level);
     }

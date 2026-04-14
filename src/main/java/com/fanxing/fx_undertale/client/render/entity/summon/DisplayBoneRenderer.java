@@ -54,14 +54,12 @@ public class DisplayBoneRenderer extends GeoEntityRenderer<DisplayBone> {
         if (down.isPresent()) {
             Vector3d localPos = down.get().getLocalPosition();
             animatable.trail1.addPoint(localPos, currentTime);
-            VertexConsumer consumer = bufferSource.getBuffer(trailType);
-            animatable.trail1.render(poseStack, (MultiBufferSource.BufferSource) bufferSource, consumer, packedLight, currentTime);
+            animatable.trail1.render(poseStack, bufferSource, bufferSource.getBuffer(trailType), packedLight, currentTime);
         }
         if(top.isPresent()) {
             Vector3d localPos = top.get().getLocalPosition();
             animatable.trail2.addPoint(localPos, currentTime);
-            VertexConsumer consumer = bufferSource.getBuffer(trailType);
-            animatable.trail2.render(poseStack,(MultiBufferSource.BufferSource) bufferSource, consumer, packedLight, currentTime);
+            animatable.trail2.render(poseStack,bufferSource, bufferSource.getBuffer(trailType), packedLight, currentTime);
         }
         super.renderFinal(poseStack, animatable, model, bufferSource, buffer, partialTick, packedLight, packedOverlay, colour);
     }

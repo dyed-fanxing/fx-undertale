@@ -85,13 +85,12 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
         AnimationController<Sans> attackController = animatable.getAttackAnimController();
         RawAnimation currentRawAnimation = attackController.getCurrentRawAnimation();
         // 5. 渲染拖尾（使用 TRIANGLE_STRIP 模式的 RenderType）
-        VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.ENERGY_TRIANGLE_STRIP_WHITE);
         if(attackController.getAnimationState()== AnimationController.State.RUNNING && (Sans.isSameRawAnimation(currentRawAnimation,Sans.ANIM_BONE_PROJECTILE_LEFT)||Sans.isSameRawAnimation(currentRawAnimation,Sans.THROW_ANIMATIONS))){
             if(Sans.isSameRawAnimation(currentRawAnimation,Sans.ANIM_BONE_PROJECTILE_LEFT)){
-                animatable.leftHandTrail.setColor(255,255,255);
+                animatable.leftHandTrail.color(1f,1f,1f,1f);
             }
             if(Sans.isSameRawAnimation(currentRawAnimation,Sans.THROW_ANIMATIONS)){
-                animatable.leftHandTrail.setColor(Sans.ENERGY_AQUA);
+                animatable.leftHandTrail.color(Sans.ENERGY_AQUA[1]);
             }
             GeoBone leftHand = attackController.getBoneAnimationQueues().get("left_hand").bone();
             GeoBone leftElbow = attackController.getBoneAnimationQueues().get("left_elbow").bone();
@@ -99,8 +98,8 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
             animatable.leftHandTrail.addPoint( leftHand.getLocalPosition(),animTick);
         }
         if(attackController.getAnimationState()== AnimationController.State.RUNNING && Sans.isSameRawAnimation(currentRawAnimation,Sans.ANIM_BONE_PROJECTILE)){
-            animatable.leftHandTrail.setColor(255,255,255);
-            animatable.rightHandTrail.setColor(255,255,255);
+            animatable.leftHandTrail.color(255,255,255,255);
+            animatable.rightHandTrail.color(255,255,255,255);
             GeoBone leftHand = attackController.getBoneAnimationQueues().get("left_hand").bone();
             GeoBone leftElbow = attackController.getBoneAnimationQueues().get("left_elbow").bone();
             animatable.leftHandTrail.setCenter(leftElbow.getLocalPosition());;
@@ -110,8 +109,10 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
             animatable.rightHandTrail.setCenter(rightBelow.getLocalPosition());
             animatable.rightHandTrail.addPoint(rightHand.getLocalPosition(),animTick);
         }
-        animatable.leftHandTrail.render(poseStack, consumer,packedLight,animTick);
-        animatable.rightHandTrail.render(poseStack, consumer,packedLight,animTick);
+        VertexConsumer consumer1 = bufferSource.getBuffer(RenderTypes.ENERGY_TRIANGLE_STRIP_WHITE);
+        animatable.leftHandTrail.render(poseStack,bufferSource, consumer1,packedLight,animTick);
+        VertexConsumer consumer2 = bufferSource.getBuffer(RenderTypes.ENERGY_TRIANGLE_STRIP_WHITE);
+        animatable.rightHandTrail.render(poseStack,bufferSource, consumer2,packedLight,animTick);
     }
 
 

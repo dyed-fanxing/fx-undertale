@@ -3,62 +3,90 @@ package com.fanxing.fx_undertale.client.render.component;
 import com.fanxing.fx_undertale.utils.Curve3DUtils;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.FastColor;
 import org.joml.Matrix4f;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
-public abstract class AbstractPointTrail {
-    private static final Logger log = LoggerFactory.getLogger(AbstractPointTrail.class);
+public abstract class AbstractPointTrail<T extends AbstractPointTrail<T>> {
     public LinkedList<TrailPoint> points = new LinkedList<>();
-    public float lifetime;
-
-    public float r, g, b;
-    public Function<Float, Float> progressCurve;        // 基于生命周期控制点的透明度曲线，时间渐变
-    public Function<Float, Float> uAlphaCurve;          // 基于纹理u坐标控制点的透明度曲线，空间渐变，两着可以组合使用
+    public float lifetime = 5;
+    public float r=1, g=1, b=1,a=1;
+    public Function<Float, Float> progressCurve = t -> 1-t;        // 基于生命周期控制点的透明度曲线，时间渐变
+    public Function<Float, Float> uAlphaCurve = u -> 1f;          // 基于纹理u坐标控制点的透明度曲线，空间渐变，两者可以组合使用
     public Vector3f center = new Vector3f();
     protected float interpolationSpacing = 0.06f; // 插值最大间距，可调整
     public boolean isAdditive = true; //是否为加法混合
-
-    public AbstractPointTrail(float lifetime, float r, float g, float b, Function<Float, Float> progressCurve, Function<Float, Float> uAlphaCurve) {
+    public AbstractPointTrail(float lifetime, float r, float g, float b,float a, Function<Float, Float> progressCurve, Function<Float, Float> uAlphaCurve) {
         this.r = r;
         this.g = g;
         this.b = b;
+        this.a = a;
         this.lifetime = lifetime;
         this.progressCurve = progressCurve;
         this.uAlphaCurve = uAlphaCurve;
     }
+    public AbstractPointTrail(float lifetime) {
+        this.lifetime = lifetime;
+    }
 
-    // 兼容旧构造（默认 u 曲线为线性 u -> u）
-    public AbstractPointTrail(float lifetime, float r, float g, float b, Function<Float, Float> progressCurve) {
-        this(lifetime, r, g, b, progressCurve, u -> 1f);
-
+    public T color(float r,float g,float b,float a) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+        return (T) this;
     }
-    public AbstractPointTrail(float lifetime,int color, Function<Float, Float> progressCurve, Function<Float, Float> uAlphaCurve) {
-        this(lifetime, FastColor.ARGB32.red(color) / 255f, FastColor.ARGB32.green(color) / 255f, FastColor.ARGB32.blue(color) / 255f, progressCurve, uAlphaCurve);
+    public T color(float[] color){
+        this.r = color[0];
+        this.g = color[1];
+        this.b = color[2];
+        this.a = color[3];
+        return (T) this;
     }
-    public AbstractPointTrail(float lifetime,int color, Function<Float, Float> progressCurve) {
-        this(lifetime, color, progressCurve, u -> u);
+    public T color(int r, int g, int b,int a) {
+        this.r = r/255f;
+        this.g = g/255f;
+        this.b = b/255f;
+        this.a = a/255f;
+        return (T) this;
     }
-    public AbstractPointTrail(float lifetime,int color) {
-        this(lifetime,color, progress -> 1f - progress, u -> 1f);
+    public T color(int[] color) {
+        this.r = color[0]/255f;
+        this.g = color[1]/255f;
+        this.b = color[2]/255f;
+        this.a = color[3]/255f;
+        return (T) this;
     }
-    public AbstractPointTrail isAdditive(boolean isAdditive) {
+    public T color(int color){
+        this.r = FastColor.ARGB32.red(color)/255f;
+        this.g = FastColor.ARGB32.green(color)/255f;
+        this.b = FastColor.ARGB32.blue(color)/255f;
+        this.a = FastColor.ARGB32.alpha(color)/255f;
+        return (T) this;
+    }
+    public T progressCurve(Function<Float, Float> progressCurve){
+        this.progressCurve = progressCurve;
+        return (T) this;
+    }
+    public T uAlphaCurve(Function<Float, Float> uAlphaCurve){
+        this.uAlphaCurve = uAlphaCurve;
+        return (T) this;
+    }
+    public T isAdditive(boolean isAdditive) {
         this.isAdditive = isAdditive;
-        return this;
+        return (T) this;
     }
-
-    public AbstractPointTrail interpolationSpacing(float interpolationSpacing) {
+    public T interpolationSpacing(float interpolationSpacing) {
         this.interpolationSpacing = interpolationSpacing;
-        return this;
+        return (T) this;
     }
 
 
@@ -103,25 +131,28 @@ public abstract class AbstractPointTrail {
         smoothPoints.add(rawPoints.getLast());
         return smoothPoints;
     }
-    
-    public void breakStrip(PoseStack poseStack, VertexConsumer consumer) {
-        if (points.isEmpty()) return;
-//        TrailPoint last = points.getLast();
-//        Matrix4f matrix4f = poseStack.last().pose();
-//        addVertex(consumer, matrix4f,last.position, 0, 0, 0, 0, new Vector3f());
-//        addVertex(consumer, matrix4f,last.position, 0, 0, 0, 0, new Vector3f());
 
-        // 利用单位矩阵直接将两个透明的顶点提交到世界坐标原点上，因为距离过远超出视锥体范围，会被剔除或遮挡的原理，隐藏和下一个条带形成的三角形
-        // 把这个两个用来断开的点叫做 AE1和A2E，而另一个条带的两个起点叫做BS1,BS2，
-        // 组成三角形为：AE1 AE2 BS1（退化成线段，不渲染），AE2 BS1 BS2（三角形，会渲染，但因为超出视锥体范围，被剔除或遮挡，所以也不渲染）
-        // 必须用单位矩阵，且用原点(0,0,0)，且必须完全透明才行，三个差一个都不对
-        Vector3f vector3f = new Vector3f(0, 0, 0);
-        Matrix4f matrix4f = new Matrix4f();
-        addVertex(consumer, matrix4f, vector3f, 0F, 0, 0, 0, new Vector3f());
-        addVertex(consumer, matrix4f, new Vector3f(0, 0, 0), 0F, 0, 0, 0, new Vector3f());
+    public void render(Vector3f centerOverride, PoseStack poseStack, MultiBufferSource bufferSource, VertexConsumer consumer,int packedLight, float currentTime) {
+        if (centerOverride != null) this.center = centerOverride;
+        points.removeIf(p -> currentTime - p.createTime > lifetime);
+        if (points.size() < 2) return;
+        List<TrailPoint> list = getSmoothPoints();
+        // 过滤过近点
+        List<TrailPoint> filtered = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            if (i > 0 && filtered.getLast().position.distanceSquared(list.get(i).position) < 1e-6f)
+                continue;
+            filtered.add(list.get(i));
+        }
+        list = filtered;
+        if (list.size() < 2) return;
+        render(list,poseStack,bufferSource,consumer,packedLight,currentTime);
+    }
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, VertexConsumer consumer, int packedLight, float currentTime) {
+        render((Vector3f) null, poseStack,bufferSource, consumer, packedLight, currentTime);
     }
 
-
+    protected abstract void render(List<TrailPoint> list,PoseStack poseStack, MultiBufferSource bufferSource, VertexConsumer consumer,int packedLight, float currentTime);
 
     protected void addVertex(VertexConsumer consumer, Matrix4f matrix, Vector3f pos, float alpha,
                            float u, float v, int packedLight, Vector3f normal) {
@@ -129,20 +160,33 @@ public abstract class AbstractPointTrail {
         float rMul = r ;
         float gMul = g;
         float bMul = b;
-        if(isAdditive){
+        if(isAdditive){ // 预乘alpha 使加法混合也能达到透明渐变的效果
             rMul *= alpha;
             gMul *= alpha;
             bMul *= alpha;
         }
-
         consumer.addVertex(matrix, pos.x, pos.y, pos.z)
-                .setColor(1.0f, 0.0f, 0.0f, 1.0f) // 完全不透明的红色
-//                .setColor(rMul, gMul, bMul, alpha)
+                .setColor(rMul, gMul, bMul, alpha)
                 .setUv(u, v)
                 .setOverlay(OverlayTexture.NO_OVERLAY)
                 .setLight(packedLight)
                 .setNormal(normal.x, normal.y, normal.z);
     }
+
+    public void endBatch( MultiBufferSource bufferSource) {
+        // 如果是原版 BufferSource，直接调用
+        if (bufferSource instanceof MultiBufferSource.BufferSource bs)  bs.endBatch();
+        // 如果是 Iris 的包装类，先解包
+        if (bufferSource instanceof net.irisshaders.iris.layer.BufferSourceWrapper wrapper) {
+            MultiBufferSource original = wrapper.getOriginal();
+            if (original instanceof MultiBufferSource.BufferSource bs) {
+                bs.endBatch();
+            }
+        }
+    }
+
+
+
 
 
     public Vector3f getLastPosition() {
@@ -153,16 +197,22 @@ public abstract class AbstractPointTrail {
     public void setCenter(Vector3d center) {
         this.center = center.get(new Vector3f());
     }
-
-    public void setColor(int r, int g, int b) {
+    public void setColor(float[] color) {
+        this.r = color[0];
+        this.g = color[1];
+        this.b = color[2];
+        this.a = color[3];
+    }
+    public void setColor(int r, int g, int b,int a) {
         this.r = r / 255f;
         this.g = g / 255f;
         this.b = b / 255f;
+        this.a =  a / 255f;
     }
-
     public void setColor(int color) {
         this.r = FastColor.ARGB32.red(color) / 255f;
         this.g = FastColor.ARGB32.green(color) / 255f;
         this.b = FastColor.ARGB32.blue(color) / 255f;
+        this.a = FastColor.ARGB32.alpha(color) / 255f;
     }
 }

@@ -2,6 +2,7 @@ package com.fanxing.fx_undertale.event.handler;
 
 import com.fanxing.fx_undertale.entity.block.PlatformBlockEntity;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
+import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.entity.summon.GroundBone;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import net.minecraft.core.Direction;
@@ -31,7 +32,7 @@ public class EntityHandler {
     @SubscribeEvent
     public static void onEntityJoinLevel(EntityJoinLevelEvent event){
         Entity entity = event.getEntity();
-//        if(entity instanceof Sans){
+//        if(entity instanceof GasterBlaster){
 //            entity.discard();
 //            event.setCanceled(true);
 //        }

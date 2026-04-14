@@ -2,11 +2,13 @@ package com.fanxing.fx_undertale.entity.summon;
 
 import com.fanxing.fx_undertale.client.render.component.SphereEffectEmitter;
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
+import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.capability.Mountable;
 import com.fanxing.fx_undertale.mixin.LivingEntityAccessor;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.registry.ItemTypes;
 import com.fanxing.fx_undertale.registry.SoundEvnets;
+import com.fanxing.fx_undertale.utils.ColorUtils;
 import com.fanxing.fx_undertale.utils.CurvesUtils;
 import com.fanxing.fx_undertale.utils.collsion.CollisionDetectionUtils;
 import com.fanxing.fx_undertale.utils.RotUtils;
@@ -19,6 +21,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -82,6 +85,10 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     // 骑乘相关
     private static final EntityDataAccessor<Boolean> DATA_MOUNTABLE = SynchedEntityData.defineId(GasterBlaster.class, EntityDataSerializers.BOOLEAN);
 
+    // 光束颜色
+    public int[][] color = Sans.ENERGY_AQUA;
+    // 吸收光线
+    public final SphereEffectEmitter sphereRayEmitter = new SphereEffectEmitter();
 
     public GasterBlaster(EntityType<? extends LivingEntity> entityType, Level level) {
         super(entityType, level);
@@ -146,6 +153,10 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     }
     public GasterBlaster target(Entity target) {
         this.target = target;
+        return this;
+    }
+    public GasterBlaster color(int[][] color){
+        this.color = color;
         return this;
     }
 
@@ -446,6 +457,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         tag.putBoolean("mountable", isMountable());
 
         tag.putFloat("holdTimeScale", holdTimeScale);
+        tag.putIntArray("color",ColorUtils.rgbaArrayToInt(color));
     }
 
     @Override
@@ -467,6 +479,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
 
         if(tag.contains("mountable")) setMountable(tag.getBoolean("mountable"));
         if(tag.contains("holdTimeScale"))  this.holdTimeScale = tag.getFloat("holdTimeScale");
+        if(tag.contains("color")) tag.getIntArray("color");
     }
 
     @Override
@@ -490,6 +503,9 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         buffer.writeFloat(holdTimeScale);
         buffer.writeBoolean(target != null);
         if(target != null) buffer.writeInt(target.getId());
+        buffer.writeInt(ColorUtils.rgbaArrayToInt(color[0]));
+        buffer.writeInt(ColorUtils.rgbaArrayToInt(color[1]));
+        buffer.writeInt(ColorUtils.rgbaArrayToInt(color[2]));
     }
 
     @Override
@@ -511,6 +527,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
             restAnimPos();
             this.setPos(startPos);
         }
+        this.color = ColorUtils.intToRGBArrays(buffer.readInt(),buffer.readInt(),buffer.readInt());
         this.refreshDimensions();
     }
 
@@ -572,13 +589,5 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
 
 
 
-
-
-
-
-    // 客户端特效
-
-
-    public final SphereEffectEmitter sphereRayEmitter = new SphereEffectEmitter();
 
 }

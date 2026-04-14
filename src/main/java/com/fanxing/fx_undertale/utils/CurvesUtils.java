@@ -1,5 +1,7 @@
 package com.fanxing.fx_undertale.utils;
 
+import net.minecraft.util.Mth;
+
 import java.util.function.Function;
 
 public class CurvesUtils {

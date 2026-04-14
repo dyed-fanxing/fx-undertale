@@ -95,8 +95,8 @@ public class DisplayBone extends Entity implements  Scalable, Growable, IEntityW
     @Override
     public void recreateFromPacket(ClientboundAddEntityPacket packet) {
         super.recreateFromPacket(packet);
-        trail1 = new TrailFan(lifetime*0.5f,Sans.ENERGY_AQUA);
-        trail2 = new TrailFan(lifetime*0.5f,Sans.ENERGY_AQUA);
+        trail1 = new TrailFan(lifetime*0.5f).color(Sans.ENERGY_AQUA[1]);
+        trail2 = new TrailFan(lifetime*0.5f).color(Sans.ENERGY_AQUA[1]);
     }
 
     @Override

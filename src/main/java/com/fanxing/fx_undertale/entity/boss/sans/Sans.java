@@ -127,11 +127,11 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     private boolean mercyTriggered = false;  // 仁慈触发标记
 
     // 添加BOSS条相关字段
-    private ServerBossEvent bossEvent;
+    private final ServerBossEvent bossEvent;
     private final Set<ServerPlayer> trackingPlayers = new HashSet<>();
 
     private GasterBlaster controllerAimGB = null;
-    private EllipsoidShield shield ;
+    private final EllipsoidShield shield ;
 
     public Sans(EntityType<? extends Monster> type, Level level) {
         super(type, level);
@@ -182,7 +182,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 long time = this.tickCount;
                 float cycle = (Mth.sin(time * 1.0f) + 1.0f) / 2.0f; // 0.1f 控制变化速度
                 int colorB = 0xC0F6FD29;// 原本是 0xFFF6FD29
-                this.level().addParticle(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.lerp(cycle, Sans.ENERGY_AQUA, colorB)), vec3.x, vec3.y, vec3.z, 0, 0, 0);
+                int[] colorA = Sans.ENERGY_AQUA[1];
+                this.level().addParticle(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.lerp(cycle,FastColor.ARGB32.color(colorA[3],colorA[0],colorA[1],colorA[2]), colorB)), vec3.x, vec3.y, vec3.z, 0, 0, 0);
             }
         }else{
             EntityHitResult hitResult = shield.tick((t)-> t.getOwner() != this);
@@ -1523,7 +1524,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                         8 + this.random.nextDouble() * 4,
                         this.getYHeadRot(), this.getXRot()
                 )));
-            } while (this.level().noBlockCollision(gb, gb.getBoundingBox()) && !this.level().getEntities(gb, gb.getBoundingBox()).isEmpty() && ++attempts < 16);
+            } while (this.level().noCollision(gb, gb.getBoundingBox()) && ++attempts < 16);
             gb.aim(target);
             gb.restAnimPos();
             this.level().addFreshEntity(gb);
@@ -1592,7 +1593,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         float size = 1.25F + (2 + difficulty - count) * 0.25f;
         float currentAngle = offsetAngle; // 从指定角度开始
         for (int i = 0; i < count; i++, currentAngle += angleStep) {
-            GasterBlaster gb = new GasterBlaster(this.level(), this, getAttackDamage(), size);
+            GasterBlaster gb = createGasterBlaster(size);
             gb.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(UUID.randomUUID().toString(), (byte) 10));
             // 计算圆形上的位置
             double xOffset = Math.sin(currentAngle * Mth.DEG_TO_RAD) * radius;
@@ -1612,7 +1613,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         float angleStep = 360f / count;
         float currentAngle = offsetAngle; // 从指定角度开始
         for (int i = 0; i < count; i++, currentAngle += angleStep) {
-            GasterBlaster gb = new GasterBlaster(this.level(), this, getAttackDamage(), size);
+            GasterBlaster gb = createGasterBlaster(size);
             gb.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(UUID.randomUUID().toString(), (byte) 10));
             // 计算圆形上的位置
             double xOffset = Math.sin(currentAngle * Mth.DEG_TO_RAD) * radius;
@@ -1649,7 +1650,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         int difficulty = getDifficulty();
         float size = 0.5f + difficulty * 0.3334f + factor * 0.5f;
         GasterBlaster gb = new GasterBlaster(level(), this, getAttackDamage(), size, (34 - factor * 17), (int) (100 * size), 100).follow(new Vec3(0, this.getBbHeight() * 0.5f, 1))
-                .aimSmoothSpeed(0.1f + getStaminaFactor() * 0.02f + factor * 0.02f);
+                .aimSmoothSpeed(0.11f + getStaminaFactor() * 0.02f + factor * 0.02f);
         gb.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(UUID.randomUUID().toString(), (byte) 10));
         gb.aim(target);
         this.level().addFreshEntity(gb);
@@ -1838,10 +1839,14 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         return false;
     }
 
-    public static int ENERGY_AQUA = 0xC061E5DF;
-//    public final RadialBladeTrailStrip leftHandTrail = new RadialBladeTrailStrip(10f, ENERGY_AQUA, (t) -> CurvesUtils.powerFallEaseOut(t, 2)).tipInflate(0.2F);
-    public final RadialPlaneTrailStrip leftHandTrail = new RadialPlaneTrailStrip(10f,ENERGY_AQUA, (t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
-    public final RadialPlaneTrailStrip rightHandTrail = new RadialPlaneTrailStrip(10f, ENERGY_AQUA, (t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
+    // 蓝色（激光风格）
+    public static final int[][] ENERGY_AQUA = {
+            {226, 255, 255,255},    // 内层 能量层：高亮白（最亮）
+            {0, 97, 165,255},       // 外层 泛光层：加法混合下呈现浅蓝
+            {25, 97, 165, 255}     // 外层 流动条纹层：加法混合下呈现亮蓝偏青
+    };
+    public final RadialPlaneTrailStrip leftHandTrail = new RadialPlaneTrailStrip(10f).color(ENERGY_AQUA[1]).progressCurve((t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
+    public final RadialPlaneTrailStrip rightHandTrail = new RadialPlaneTrailStrip(10f).color(ENERGY_AQUA[1]).progressCurve((t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
 
 }
 

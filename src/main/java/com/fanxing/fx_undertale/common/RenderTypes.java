@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.lang3.function.TriFunction;
 
+import java.util.OptionalDouble;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -224,97 +225,107 @@ public interface RenderTypes {
                         .createCompositeState(false)
         );
     }
-    /**
-     * ENERGY_SWIRL_TRIANGLES - 能量漩涡效果（带偏移，三角形模式）
-     */
-    static RenderType energySwirlTriangles(ResourceLocation resourceLocation, float uOffset, float vOffset) {
-        return RenderType.create("energy_swirl_triangles", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLES, 1536, false, true,
-                RenderType.CompositeState.builder()
-                        .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
-                        .setTextureState(new TextureStateShard(resourceLocation, false, false))
-                        .setTexturingState(new OffsetTexturingStateShard(uOffset, vOffset))
-                        .setTransparencyState(ADDITIVE_TRANSPARENCY)
-                        .setCullState(NO_CULL)
-                        .createCompositeState(false)
-        );
-    }
+//    /**
+//     * ENERGY_SWIRL_TRIANGLES - 能量漩涡效果（带偏移，三角形模式）
+//     */
+//    static RenderType energySwirlTriangles(ResourceLocation resourceLocation, float uOffset, float vOffset) {
+//        return RenderType.create("energy_swirl_triangles", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLES, 1536, false, true,
+//                RenderType.CompositeState.builder()
+//                        .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
+//                        .setTextureState(new TextureStateShard(resourceLocation, false, false))
+//                        .setTexturingState(new OffsetTexturingStateShard(uOffset, vOffset))
+//                        .setTransparencyState(ADDITIVE_TRANSPARENCY)
+//                        .setCullState(NO_CULL)
+//                        .createCompositeState(false)
+//        );
+//    }
+//
+//    /**
+//     * ENERGY_SWIRL_TRIANGLE_FAN - 能量漩涡效果（带偏移，扇形模式）
+//     */
+//    static RenderType energySwirlTriangleFan(ResourceLocation resourceLocation, float uOffset, float vOffset) {
+//        return RenderType.create("energy_swirl_triangle_fan", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_FAN, 1536, false, true,
+//                RenderType.CompositeState.builder()
+//                        .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
+//                        .setTextureState(new TextureStateShard(resourceLocation, false, false))
+//                        .setTexturingState(new OffsetTexturingStateShard(uOffset, vOffset))
+//                        .setTransparencyState(ADDITIVE_TRANSPARENCY)
+//                        .setCullState(NO_CULL)
+//                        .createCompositeState(false)
+//        );
+//    }
+//
+//    /**
+//     * ENERGY_SWIRL_TRIANGLE_STRIP - 能量漩涡效果（带偏移，条带模式）
+//     */
+//    static RenderType energySwirlTriangleStrip(ResourceLocation resourceLocation, float uOffset, float vOffset) {
+//        return RenderType.create("energy_swirl_triangle_strip", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_STRIP, 1536, false, true,
+//                RenderType.CompositeState.builder()
+//                        .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
+//                        .setTextureState(new TextureStateShard(resourceLocation, false, false))
+//                        .setTexturingState(new OffsetTexturingStateShard(uOffset, vOffset))
+//                        .setTransparencyState(ADDITIVE_TRANSPARENCY)
+//                        .setCullState(NO_CULL)
+//                        .createCompositeState(false)
+//        );
+//    }
 
-    /**
-     * ENERGY_SWIRL_TRIANGLE_FAN - 能量漩涡效果（带偏移，扇形模式）
-     */
-    static RenderType energySwirlTriangleFan(ResourceLocation resourceLocation, float uOffset, float vOffset) {
-        return RenderType.create("energy_swirl_triangle_fan", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_FAN, 1536, false, true,
-                RenderType.CompositeState.builder()
-                        .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
-                        .setTextureState(new TextureStateShard(resourceLocation, false, false))
-                        .setTexturingState(new OffsetTexturingStateShard(uOffset, vOffset))
-                        .setTransparencyState(ADDITIVE_TRANSPARENCY)
-                        .setCullState(NO_CULL)
-                        .createCompositeState(false)
-        );
-    }
-
-    /**
-     * ENERGY_SWIRL_TRIANGLE_STRIP - 能量漩涡效果（带偏移，条带模式）
-     */
-    static RenderType energySwirlTriangleStrip(ResourceLocation resourceLocation, float uOffset, float vOffset) {
-        return RenderType.create("energy_swirl_triangle_strip", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_STRIP, 1536, false, true,
-                RenderType.CompositeState.builder()
-                        .setShaderState(RENDERTYPE_ENERGY_SWIRL_SHADER)
-                        .setTextureState(new TextureStateShard(resourceLocation, false, false))
-                        .setTexturingState(new OffsetTexturingStateShard(uOffset, vOffset))
-                        .setTransparencyState(ADDITIVE_TRANSPARENCY)
-                        .setCullState(NO_CULL)
-                        .createCompositeState(false)
-        );
-    }
-
-
-
-
-
-    /**
-     * 渲染可透明白色实体类型：将有色部分替换为白色，透明部分不动
-     */
-    BiFunction<ResourceLocation, Boolean, RenderType> WHITE_ENTITY_TRANSLUCENT = Util.memoize((texture, sortOnUpload) -> RenderType.create(
-            "white_entity_translucent", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, sortOnUpload,
+    RenderType LINE_STRIP = RenderType.create("energy_line_strip",DefaultVertexFormat.POSITION_COLOR_NORMAL,VertexFormat.Mode.LINE_STRIP,1536,
             RenderType.CompositeState.builder()
-                    .setShaderState(new ShaderStateShard(Shaders::getWhiteEntityShader))
-                    .setTextureState(new TextureStateShard(texture, false, false))
-                    .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                    .setLightmapState(LIGHTMAP)
-                    .setOverlayState(OVERLAY)
+                    .setShaderState(RENDERTYPE_LINES_SHADER)
+                    .setLineState(new RenderStateShard.LineStateShard(OptionalDouble.empty()))
+                    .setLayeringState(VIEW_OFFSET_Z_LAYERING)
+                    .setTransparencyState(ADDITIVE_TRANSPARENCY)
+                    .setOutputState(ITEM_ENTITY_TARGET)
+                    .setWriteMaskState(COLOR_DEPTH_WRITE)
                     .setCullState(NO_CULL)
-                    .createCompositeState(true)
-    ));
-    /**
-     * 模型顶底偏移消散
-     */
-    BiFunction<ResourceLocation, Boolean, RenderType> FLY_BASIC = Util.memoize((texture, translucent) -> RenderType.create(
-            "fly_basic", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, true,
-            RenderType.CompositeState.builder()
-                    .setShaderState(new ShaderStateShard(Shaders::getFlyBasicShader))
-                    .setTextureState(new TextureStateShard(texture, false, false))
-                    .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                    .setLightmapState(LIGHTMAP)
-                    .setOverlayState(OVERLAY)
-                    .setCullState(NO_CULL)
-                    .createCompositeState(true)
-    ));
+                    .createCompositeState(false)
+    );
 
-    /**
-     * 从顶部开始向下，淡出（消失）
-     * 使用了自定义的getTopFadeShader着色器，详细参数看着色器
-     */
-    BiFunction<ResourceLocation, Boolean, RenderType> TOP_FADE = Util.memoize((texture, translucent) -> RenderType.create(
-            "top_fade", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, true,
-            RenderType.CompositeState.builder()
-                    .setShaderState(new ShaderStateShard(Shaders::getTopFadeShader))
-                    .setTextureState(new TextureStateShard(texture, false, false))
-                    .setTransparencyState(translucent ? TRANSLUCENT_TRANSPARENCY : NO_TRANSPARENCY)
-                    .setLightmapState(LIGHTMAP)
-                    .setOverlayState(OVERLAY)
-                    .setCullState(NO_CULL)
-                    .createCompositeState(true)
-    ));
+
+
+//    /**
+//     * 渲染可透明白色实体类型：将有色部分替换为白色，透明部分不动
+//     */
+//    BiFunction<ResourceLocation, Boolean, RenderType> WHITE_ENTITY_TRANSLUCENT = Util.memoize((texture, sortOnUpload) -> RenderType.create(
+//            "white_entity_translucent", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, sortOnUpload,
+//            RenderType.CompositeState.builder()
+//                    .setShaderState(new ShaderStateShard(Shaders::getWhiteEntityShader))
+//                    .setTextureState(new TextureStateShard(texture, false, false))
+//                    .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+//                    .setLightmapState(LIGHTMAP)
+//                    .setOverlayState(OVERLAY)
+//                    .setCullState(NO_CULL)
+//                    .createCompositeState(true)
+//    ));
+//    /**
+//     * 模型顶底偏移消散
+//     */
+//    BiFunction<ResourceLocation, Boolean, RenderType> FLY_BASIC = Util.memoize((texture, translucent) -> RenderType.create(
+//            "fly_basic", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, true,
+//            RenderType.CompositeState.builder()
+//                    .setShaderState(new ShaderStateShard(Shaders::getFlyBasicShader))
+//                    .setTextureState(new TextureStateShard(texture, false, false))
+//                    .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+//                    .setLightmapState(LIGHTMAP)
+//                    .setOverlayState(OVERLAY)
+//                    .setCullState(NO_CULL)
+//                    .createCompositeState(true)
+//    ));
+//
+//    /**
+//     * 从顶部开始向下，淡出（消失）
+//     * 使用了自定义的getTopFadeShader着色器，详细参数看着色器
+//     */
+//    BiFunction<ResourceLocation, Boolean, RenderType> TOP_FADE = Util.memoize((texture, translucent) -> RenderType.create(
+//            "top_fade", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, true,
+//            RenderType.CompositeState.builder()
+//                    .setShaderState(new ShaderStateShard(Shaders::getTopFadeShader))
+//                    .setTextureState(new TextureStateShard(texture, false, false))
+//                    .setTransparencyState(translucent ? TRANSLUCENT_TRANSPARENCY : NO_TRANSPARENCY)
+//                    .setLightmapState(LIGHTMAP)
+//                    .setOverlayState(OVERLAY)
+//                    .setCullState(NO_CULL)
+//                    .createCompositeState(true)
+//    ));
 }

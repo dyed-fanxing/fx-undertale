@@ -126,9 +126,14 @@ repositories {
     }
 //    maven {
 //        name = "Iris Maven"
-//        url = "https://www.cursemaven.com"
 //        url = "https://maven.irisshaders.net/releases/"
 //    }
+    maven {
+        url "https://www.cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
     mavenCentral()
 }
 
@@ -152,7 +157,10 @@ dependencies {
 
 //    compileOnly "net.irisshaders:iris-api:1.6.0+mc1.20.1"
 //    implementation "net.irisshaders.iris:iris-neoforge:${minecraft_version}"
-
+    dependencies {
+        // 使用 `compileOnly`，因为我们只需要在编译时用到，运行时会由用户自己安装 Iris
+        compileOnly "curse.maven:irisshaders-455508:6661598"
+    }
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

@@ -33,6 +33,7 @@
   "death.attack.fx_undertale.frame_blockable.rotation_bone.player": "%1$s 被 %2$s 使用 魔法骨头 砸死了",
   "death.attack.fx_undertale.frame_blockable.flying_bone.player": "%1$s 被 %2$s 使用 魔法骨头 射穿了",
   "death.attack.fx_undertale.frame.ground_bone.player": "%1$s 被 %2$s 使用 魔法骨头 刺穿了",
+  "death.attack.fx_undertale.frame.ground_bone_obb.player": "%1$s 被 %2$s 使用 魔法骨头 刺穿了",
   "death.attack.fx_undertale.frame.gaster_blaster.player": "%1$s 被 %2$s 使用 加斯特冲击波 轰成了渣渣",
 
 
@@ -40,8 +41,6 @@
 
   "fx_undertale.debug.ccd.on": "CCD扫掠: 显示",
   "fx_undertale.debug.ccd.off": "CCD扫掠: 关闭",
-
-
 
 
   "dialogue.fx_undertale.entity.mercy": "%1$s正在%2$s你",
@@ -55,49 +54,53 @@
 
 
 
-  "fx_undertale.configuration.general": "通用",
-  "config.fx_undertale.general.segments": "圆段数",
-  "fx_undertale.configuration.general.expPerLv": "每级所需经验基数",
-  "fx_undertale.configuration.general.expCurveExponent": "经验曲线指数",
-  "fx_undertale.configuration.general.maxLv": "最大等级",
+  "fx_undertale.configuration.segments": "圆段数",
 
-  "fx_undertale.configuration.entity_exp": "实体经验",
-  "fx_undertale.configuration.entity_exp.entityExp": "实体经验列表",
+  "fx_undertale.configuration.expPerLv": "每级所需经验基数",
+  "fx_undertale.configuration.expCurveExponent": "经验曲线指数",
+  "fx_undertale.configuration.maxLv": "最大等级",
+
+  "fx_undertale.configuration.entity_exp": "实体经验配置列表",
+  "fx_undertale.configuration.entity_exp.button": "添加",
+  "fx_undertale.configuration.entity_exp.tooltip": "实体经验配置列表，格式: 实体ID,经验值,击杀上限 (limit=-1表示无限)",
 
   "fx_undertale.configuration.special_kills": "特殊击杀奖励",
   "fx_undertale.configuration.special_kills.namedKillExp": "命名生物额外经验",
+  "fx_undertale.configuration.special_kills.namedKillExp.tooltip": "杀死命名且存活足够天数的生物获得的额外经验",
   "fx_undertale.configuration.special_kills.namedKillDays": "命名生物所需天数",
+  "fx_undertale.configuration.special_kills.namedKillDays.tooltip": "命名生物所需最小存活天数",
   "fx_undertale.configuration.special_kills.tamedKillExp": "驯服生物额外经验",
+  "fx_undertale.configuration.special_kills.tamedKillExp.tooltip": "杀死驯服且存活足够天数的生物获得的额外经验",
   "fx_undertale.configuration.special_kills.tamedKillDays": "驯服生物所需天数",
+  "fx_undertale.configuration.special_kills.tamedKillDays.tooltip": "驯服生物所需最小存活天数",
+
 
   "fx_undertale.configuration.attributes": "属性点",
-  "fx_undertale.configuration.attributes.pointsPerLevel": "每级属性点",
+  "fx_undertale.configuration.attributes.pointsPerLevel": "每升一级获得的属性点",
   "fx_undertale.configuration.attributes.strengthPerPoint": "每点力量增加伤害百分比",
   "fx_undertale.configuration.attributes.toughnessArmorPerPoint": "每点坚韧增加护甲值",
   "fx_undertale.configuration.attributes.toughnessToughnessPerPoint": "每点坚韧增加护甲韧性",
   "fx_undertale.configuration.attributes.healthPerPoint": "每点生命增加生命值",
 
-  "fx_undertale.configuration.character_entities": "角色实体",
-  "fx_undertale.configuration.character_entities.torielEntityId": "Toriel 实体ID",
-  "fx_undertale.configuration.character_entities.papyrusEntityId": "Papyrus 实体ID",
-  "fx_undertale.configuration.character_entities.undyneEntityId": "Undyne 实体ID",
-  "fx_undertale.configuration.character_entities.alphysEntityId": "Alphys 实体ID",
-  "fx_undertale.configuration.character_entities.mettatonEntityId": "Mettaton 实体ID",
-  "fx_undertale.configuration.character_entities.sansEntityId": "Sans 实体ID",
-  "fx_undertale.configuration.character_entities.asgoreEntityId": "Asgore 实体ID",
 
-  "fx_undertale.configuration.chara_hidden": "隐藏能力",
-  "fx_undertale.configuration.chara_hidden.charaRequiredLevel": "Chara 所需LV等级",
-  "fx_undertale.configuration.chara_hidden.charaRequiredItem": "Chara 所需手持物品ID",
-  "fx_undertale.configuration.chara_hidden.charaMaxHpPercent": "Chara 每次攻击削减最大生命值百分比",
-  "fx_undertale.configuration.chara_hidden.charaRemoveBuffs": "Chara 攻击是否移除目标正面效果",
+
+//  "fx_undertale.configuration.character_entities": "角色实体",
+//  "fx_undertale.configuration.character_entities.torielEntityId": "Toriel 实体ID",
+//  "fx_undertale.configuration.character_entities.papyrusEntityId": "Papyrus 实体ID",
+//  "fx_undertale.configuration.character_entities.undyneEntityId": "Undyne 实体ID",
+//  "fx_undertale.configuration.character_entities.alphysEntityId": "Alphys 实体ID",
+//  "fx_undertale.configuration.character_entities.mettatonEntityId": "Mettaton 实体ID",
+//  "fx_undertale.configuration.character_entities.sansEntityId": "Sans 实体ID",
+//  "fx_undertale.configuration.character_entities.asgoreEntityId": "Asgore 实体ID",
+
 
   "fx_undertale.configuration.toriel": "弱肉强食",
   "fx_undertale.configuration.toriel.damageThreshold": "触发阈值",
+  "fx_undertale.configuration.toriel.damageThreshold.tooltip": "目标生命低于此比例时触发",
   "fx_undertale.configuration.toriel.damageStep": "每级增伤比例",
 
   "fx_undertale.configuration.papyrus": "众叛亲离",
-  "fx_undertale.configuration.papyrus.critDamageStep": "每级暴击伤害增加量",
+  "fx_undertale.configuration.papyrus.critDamageStep": "每级暴击伤害增加比例",
 
   "fx_undertale.configuration.undyne": "决心熔蚀",
   "fx_undertale.configuration.undyne.attackSpeedStep": "每级攻速增加比例",
@@ -108,17 +111,22 @@
 
   "fx_undertale.configuration.mettaton": "万众瞩目",
   "fx_undertale.configuration.mettaton.damagePerEnemyStep": "每级增伤增加比例",
-  "fx_undertale.configuration.mettaton.rangeStep": "每级增加范围",
+  "fx_undertale.configuration.mettaton.rangeStep": "每级增加范围（格）",
 
   "fx_undertale.configuration.sans": "罪业回响",
-  "fx_undertale.configuration.sans.frameReductionStep": "每级无敌帧减少比例增加",
+  "fx_undertale.configuration.sans.frameReductionStep": "每级无敌帧减少比例",
 
   "fx_undertale.configuration.asgore": "迟王断命",
-  "fx_undertale.configuration.asgore.armorPierceStep": "每级无视护甲增加比例",
-  "fx_undertale.configuration.asgore.shieldBreakStep": "每级破盾概率增加",
+  "fx_undertale.configuration.asgore.armorPierceStep": "每级无视护甲值增加比例",
+  "fx_undertale.configuration.asgore.shieldBreakStep": "每级破盾概率增加比例",
 
   "fx_undertale.configuration.chara_hidden": "屠杀殆尽",
   "fx_undertale.configuration.chara_hidden.charaMaxHpPercent": "每次攻击削减最大生命值百分比",
-  "fx_undertale.configuration.chara_hidden.charaRemoveBuffs": "攻击是否移除目标正面效果"
+  "fx_undertale.configuration.chara_hidden.charaRemoveBuffs": "攻击是否移除目标正面效果",
 
+  "fx_undertale.configuration.chara_hidden": "隐藏能力",
+  "fx_undertale.configuration.chara_hidden.charaRequiredLevel": "所需LV等级",
+  "fx_undertale.configuration.chara_hidden.charaRequiredItem": "所需手持物品ID",
+  "fx_undertale.configuration.chara_hidden.charaMaxHpPercent": "每次攻击削减最大生命值百分比",
+  "fx_undertale.configuration.chara_hidden.charaRemoveBuffs": "攻击是否移除目标正面效果"
 }
