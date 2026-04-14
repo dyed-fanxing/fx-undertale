@@ -43,7 +43,6 @@ public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMons
     public AbstractDeadUTMonsterDustRenderer(EntityRendererProvider.Context renderManager, GeoModel<T> model) {
         super(renderManager, model);
     }
-
     @Override
     public void createVerticesOfQuad(GeoQuad quad, Matrix4f poseState, Vector3f normal, VertexConsumer buffer,
                                      int packedLight, int packedOverlay, int colour) {
@@ -139,10 +138,7 @@ public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMons
 
     @Override
     public int getPackedOverlay(T animatable, float u, float partialTick) {
-        // 死亡时不要红色闪烁
-        if (animatable.isDeadOrDying()) {
-            return OverlayTexture.NO_OVERLAY;
-        }
+        if (animatable.isDeadOrDying()) return OverlayTexture.NO_OVERLAY;
         return super.getPackedOverlay(animatable, u, partialTick);
     }
 

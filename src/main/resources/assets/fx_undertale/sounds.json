@@ -43,5 +43,10 @@
         "sounds": [
             "fx_undertale:block"
         ]
+    },
+    "entity.death": {
+        "sounds": [
+            "fx_undertale:death"
+        ]
     }
 }

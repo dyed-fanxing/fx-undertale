@@ -38,7 +38,6 @@ public class GravityHandler {
 
 
 
-
     @SubscribeEvent
     public static void onExplosionKnockback(ExplosionKnockbackEvent event) {
         Entity affectedEntity = event.getAffectedEntity();

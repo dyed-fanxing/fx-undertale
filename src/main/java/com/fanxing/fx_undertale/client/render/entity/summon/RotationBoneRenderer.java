@@ -47,15 +47,16 @@ public class RotationBoneRenderer extends GeoEntityRenderer<RotationBone> {
 
     @Override
     public void renderFinal(PoseStack poseStack, RotationBone animatable, BakedGeoModel model, MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay, int colour) {
-        Optional<GeoBone> down = this.getGeoModel().getBone("top");
-        float currentTime = animatable.tickCount + partialTick;
-        if (down.isPresent()) {
-            Vector3d localPos = down.get().getLocalPosition();
-            animatable.trail1.addPoint(localPos, currentTime);
-            VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.LINE_STRIP);
-            animatable.trail1.render(poseStack,bufferSource, consumer, packedLight, currentTime);
+        if(animatable.getAngularVelocity().lengthSquared() != 0){
+            Optional<GeoBone> top = this.getGeoModel().getBone("top");
+            float currentTime = animatable.tickCount + partialTick;
+            if (top.isPresent()) {
+                Vector3d localPos = top.get().getLocalPosition();
+                animatable.trail1.addPoint(localPos, currentTime);
+                VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.LINE_STRIP);
+                animatable.trail1.render(poseStack,bufferSource, consumer, packedLight, currentTime);
+            }
         }
-
         super.renderFinal(poseStack, animatable, model, bufferSource, buffer, partialTick, packedLight, packedOverlay, colour);
     }
 

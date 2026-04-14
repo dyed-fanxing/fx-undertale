@@ -1,20 +1,17 @@
 package com.fanxing.fx_undertale.event.handler;
 
-import com.fanxing.fx_undertale.entity.block.PlatformBlockEntity;
-import com.fanxing.fx_undertale.entity.boss.sans.Sans;
-import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.entity.summon.GroundBone;
-import com.fanxing.fx_undertale.registry.AttachmentTypes;
-import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.level.ExplosionKnockbackEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +19,23 @@ import org.slf4j.LoggerFactory;
 @EventBusSubscriber
 public class EntityHandler {
     private static final Logger log = LoggerFactory.getLogger(EntityHandler.class);
+
+    @SubscribeEvent
+    public static void onExplosionKnockback(ExplosionKnockbackEvent event) {
+        Entity affectedEntity = event.getAffectedEntity();
+        if(affectedEntity instanceof GroundBone){
+            event.setKnockbackVelocity(new Vec3(0,0,0));
+        }
+    }
+
+
+
+
+
+
+
+
+
 
     @SubscribeEvent
     public static void onEntityRefreshDimension(EntityEvent.Size event){
@@ -68,5 +82,4 @@ public class EntityHandler {
 //            log.info("铁傀儡tick后{}的 差分速度：({},{},{})",ironGolem.tickCount,ironGolem.getX()-ironGolem.xo,ironGolem.getY()-ironGolem.yo,ironGolem.getZ()-ironGolem.zo );
         }
     }
-
 }

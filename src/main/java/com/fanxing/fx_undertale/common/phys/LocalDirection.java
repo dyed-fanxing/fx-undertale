@@ -15,7 +15,6 @@ public enum LocalDirection {
     FRONT(0,0,1),
     BACK(0,0,-1);
     private final Vec3 vec3;
-
     LocalDirection(double x,double y,double z) {
         this.vec3 = new Vec3(x,y,z);
     }

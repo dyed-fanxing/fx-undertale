@@ -19,29 +19,27 @@ import java.util.function.Supplier;
 
 public class EntityTypes {
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, FxUndertale.MOD_ID);
+
     public static void register(IEventBus bus) {
         ENTITY_TYPES.register(bus);
     }
 
-    public static <T extends Entity> DeferredHolder<EntityType<?>, EntityType<T>> register(String name, EntityType.Builder<T> builder){
-        return ENTITY_TYPES.register(name,() -> builder.build(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,name).toString()));
+    public static <T extends Entity> DeferredHolder<EntityType<?>, EntityType<T>> register(String name, EntityType.Builder<T> builder) {
+        return ENTITY_TYPES.register(name, () -> builder.build(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, name).toString()));
     }
 
 
-    public static final DeferredHolder<EntityType<?>,EntityType<GasterBlaster>> GASTER_BLASTER =
-            ENTITY_TYPES.register("gaster_blaster",
-                    () -> EntityType.Builder.<GasterBlaster>of(GasterBlaster::new, MobCategory.MISC)
-                            .sized(1.5f, 1.5f)  // 碰撞箱
-                            .eyeHeight(0.4f)
-                            .clientTrackingRange(16)  // 客户端同步范围，以区块为单位
-                            .build(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,"gaster_blaster").toString())
-            );
+    public static final DeferredHolder<EntityType<?>, EntityType<GasterBlaster>> GASTER_BLASTER = register("gaster_blaster",
+            EntityType.Builder.<GasterBlaster>of(GasterBlaster::new, MobCategory.MISC)
+                    .sized(1.5f, 1.5f)  // 碰撞箱
+                    .eyeHeight(0.4f)
+                    .clientTrackingRange(16));
 
     public static final DeferredHolder<EntityType<?>, EntityType<Sans>> SANS = register("sans",
             EntityType.Builder.of(Sans::new, MobCategory.MONSTER)
                     .sized(0.8f, 2.0f)  // 碰撞箱
                     .eyeHeight(1.6665f)
-                    .attach(EntityAttachment.WARDEN_CHEST,0.2f,1.6665f,0.4f)
+                    .attach(EntityAttachment.WARDEN_CHEST, 0.2f, 1.6665f, 0.4f)
                     .clientTrackingRange(16)  // 客户端同步范围，以区块为单位)
     );
 
@@ -59,24 +57,22 @@ public class EntityTypes {
     );
     public static final DeferredHolder<EntityType<?>, EntityType<FlyingBone>> FLYING_BONE = register("flying_bone",
             EntityType.Builder.<FlyingBone>of(FlyingBone::new, MobCategory.MISC)
-                    .sized(0.3125f,0.3125f)
+                    .sized(0.3125f, 0.3125f)
                     .eyeHeight(0.15625f)
                     .clientTrackingRange(16)  // 客户端同步范围，以区块为单位
     );
     public static final DeferredHolder<EntityType<?>, EntityType<RotationBone>> ROTATION_BONE = register("rotation_bone",
             EntityType.Builder.<RotationBone>of(RotationBone::new, MobCategory.MISC)
-                    .sized(0.25f,1.0f)
+                    .sized(0.25f, 1.0f)
                     .eyeHeight(0.5f)
                     .clientTrackingRange(16)  // 客户端同步范围，以区块为单位
     );
     public static final DeferredHolder<EntityType<?>, EntityType<DisplayBone>> DISPLAY_BONE = register("display_bone",
             EntityType.Builder.<DisplayBone>of(DisplayBone::new, MobCategory.MISC)
-                    .sized(0.1F,0.1F)
+                    .sized(0.25f, 0.25f)
                     .eyeHeight(0.05F)
                     .clientTrackingRange(16)  // 客户端同步范围，以区块为单位
     );
-
-
 
 
     public static final DeferredHolder<EntityType<?>, EntityType<PlatformBlockEntity>> PLATFORM_BLOCK_ENTITY = register("platform_block_entity",

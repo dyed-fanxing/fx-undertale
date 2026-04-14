@@ -47,6 +47,19 @@ public abstract class Summons extends Entity implements TraceableEntity {
             }
         }
     }
+    @Override
+    public boolean shouldRenderAtSqrDistance(double r) {
+        double d0 = this.getBoundingBox().getSize() * (double)2.0F;
+        if (Double.isNaN(d0)) {
+            d0 = 4.0F;
+        }
+
+        d0 *= getViewDist();
+        return r < d0 * d0;
+    }
+    public double getViewDist(){
+        return 64f;
+    }
 
     protected boolean canHitEntity(Entity entity) {
         Entity owner = getOwner();

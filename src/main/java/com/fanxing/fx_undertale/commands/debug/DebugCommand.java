@@ -1,4 +1,4 @@
-package com.fanxing.fx_undertale.commands;
+package com.fanxing.fx_undertale.commands.debug;
 
 import com.fanxing.fx_undertale.net.packet.GravityPacket;
 import com.fanxing.fx_undertale.utils.GravityUtils;
@@ -33,31 +33,22 @@ public class DebugCommand {
         // 直接注册命令
         event.getDispatcher().register(
                 Commands.literal("sans").requires(css -> css.hasPermission(3)).then(
-                        Commands.argument("function", IntegerArgumentType.integer(1, 10))
+                        Commands.argument("attackId", IntegerArgumentType.integer(1, 50))
                                 .executes(cc -> {
                                     ServerPlayer player = cc.getSource().getPlayer();
                                     if (player != null) {
                                         int viewDis = player.requestedViewDistance() * 16;
                                         Vec3 pos = player.position();
-                                        Sans sans = player.level().getNearestEntity(Sans.class, TargetingConditions.forNonCombat(), player, pos.x, pos.y, pos.z,
-                                                new AABB(pos.x-viewDis,pos.y-viewDis,pos.z-viewDis,pos.x+viewDis,pos.y+viewDis,pos.z+viewDis));
-                                        if(sans != null) {
-//                                            sans.setPersistentAngerTarget(player.getUUID());
-                                            int function = IntegerArgumentType.getInteger(cc, "function");
-                                            switch (function) {
-                                                case 1 -> sans.shootBoneRingVolley(player);
-                                                case 2 -> sans.shootArcSweepVolley(player);
-                                                case 3 -> sans.shootAimedBarrage(player);
-                                                case 4 -> sans.shootForwardBarrage(player);
-                                                case 5 -> sans.summonGroundBoneSpineAtSelf();
-                                                case 6 -> sans.summonGroundBoneSpineWaveAroundSelf(player);
-                                            }
+                                        Sans sans = player.level().getNearestEntity(Sans.class, TargetingConditions.forNonCombat(), player, pos.x, pos.y, pos.z, new AABB(pos.x - viewDis, pos.y - viewDis, pos.z - viewDis, pos.x + viewDis, pos.y + viewDis, pos.z + viewDis));
+                                        if (sans != null) {
+                                            sans.testAttackId = IntegerArgumentType.getInteger(cc, "attackId");
                                         }
                                     }
                                     return 1;
                                 })
                 )
         );
+
         event.getDispatcher().register(
                 Commands.literal("gravity")
                         .requires(css -> css.hasPermission(3))
@@ -98,7 +89,7 @@ public class DebugCommand {
                                                         .executes(ctx -> {
                                                             Collection<? extends Entity> targets = EntityArgument.getEntities(ctx, "targets");
                                                             for (Entity target : targets) {
-                                                                GravityUtils.applyGravity(target,Direction.DOWN);
+                                                                GravityUtils.applyGravity(target, Direction.DOWN);
                                                             }
                                                             return 1;
                                                         })
@@ -112,7 +103,7 @@ public class DebugCommand {
                                                         .executes(ctx -> {
                                                             Collection<? extends Entity> targets = EntityArgument.getEntities(ctx, "targets");
                                                             for (Entity target : targets) {
-                                                                GravityUtils.applyGravity(target,Direction.UP);
+                                                                GravityUtils.applyGravity(target, Direction.UP);
                                                             }
                                                             return 1;
                                                         })
@@ -120,8 +111,6 @@ public class DebugCommand {
                         )
         );
     }
-
-
 
 
     @SubscribeEvent
@@ -154,7 +143,7 @@ public class DebugCommand {
                                                             Direction direction = Direction.valueOf(directionStr.toUpperCase());
                                                             for (Entity target : targets) {
                                                                 GravityUtils.applyGravity(target, direction);
-                                                                PacketDistributor.sendToPlayersTrackingEntityAndSelf(target,new GravityPacket(target.getId(),direction));
+                                                                PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), direction));
                                                             }
                                                             ctx.getSource().sendSuccess(() ->
                                                                             Component.literal("应用重力方向 " + directionStr + " 到 " + targets.size() + " 个实体"),
@@ -181,7 +170,7 @@ public class DebugCommand {
                                                                                                                             for (Entity target : targets) {
                                                                                                                                 GravityUtils.applyGravity(target, direction);
                                                                                                                                 target.setDeltaMovement(dx, dy, dz);
-                                                                                                                                PacketDistributor.sendToPlayersTrackingEntityAndSelf(target,new GravityPacket(target.getId(),direction, (float) dy));
+                                                                                                                                PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), direction, (float) dy));
                                                                                                                                 // 2. 设置速度
                                                                                                                                 if (target instanceof ServerPlayer player) {
                                                                                                                                     player.connection.send(new ClientboundSetEntityMotionPacket(player));

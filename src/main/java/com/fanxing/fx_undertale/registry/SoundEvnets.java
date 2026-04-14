@@ -25,6 +25,7 @@ public class SoundEvnets {
     public static final DeferredHolder<SoundEvent,SoundEvent> SANS_BONE_SPINE = register("entity.sans.bone_spine");
     public static final DeferredHolder<SoundEvent,SoundEvent> SANS_TELEPORT_TIME_JUMP = register("entity.sans.teleport_time_jump");
     public static final DeferredHolder<SoundEvent,SoundEvent> BLOCK = register("entity.block");
+    public static final DeferredHolder<SoundEvent,SoundEvent> DEATH = register("entity.death");
 
     public static DeferredHolder<SoundEvent, SoundEvent> register(String name){
         return SOUNDS.register(name,() ->

@@ -37,8 +37,6 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
     private static final Logger log = LoggerFactory.getLogger(SansRender.class);
 //    RenderType whiteEntityType = RenderTypes.WHITE_ENTITY_TRANSLUCENT.apply(getTextureLocation(animatable), true);
     RenderType WHITE = RenderType.ENTITY_TRANSLUCENT.apply(SANS_WHITE, false);
-    RenderType BALL_GLOW = RenderTypes.ENERGY_TRIANGLE_STRIP.apply(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,"textures/misc/circle_white.png"), true);
-    private RotationBoneModel rotationBoneModel;
     public SansRender(EntityRendererProvider.Context renderManager) {
         super(renderManager, new SansModel());
         addRenderLayer(new SansEyesLayer(this));

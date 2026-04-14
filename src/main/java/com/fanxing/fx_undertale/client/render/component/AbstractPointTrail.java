@@ -20,7 +20,8 @@ public abstract class AbstractPointTrail<T extends AbstractPointTrail<T>> {
     public float lifetime = 5;
     public float r=1, g=1, b=1,a=1;
     public Function<Float, Float> progressCurve = t -> 1-t;        // 基于生命周期控制点的透明度曲线，时间渐变
-    public Function<Float, Float> uAlphaCurve = u -> 1f;          // 基于纹理u坐标控制点的透明度曲线，空间渐变，两者可以组合使用
+    //KEY 加法混合得启用u映射，不然只用生命周期透明度曲线，最后的效果只有整体淡出，没有尾部淡出，大概因为加法混合的原因丢掉了某个透明度因子。
+    public Function<Float, Float> uAlphaCurve = u -> u;          // 基于纹理u坐标控制点的透明度曲线，空间渐变，两者可以组合使用
     public Vector3f center = new Vector3f();
     protected float interpolationSpacing = 0.06f; // 插值最大间距，可调整
     public boolean isAdditive = true; //是否为加法混合

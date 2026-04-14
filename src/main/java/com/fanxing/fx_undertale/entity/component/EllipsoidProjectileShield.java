@@ -1,6 +1,7 @@
 package com.fanxing.fx_undertale.entity.component;
 
 import com.fanxing.fx_undertale.utils.collsion.CollisionDetectionUtils;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
@@ -15,12 +16,12 @@ import java.util.function.Predicate;
  * 椭球体防护罩组件。
  * 可附加到任意实体上，在该实体的 tick() 方法中调用 tick() 即可自动拦截进入椭球区域的弹射物。
  */
-public class EllipsoidShield {
+public class EllipsoidProjectileShield {
     private final Entity holder;
     private final double a, b, c;
     private double searchRadius = 64.0;  // 搜索半径，可配置，默认64格
 
-    public EllipsoidShield(Entity holder, double a, double b, double c) {
+    public EllipsoidProjectileShield(Entity holder, double a, double b, double c) {
         this.holder = holder;
         this.a = a;
         this.b = b;
@@ -55,12 +56,9 @@ public class EllipsoidShield {
         for (Projectile proj : projectiles) {
             Vec3 curPos = proj.position();
             // 1. 如果弹射物已经在椭球内部，立即拦截
-            if (CollisionDetectionUtils.isPointInsideEllipsoid(curPos, center, a, b, c)) return new EntityHitResult(proj, curPos);
-
-            // 2. 获取速度向量，预测下一帧位置（假设速度不变，时间步长 1 tick）
-            Vec3 velocity = proj.getDeltaMovement();
-            Vec3 nextPos = curPos.add(velocity);
-
+            Vec3 vel = proj.getDeltaMovement();
+            if (CollisionDetectionUtils.isPointInsideEllipsoid(curPos, center, a, b, c) && vel.lengthSqr() <= Mth.EPSILON) return new EntityHitResult(proj, curPos);
+            Vec3 nextPos = curPos.add(vel);
             // 3. 检测从当前位置到预测位置的线段是否与椭球相交
             Vec3 hit = CollisionDetectionUtils.getSegmentEllipsoidIntersection(curPos, nextPos, center, a, b, c);
             if (hit != null) return new EntityHitResult(proj, hit);

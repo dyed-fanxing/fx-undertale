@@ -3,6 +3,9 @@ package com.fanxing.fx_undertale.utils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.FlyingMob;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -15,8 +18,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public class EntityUtils {
     /**
      * 精确查找地面Y坐标（与原版Evoker尖牙相同的逻辑）
+     *
      * @param level 世界
-     * @param pos 最小搜索Y坐标
+     * @param pos   最小搜索Y坐标
      * @return 精确的地面Y坐标，如果没找到返回世界最小坐标
      */
     public static double findGroundY(Level level, Vec3 pos) {
@@ -46,13 +50,15 @@ public class EntityUtils {
         // 没找到地面，返回世界最小Y坐标
         return minBuildHeight;
     }
+
     /**
      * 精确查找地面Y坐标（与原版Evoker尖牙相同的逻辑）
-     * @param level 世界
+     *
+     * @param level   世界
      * @param targetX 目标X坐标
      * @param targetZ 目标Z坐标
-     * @param minY 最小搜索Y坐标
-     * @param maxY 最大搜索Y坐标
+     * @param minY    最小搜索Y坐标
+     * @param maxY    最大搜索Y坐标
      * @return 精确的地面Y坐标，如果没找到返回世界最小坐标
      */
     public static double findGroundY(Level level, double targetX, double targetZ, double minY, double maxY) {
@@ -84,4 +90,5 @@ public class EntityUtils {
         // 没找到地面，返回世界最小Y坐标
         return level.getMinBuildHeight();
     }
+
 }

@@ -235,15 +235,7 @@ public class AttackNode<T extends LivingEntity> {
 
     public AttackNode<T> copy() {
         // 1. 根据字段选择合适的构造器
-        AttackNode<T> cloned;
-        if (this.tick != null) {
-            cloned = new AttackNode<>(this.id, this.cooldown, this.tick);
-        } else if (this.animId != null) {
-            cloned = new AttackNode<>(this.id, this.animId, this.cooldown);
-        } else {
-            // fallback：无 tick 无动画，使用空 tick
-            cloned = new AttackNode<>(this.id, this.cooldown, (a, t, tick) -> true);
-        }
+        AttackNode<T> cloned = new AttackNode<>(this.id, this.animId, this.cooldown, this.tick);
         // 2. 复制普通字段
         cloned.priority = this.priority;
         cloned.isControlMove = this.isControlMove;

@@ -23,11 +23,6 @@ public class DisplayBone extends Entity implements  Scalable, Growable, IEntityW
     private int lifetime = 5; // 0.5秒
     private float scale;
 
-
-
-
-
-
     public TrailFan trail1;
     public TrailFan trail2;
     public DisplayBone(EntityType<?> entityType, Level level) {
@@ -51,7 +46,16 @@ public class DisplayBone extends Entity implements  Scalable, Growable, IEntityW
         }
         super.tick();
     }
+    @Override
+    public boolean shouldRenderAtSqrDistance(double r) {
+        double d0 = this.getBoundingBox().getSize() * (double)2.0F;
+        if (Double.isNaN(d0)) {
+            d0 = 4.0F;
+        }
 
+        d0 *= 256F;
+        return r < d0 * d0;
+    }
 
     public float getScaleProgress(float partialTick) {
         return scale*CurvesUtils.riseHoldFallBezier((tickCount+partialTick)/lifetime,0.5F,1.0f);
@@ -78,6 +82,7 @@ public class DisplayBone extends Entity implements  Scalable, Growable, IEntityW
     public boolean isAttackable() {
         return false;
     }
+
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {}
