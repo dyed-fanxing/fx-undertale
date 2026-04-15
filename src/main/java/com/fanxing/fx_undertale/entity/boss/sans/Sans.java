@@ -256,6 +256,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         float stamina = getStamina();
         byte phaseID = getPhaseID();
         boolean flag;
+        log.info("原始：power：{}",power);
         // 直接免疫的
         if (phaseID == MERCY_PHASE) {
             // 触发仁慈可以被攻击，但是不会立马进入二阶段
@@ -270,18 +271,34 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         } else if (phaseID == SPECIAL_ATTACK) {
             return false;
         } else {
-            power *= 0.6f;
+            boolean f = true;
             if (source.is(DamageTypeTags.IS_PROJECTILE)) {
-                power *= 0.4f;
+                f = false;
+                power *= 0.2f;
+                log.debug("弹射物减免80%：power：{}",power);
             }
             if (source.is(Tags.DamageTypes.IS_MAGIC)) {
-                power *= 0.1f;
+                f = false;
+                power *= 0.05f;
+                log.debug("魔法减免95%：power：{}",power);
             }
             if (source.is(Tags.DamageTypes.IS_PHYSICAL)) {
-                if(!source.isDirect()) power *= 0.8f;
+                f = false;
+                if(source.isDirect()) {
+                    log.debug("近身物理伤害减免70%：power：{}",power);
+                    power *= 0.3F;
+                } else{
+                    log.debug("近身物理伤害减免60%：power：{}",power);
+                    power *= 0.2F;
+                }
+            }
+            if(f){
+                power *= 0.01f;
+                log.debug("其他攻击伤害，减免99%：power：{}",power);
             }
             flag = true;
         }
+        log.debug("最终减免：power：{}",power);
         if (flag) {
             if (phaseID == FIRST_PHASE) {
                 stamina = Math.max(maxStamina * 0.5f, stamina - power);
