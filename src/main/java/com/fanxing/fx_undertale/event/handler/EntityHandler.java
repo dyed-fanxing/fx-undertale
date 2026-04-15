@@ -1,6 +1,7 @@
 package com.fanxing.fx_undertale.event.handler;
 
 import com.fanxing.fx_undertale.entity.summon.GroundBone;
+import com.fanxing.fx_undertale.entity.summon.GroundBoneOBB;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -16,7 +17,7 @@ public class EntityHandler {
     @SubscribeEvent
     public static void onExplosionKnockback(ExplosionKnockbackEvent event) {
         Entity affectedEntity = event.getAffectedEntity();
-        if(affectedEntity instanceof GroundBone){
+        if(affectedEntity instanceof GroundBone || affectedEntity instanceof GroundBoneOBB){
             event.setKnockbackVelocity(new Vec3(0,0,0));
         }
     }
