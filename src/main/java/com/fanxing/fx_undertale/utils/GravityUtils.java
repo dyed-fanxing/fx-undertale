@@ -92,8 +92,8 @@ public class GravityUtils {
         double minE = aabb.min(axis);
         double maxE = aabb.max(axis);
         double dy = 0;
-        double maxFootS = 0;
-        double minHeadS = Double.MAX_VALUE;
+        double maxFootS = Double.NEGATIVE_INFINITY;
+        double minHeadS = Double.POSITIVE_INFINITY;
         for (VoxelShape shape : level.getBlockCollisions(null, aabb)) {
             if (shape.isEmpty()) continue;
             double minS = shape.min(axis);
@@ -185,7 +185,9 @@ public class GravityUtils {
         return BlockPos.containing(x+(normal.getX()>0?-FLOOR_EPSILON:0), y+(normal.getY()>0?-FLOOR_EPSILON:0), z+(normal.getZ()>0?-FLOOR_EPSILON:0));
     }
 
-    // 提取向量在重力轴上的分量（其他轴清零）
+    /**
+     * 提取向量在重力轴上的分量（其他轴清零）
+     */
     public static Vec3 getAxialComponent(Direction gravity,Vec3 vec) {
         return switch (gravity.getAxis()) {
             case X -> new Vec3(vec.x, 0, 0);

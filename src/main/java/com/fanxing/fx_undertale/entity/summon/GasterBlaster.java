@@ -174,12 +174,10 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         endPos = this.position();
         startPos = this.position().add(this.getLookAngle().scale(-DIST));
         this.setPos(startPos);
-        log.info("restAnimPos，position：{}，startPos：{}，endPos：{}",position(),startPos,endPos);
     }
     public void restAnimPosClient(){
         startPos = this.position();
         endPos = this.position().add(this.getLookAngle().scale(DIST));
-        log.info("restAnimPos，position：{}，startPos：{}，endPos：{}",position(),startPos,endPos);
     }
     /**
      * 平滑瞄准目标，旋转速度由 speed 控制（0~1，值越小越慢）

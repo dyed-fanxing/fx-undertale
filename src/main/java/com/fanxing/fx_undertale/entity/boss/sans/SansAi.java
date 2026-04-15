@@ -591,6 +591,7 @@ public class SansAi {
                 a.applyGravityControlAcc(t, 0F);
                 a.controlSoulMode(t,SoulMode.DEFAULT);
             });
+            PacketDistributor.sendToPlayersTrackingEntity(a,new AnimPacket(a.getId(), -1));
         }
     }
     public static AttackNode<Sans> createSpecialAttack(Sans mob,LivingEntity target) {
