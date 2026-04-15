@@ -28,7 +28,7 @@ public abstract class AbstractUTMonster extends Monster {
     protected void tickDeath() {
         ++this.deathTime;
         if (this.deathTime >= getDeathTime() && !this.level().isClientSide() && !this.isRemoved()) {
-            dropAllDeathLoot((ServerLevel) level(),deathSource);
+            dropAllDeathLoot((ServerLevel) level(),deathSource==null?this.damageSources().generic():deathSource);
             this.level().broadcastEntityEvent(this, (byte)60);
             this.remove(RemovalReason.KILLED);
         }
