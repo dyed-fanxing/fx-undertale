@@ -173,8 +173,14 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     public void restAnimPos(){
         endPos = this.position();
         startPos = this.position().add(this.getLookAngle().scale(-DIST));
+        this.setPos(startPos);
+        log.info("restAnimPos，position：{}，startPos：{}，endPos：{}",position(),startPos,endPos);
     }
-
+    public void restAnimPosClient(){
+        startPos = this.position();
+        endPos = this.position().add(this.getLookAngle().scale(DIST));
+        log.info("restAnimPos，position：{}，startPos：{}，endPos：{}",position(),startPos,endPos);
+    }
     /**
      * 平滑瞄准目标，旋转速度由 speed 控制（0~1，值越小越慢）
      */
@@ -196,7 +202,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
      */
     @Override
     public boolean shouldBeSaved() {
-        return !isFollow && super.shouldBeSaved();
+        return false;
     }
 
 
@@ -523,10 +529,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         }
         this.holdTimeScale = buffer.readFloat();
         if(buffer.readBoolean()) this.target = this.level().getEntity(buffer.readInt());
-        if(!isFollow && !isMountable()){
-            restAnimPos();
-            this.setPos(startPos);
-        }
+        if(!isFollow && !isMountable()) restAnimPosClient();
         this.color = ColorUtils.intToRGBArrays(buffer.readInt(),buffer.readInt(),buffer.readInt());
         this.refreshDimensions();
     }

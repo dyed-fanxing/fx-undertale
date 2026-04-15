@@ -95,11 +95,10 @@ public class GasterBlasterItem extends Item implements GeoItem {
                 GasterBlaster blaster = new GasterBlaster(level, player).color(Sans.ENERGY_AQUA);
                 double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
                 blaster.setPos(player.position().add(GravityUtils.localToWorld(player,RotUtils.rotateYXZ(new Vec3(0, safeDistance, 0.3f), player.getYRot(), player.getXRot(), player.getRandom().nextFloat() * 180f -90f))));
+                blaster.aim(hitResult.getLocation());
                 if (hitResult instanceof EntityHitResult entityHitResult) {
                     Entity target = entityHitResult.getEntity();
                     blaster.target(target).aimSmoothSpeed(0.15f);
-                } else {
-                    blaster.aim(hitResult.getLocation());
                 }
                 blaster.restAnimPos();
                 level.addFreshEntity(blaster);
