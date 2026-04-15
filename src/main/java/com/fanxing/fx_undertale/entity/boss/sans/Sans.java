@@ -759,7 +759,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
 
     protected FlyingBone createFlyingBone(String attackTypeUUID, float scale, float growScale) {
         FlyingBone bone = new FlyingBone(EntityTypes.FLYING_BONE.get(), this.level(), this, getAttackDamage(), scale, growScale);
-        bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackTypeUUID, (byte) (2 * scale * growScale)));
+        bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackTypeUUID, (byte) 6));
         return bone;
     }
 
@@ -830,14 +830,14 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
 
             for (int c = 0; c < cols; c++) {
                 // 左侧骨头
-                RotationBone leftBone = createRotationBone(attackUUID, scale, leftWidth / scale, ticks).holdTimeScale(0.9f).initOrientation(-yRot, 0, -90f); //KEY 这里yRot必须取反和MC对齐，不然Z轴会错位，下方同理
+                RotationBone leftBone = createLaterBone(attackUUID, scale, leftWidth / scale, ticks).holdTimeScale(0.9f).initOrientation(-yRot, 0, -90f); //KEY 这里yRot必须取反和MC对齐，不然Z轴会错位，下方同理
                 leftBone.setPos(RotUtils.rotateY(new Vec3(-width, c * spacing + leftBone.getBbWidth() * 0.5f, length - frontDist - r * spacing), yRot).add(this.getX(), groundY, this.getZ()));
                 leftBone.shoot(vel.scale(speed));
                 leftBone.updateOBB();
                 level.addFreshEntity(leftBone);
 
                 // 右侧骨头
-                RotationBone rightBone = createRotationBone(attackUUID, scale, rightWidth / scale, ticks).holdTimeScale(0.9f).initOrientation(-yRot, 0, 90f);
+                RotationBone rightBone = createLaterBone(attackUUID, scale, rightWidth / scale, ticks).holdTimeScale(0.9f).initOrientation(-yRot, 0, 90f);
                 rightBone.setPos(RotUtils.rotateY(new Vec3(width, c * spacing + rightBone.getBbWidth() * 0.5f, length - frontDist - r * spacing), yRot).add(this.getX(), groundY, this.getZ()));
                 rightBone.shoot(vel.scale(speed));
                 rightBone.updateOBB();
@@ -874,10 +874,14 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         bone1.updateOBB();
         level().addFreshEntity(bone1);
     }
-
+    public RotationBone createLaterBone(String attackUUID, float scale, float growScale, int lifetime) {
+        RotationBone leftBone = new RotationBone(this.level(), this, scale, growScale, lifetime, getAttackDamage());
+        leftBone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackUUID, (byte) 4));
+        return leftBone;
+    }
     public RotationBone createRotationBone(String attackUUID, float scale, float growScale, int lifetime) {
         RotationBone leftBone = new RotationBone(this.level(), this, scale, growScale, lifetime, getAttackDamage());
-        leftBone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackUUID, (byte) (2 + scale * 1.5 + growScale * 2)));
+        leftBone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackUUID, (byte) 8));
         return leftBone;
     }
 
@@ -1480,7 +1484,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         GroundBoneOBB bone = new GroundBoneOBB(level, this, scale, growScale, getAttackDamage(), lifetime, delay);
         if (spawnY != level.getMinBuildHeight()) {
             bone.setPos(targetX, spawnY, targetZ);
-            bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackUUID, (byte) (scale * 2f + growScale * 1.5f)));
+            bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackUUID, (byte) 6));
             bone.orientation(yRot, xRot, 0);
         }
         return bone;
@@ -1497,7 +1501,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         // 如果找到有效地面，生成骨刺
         GroundBoneOBB bone = new GroundBoneOBB(level, this, scale, growScale, getAttackDamage(), lifetime, delay);
         bone.setPos(pos);
-        bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackUUID, (byte) (scale * 2f + growScale * 1.5f)));
+        bone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackUUID, (byte) 6));
         bone.orientation(yRot, xRot, 0);
         return bone;
     }
@@ -1666,7 +1670,6 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         gravitySlamDirect(target, GravityUtils.applyGravity(target, direction), acceleration);
     }
     public void gravitySlamDirect(LivingEntity target, Direction direction, float acceleration) {
-        log.debug("重力猛击加速度：{}",acceleration);
         target.addDeltaMovement(new Vec3(0, -acceleration, 0));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), direction, -acceleration));
         applyGravityControlAcc(target, 0.08F);
