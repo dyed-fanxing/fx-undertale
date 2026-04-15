@@ -270,15 +270,15 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         } else if (phaseID == SPECIAL_ATTACK) {
             return false;
         } else {
-            power *= 0.5f;
+            power *= 0.6f;
             if (source.is(DamageTypeTags.IS_PROJECTILE)) {
-                power *= 0.9f;
+                power *= 0.4f;
             }
             if (source.is(Tags.DamageTypes.IS_MAGIC)) {
-                power *= 0.95f;
+                power *= 0.1f;
             }
             if (source.is(Tags.DamageTypes.IS_PHYSICAL)) {
-                power *= 0.6f;
+                if(!source.isDirect()) power *= 0.8f;
             }
             flag = true;
         }
