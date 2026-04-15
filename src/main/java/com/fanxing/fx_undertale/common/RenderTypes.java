@@ -49,18 +49,51 @@ public interface RenderTypes {
                         .createCompositeState(true)
         );
     }
+    BiFunction<ResourceLocation, Boolean, RenderType> ENTITY_TRANSLUCENT_TRIANGLE = Util.memoize((texture, isAffectsOutline) ->
+            RenderType.create("entity_translucent_triangle", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLES, 1536, true, true,
+                    RenderType.CompositeState.builder()
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                            .setTextureState(new TextureStateShard(texture, false, false))
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setCullState(NO_CULL)
+                            .setWriteMaskState(COLOR_WRITE)
+                            .setOverlayState(OVERLAY)
+                            .createCompositeState(isAffectsOutline))
+    );
+    BiFunction<ResourceLocation, Boolean, RenderType> ENTITY_TRANSLUCENT_TRIANGLE_STRIP = Util.memoize((texture, isAffectsOutline) ->
+            RenderType.create("entity_translucent_triangle_strip", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_STRIP, 1536, true, true,
+                    RenderType.CompositeState.builder()
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                            .setTextureState(new TextureStateShard(texture, false, false))
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setCullState(NO_CULL)
+                            .setWriteMaskState(COLOR_WRITE)
+                            .setOverlayState(OVERLAY)
+                            .createCompositeState(isAffectsOutline))
+    );
+    BiFunction<ResourceLocation, Boolean, RenderType> ENTITY_TRANSLUCENT_TRIANGLE_FAN = Util.memoize((texture, isAffectsOutline) ->
+            RenderType.create("entity_translucent_triangle_fan", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.TRIANGLE_FAN, 1536, true, true,
+                    RenderType.CompositeState.builder()
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                            .setTextureState(new TextureStateShard(texture, false, false))
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setCullState(NO_CULL)
+                            .setWriteMaskState(COLOR_WRITE)
+                            .setOverlayState(OVERLAY)
+                            .createCompositeState(isAffectsOutline))
+    );
+
     BiFunction<ResourceLocation, Boolean, RenderType> ENTITY_TRANSLUCENT_EMISSIVE_DEPTH = Util.memoize((texture, isAffectsOutline) ->
             RenderType.create("entity_translucent_emissive", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536, true, true,
                     RenderType.CompositeState.builder()
-                    .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER)
-                    .setTextureState(new TextureStateShard(texture, false, false))
-                    .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                    .setCullState(NO_CULL)
-                    .setWriteMaskState(COLOR_DEPTH_WRITE)
-                    .setOverlayState(OVERLAY)
-                    .createCompositeState(isAffectsOutline))
+                            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER)
+                            .setTextureState(new TextureStateShard(texture, false, false))
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setCullState(NO_CULL)
+                            .setWriteMaskState(COLOR_DEPTH_WRITE)
+                            .setOverlayState(OVERLAY)
+                            .createCompositeState(isAffectsOutline))
     );
-
     BiFunction<ResourceLocation, Float, RenderType> ENTITY_TRANSLUCENT_EMISSIVE_ADJUSTABLE_SORT =
             Util.memoize((texture, strength) -> createEntityTranslucentEmissiveAdjustable(texture, true, strength));
     BiFunction<ResourceLocation, Float, RenderType> ENTITY_TRANSLUCENT_EMISSIVE_ADJUSTABLE_UNSORT =

@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.client.render.effect;
 
+import com.fanxing.fx_undertale.common.ResourceLocations;
 import com.fanxing.fx_undertale.utils.CurvesUtils;
 import com.fanxing.fx_undertale.utils.GravityUtils;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -104,6 +105,10 @@ public abstract class WarningTip extends Effect {
 
             VertexConsumer sideConsumer = bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_STRIP_WHITE);
             VertexConsumer capConsumer = bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_TRIANGLE_WHITE);
+//            RenderType sideRenderType = RenderTypes.ENTITY_TRANSLUCENT_TRIANGLE_STRIP.apply(ResourceLocations.WHITE_TEXTURE, false);
+//            RenderType capRenderType = RenderTypes.ENTITY_TRANSLUCENT_TRIANGLE.apply(ResourceLocations.WHITE_TEXTURE, false);
+//            VertexConsumer sideConsumer = bufferSource.getBuffer(sideRenderType);
+//            VertexConsumer capConsumer = bufferSource.getBuffer(capRenderType);
             RenderUtils.renderCylinder(poseStack.last(), sideConsumer, capConsumer,
                     radius, height, Config.COMMON.segments.getAsInt(), r, g, b, getAlpha(partialTick),
                     OverlayTexture.NO_OVERLAY, LightTexture.FULL_SKY);
@@ -201,6 +206,7 @@ public abstract class WarningTip extends Effect {
             poseStack.translate(x, y, z);
             poseStack.mulPose(Axis.YP.rotationDegrees(-yaw));
             float linearProgress = (age + partialTick) / lifetime;
+//            VertexConsumer consumer = bufferSource.getBuffer(RenderType.ENTITY_TRANSLUCENT.apply(ResourceLocations.WHITE_TEXTURE,false));
             VertexConsumer consumer = bufferSource.getBuffer(RenderTypes.ENTITY_TRANSLUCENT_EMISSIVE_WHITE);
             RenderUtils.renderQuadForward(Vec3.ZERO, width, length * Mth.sqrt(linearProgress), poseStack.last(), consumer,
                     r, g, b, alpha, OverlayTexture.NO_OVERLAY, LightTexture.FULL_SKY);
