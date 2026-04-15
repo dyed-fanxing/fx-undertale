@@ -562,7 +562,8 @@ public class SansAi {
         }
 
         @Override
-        protected void stop(@NotNull ServerLevel level, Sans a, long time) {
+        protected void stop(@NotNull ServerLevel level, @NotNull Sans a, long time) {
+            PacketDistributor.sendToPlayersTrackingEntity(a,new AnimPacket(a.getId(), -1));
             a.setPhaseID(Sans.SECOND_PHASE);
         }
     }
