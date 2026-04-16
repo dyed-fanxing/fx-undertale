@@ -485,11 +485,11 @@ public class SansAi {
         return new AttackNode<Sans>(
                 PARAMETRIC_GROUND_BONE, 6, 40, (a, t, tick) -> {
             if (tick == 4) {
-                delay[0] = a.summonHugeParametricGroundBoneSpineWave(t);
                 if(t.position().subtract(a.originPos).lengthSqr() >= 256){
                     t.teleportTo(a.originPos.x, a.originPos.y, a.originPos.z);
                     a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_EYE_BLINK.get(), SoundSource.HOSTILE);
                 }
+                delay[0] = a.summonHugeParametricGroundBoneSpineWave(t);
             }
             if (tick == 20) a.level().playSound(null, t, SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE, 1, 1);
             return tick >= 20 + delay[0];
@@ -647,7 +647,13 @@ public class SansAi {
             float step = 360f/count;
             for (int j = 0; j < count; j++) {
                 int finalJ = j;
-                curr = curr.then(new AttackNode<>("windmill_gb",0,(a, t)->a.summonGBAimOriginPos(t,finalJ *step,1.25f),i<3?2:1,10)).mutex().controlMove();
+                curr = curr.then(new AttackNode<Sans>("windmill_gb",0,(a, t)->{
+                    if (target.position().subtract(a.originPos).lengthSqr() >= 256) {
+                        target.teleportTo(a.originPos.x, a.originPos.y, a.originPos.z);
+                        t.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvnets.SANS_EYE_BLINK.get(), SoundSource.HOSTILE);
+                    }
+                    a.summonGBAimOriginPos(t,finalJ *step,1.25f);
+                },i<3?2:1,10).mutex().controlMove());
             }
         }
         curr = curr.then(new AttackNode<>("",6,0,(a,t)->{},10,4)).mutex().controlMove();
