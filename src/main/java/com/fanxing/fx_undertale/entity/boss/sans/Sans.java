@@ -1643,10 +1643,6 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         gb.aim(originPos.add(0.0, height, 0.0));
         gb.restAnimPos();
         this.level().addFreshEntity(gb);
-        if (target.position().subtract(this.originPos).lengthSqr() >= 256) {
-            target.teleportTo(originPos.x, originPos.y, originPos.z);
-            this.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvnets.SANS_EYE_BLINK.get(), SoundSource.HOSTILE);
-        }
     }
 
     /**
