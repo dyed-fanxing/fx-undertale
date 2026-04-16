@@ -13,6 +13,7 @@
     "OBBEntityMixin",
     "PlayerWantsToStopRidingMixin",
     "gravity.EntityGravityMixin",
+    "gravity.FireworkRocketEntityMixin",
     "gravity.LivingEntityGravityMixin",
     "gravity.MoveControlTestMixin",
     "gravity.PlayerGravityMixin",

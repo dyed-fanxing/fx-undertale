@@ -95,29 +95,29 @@ public class SansAi {
 
                 new SpecialAttack(),
                 createSpecialPhaseSingleSkills(),
-                createAllTest()
-//                new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-//                        Pair.of(createFirstComboSkillBehavior(), 15),
-//                        Pair.of(createContinuousOffHandSkillBehavior(), 5),
-//                        Pair.of(createContinuousSkillBehavior(), 1),
-//                        Pair.of(createFirstPhaseSingleSkills(), 9)
-//                )) {
-//                    @Override
-//                    protected boolean checkExtraStartConditions(ServerLevel level, Sans entity) {
-//                        return entity.getPhaseID() == Sans.FIRST_PHASE;
-//                    }
-//                },
-//                new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
-//                        Pair.of(createSecondComboSkillBehavior(), 15),
-//                        Pair.of(createContinuousOffHandSkillBehavior(), 5),
-//                        Pair.of(createContinuousSkillBehavior(), 1),
-//                        Pair.of(createSecondPhaseSingleSkills(), 9)
-//                )) {
-//                    @Override
-//                    protected boolean checkExtraStartConditions(ServerLevel level, Sans entity) {
-//                        return entity.getPhaseID() == Sans.SECOND_PHASE;
-//                    }
-//                }
+//                createAllTest()
+                new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
+                        Pair.of(createFirstComboSkillBehavior(), 15),
+                        Pair.of(createContinuousOffHandSkillBehavior(), 5),
+                        Pair.of(createContinuousSkillBehavior(), 1),
+                        Pair.of(createFirstPhaseSingleSkills(), 9)
+                )) {
+                    @Override
+                    protected boolean checkExtraStartConditions(ServerLevel level, Sans entity) {
+                        return entity.getPhaseID() == Sans.FIRST_PHASE;
+                    }
+                },
+                new RestartableTryAllBehavior<>(GateBehavior.OrderPolicy.SHUFFLED, ImmutableList.of(
+                        Pair.of(createSecondComboSkillBehavior(), 15),
+                        Pair.of(createContinuousOffHandSkillBehavior(), 5),
+                        Pair.of(createContinuousSkillBehavior(), 1),
+                        Pair.of(createSecondPhaseSingleSkills(), 9)
+                )) {
+                    @Override
+                    protected boolean checkExtraStartConditions(ServerLevel level, Sans entity) {
+                        return entity.getPhaseID() == Sans.SECOND_PHASE;
+                    }
+                }
         ), MemoryModuleType.ATTACK_TARGET);
 
 
