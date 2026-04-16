@@ -394,13 +394,6 @@ public class SansAi {
             return tick >= delay[0] + 10;
         }).mutex().condition(SansAi::isSameGravity).weight(0.4F);
     }
-    public static AttackNode<Sans> gravitySlam(Sans mob,LivingEntity target, int count) {
-        AttackNode<Sans> root = new AttackNode<Sans>(GRAVITY_SLAM, 0, (a, t, tick) -> tick >= 0).weight((a,t) -> (double) (3 + a.getStaminaFactor()*3+ (a.getStamina()/a.getMaxStamina() < 0.1?3:0)));
-        AttackNode<Sans> curr = root;
-        for (int i = 0; i < count; i++) curr = curr.then(gravitySlam(mob, target,true));
-        curr.then(mob.getRandom().nextFloat() <= 0.7f ? gravitySlam(mob, target,true) : gravitySlam(mob, target,false));
-        return root;
-    }
     public static AttackNode<Sans> timeJumpSkill() {
         int[] counter = new int[]{0};
         int[] delay = new int[5];
@@ -441,6 +434,13 @@ public class SansAi {
                 }).mutex().child(root)
         );
         root.children(children);
+        return root;
+    }
+    public static AttackNode<Sans> gravitySlam(Sans mob,LivingEntity target, int count) {
+        AttackNode<Sans> root = new AttackNode<Sans>(GRAVITY_SLAM, 0, (a, t, tick) -> tick >= 0).weight((a,t) -> (double) (3 + a.getStaminaFactor()*3+ (a.getStamina()/a.getMaxStamina() < 0.1?3:0)));
+        AttackNode<Sans> curr = root;
+        for (int i = 0; i < count; i++) curr = curr.then(gravitySlam(mob, target,true));
+        curr.then(mob.getRandom().nextFloat() <= 0.7f ? gravitySlam(mob, target,true) : gravitySlam(mob, target,false));
         return root;
     }
     public static AttackNode<Sans> gravitySlam(Sans mob,LivingEntity target, boolean isRandom) {
@@ -500,7 +500,7 @@ public class SansAi {
     public static class RecoverDownGravity extends StrategyAttackBehavior<Sans> {
         protected int targetNotDownwardGravityTick;
         public RecoverDownGravity() {
-            super((a,t) -> List.of(gravitySlam(a,t,false)));
+            super((a,t) -> List.of(a.getPhaseID()==Sans.FIRST_PHASE?gravitySlam(a):gravitySlam(a,t,false)));
         }
         @Override
         protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull Sans mob) {
@@ -573,7 +573,7 @@ public class SansAi {
             a.setPhaseID(Sans.SECOND_PHASE);
         }
     }
-
+    //###########################特殊攻击#########################
     public static class SpecialAttack extends AttackSchedulerWithoutBuiltlnCoolingBehavior<Sans> {
         public SpecialAttack() {
             super(List.of(), (a,t) -> List.of(createSpecialAttack(a,t)), 30000);
