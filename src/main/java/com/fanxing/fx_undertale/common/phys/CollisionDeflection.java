@@ -46,7 +46,6 @@ public interface CollisionDeflection {
                 (random.nextDouble() - 0.5) * 0.1,
                 (random.nextDouble() - 0.5) * 0.1
         );
-        log.info("原始速度：{},精确反射方向：{}，随机方向：{}，叠加后的反射方向：{}",motion,reflection,randomOffset,reflection.add(randomOffset).normalize());
         entity.setDeltaMovement(reflection.add(randomOffset).normalize().scale(motion.length()));
     }
     // 碰撞
@@ -58,7 +57,6 @@ public interface CollisionDeflection {
         // 计算镜面反射
         double dotProduct = motion.dot(normal);
         Vec3 reflection = motion.subtract(normal.scale(2 * dotProduct));
-        log.info("原始速度：{},法线：{},精确反射方向：{}，叠加后的反射方向：{}",motion,normal,reflection,reflection.normalize());
         entity.setDeltaMovement(reflection);
     }
 

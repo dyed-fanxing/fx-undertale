@@ -1062,7 +1062,7 @@ public class OBBCCDUtils {
         }
 
         if (closestPoint != null) {
-            log.info("OBB 上最接近 AABB 边界的点：{}，距离边界：{}", closestPoint, minDistanceToBoundary);
+            log.debug("OBB 上最接近 AABB 边界的点：{}，距离边界：{}", closestPoint, minDistanceToBoundary);
             return closestPoint;
         }
 

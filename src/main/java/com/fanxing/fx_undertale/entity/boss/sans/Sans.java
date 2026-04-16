@@ -202,6 +202,9 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 this.level().addFreshEntity(displayBone);
             }
         }
+        if(this.getPhaseID() >= SECOND_PHASE){
+            this.setIsEyeBlink(true);
+        }
     }
 
     @Override
@@ -256,7 +259,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         float stamina = getStamina();
         byte phaseID = getPhaseID();
         boolean flag;
-        log.info("原始：power：{}", power);
+        log.debug("原始：power：{}", power);
         // 直接免疫的
         if (phaseID == MERCY_PHASE) {
             // 触发仁慈可以被攻击，但是不会立马进入二阶段
@@ -308,10 +311,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                     if (getTarget() instanceof ServerPlayer player) {
                         this.entityData.set(PHASE_ID, MERCY_PHASE);
                         SansDialogue.mercy(player, this);
-                    } else {
-                        this.entityData.set(PHASE_ID, SECOND_PHASE);
-                        setIsEyeBlink(true);
-                    }
+                    } else this.entityData.set(PHASE_ID, SECOND_PHASE);
                 }
             } else if (phaseID == SECOND_PHASE) {
                 stamina = Math.max(0, stamina - power);
