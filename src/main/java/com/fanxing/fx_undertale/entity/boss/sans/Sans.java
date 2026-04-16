@@ -132,7 +132,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     private final Set<ServerPlayer> trackingPlayers = new HashSet<>();
 
     private GasterBlaster controllerAimGB = null;
-    private final EllipsoidProjectileShield shield ;
+    private final EllipsoidProjectileShield shield;
 
     public Sans(EntityType<? extends Monster> type, Level level) {
         super(type, level);
@@ -141,7 +141,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         this.moveControl = new PatchedMoveControl(this);
         this.bossEvent = new ServerBossEvent(this.getDisplayName(), BossEvent.BossBarColor.WHITE, BossEvent.BossBarOverlay.PROGRESS);
         this.bossEvent.setPlayBossMusic(true).setDarkenScreen(false);
-        this.shield = new EllipsoidProjectileShield(this, getBbWidth()+0.8F, getBbHeight()+0.5F, getBbWidth()+0.8F);
+        this.shield = new EllipsoidProjectileShield(this, getBbWidth() + 0.8F, getBbHeight() + 0.5F, getBbWidth() + 0.8F);
     }
 
     @Override
@@ -171,7 +171,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         super.tick();
         // 客户端过期检查（可选，也可以在渲染器中判断）
         if (level().isClientSide()) {
-            if(phantomActive){
+            if (phantomActive) {
                 int elapsed = tickCount - phantomStartTick;
                 if (elapsed >= PHANTOM_DURATION) {
                     phantomActive = false;
@@ -184,21 +184,21 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 float cycle = (Mth.sin(time * 1.0f) + 1.0f) / 2.0f; // 0.1f 控制变化速度
                 int colorB = 0xC0F6FD29;// 原本是 0xFFF6FD29
                 int[] colorA = Sans.ENERGY_AQUA[1];
-                this.level().addParticle(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.lerp(cycle,FastColor.ARGB32.color(colorA[3],colorA[0],colorA[1],colorA[2]), colorB)), vec3.x, vec3.y, vec3.z, 0, 0, 0);
+                this.level().addParticle(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.lerp(cycle, FastColor.ARGB32.color(colorA[3], colorA[0], colorA[1], colorA[2]), colorB)), vec3.x, vec3.y, vec3.z, 0, 0, 0);
             }
-        }else{
-            EntityHitResult hitResult = shield.tick((t)-> t.getOwner() != this);
-            float range = getPhaseID() == SPECIAL_ATTACK?1.0f:(getPhaseID()==SECOND_PHASE?0.6F:0.9f);
-            if (hitResult != null && random.nextFloat() <  range) {
+        } else {
+            EntityHitResult hitResult = shield.tick((t) -> t.getOwner() != this);
+            float range = getPhaseID() == SPECIAL_ATTACK ? 1.0f : (getPhaseID() == SECOND_PHASE ? 0.6F : 0.9f);
+            if (hitResult != null && random.nextFloat() < range) {
                 Vec3 pos = hitResult.getLocation();
                 Projectile entity = (Projectile) hitResult.getEntity();
                 entity.setPos(pos);
                 Vec3 radial = pos.subtract(this.getBoundingBox().getCenter()).normalize();
                 entity.discard();
                 DisplayBone displayBone = new DisplayBone(this.level(), 10, 1.0f);
-                this.level().playSound(null,pos.x,pos.y,pos.z,SoundEvnets.BLOCK,SoundSource.HOSTILE,1.0f,1.0f);
+                this.level().playSound(null, pos.x, pos.y, pos.z, SoundEvnets.BLOCK, SoundSource.HOSTILE, 1.0f, 1.0f);
                 displayBone.setPos(hitResult.getLocation());
-                RotUtils.lookVec(displayBone,radial);
+                RotUtils.lookVec(displayBone, radial);
                 this.level().addFreshEntity(displayBone);
             }
         }
@@ -256,7 +256,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         float stamina = getStamina();
         byte phaseID = getPhaseID();
         boolean flag;
-        log.info("原始：power：{}",power);
+        log.info("原始：power：{}", power);
         // 直接免疫的
         if (phaseID == MERCY_PHASE) {
             // 触发仁慈可以被攻击，但是不会立马进入二阶段
@@ -275,30 +275,30 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             if (source.is(DamageTypeTags.IS_PROJECTILE)) {
                 f = false;
                 power *= 0.2f;
-                log.debug("弹射物减免80%：power：{}",power);
+                log.debug("弹射物减免80%：power：{}", power);
             }
             if (source.is(Tags.DamageTypes.IS_MAGIC)) {
                 f = false;
                 power *= 0.05f;
-                log.debug("魔法减免95%：power：{}",power);
+                log.debug("魔法减免95%：power：{}", power);
             }
             if (source.is(Tags.DamageTypes.IS_PHYSICAL)) {
                 f = false;
-                if(source.isDirect()) {
-                    log.debug("近身物理伤害减免70%：power：{}",power);
+                if (source.isDirect()) {
+                    log.debug("近身物理伤害减免70%：power：{}", power);
                     power *= 0.3F;
-                } else{
-                    log.debug("近身物理伤害减免60%：power：{}",power);
+                } else {
+                    log.debug("近身物理伤害减免60%：power：{}", power);
                     power *= 0.2F;
                 }
             }
-            if(f){
+            if (f) {
                 power *= 0.01f;
-                log.debug("其他攻击伤害，减免99%：power：{}",power);
+                log.debug("其他攻击伤害，减免99%：power：{}", power);
             }
             flag = true;
         }
-        log.debug("最终减免：power：{}",power);
+        log.debug("最终减免：power：{}", power);
         if (flag) {
             if (phaseID == FIRST_PHASE) {
                 stamina = Math.max(maxStamina * 0.5f, stamina - power);
@@ -555,15 +555,19 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     public int getDifficulty() {
         return this.level().getDifficulty().getId();
     }
+
     public double getFollowRange() {
         return this.getAttributeValue(Attributes.FOLLOW_RANGE);
     }
+
     public float getAttackDamage() {
         return (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
     }
+
     public void setControllerAimGB(GasterBlaster gb) {
         this.controllerAimGB = gb;
     }
+
     public GasterBlaster getControllerAimGB() {
         return controllerAimGB;
     }
@@ -595,20 +599,20 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         tag.putFloat("stamina", this.getStamina());
         tag.putByte("phaseId", this.getPhaseID());
         if (originPos != null) tag.put("originPos", this.newDoubleList(originPos.x, originPos.y, originPos.z));
-        tag.putFloat("structYaw",this.structYaw);
+        tag.putFloat("structYaw", this.structYaw);
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if(tag.contains("maxStamina")) this.maxStamina = tag.getFloat("maxStamina");
-        if(tag.contains("stamina")) setStamina(tag.getFloat("stamina"));
-        if(tag.contains("phaseId")) this.entityData.set(PHASE_ID, tag.getByte("phaseId"));
-        if(tag.contains("originPos")) {
+        if (tag.contains("maxStamina")) this.maxStamina = tag.getFloat("maxStamina");
+        if (tag.contains("stamina")) setStamina(tag.getFloat("stamina"));
+        if (tag.contains("phaseId")) this.entityData.set(PHASE_ID, tag.getByte("phaseId"));
+        if (tag.contains("originPos")) {
             ListTag list = tag.getList("originPos", 6);
             this.originPos = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
         }
-        if(tag.contains("structYaw")) structYaw  = tag.getFloat("structYaw");
+        if (tag.contains("structYaw")) structYaw = tag.getFloat("structYaw");
         setPersistenceRequired();
     }
 
@@ -754,8 +758,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         float interval = 10f - difficulty - phaseFactor;
         // 圆心位置（实体位置）
         Vec3 center = new Vec3(this.getX(), this.getY(0.5f), this.getZ());
-        int pitchLayer = (int) (3 + scale * 2);
-        int yawLayer = (int) (1 + scale);
+        int pitchLayer = 3 + phaseFactor * 2;
+        int yawLayer = 1 + phaseFactor;
         Vec3 dir = target.getEyePosition().subtract(this.getEyePosition()).normalize();
         for (int k = 0; k < yawLayer; k++) {
             int count = difficulty * 8 + 1 + k; // 或1，确保是奇数
@@ -785,7 +789,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
      *
      * @param randomIntervalSize 随机区间大小（0~0.5 为宜），决定所有随机参数的变化幅度
      */
-    public int summonLateralBoneMatrix(LivingEntity target, float randomIntervalSize) {
+    public int summonTunnelBoneMatrix(LivingEntity target, float randomIntervalSize) {
         Level level = this.level();
         int difficulty = level.getDifficulty().getId();
         String attackUUID = UUID.randomUUID().toString();
@@ -891,11 +895,13 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         bone1.updateOBB();
         level().addFreshEntity(bone1);
     }
+
     public RotationBone createLaterBone(String attackUUID, float scale, float growScale, int lifetime) {
         RotationBone leftBone = new RotationBone(this.level(), this, scale, growScale, lifetime, getAttackDamage());
         leftBone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackUUID, (byte) 4));
         return leftBone;
     }
+
     public RotationBone createRotationBone(String attackUUID, float scale, float growScale, int lifetime) {
         RotationBone leftBone = new RotationBone(this.level(), this, scale, growScale, lifetime, getAttackDamage());
         leftBone.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(attackUUID, (byte) 8));
@@ -1062,88 +1068,88 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         float scale = 4f;
         float growScale = 0.8f;
         float spacing = scale * 0.375f;
-        float height = scale*growScale;
-        float rowSpacing = scale* 0.3F;
+        float height = scale * growScale;
+        float rowSpacing = scale * 0.3F;
         float colOffset = -spacing * (cols - 1) * 0.5f;
-        float heightBase = height+0.5f;
+        float heightBase = height + 0.5f;
         // 计算骨砖朝向角度
         float yRot = 90f;
         double groundY = EntityUtils.findGroundY(level, originPos);
         Vec3 centerPos = new Vec3(originPos.x, groundY, originPos.z);
         int delay = 10;
         // target
-        Vec3 pos = target.position().add(RotUtils.rotateY(-2,height,0,structYaw));
-        PlatformBlockEntity platform = new PlatformBlockEntity(this.level(),2.0f,1.0f).anchorPos(pos).isSaved(false);
+        Vec3 pos = target.position().add(RotUtils.rotateY(-2, height, 0, structYaw));
+        PlatformBlockEntity platform = new PlatformBlockEntity(this.level(), 2.0f, 1.0f).anchorPos(pos).isSaved(false);
         platform.setPos(pos);
         level.addFreshEntity(platform);
         // this
-        pos = this.position().add(0,height,0);
-        platform = new PlatformBlockEntity(this.level(),2.0f,1.0f).anchorPos(pos).isSaved(false);
+        pos = this.position().add(0, height, 0);
+        platform = new PlatformBlockEntity(this.level(), 2.0f, 1.0f).anchorPos(pos).isSaved(false);
         platform.setPos(pos);
         level.addFreshEntity(platform);
-        for (int i=0;i<2;i++){
-            float dx = (i==0?colOffset:-colOffset)*0.5f;
-            RotationBone bone = createRotationBone(UUID.randomUUID().toString(), scale, growScale*4F, 20000).angularVelocity(new Vector3f(0, (i==0?30F:-30F)*Mth.DEG_TO_RAD, 0)).holdTimeScale(0.995F)
-                    .motion(new SpringMotionModel(0.001F),originRela(0,heightBase,dx));
-            bone.setPos(this.position().add(RotUtils.rotateY(0,heightBase,dx,structYaw)));
+        for (int i = 0; i < 2; i++) {
+            float dx = (i == 0 ? colOffset : -colOffset) * 0.5f;
+            RotationBone bone = createRotationBone(UUID.randomUUID().toString(), scale, growScale * 4F, 20000).angularVelocity(new Vector3f(0, (i == 0 ? 30F : -30F) * Mth.DEG_TO_RAD, 0)).holdTimeScale(0.995F)
+                    .motion(new SpringMotionModel(0.001F), originRela(0, heightBase, dx));
+            bone.setPos(this.position().add(RotUtils.rotateY(0, heightBase, dx, structYaw)));
             bone.initOrientation(0, -90f, 0);
             bone.updateOBB();
             level().addFreshEntity(bone);
-            RotationBone bone1 = createRotationBone(UUID.randomUUID().toString(), scale, growScale*4F, 20000).angularVelocity(new Vector3f(0, (i==0?30F:-30F)*Mth.DEG_TO_RAD, 0)).holdTimeScale(0.995F)
-                    .motion(new SpringMotionModel(0.001F),originRela(0,heightBase,dx));
-            bone1.setPos(this.position().add(RotUtils.rotateY(0,heightBase,dx,structYaw)));
+            RotationBone bone1 = createRotationBone(UUID.randomUUID().toString(), scale, growScale * 4F, 20000).angularVelocity(new Vector3f(0, (i == 0 ? 30F : -30F) * Mth.DEG_TO_RAD, 0)).holdTimeScale(0.995F)
+                    .motion(new SpringMotionModel(0.001F), originRela(0, heightBase, dx));
+            bone1.setPos(this.position().add(RotUtils.rotateY(0, heightBase, dx, structYaw)));
             bone1.initOrientation(0, 90f, 0);
             bone1.updateOBB();
             level().addFreshEntity(bone1);
         }
-        this.teleportRelative(0,height+0.5f,0);
+        this.teleportRelative(0, height + 0.5f, 0);
 
         target.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
         for (int r = 0; r < rows; r++) {
             float dz = (halfRows - r) * rowSpacing;
-            if(r==4){
-                pos = originRela(dz,heightBase,0);
-                platform = new PlatformBlockEntity(this.level(),3.0F,1.0f).anchorPos(pos).isSaved(false);
+            if (r == 4) {
+                pos = originRela(dz, heightBase, 0);
+                platform = new PlatformBlockEntity(this.level(), 3.0F, 1.0f).anchorPos(pos).isSaved(false);
                 platform.setPos(pos);
                 level.addFreshEntity(platform);
             }
-            if(r==13){
-                pos = originRela(dz,heightBase,0);
-                platform = new PlatformBlockEntity(this.level(),3.0F,1.0f).anchorPos(pos.add(RotUtils.rotateY(3,0,0,structYaw) )).motion(new SpringMotionModel(0.01f)).isSaved(false);
+            if (r == 13) {
+                pos = originRela(dz, heightBase, 0);
+                platform = new PlatformBlockEntity(this.level(), 3.0F, 1.0f).anchorPos(pos.add(RotUtils.rotateY(3, 0, 0, structYaw))).motion(new SpringMotionModel(0.01f)).isSaved(false);
                 platform.setPos(pos);
                 level.addFreshEntity(platform);
             }
-            if(r==23){
-                pos = originRela(dz,heightBase,0);
-                platform = new PlatformBlockEntity(this.level(),3.0F,1.0f).anchorPos(pos.add(RotUtils.rotateY(3,0,0,structYaw))).isSaved(false)
-                        .motion(new CircularMotionModel(3f,0.05F));
+            if (r == 23) {
+                pos = originRela(dz, heightBase, 0);
+                platform = new PlatformBlockEntity(this.level(), 3.0F, 1.0f).anchorPos(pos.add(RotUtils.rotateY(3, 0, 0, structYaw))).isSaved(false)
+                        .motion(new CircularMotionModel(3f, 0.05F));
                 platform.setPos(pos);
                 level.addFreshEntity(platform);
             }
-            if(r==29){
-                pos = originRela(dz,heightBase,0);
-                platform = new PlatformBlockEntity(this.level(),3.0F,1.0f).anchorPos(pos).ease(-2f);
+            if (r == 29) {
+                pos = originRela(dz, heightBase, 0);
+                platform = new PlatformBlockEntity(this.level(), 3.0F, 1.0f).anchorPos(pos).ease(-2f);
                 platform.setPos(pos);
                 level.addFreshEntity(platform);
             }
-            if(r==35){
-                pos = originRela(dz,heightBase,0);
-                platform = new PlatformBlockEntity(this.level(),3.0F,1.0f).anchorPos(pos).motion(new SpringMotionModel(0.01F)).isSaved(false);
-                platform.setPos(pos.add(0,0,4));
+            if (r == 35) {
+                pos = originRela(dz, heightBase, 0);
+                platform = new PlatformBlockEntity(this.level(), 3.0F, 1.0f).anchorPos(pos).motion(new SpringMotionModel(0.01F)).isSaved(false);
+                platform.setPos(pos.add(0, 0, 4));
                 level.addFreshEntity(platform);
             }
-            if(r==45){
-                pos = originRela(dz,heightBase,0);
-                platform = new PlatformBlockEntity(this.level(),3.0F,1.0f).anchorPos(pos.add(RotUtils.rotateY(3,0,0,structYaw))).isSaved(false)
-                        .motion(new CircularMotionModel(1F,0.2F));
+            if (r == 45) {
+                pos = originRela(dz, heightBase, 0);
+                platform = new PlatformBlockEntity(this.level(), 3.0F, 1.0f).anchorPos(pos.add(RotUtils.rotateY(3, 0, 0, structYaw))).isSaved(false)
+                        .motion(new CircularMotionModel(1F, 0.2F));
                 platform.setPos(pos);
                 level.addFreshEntity(platform);
             }
             for (int c = 0; c < cols; c++) {
                 float dx = colOffset + c * spacing;
                 GroundBone bone = createGroundBone(attackTypeUUID, scale, growScale, 20000).delay(delay).holdTimeScale(-2f);
-                bone.setPos(centerPos.add(RotUtils.rotateY(new Vec3(dx, 0, dz), structYaw+yRot)));
-                bone.setYRot(structYaw+yRot);
+                bone.setPos(centerPos.add(RotUtils.rotateY(new Vec3(dx, 0, dz), structYaw + yRot)));
+                bone.setYRot(structYaw + yRot);
                 level.addFreshEntity(bone);
             }
             delay += 1;
@@ -1183,7 +1189,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             float angle = interval; // 初始位置错位
             for (int j = 0; j < count; j++, angle += interval) {
                 Vec3 pos = centerPos.add(GravityUtils.localToWorld(gravity, r * Math.cos(angle * Math.PI / 180F), 0, r * Math.sin(angle * Math.PI / 180F)));
-                pos = GravityUtils.findGround(this.level(),pos,gravity);
+                pos = GravityUtils.findGround(this.level(), pos, gravity);
                 GroundBoneOBB groundBone = createGroundBone(attackTypeUUID, pos, 1.0f, growScale, lifetime, delay, -angle, (float) (this.random.nextGaussian() * randomScale)).gravity(gravity).holdTimeScale(holdTimeScale);
                 this.level().addFreshEntity(groundBone);
             }
@@ -1404,9 +1410,10 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
 
     public int summonHugeParametricGroundBoneSpineWave(LivingEntity target) {
         int type = this.random.nextInt(6);
-        return summonHugeParametricGroundBoneSpineWave(target,type);
+        return summonHugeParametricGroundBoneSpineWave(target, type);
     }
-    public int summonHugeParametricGroundBoneSpineWave(LivingEntity target,int type) {
+
+    public int summonHugeParametricGroundBoneSpineWave(LivingEntity target, int type) {
         String attackTypeUUID = UUID.randomUUID().toString();
         int phaseFactor = getPhaseFactor();
         int curveCount = 10 + phaseFactor * 6;
@@ -1432,7 +1439,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 yield ParametricCurveUtils.flower(4);
             }
             case 3 -> {
-                curveCount-=2;
+                curveCount -= 2;
                 PacketDistributor.sendToPlayersTrackingEntity(this,
                         new WarningTipPacket.RadialPrecessionCurveStripsGravityPacket(
                                 (float) targetPos.x, (float) targetPos.y, (float) targetPos.z,
@@ -1453,7 +1460,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 yield ParametricCurveUtils.starburst(6.0f, 0.6f);
             }
             case 5 -> {
-                curveCount-=1;
+                curveCount -= 1;
                 PacketDistributor.sendToPlayersTrackingEntity(this,
                         new WarningTipPacket.RadialPrecessionCurveStripsGravityPacket(
                                 (float) targetPos.x, (float) targetPos.y, (float) targetPos.z,
@@ -1464,7 +1471,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 yield ParametricCurveUtils.wavefold(4f, 8f, 0.3f);
             }
             default -> {
-                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.RadialPrecessionCurveStripsGravityPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve,gravity, ParametricCurveType.HEART_REVERSED));
+                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.RadialPrecessionCurveStripsGravityPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, gravity, ParametricCurveType.HEART_REVERSED));
                 yield ParametricCurveUtils.heart();
             }
         });
@@ -1479,7 +1486,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 double rotatedX = localPos.x * Math.cos(rad) - localPos.z * Math.sin(rad);
                 double rotatedZ = localPos.x * Math.sin(rad) + localPos.z * Math.cos(rad);
                 Vec3 pos = targetPos.add(GravityUtils.localToWorld(gravity, rotatedX, localPos.y, rotatedZ));
-                pos = GravityUtils.findGround(this.level(),pos, gravity);
+                pos = GravityUtils.findGround(this.level(), pos, gravity);
 
                 this.level().addFreshEntity(createGroundBone(attackTypeUUID, pos, sizeScale, growScale, lifetime, delay, 0, 0).gravity(gravity).holdTimeScale(0.6f));
                 delay += p % 2;
@@ -1564,7 +1571,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
      */
     public void summonGBAroundTarget(LivingEntity target, int count, float radius, float offsetAngle, float angleStep, float size) {
         Direction gravity = target.getData(AttachmentTypes.GRAVITY);
-        radius*=0.5f;
+        radius *= 0.5f;
         Vec3 toTarget = target.position().subtract(this.position());
         Vec3 centerPos = this.position().add(toTarget.scale(0.5f));
         float currentAngle = offsetAngle; // 从指定角度开始
@@ -1600,7 +1607,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     /**
      * 在目标所在位置周围的指定高度上召唤四周GB，用于重力控制的追加技能，根据数量自动计算角度步长和大小
      */
-    public void summonGBAtTargetHeight(LivingEntity target, int count,float offsetAngle, float height) {
+    public void summonGBAtTargetHeight(LivingEntity target, int count, float offsetAngle, float height) {
         int difficulty = this.level().getDifficulty().getId();
         Vec3 position = target.position();
         Direction gravity = target.getData(AttachmentTypes.GRAVITY);
@@ -1620,26 +1627,28 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             this.level().addFreshEntity(gb);
         }
     }
+
     /**
-     * 在目标所在位置周围的指定高度上召唤四周GB，用于重力控制的追加技能，根据数量自动计算角度步长和大小
+     * 大风车
      */
-    public void summonGBAimOriginPos(LivingEntity target, int count,float offsetAngle,float size) {
+    public void summonGBAimOriginPos(LivingEntity target, float offsetAngle, float size) {
         float height = target.getBbHeight() * 0.5f;
         float radius = target.getBbWidth() * 13;
-        float angleStep = 360f / count;
-        float currentAngle = offsetAngle; // 从指定角度开始
-        for (int i = 0; i < count; i++, currentAngle += angleStep) {
-            GasterBlaster gb = createGasterBlaster(size);
-            gb.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(UUID.randomUUID().toString(), (byte) 10));
-            // 计算圆形上的位置
-            double xOffset = Math.sin(currentAngle * Mth.DEG_TO_RAD) * radius;
-            double zOffset = -Math.cos(currentAngle * Mth.DEG_TO_RAD) * radius;
-            gb.setPos(originPos.add(xOffset, height, zOffset));
-            gb.aim(originPos.add( 0.0, height, 0.0));
-            gb.restAnimPos();
-            this.level().addFreshEntity(gb);
+        GasterBlaster gb = createGasterBlaster(size);
+        gb.setData(AttachmentTypes.KARMA_ATTACK, new KaramJudge(UUID.randomUUID().toString(), (byte) 10));
+        // 计算圆形上的位置
+        double xOffset = Math.sin(offsetAngle * Mth.DEG_TO_RAD) * radius;
+        double zOffset = -Math.cos(offsetAngle * Mth.DEG_TO_RAD) * radius;
+        gb.setPos(originPos.add(xOffset, height, zOffset));
+        gb.aim(originPos.add(0.0, height, 0.0));
+        gb.restAnimPos();
+        this.level().addFreshEntity(gb);
+        if (target.position().subtract(this.originPos).lengthSqr() >= 256) {
+            target.teleportTo(originPos.x, originPos.y, originPos.z);
+            this.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvnets.SANS_EYE_BLINK.get(), SoundSource.HOSTILE);
         }
     }
+
     /**
      * 给仁慈阶段使用的自定义射击时间GB
      */
@@ -1683,9 +1692,11 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         Direction gravity = GravityUtils.applyRelativeGravity(this, target, direction);
         gravitySlam(target, gravity, acceleration);
     }
+
     public void gravitySlam(LivingEntity target, Direction direction, float acceleration) {
         gravitySlamDirect(target, GravityUtils.applyGravity(target, direction), acceleration);
     }
+
     public void gravitySlamDirect(LivingEntity target, Direction direction, float acceleration) {
         target.addDeltaMovement(new Vec3(0, -acceleration, 0));
         PacketDistributor.sendToPlayersTrackingEntityAndSelf(target, new GravityPacket(target.getId(), direction, -acceleration));
@@ -1706,9 +1717,10 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         Vec3 vec3 = RotUtils.rotateY(dx, dy, dz, structYaw);
         return originPos.add(vec3);
     }
-    public void teleportOrigin(LivingEntity target,double dx,double dy,double dz) {
-        Vec3 pos = originRela(dx,dy,dz);
-        target.teleportTo(pos.x,pos.y,pos.z);
+
+    public void teleportOrigin(LivingEntity target, double dx, double dy, double dz) {
+        Vec3 pos = originRela(dx, dy, dz);
+        target.teleportTo(pos.x, pos.y, pos.z);
     }
 
     public void controlSoulMode(LivingEntity target, byte soulState) {
@@ -1856,8 +1868,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
 
     // 蓝色（激光风格）
     public static final int[][] ENERGY_AQUA = {
-            {226, 255, 255,255},    // 内层 能量层：高亮白（最亮）
-            {0, 97, 165,255},       // 外层 泛光层：加法混合下呈现浅蓝
+            {226, 255, 255, 255},    // 内层 能量层：高亮白（最亮）
+            {0, 97, 165, 255},       // 外层 泛光层：加法混合下呈现浅蓝
             {25, 97, 165, 255}     // 外层 流动条纹层：加法混合下呈现亮蓝偏青
     };
     public final RadialPlaneTrailStrip leftHandTrail = new RadialPlaneTrailStrip(10f).color(ENERGY_AQUA[1]).progressCurve((t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
