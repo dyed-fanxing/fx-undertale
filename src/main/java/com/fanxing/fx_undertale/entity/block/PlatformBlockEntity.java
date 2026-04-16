@@ -17,10 +17,8 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityDimensions;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -105,7 +103,6 @@ public class PlatformBlockEntity extends Entity implements IEntityWithComplexSpa
 
     @Override
     public void tick() {
-        super.tick();
         Vec3 currentPos = this.position();
         Vec3 newVel = motion.update(currentPos, this.getDeltaMovement(),anchorPos, tickCount);
         this.setDeltaMovement(newVel);
@@ -115,11 +112,13 @@ public class PlatformBlockEntity extends Entity implements IEntityWithComplexSpa
             double dd = aboveBox.maxY - p.getBoundingBox().minY;
             return !p.isPassenger()&& dd*dd <= Mth.EPSILON;
         });
+        super.tick();
         this.setPos(this.position().add(newVel));
         for (Entity entity : entities) {
             Vec3 newPos = entity.position().add(newVel);
             entity.setPos(newPos);
         }
+
         refreshDimensions();
     }
 
@@ -229,7 +228,7 @@ public class PlatformBlockEntity extends Entity implements IEntityWithComplexSpa
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
-        if (tag.contains("blockState")) setBlockState(NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), tag.getCompound("blockState")));
+         if (tag.contains("blockState")) setBlockState(NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), tag.getCompound("blockState")));
         if (tag.contains("anchorPos")) {
             ListTag list = tag.getList("anchorPos", 6);
             this.anchorPos = new Vec3(list.getDouble(0), list.getDouble(1), list.getDouble(2));
