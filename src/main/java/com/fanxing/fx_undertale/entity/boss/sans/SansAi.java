@@ -118,8 +118,6 @@ public class SansAi {
 //                        return entity.getPhaseID() == Sans.SECOND_PHASE;
 //                    }
 //                }
-
-
         ), MemoryModuleType.ATTACK_TARGET);
 
 
@@ -254,7 +252,7 @@ public class SansAi {
     private static AttackSchedulerWithBuiltInCoolingBehavior<Sans> createFirstPhaseSingleSkills() {
         return new AttackSchedulerWithBuiltInCoolingBehavior<>(List.of(
                 BONE_RING_VOLLEY, ARC_SWEEP_VOLLEY, DOUBLE_SPIN_BONE, SELF_GB, CROSS_GB, RANDOM_GB, SELF_GROUND_BONE_SPINE, GROUND_BONE_SPINE_WAVE, PARAMETRIC_GROUND_BONE_SPINE
-        ), (a,t) -> List.of(gravitySlam(a)), MemoryModuleTypes.COOLDOWN_1.get(), 10) {
+        ), (a,t) -> List.of(gravitySlam(a,true)), MemoryModuleTypes.COOLDOWN_1.get(), 10) {
             @Override
             protected void stop(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
                 super.stop(level, mob, gameTime);
@@ -456,11 +454,17 @@ public class SansAi {
             if(tick == 0){
                 int count = 8;
                 int index;
-                do{
-                    index = isRandom ? mob.getRandom().nextInt(directions.length - 1) : 1;
-                    direction[0] = GravityUtils.applyRelativeGravity(mob, t, LocalDirection.values()[index]);
-                    h[0] = GravityUtils.findGroundHeight(mob.level(), target.position(), direction[0]);
-                }while (h[0] < 0.1F&& count -- >0);
+                if(isRandom){
+                    do{
+                        index = mob.getRandom().nextInt(directions.length - 1);
+                        direction[0] = GravityUtils.applyRelativeGravity(mob, t, LocalDirection.values()[index]);
+                        h[0] = GravityUtils.findGroundHeight(mob.level(), target.position(), direction[0]);
+                    }while (h[0] < 0.1F&& count -- >0);
+                }else {
+                    index = 1;
+                    direction[0] = Direction.DOWN;
+                    GravityUtils.applyGravity(t,direction[0]);
+                }
                 PacketDistributor.sendToPlayersTrackingEntity(a,new AnimPacket(a.getId(),index));
             }
             if (tick == 3) a.gravitySlamDirect(t, direction[0], (float) (h[0] *0.1f*(1f + factor*4.5F + (a.getPhaseID() == Sans.SPECIAL_ATTACK ? 1f : 0F))));
@@ -500,7 +504,7 @@ public class SansAi {
     public static class RecoverDownGravity extends StrategyAttackBehavior<Sans> {
         protected int targetNotDownwardGravityTick;
         public RecoverDownGravity() {
-            super((a,t) -> List.of(a.getPhaseID()==Sans.FIRST_PHASE?gravitySlam(a):gravitySlam(a,t,false)));
+            super((a,t) -> List.of(a.getPhaseID()==Sans.FIRST_PHASE?gravitySlam(a,false):gravitySlam(a,t,false)));
         }
         @Override
         protected boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull Sans mob) {
@@ -511,6 +515,12 @@ public class SansAi {
                 else targetNotDownwardGravityTick++;
             });
             return super.checkExtraStartConditions(level, mob) && targetNotDownwardGravityTick >= 200 + mob.getPhaseFactor()*200 && !brain.hasMemoryValue(MemoryModuleTypes.ATTACKING.get());
+        }
+
+        @Override
+        protected void start(@NotNull ServerLevel level, @NotNull Sans mob, long gameTime) {
+            super.start(level, mob, gameTime);
+            targetNotDownwardGravityTick = 0;
         }
     }
     public static class MercyAttack extends Behavior<Sans> {
@@ -723,7 +733,7 @@ public class SansAi {
                 whiteMultipleWall().copy().condition((a,t)->a.testAttackId == 32).cooldown(60)
         ), (aa,tt) -> List.of(
                 // 单击
-                gravitySlam(aa).condition((a,t)->a.testAttackId == 10),
+                gravitySlam(aa,true).condition((a,t)->a.testAttackId == 10),
                 // 持续攻击
                 continuousGBSkillTest(),
                 // 连击
@@ -848,7 +858,6 @@ public class SansAi {
         return root;
     }
     public static AttackNode<Sans> gravitySlamTestShowAnim(Sans mob,LivingEntity target) {
-        LocalDirection[] directions = LocalDirection.values();
         float factor = 1f - mob.getStamina() * 2f / (mob.getMaxStamina() + Mth.EPSILON);
         int difficulty = mob.level().getDifficulty().getId();
         double[] h = new double[1];
@@ -865,7 +874,7 @@ public class SansAi {
                     direction[0] = GravityUtils.applyRelativeGravity(mob, t, LocalDirection.values()[index]);
                     h[0] = GravityUtils.findGroundHeight(mob.level(), target.position(), direction[0]);
                 }while (h[0] < 0.1F&& count -- >0);
-                PacketDistributor.sendToPlayersTrackingEntity(a,new AnimPacket(a.getId(),mob.getRandom().nextInt(directions.length - 1)));
+                PacketDistributor.sendToPlayersTrackingEntity(a,new AnimPacket(a.getId(),index));
             }
             if (tick == 3) a.gravitySlamDirect(t, direction[0], (float) (h[0] *0.1f*(1f + factor*4.5F)));
             if (tick > 3 && state[0] && t.onGround()) {
@@ -977,7 +986,7 @@ public class SansAi {
         return tick >= 40;
     }).weight((a, t) -> WeightMath.linearIncrease(a.distanceTo(t), 0, 24, a.getFollowRange() * 0.5f, a.getFollowRange())).mutex();
     // 用于单击
-    public static AttackNode<Sans> gravitySlam(Sans mob) {
+    public static AttackNode<Sans> gravitySlam(Sans mob,boolean isRandom) {
         LocalDirection[] directions = LocalDirection.values();
         int difficulty = mob.level().getDifficulty().getId();
         double[] h = new double[1];
@@ -988,15 +997,23 @@ public class SansAi {
             if(tick == 0){
                 int count = 8;
                 int index;
-                do{
-                    if(a.distanceToSqr(t) <= 36){
-                        int[] indexs = {0,2,3,4};
-                        index = indexs[mob.getRandom().nextInt(indexs.length)];
-                    }else index = mob.getRandom().nextInt(directions.length - 1);
-                    direction[0] = GravityUtils.applyRelativeGravity(mob, t, LocalDirection.values()[index]);
-                    h[0] = GravityUtils.findGroundHeight(mob.level(), t.position(), direction[0]);
-                }while (h[0] < 0.1F&& count -- >0);
-                PacketDistributor.sendToPlayersTrackingEntity(a,new AnimPacket(a.getId(),mob.getRandom().nextInt(directions.length - 1)));
+                if(isRandom){
+                    do{
+                        if(a.distanceToSqr(t) <= 36){
+                            int[] indexs = {0,2,3,4};
+                            index = indexs[mob.getRandom().nextInt(indexs.length)];
+                        }else index = mob.getRandom().nextInt(directions.length - 1);
+                        direction[0] = GravityUtils.applyRelativeGravity(mob, t, LocalDirection.values()[index]);
+                        h[0] = GravityUtils.findGroundHeight(mob.level(), t.position(), direction[0]);
+                    }while (h[0] < 0.1F&& count -- >0);
+                }else {
+                    index = 1;
+                    direction[0] = Direction.DOWN;
+                    GravityUtils.applyGravity(t,direction[0]);
+                }
+                PacketDistributor.sendToPlayersTrackingEntity(a,new AnimPacket(a.getId(),index));
+                log.info("重力猛击单击,重力方向：{},",direction[0]);
+                Thread.dumpStack();
             }
             if (tick == 3) a.gravitySlamDirect(t, direction[0], 1f);
             if (tick > 3 && state[0] && t.onGround()) {
@@ -1009,7 +1026,7 @@ public class SansAi {
             if (!state[0] && tick == duration[0] + 10) a.level().playSound(null, t.getX(), t.getY(), t.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
             return tick >= duration[0] + 12 - difficulty && (!state[0] || tick > 100);
         }).weight((a,t)->6.0 + ((a.distanceToSqr(t) <= 36)?10:0) + (EntitySelector.isFlying(t)?20:0))
-                .allowConcurrent(SELF_GB, RANDOM_GB).addAllowConcurrent(AIMED_BARRAGE_BONE, FORWARD_BARRAGE_BONE);
+                .allowConcurrent(SELF_GB, RANDOM_GB);
     }
 
     // 持续攻击
