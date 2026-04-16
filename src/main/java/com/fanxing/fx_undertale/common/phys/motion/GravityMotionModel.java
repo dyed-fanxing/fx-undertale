@@ -60,7 +60,6 @@ public class GravityMotionModel extends PhysicsMotionModel {
         double softenedDistSq = distSq + softening * softening;
         double accelMag = strength / softenedDistSq;
         Vec3 acceleration = toTarget.normalize().scale(accelMag*0.05f);
-        log.info("distSq：{}，softenedDistSq：{}，accelMag：{}，acceleration：{}",distSq,softenedDistSq,accelMag,acceleration);
         return currentVel.add(acceleration).scale(damping);
     }
 

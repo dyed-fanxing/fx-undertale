@@ -48,7 +48,7 @@ public class DialogueMessageProvider {
 
         String entityTypePath = EntityType.getKey(entity.getType()).getPath();
         String dialogueKey = DIALOGUE_PRE + entityTypePath + "." + key;
-        log.info("EntityTypeDescriptonId: {}, EntityType.getKey：{},Path:{}", entity.getType().getDescriptionId(), EntityType.getKey(entity.getType()), entityTypePath);
+//        log.info("EntityTypeDescriptonId: {}, EntityType.getKey：{},Path:{}", entity.getType().getDescriptionId(), EntityType.getKey(entity.getType()), entityTypePath);
         if (!Language.getInstance().has(dialogueKey)) {
             return null;
         }

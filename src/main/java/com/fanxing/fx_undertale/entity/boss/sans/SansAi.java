@@ -1012,8 +1012,6 @@ public class SansAi {
                     GravityUtils.applyGravity(t,direction[0]);
                 }
                 PacketDistributor.sendToPlayersTrackingEntity(a,new AnimPacket(a.getId(),index));
-                log.info("重力猛击单击,重力方向：{},",direction[0]);
-                Thread.dumpStack();
             }
             if (tick == 3) a.gravitySlamDirect(t, direction[0], 1f);
             if (tick > 3 && state[0] && t.onGround()) {
