@@ -30,7 +30,7 @@ import software.bernie.geckolib.renderer.GeoRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
 public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
-    private static final RenderType EYES_EMISSIVE = RenderType.EYES.apply(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_eyes.png"),RenderType.ADDITIVE_TRANSPARENCY);
+    private static final RenderType EYES_EMISSIVE = RenderType.EYES.apply(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_eyes.png"),RenderType.TRANSLUCENT_TRANSPARENCY);
     private static final ResourceLocation EYES_BLINK = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_eyes_blink.png");
     private static final ResourceLocation SANS_WHITE = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_white.png");
     RenderType WHITE = RenderType.ENTITY_TRANSLUCENT.apply(SANS_WHITE, false);
