@@ -74,6 +74,21 @@ versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
+[[dependencies."${mod_id}"]] #（可选）
+modId = "geckolib"
+mandatory = true
+versionRange = "${geckolib_version_range}"   # 根据实际情况写
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies."${mod_id}"]] #（可选）
+modId = "player_animation_library"   # 注意实际 modId
+mandatory = true
+versionRange = "${pal_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+
 # Features 是游戏环境的特定属性，您可能需要声明您的要求。此示例声明
 # 您的模组需要 GL 版本 3.2 或更高。将会添加其他 features。它们具有端感知能力，因此声明此项不会
 # 阻止您的模组在服务器上加载。
