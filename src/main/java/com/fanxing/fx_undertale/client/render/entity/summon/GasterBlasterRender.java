@@ -11,6 +11,7 @@ import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.entity.summon.IGasterBlaster;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -29,7 +30,7 @@ import software.bernie.geckolib.renderer.GeoRenderer;
 
 public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     public static ResourceLocation EYES = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,"textures/entity/gaster_blaster_eyes.png");
-    public static RenderType EYES_GLOW = RenderType.entityTranslucentEmissive(EYES);
+    public static RenderType EYES_GLOW = RenderType.EYES.apply(EYES, RenderStateShard.ADDITIVE_TRANSPARENCY);
     public static ResourceLocation SHOT_EYES = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,"textures/entity/gaster_blaster_shot_eyes.png");
 
 
