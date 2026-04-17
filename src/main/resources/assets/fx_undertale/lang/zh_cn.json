@@ -120,11 +120,8 @@
   "fx_undertale.configuration.asgore.armorPierceStep": "每级无视护甲值增加比例",
   "fx_undertale.configuration.asgore.shieldBreakStep": "每级破盾概率增加比例",
 
-  "fx_undertale.configuration.chara_hidden": "屠杀殆尽",
-  "fx_undertale.configuration.chara_hidden.charaMaxHpPercent": "每次攻击削减最大生命值百分比",
-  "fx_undertale.configuration.chara_hidden.charaRemoveBuffs": "攻击是否移除目标正面效果",
 
-  "fx_undertale.configuration.chara_hidden": "隐藏能力",
+  "fx_undertale.configuration.chara_hidden": "屠杀殆尽",
   "fx_undertale.configuration.chara_hidden.charaRequiredLevel": "所需LV等级",
   "fx_undertale.configuration.chara_hidden.charaRequiredItem": "所需手持物品ID",
   "fx_undertale.configuration.chara_hidden.charaMaxHpPercent": "每次攻击削减最大生命值百分比",
