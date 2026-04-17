@@ -30,7 +30,7 @@ import software.bernie.geckolib.renderer.GeoRenderer;
 
 public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     public static ResourceLocation EYES = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,"textures/entity/gaster_blaster_eyes.png");
-    public static RenderType EYES_GLOW = RenderType.EYES.apply(EYES, RenderStateShard.ADDITIVE_TRANSPARENCY);
+    public static RenderType EYES_GLOW = RenderType.EYES.apply(EYES, RenderStateShard.TRANSLUCENT_TRANSPARENCY);
     public static ResourceLocation SHOT_EYES = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,"textures/entity/gaster_blaster_shot_eyes.png");
 
 
