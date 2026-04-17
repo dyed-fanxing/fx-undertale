@@ -905,7 +905,7 @@ public class SansAi {
     // 飞行骨
     public static final AttackNode<Sans> BONE_RING_VOLLEY = new AttackNode<>(
             "bone_ring_volley", 8, 3, Sans::shootBoneRingVolley, 30, 30
-    ).weight((a, t) -> WeightMath.linearIncrease(a.distanceTo(t), 0, 32));
+    ).weight((a, t) -> WeightMath.linearIncrease(a.distanceTo(t), 8, 32));
 
     // 弧扫弹幕
     public static final AttackNode<Sans> ARC_SWEEP_VOLLEY = new AttackNode<>(
@@ -928,7 +928,7 @@ public class SansAi {
         int count = 1 + a.getRandom().nextInt(1 + difficulty + a.getPhaseFactor());
         a.summonGBFront(t, count, 60f / count, 17);
     }, 30, 40
-    ).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, a.getFollowRange() * CLOSE_RANGE_FACTOR, 0, 16) - a.getPhaseFactor() * 5);
+    ).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 8, a.getFollowRange() * CLOSE_RANGE_FACTOR, 0, 16) - a.getPhaseFactor() * 5);
 
     // 十字 GB
     public static final AttackNode<Sans> CROSS_GB = new AttackNode<Sans>(
@@ -978,7 +978,7 @@ public class SansAi {
         if (a.getPhaseID() == Sans.FIRST_PHASE) return isSameGravity(a, t) && t.getY() - a.getY() <= (0.9f + 0.1f * a.getDifficulty() + 0.2f * a.getPhaseFactor()) * (1.5f + a.getStaminaFactor() * 0.5f);
         if (a.getPhaseID() == Sans.SECOND_PHASE) return isSameGravity(a, t) && t.getY() - a.getY() <= (1.7f + 0.3f * a.getStaminaFactor()) * 0.8f * (2.0f + a.getStaminaFactor() * 0.5f);
         return false;
-    }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 0, 32, a.getFollowRange() * CLOSE_RANGE_FACTOR, a.getFollowRange() * MID_RANGE_FACTOR)).controlMove();
+    }).weight((a, t) -> WeightMath.linearDecrease(a.distanceTo(t), 14, 32, a.getFollowRange() * CLOSE_RANGE_FACTOR, a.getFollowRange() * MID_RANGE_FACTOR)).controlMove();
     // 参数化地面骨刺
     public static final AttackNode<Sans> PARAMETRIC_GROUND_BONE_SPINE = new AttackNode<Sans>(
             PARAMETRIC_GROUND_BONE, 6, 40, (a, t, tick) -> {
