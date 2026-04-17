@@ -170,6 +170,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
     public void tick() {
         super.tick();
         // 客户端过期检查（可选，也可以在渲染器中判断）
+        byte phaseID = getPhaseID();
         if (level().isClientSide()) {
             if (phantomActive) {
                 int elapsed = tickCount - phantomStartTick;
@@ -188,7 +189,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             }
         } else {
             EntityHitResult hitResult = shield.tick((t) -> t.getOwner() != this);
-            float range = getPhaseID() == SPECIAL_ATTACK ? 1.0f : (getPhaseID() == SECOND_PHASE ? 0.6F : 0.9f);
+            float range = phaseID == SPECIAL_ATTACK ? 1.0f : (phaseID == SECOND_PHASE ? 0.6F : 0.9f);
             if (hitResult != null && random.nextFloat() < range) {
                 Vec3 pos = hitResult.getLocation();
                 Projectile entity = (Projectile) hitResult.getEntity();
@@ -202,9 +203,10 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 this.level().addFreshEntity(displayBone);
             }
         }
-        if(this.getPhaseID() >= SECOND_PHASE){
-            this.setIsEyeBlink(true);
+        if(!this.isDeadOrDying()){
+            if(phaseID == SECOND_PHASE || phaseID == SPECIAL_ATTACK) this.setIsEyeBlink(true);
         }
+
     }
 
     @Override
@@ -361,6 +363,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
 
     @Override
     public void die(@NotNull DamageSource p_21014_) {
+        this.setIsEyeBlink(false);
         super.die(p_21014_);
     }
 

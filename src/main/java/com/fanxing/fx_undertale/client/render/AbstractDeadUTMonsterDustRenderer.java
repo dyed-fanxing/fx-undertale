@@ -13,10 +13,12 @@ import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -37,59 +39,55 @@ import java.util.Objects;
  * 实现UT怪物死亡尘埃消散的效果
  */
 public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMonster & GeoAnimatable> extends GeoEntityRenderer<T> {
-
-    private static final Logger log = LoggerFactory.getLogger(AbstractDeadUTMonsterDustRenderer.class);
-
     public AbstractDeadUTMonsterDustRenderer(EntityRendererProvider.Context renderManager, GeoModel<T> model) {
         super(renderManager, model);
     }
-    @Override
-    public void createVerticesOfQuad(GeoQuad quad, Matrix4f poseState, Vector3f normal, VertexConsumer buffer,
-                                     int packedLight, int packedOverlay, int colour) {
-        T animatable = getAnimatable();
-        float progress = animatable.deathProgress;
-        if (progress <= 0) {
-            super.createVerticesOfQuad(quad, poseState, normal, buffer, packedLight, packedOverlay, colour);
-            return;
-        }
-        // 获取相机空间脚底 Y 和高度（你已经算好的）
-        float cameraY = (float) Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().y;
-        double entityBottomY = animatable.getY();
-        float cameraBottomY = (float) (entityBottomY - cameraY);
-        float bbHeight = animatable.getBbHeight();
 
-        for (GeoVertex vertex : quad.vertices()) {
-            Vector4f cam = poseState.transform(new Vector4f(vertex.position().x(), vertex.position().y(), vertex.position().z(), 1f));
-            float y = cam.y();
-            float normY = (y - cameraBottomY) / bbHeight;
-            normY = Mth.clamp(normY, 0f, 1f);
-
-            float alpha = 1f;
-            float threshold = 1f - progress;
-            if (normY > threshold) alpha = 0f;
-            else if (normY > threshold - 0.1f) alpha = 1f - (normY - (threshold - 0.1f)) / 0.1f;
-
-            // RGB 强制白色，alpha 渐变
-            int newColour = ((int)(alpha * 255) << 24) | 0x00FFFFFF;
-            buffer.addVertex(cam.x(), cam.y(), cam.z(), newColour, vertex.texU(), vertex.texV(),
-                    packedOverlay, packedLight, normal.x(), normal.y(), normal.z());
-        }
-    }
     @Override
     public void actuallyRender(PoseStack poseStack, T animatable, BakedGeoModel model, RenderType renderType,
                                MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
                                float partialTick, int packedLight, int packedOverlay, int colour) {
         if (animatable.isDeadOrDying()) {
-            renderType = RenderType.ENTITY_TRANSLUCENT.apply(getTextureLocation(animatable), false);
             animatable.deathProgress = Math.min(1f, (animatable.deathTime + partialTick) / animatable.getDeathTime());
             spawnDeathParticles(animatable, animatable.deathProgress);
-            super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, bufferSource.getBuffer(renderType),
-                    isReRender, partialTick, LightTexture.FULL_SKY, packedOverlay, colour);
+            packedLight = LightTexture.FULL_SKY;
+            VertexConsumer fadingBuffer = new TopFadingVertexConsumer(buffer, animatable);
+            super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, fadingBuffer,
+                    isReRender, partialTick, packedLight, packedOverlay, colour);
         } else {
             super.actuallyRender(poseStack, animatable, model, renderType, bufferSource, buffer,
                     isReRender, partialTick, packedLight, packedOverlay, colour);
         }
     }
+
+    @Override
+    public RenderType getRenderType(T animatable, ResourceLocation texture, @Nullable MultiBufferSource bufferSource, float partialTick) {
+        if (animatable.isDeadOrDying()) return RenderType.ENTITY_TRANSLUCENT.apply(texture, false);
+        return super.getRenderType(animatable, texture, bufferSource, partialTick);
+    }
+
+    @Override
+    public boolean shouldRender(T animatable, @NotNull Frustum frustum, double p_114493_, double p_114494_, double p_114495_) {
+        if (animatable.isDeadOrDying()) return true;
+        return super.shouldRender(animatable, frustum, p_114493_, p_114494_, p_114495_);
+    }
+
+    @Override
+    public int getPackedOverlay(T animatable, float u, float partialTick) {
+        if (animatable.isDeadOrDying()) return OverlayTexture.NO_OVERLAY;
+        return super.getPackedOverlay(animatable, u, partialTick);
+    }
+
+    @Override
+    protected void applyRotations(T animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
+        // 死亡时保持直立，只应用基础的Y轴旋转（避免倒下）
+        if (animatable.isDeadOrDying()) {
+            poseStack.mulPose(Axis.YP.rotationDegrees(180f - rotationYaw));
+            return;
+        }
+        super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
+    }
+
 
     /**
      * 生成死亡消散粒子
@@ -103,8 +101,8 @@ public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMons
 
         RandomSource random = animatable.getRandom();
         float bbWidth = animatable.getBbWidth();
-        // 粒子数量随进度增加（例如 0~20 个/帧），但限制最高数量避免卡顿
-        int count = Mth.ceil(bbWidth / 0.333334F);
+        // 粒子数量随进度增加（例如 0~50 个/帧），但限制最高数量避免卡顿
+        int count = Mth.ceil(bbWidth * 5);
         if (count <= 0) return;
 
         // 模型包围盒信息
@@ -130,25 +128,66 @@ public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMons
         }
     }
 
-    @Override
-    public boolean shouldRender(T animatable, @NotNull Frustum frustum, double p_114493_, double p_114494_, double p_114495_) {
-        if (animatable.isDeadOrDying()) return true;
-        return super.shouldRender(animatable, frustum, p_114493_, p_114494_, p_114495_);
-    }
 
-    @Override
-    public int getPackedOverlay(T animatable, float u, float partialTick) {
-        if (animatable.isDeadOrDying()) return OverlayTexture.NO_OVERLAY;
-        return super.getPackedOverlay(animatable, u, partialTick);
-    }
+    private class TopFadingVertexConsumer implements VertexConsumer {
+        private final VertexConsumer wrapped;
+        private final T animatable;
+        private final float entityHeight;
+        private float currentY;  // 只需要记录 Y 坐标
+        private final float entityBottomCameraY;  // 只需要记录 Y 坐标
 
-    @Override
-    protected void applyRotations(T animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
-        // 死亡时保持直立，只应用基础的Y轴旋转（避免倒下）
-        if (animatable.isDeadOrDying()) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(180f - rotationYaw));
-            return;
+        public TopFadingVertexConsumer(VertexConsumer wrapped, T animatable) {
+            this.wrapped = wrapped;
+            this.animatable = animatable;
+            this.entityHeight = animatable.getBbHeight();
+            this.entityBottomCameraY = (float) (animatable.getY() - Minecraft.getInstance().gameRenderer.getMainCamera().getPosition().y);
         }
-        super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
+
+        @Override
+        public @NotNull VertexConsumer addVertex(float x, float y, float z) {
+            this.currentY = y;
+            wrapped.addVertex(x, y, z);
+            return this;
+        }
+
+        @Override
+        public @NotNull VertexConsumer setColor(int r, int g, int b, int a) {
+            //线性渐变
+//            float heightRatio = (currentY - entityBottomCameraY) / entityHeight;
+//            float alpha = 1 - heightRatio * animatable.deathProgress;
+//            return wrapped.setColor(r, g, b, (int) (alpha * 255));
+
+            // 滑动窗口渐变
+            float normY = (currentY - entityBottomCameraY) / entityHeight;
+            float alpha = 1f;
+            float threshold = 1f - animatable.deathProgress;
+            if (normY > threshold) alpha = 0f;
+            else if (normY > threshold - 0.1f) alpha = 1f - (normY - (threshold - 0.1f)) / 0.1f;
+            return wrapped.setColor(r, g, b, (int) (alpha * 255));
+        }
+
+        @Override
+        public @NotNull VertexConsumer setUv(float u, float v) {
+            wrapped.setUv(u, v);
+            return this;
+        }
+
+        @Override
+        public @NotNull VertexConsumer setUv1(int u, int v) {
+            wrapped.setUv1(u, v);
+            return this;
+        }
+
+        @Override
+        public @NotNull VertexConsumer setUv2(int u, int v) {
+            wrapped.setUv2(u, v);
+            return this;
+        }
+
+        @Override
+        public @NotNull VertexConsumer setNormal(float x, float y, float z) {
+            wrapped.setNormal(x, y, z);
+            return this;
+        }
     }
 }

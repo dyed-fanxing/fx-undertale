@@ -30,12 +30,9 @@ import software.bernie.geckolib.renderer.GeoRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
 public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
-    private static final RenderType EYES_EMISSIVE = RenderType.entityTranslucentEmissive(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_eyes.png"));
+    private static final RenderType EYES_EMISSIVE = RenderType.EYES.apply(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_eyes.png"),RenderType.ADDITIVE_TRANSPARENCY);
     private static final ResourceLocation EYES_BLINK = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_eyes_blink.png");
     private static final ResourceLocation SANS_WHITE = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_white.png");
-    private static final RenderType EYES_BLINK_EMISSIVE = RenderType.entityTranslucentEmissive(ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/sans_eyes_blink.png"));
-    private static final Logger log = LoggerFactory.getLogger(SansRender.class);
-//    RenderType whiteEntityType = RenderTypes.WHITE_ENTITY_TRANSLUCENT.apply(getTextureLocation(animatable), true);
     RenderType WHITE = RenderType.ENTITY_TRANSLUCENT.apply(SANS_WHITE, false);
     public SansRender(EntityRendererProvider.Context renderManager) {
         super(renderManager, new SansModel());
@@ -124,6 +121,7 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
         public void render(PoseStack poseStack, Sans animatable, BakedGeoModel bakedModel, @Nullable RenderType renderType, MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
             if (animatable.getIsEyeBlink()) {
                 AnimatableTexture.setAndUpdate(EYES_BLINK);
+                RenderType EYES_BLINK_EMISSIVE = RenderType.entityTranslucentEmissive(EYES_BLINK);
                 this.getRenderer().reRender(bakedModel, poseStack, bufferSource, animatable, EYES_BLINK_EMISSIVE, bufferSource.getBuffer(EYES_BLINK_EMISSIVE), partialTick, LightTexture.FULL_SKY, packedOverlay, -1);
             } else {
                 this.getRenderer().reRender(bakedModel, poseStack, bufferSource, animatable, EYES_EMISSIVE, bufferSource.getBuffer(EYES_EMISSIVE), partialTick, LightTexture.FULL_SKY, packedOverlay, -1);
