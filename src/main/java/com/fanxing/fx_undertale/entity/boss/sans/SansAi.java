@@ -403,29 +403,29 @@ public class SansAi {
             return tick >= 10;
         }).condition((a, t) -> SansAi.isSameGravity(a, t) && counter[0]++ < 5).weight(6).mutex();
         List<AttackNode<Sans>> children = List.of(
-                new AttackNode<Sans>(TIME_JUMP, 80, (a, t, tick) -> {
+                new AttackNode<Sans>(TIME_JUMP, 6,80, (a, t, tick) -> {
                     if (tick == 0) delay[0] = a.summonTunnelBoneMatrix(t, 0.5f);
                     return tick >= delay[0];
                 }).mutex().child(root),
-                new AttackNode<Sans>(TIME_JUMP, 80, (a, t, tick) -> {
+                new AttackNode<Sans>(TIME_JUMP, 6,80, (a, t, tick) -> {
                     if (tick == 0) a.summonGBAroundTarget(t);
                     return tick >= 50;
                 }).mutex().child(root),
-                new AttackNode<Sans>(TIME_JUMP, 80, (a, t, tick) -> {
+                new AttackNode<Sans>(TIME_JUMP, 6,80, (a, t, tick) -> {
                     if (tick == 0) a.summonGroundBoneWallAroundTarget(t, ColorAttack.AQUA, 5f);
                     if (tick == 8) delay[1] = tick + a.summonGroundBoneWallAroundTarget(t, ColorAttack.WHITE, 1f);
                     return tick >= 10 + delay[1];
                 }).mutex().child(root),
-                new AttackNode<Sans>(TIME_JUMP, 80, (a, t, tick) -> {
+                new AttackNode<Sans>(TIME_JUMP, 6,80, (a, t, tick) -> {
                     if (tick == 0) a.summonGroundBoneWallAroundTarget(t, ColorAttack.WHITE, 1f);
                     if (tick == 8) delay[2] = tick + a.summonGroundBoneWallAroundTarget(t, ColorAttack.WHITE, 3f);
                     return tick >= 10 + delay[2];
                 }).mutex().child(root),
-                new AttackNode<Sans>(TIME_JUMP, 80, (a, t, tick) -> {
+                new AttackNode<Sans>(TIME_JUMP, 6,80, (a, t, tick) -> {
                     if (tick == 0) delay[3] = a.summonGroundBoneMatrix(t, 1.0f);
                     return tick >= delay[3];
                 }).mutex().child(root),
-                new AttackNode<Sans>(TIME_JUMP, 80, (a, t, tick) -> {
+                new AttackNode<Sans>(TIME_JUMP, 6,80, (a, t, tick) -> {
                     if (tick == 0) delay[4] = a.summonHugeParametricGroundBoneSpineWave(t);
                     if (tick == 16) a.level().playSound(null, t, SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE, 1, 1);
                     return tick >= 30 + delay[4];
