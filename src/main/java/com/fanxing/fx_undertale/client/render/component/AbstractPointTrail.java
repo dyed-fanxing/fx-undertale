@@ -10,6 +10,8 @@ import org.joml.Matrix4f;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -177,13 +179,28 @@ public abstract class AbstractPointTrail<T extends AbstractPointTrail<T>> {
     public void endBatch( MultiBufferSource bufferSource) {
         // 如果是原版 BufferSource，直接调用
         if (bufferSource instanceof MultiBufferSource.BufferSource bs)  bs.endBatch();
-        // 如果是 Iris 的包装类，先解包
-        if (bufferSource instanceof net.irisshaders.iris.layer.BufferSourceWrapper wrapper) {
-            MultiBufferSource original = wrapper.getOriginal();
-            if (original instanceof MultiBufferSource.BufferSource bs) {
-                bs.endBatch();
+        // 尝试通过反射处理 Iris 包装类
+
+
+        try {
+            Class<?> wrapperClass = Class.forName("net.irisshaders.iris.layer.BufferSourceWrapper");
+            if (wrapperClass.isInstance(bufferSource)) {
+                Method getOriginal = wrapperClass.getMethod("getOriginal");
+                Object original = getOriginal.invoke(bufferSource);
+                if (original instanceof MultiBufferSource.BufferSource bs) {
+                    bs.endBatch();
+                }
             }
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            // Iris 不存在或方法调用失败，忽略
         }
+//        // 如果是 Iris 的包装类，先解包
+//        if (bufferSource instanceof net.irisshaders.iris.layer.BufferSourceWrapper wrapper) {
+//            MultiBufferSource original = wrapper.getOriginal();
+//            if (original instanceof MultiBufferSource.BufferSource bs) {
+//                bs.endBatch();
+//            }
+//        }
     }
 
 
