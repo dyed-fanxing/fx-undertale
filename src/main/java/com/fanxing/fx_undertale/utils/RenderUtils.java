@@ -1,7 +1,9 @@
 package com.fanxing.fx_undertale.utils;
 
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import com.fanxing.fx_undertale.common.phys.OBB;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -9,6 +11,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+
+import java.lang.reflect.Field;
 
 
 public class RenderUtils {
@@ -332,6 +336,28 @@ public class RenderUtils {
                                           float radius, float height, int segments,
                                           int r, int g, int b, int a, int overlay, int light,
                                           float uScale, float vScale) {
+        // 在 renderCylinderSide 方法内
+        if (consumer instanceof BufferBuilder bb) {
+            try {
+                Field field = com.mojang.blaze3d.vertex.BufferBuilder.class.getDeclaredField("building");
+                field.setAccessible(true);
+                boolean building = field.getBoolean(bb);
+                System.out.println("DEBUG: BufferBuilder building = " + building);
+                if (!building) {
+                    System.err.println("DEBUG: BufferBuilder is NOT building! This is the cause.");
+                    // 可选：打印出 mode 和 format 看看
+                    Field modeField = com.mojang.blaze3d.vertex.BufferBuilder.class.getDeclaredField("mode");
+                    modeField.setAccessible(true);
+                    Object mode = modeField.get(bb);
+                    Field formatField = com.mojang.blaze3d.vertex.BufferBuilder.class.getDeclaredField("format");
+                    formatField.setAccessible(true);
+                    Object format = formatField.get(bb);
+                    System.out.println("DEBUG: mode = " + mode + ", format = " + format);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         float step = Mth.TWO_PI / segments;
         Matrix4f matrix = pose.pose();
         float vBottom = 0;

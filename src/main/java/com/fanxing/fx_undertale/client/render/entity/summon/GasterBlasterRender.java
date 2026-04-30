@@ -1,6 +1,7 @@
 package com.fanxing.fx_undertale.client.render.entity.summon;
 
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -28,6 +29,8 @@ import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.renderer.GeoRenderer;
 
+import java.lang.reflect.Field;
+
 public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     public static ResourceLocation EYES = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,"textures/entity/gaster_blaster_eyes.png");
     public static RenderType EYES_GLOW = RenderType.EYES.apply(EYES, RenderStateShard.TRANSLUCENT_TRANSPARENCY);
@@ -41,8 +44,14 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
 
     @Override
     public void preRender(PoseStack poseStack, GasterBlaster animatable, BakedGeoModel model, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
+
         if(!isReRender && !animatable.isMountable()){
-            GasterBlasterBeamRenderer.render(animatable, partialTick, poseStack, bufferSource, packedLight, animatable.color);
+            try {
+                GasterBlasterBeamRenderer.render(animatable, partialTick, poseStack, bufferSource, packedLight, animatable.color);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+
         }
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
     }

@@ -1,7 +1,9 @@
 package com.fanxing.fx_undertale.client.render.entity.summon;
 
 import com.fanxing.fx_undertale.FxUndertale;
+import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.fanxing.fx_undertale.Config;
 import com.fanxing.fx_undertale.common.RenderTypes;
@@ -19,11 +21,13 @@ import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Field;
 import java.util.Random;
 import java.util.UUID;
 
 public class GasterBlasterBeamRenderer {
     private static final RenderType BEAM_NO_TRANSPARENCY = RenderTypes.BEAM_NO_CULL.apply(ResourceLocations.WHITE_TEXTURE, false);
+//    private static final RenderType BEAM_NO_TRANSPARENCY_TRIANGLE_STRIP = RenderTypes.BEAM_NO_CULL_TRIANGLE_STRIP.apply(ResourceLocations.WHITE_TEXTURE, false);
     private static final RenderType BEAM_NO_TRANSPARENCY_TRIANGLE_STRIP = RenderTypes.BEAM_NO_CULL_TRIANGLE_STRIP.apply(ResourceLocations.WHITE_TEXTURE, false);
     private static final RenderType BEAM_ENERGY_OUTER = RenderTypes.ENERGY_BEAM.apply(ResourceLocations.WHITE_TEXTURE);
     private static final RenderType BEAM_ENERGY_OUTER_TRIANGLE_STRIP = RenderTypes.ENERGY_BEAM_TRIANGLE_STRIP.apply(ResourceLocations.WHITE_TEXTURE);
@@ -60,7 +64,7 @@ public class GasterBlasterBeamRenderer {
      *
      * @param partialTick 部分刻，客户端插值
      */
-    public static void render(GasterBlaster animatable, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int[][] color) {
+    public static void render(GasterBlaster animatable, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int[][] color) throws NoSuchFieldException, IllegalAccessException {
         poseStack.pushPose(); // 在这里压栈
         float size = animatable.getSize();
         float radius = size * 0.5f;
@@ -94,13 +98,38 @@ public class GasterBlasterBeamRenderer {
                 partialSize = Mth.lerp(animTick / discardTick, radius, 0);
             }
             poseStack.pushPose();
-            RenderUtils.renderCapsule(poseStack.last(), buffer.getBuffer(BEAM_NO_TRANSPARENCY_TRIANGLE_STRIP), buffer.getBuffer(BEAM_NO_TRANSPARENCY), partialSize * INNER_SCALE, length, segments, color[0][0], color[0][1], color[0][2], color[0][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
+            RenderType crashType = BEAM_NO_TRANSPARENCY;
+            RenderType noCrashType = BEAM_NO_TRANSPARENCY; // 或者其他你测试过不崩溃的
+            System.out.println("CRASH TYPE: " + crashType);
+            System.out.println("  - canConsolidate: " + crashType.canConsolidateConsecutiveGeometry());
+            System.out.println("  - sortOnUpload: " + crashType.sortOnUpload);
+            System.out.println("  - format: " + crashType.format());
+            System.out.println("NO CRASH TYPE: " + noCrashType);
+            System.out.println("  - canConsolidate: " + noCrashType.canConsolidateConsecutiveGeometry());
+            System.out.println("  - sortOnUpload: " + noCrashType.sortOnUpload);
+            System.out.println("  - format: " + noCrashType.format());
+            RenderUtils.renderCapsule(poseStack.last(), buffer.getBuffer(BEAM_NO_TRANSPARENCY), buffer.getBuffer(BEAM_NO_TRANSPARENCY), partialSize * INNER_SCALE, length, segments, color[0][0], color[0][1], color[0][2], color[0][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
             RenderUtils.renderCapsule(poseStack.last(), buffer.getBuffer(BEAM_ENERGY_OUTER_TRIANGLE_STRIP), buffer.getBuffer(BEAM_ENERGY_OUTER), partialSize , length, segments, color[1][0], color[1][1], color[1][2], color[1][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
             RenderUtils.renderCapsule(poseStack.last(), buffer.getBuffer(BEAM_FLOW_TRIANGLE_STRIP), buffer.getBuffer(BEAM_FLOW), partialSize , length, segments, color[2][0], color[2][1], color[2][2], color[2][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT,
                     1f,length*0.5f,-offset);
             poseStack.popPose();
         }
         poseStack.popPose();
+        VertexConsumer sideConsumer = buffer.getBuffer(BEAM_NO_TRANSPARENCY_TRIANGLE_STRIP);
+        if (sideConsumer instanceof BufferBuilder bb) {
+            Field f = BufferBuilder.class.getDeclaredField("building");
+            f.setAccessible(true);
+            boolean building = f.getBoolean(bb);
+            System.out.println("[DEBUG] sideConsumer hash=" + System.identityHashCode(bb) + ", building=" + building);
+            if (!building) {
+                // 打印 mode 和 format
+                Field modeF = BufferBuilder.class.getDeclaredField("mode");
+                modeF.setAccessible(true);
+                Field formatF = BufferBuilder.class.getDeclaredField("format");
+                formatF.setAccessible(true);
+                System.out.println("  mode=" + modeF.get(bb) + ", format=" + formatF.get(bb));
+            }
+        }
     }
 //    public static void renderLightRay(PoseStack poseStack, MultiBufferSource buffer, UUID uuid, float radius, float animTick, float partialSize,int[][] color) {
 //

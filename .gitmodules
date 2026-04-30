@@ -1,0 +1,4 @@
+[submodule "lib"]
+	path = lib
+	url = git@github.com:dyed-fanxing/fx-lib-private.git
+	branch = 1.21.1

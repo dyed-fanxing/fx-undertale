@@ -28,6 +28,7 @@
     "EntityRenderDispatcherMixin",
     "KarmaHeartMixin",
     "KeyboardHandlerMixin",
+    "MixinBufferBuilderDebug",
     "MixinGeoEntityRenderer",
     "MountCrosshairGuiMixin",
     "MouseHandlerMixin",

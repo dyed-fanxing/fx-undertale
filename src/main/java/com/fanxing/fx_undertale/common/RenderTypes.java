@@ -123,6 +123,7 @@ public interface RenderTypes {
                     .setCullState(NO_CULL)
                     .createCompositeState(false)
     ));
+
     RenderType ENTITY_TRANSLUCENT_EMISSIVE_WHITE = ENTITY_TRANSLUCENT_EMISSIVE_DEPTH.apply(ResourceLocations.WHITE_TEXTURE, true);
     /**
      * ENERGY_BEAM_FLOW - 高亮能量流动效果（带偏移）
