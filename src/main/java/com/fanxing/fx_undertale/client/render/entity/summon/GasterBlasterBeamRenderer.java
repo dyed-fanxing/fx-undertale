@@ -57,7 +57,7 @@ public class GasterBlasterBeamRenderer {
             poseStack.pushPose();
             CapsuleRenderer.render(poseStack.last(), buffer, BeamRenderType.BEAM_NO_TRANSPARENCY_TRIANGLE_STRIP_WHITE, BeamRenderType.BEAM_NO_TRANSPARENCY_WHITE, new Vector3f(), partialSize * INNER_SCALE, length, segments, color[0][0], color[0][1], color[0][2], color[0][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
             CapsuleRenderer.render(poseStack.last(), buffer, BeamRenderType.ENERGY_FLOW_BEAM_TRIANGLE_STRIP_WHITE, BeamRenderType.ENERGY_FLOW_BEAM_WHITE, new Vector3f(), partialSize, length, segments, color[2][0], color[2][1], color[2][2], color[2][3], OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT,
-                    1f, length * 0.5f,  0,  -offset);
+                    3f, length * 0.5f,  0,  -offset);
             poseStack.popPose();
         }
         poseStack.popPose();

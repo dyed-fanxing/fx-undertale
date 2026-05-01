@@ -1,12 +1,11 @@
 package com.fanxing.fx_undertale.client.render.entity.boss;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.client.model.entity.RotationBoneModel;
 import com.fanxing.fx_undertale.client.model.entity.SansModel;
 import com.fanxing.fx_undertale.client.render.AbstractDeadUTMonsterDustRenderer;
 import com.fanxing.fx_undertale.client.render.layer.SansFatigueLayer;
-import com.fanxing.fx_undertale.common.RenderTypes;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
+import com.fanxing.lib.client.render.type.BeamRenderType;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
@@ -19,8 +18,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
@@ -104,10 +101,8 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
             animatable.rightHandTrail.setCenter(rightBelow.getLocalPosition());
             animatable.rightHandTrail.addPoint(rightHand.getLocalPosition(),animTick);
         }
-        VertexConsumer consumer1 = bufferSource.getBuffer(RenderTypes.ENERGY_TRIANGLE_STRIP_WHITE);
-        animatable.leftHandTrail.render(poseStack,bufferSource, consumer1,packedLight,animTick);
-        VertexConsumer consumer2 = bufferSource.getBuffer(RenderTypes.ENERGY_TRIANGLE_STRIP_WHITE);
-        animatable.rightHandTrail.render(poseStack,bufferSource, consumer2,packedLight,animTick);
+        animatable.leftHandTrail.render(poseStack,bufferSource, bufferSource.getBuffer(BeamRenderType.ENERGY_BEAM_TRIANGLE_STRIP_WHITE),packedLight,animTick);
+        animatable.rightHandTrail.render(poseStack,bufferSource, bufferSource.getBuffer(BeamRenderType.ENERGY_BEAM_TRIANGLE_STRIP_WHITE),packedLight,animTick);
     }
 
 

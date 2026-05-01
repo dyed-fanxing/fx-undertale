@@ -1,8 +1,8 @@
 package com.fanxing.fx_undertale.client.render.entity.summon;
 
 import com.fanxing.fx_undertale.client.model.entity.DisplayBoneModel;
-import com.fanxing.fx_undertale.common.RenderTypes;
 import com.fanxing.fx_undertale.entity.summon.DisplayBone;
+import com.fanxing.lib.client.render.type.BeamRenderType;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -50,7 +50,7 @@ public class DisplayBoneRenderer extends GeoEntityRenderer<DisplayBone> {
         Optional<GeoBone> down = this.getGeoModel().getBone("down");
         Optional<GeoBone> top = this.getGeoModel().getBone("top");
         float currentTime = animatable.tickCount + partialTick;
-        RenderType trailType = RenderTypes.ENERGY_TRIANGLE_FAN_WHITE;
+        RenderType trailType = BeamRenderType.ENERGY_BEAM_TRIANGLE_FAN_WHITE;
         if (down.isPresent()) {
             Vector3d localPos = down.get().getLocalPosition();
             animatable.trail1.addPoint(localPos, currentTime);

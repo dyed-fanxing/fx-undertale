@@ -2,22 +2,18 @@ package com.fanxing.fx_undertale.client;
 
 import com.fanxing.fx_undertale.FxUndertale;
 import com.fanxing.fx_undertale.client.render.entity.block.PlatformBlockEntityRenderer;
+import com.fanxing.fx_undertale.client.render.entity.boss.SansRender;
+import com.fanxing.fx_undertale.client.render.entity.projectile.FlyingBoneRenderer;
 import com.fanxing.fx_undertale.client.render.entity.summon.*;
+import com.fanxing.fx_undertale.client.screen.GravitySelectionScreen;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.net.packet.*;
-import com.fanxing.fx_undertale.client.render.entity.projectile.FlyingBoneRenderer;
-import com.fanxing.fx_undertale.client.render.entity.boss.SansRender;
-import com.fanxing.fx_undertale.client.screen.GravitySelectionScreen;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.registry.MenuTypes;
-import com.zigythebird.playeranim.animation.PlayerAnimationController;
-import com.zigythebird.playeranim.api.PlayerAnimationFactory;
-import com.zigythebird.playeranimcore.enums.PlayState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
@@ -58,6 +54,7 @@ public class Setup {
 
     /**
      * 监听客户端注册粒子提供者事件
+     *
      * @param event 三种注册方式
      */
     @SubscribeEvent
@@ -66,6 +63,7 @@ public class Setup {
 
     /**
      * 监听客户端服务端注册网络发包事件
+     *
      * @param event 三种注册方式
      */
     @SubscribeEvent
@@ -78,22 +76,22 @@ public class Setup {
         registrar.playToClient(SoulModePacket.TYPE, SoulModePacket.STREAM_CODEC, SoulModePacket::handle);
 
 
-        registrar.playToClient(WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket.TYPE,WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket.STREAM_CODEC, WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket::handle);
-        registrar.playToClient(WarningTipGravityPacket.Cylinder.TYPE,WarningTipGravityPacket.Cylinder.STREAM_CODEC, WarningTipGravityPacket.Cylinder::handle);
+        registrar.playToClient(WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket.TYPE, WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket.STREAM_CODEC, WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket::handle);
+        registrar.playToClient(WarningTipGravityPacket.Cylinder.TYPE, WarningTipGravityPacket.Cylinder.STREAM_CODEC, WarningTipGravityPacket.Cylinder::handle);
 
-        registrar.playToClient(GravityPacket.TYPE,GravityPacket.STREAM_CODEC, GravityPacket::handle);
+        registrar.playToClient(GravityPacket.TYPE, GravityPacket.STREAM_CODEC, GravityPacket::handle);
         registrar.playToClient(GravityAccPacket.TYPE, GravityAccPacket.STREAM_CODEC, GravityAccPacket::handle);
 
 
-        registrar.playToClient(KaramPacket.TYPE,KaramPacket.STREAM_CODEC, KaramPacket::handle);
+        registrar.playToClient(KaramPacket.TYPE, KaramPacket.STREAM_CODEC, KaramPacket::handle);
         registrar.playToClient(KaramTagPacket.TYPE, KaramTagPacket.STREAM_CODEC, KaramTagPacket::handle);
-        registrar.playToClient(TimeJumpTeleportPacket.TYPE,TimeJumpTeleportPacket.STREAM_CODEC, TimeJumpTeleportPacket::handle);
+        registrar.playToClient(TimeJumpTeleportPacket.TYPE, TimeJumpTeleportPacket.STREAM_CODEC, TimeJumpTeleportPacket::handle);
 
-        registrar.playToClient(QuaternionSyncPacket.TYPE,QuaternionSyncPacket.STREAM_CODEC, QuaternionSyncPacket::handle);
+        registrar.playToClient(QuaternionSyncPacket.TYPE, QuaternionSyncPacket.STREAM_CODEC, QuaternionSyncPacket::handle);
 
 
-        registrar.playToServer(GravitySelectionPacket.TYPE,GravitySelectionPacket.STREAM_CODEC, GravitySelectionPacket::handle);
-        registrar.playToServer(MercyTriggerPacket.TYPE,MercyTriggerPacket.STREAM_CODEC, MercyTriggerPacket::handle);
+        registrar.playToServer(GravitySelectionPacket.TYPE, GravitySelectionPacket.STREAM_CODEC, GravitySelectionPacket::handle);
+        registrar.playToServer(MercyTriggerPacket.TYPE, MercyTriggerPacket.STREAM_CODEC, MercyTriggerPacket::handle);
     }
 
     /**
@@ -104,18 +102,5 @@ public class Setup {
         event.register(MenuTypes.GRAVITY_SELECTION_MENU.get(), GravitySelectionScreen::new);
     }
 
-
-    /**
-     * PLA API的注册玩家动画控制器，类似gecklib的动画控制器
-     */
-    @SubscribeEvent
-    public static void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> {
-            // 注册动画层。1000 是优先级，你可以根据需要调整（文档建议重要动画用 1500+）
-            PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(PlayerAnimations.ATTACK, 1500,
-                    player -> new PlayerAnimationController(player,(controller, state, animSetter) -> PlayState.STOP)
-            );
-        });
-    }
 }
 

@@ -6,6 +6,7 @@ import com.fanxing.fx_undertale.utils.GravityUtils;
 import com.fanxing.lib.entity.capability.Growable;
 import com.fanxing.lib.entity.capability.OBBHolder;
 import com.fanxing.lib.entity.capability.Scalable;
+import com.fanxing.lib.entity.summon.AbstractMovingSummons;
 import com.fanxing.lib.phys.OBB;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;

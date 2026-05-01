@@ -1,12 +1,12 @@
 package com.fanxing.fx_undertale.item;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.client.PlayerAnimations;
 import com.fanxing.fx_undertale.client.render.item.GasterBlasterItemRender;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.registry.ItemTypes;
 import com.fanxing.fx_undertale.utils.GravityUtils;
+import com.fanxing.lib.client.PlayerAnimations;
 import com.fanxing.lib.registry.DataComponentsFxLib;
 import com.fanxing.lib.util.RotUtils;
 import com.fanxing.lib.util.collsion.RayCCDUtils;

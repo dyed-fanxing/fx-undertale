@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity.summon;
 
-import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
+import com.fanxing.fx_undertale.data.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.net.packet.QuaternionSyncPacket;
 import com.fanxing.fx_undertale.registry.EntityTypes;
@@ -201,7 +201,7 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
     }
 
     @Override
-    void updateRotation(Vec3 velocity) {}
+    protected void updateRotation(Vec3 velocity) {}
 
     @Override
     protected BlockHitResult getBlockHitResult() {

@@ -4,7 +4,6 @@
   "package": "com.fanxing.fx_undertale.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "EntityFreeMountMixin",
     "LivingEntityBlockMixin",
     "MixinGeoRenderer",
     "gravity.EntityGravityMixin",

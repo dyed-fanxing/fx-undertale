@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.event.handler;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
+import com.fanxing.fx_undertale.data.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.attachment.KaramJudge;
 import com.fanxing.fx_undertale.entity.attachment.Karam;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;

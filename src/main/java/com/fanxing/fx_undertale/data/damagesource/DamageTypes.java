@@ -1,4 +1,4 @@
-package com.fanxing.fx_undertale.common.damagesource;
+package com.fanxing.fx_undertale.data.damagesource;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;

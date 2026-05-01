@@ -28,7 +28,6 @@
   "gui.fx_undertale.select_direction": "Select gravity direction:",
   "gui.fx_undertale.close": "Close",
 
-  "mount.onboard.double.key.dismount": "Double Press %1$s to Dismount",
 
   "death.attack.fx_undertale.frame.player": "%1$s was killed by %2$s using frame damage",
   "death.attack.fx_undertale.frame_blockable.player": "%1$s was tortured to death by %2$s using frame damage",
@@ -38,13 +37,9 @@
   "death.attack.fx_undertale.frame.ground_bone_obb.player": "%1$s was impaled by %2$s using magic bone",
   "death.attack.fx_undertale.frame.gaster_blaster.player": "%1$s was blasted to ashes by %2$s using Gaster Blaster",
 
-  "fx_undertale.debug.ccd.on": "CCD Debug: ON",
-  "fx_undertale.debug.ccd.off": "CCD Debug: OFF",
 
   "dialogue.fx_undertale.entity.mercy": "%1$s is showing mercy to you",
   "dialogue.fx_undertale.mercy": "Mercy",
-
-  "fx_undertale.configuration.segments": "Circle Segments",
 
   "fx_undertale.configuration.expPerLv": "Base EXP per Level",
   "fx_undertale.configuration.expCurveExponent": "EXP Curve Exponent",

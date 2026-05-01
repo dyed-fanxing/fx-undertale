@@ -1,18 +1,15 @@
 package com.fanxing.fx_undertale.client.render.entity.summon;
 
 import com.fanxing.fx_undertale.client.model.entity.RotationBoneModel;
-import com.fanxing.fx_undertale.common.RenderTypes;
 import com.fanxing.fx_undertale.entity.summon.RotationBone;
+import com.fanxing.lib.client.render.type.RenderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;

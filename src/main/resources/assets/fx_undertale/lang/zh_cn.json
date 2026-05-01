@@ -26,7 +26,6 @@
   "menu.fx_undertale.gravity_selection": "重力方向选择",
   "gui.fx_undertale.select_direction": "请选择重力方向：",
   "gui.fx_undertale.close": "关闭",
-  "mount.onboard.double.key.dismount": "双击 %1$s 来脱离",
 
 
   "death.attack.fx_undertale.frame_blockable.player": "%1$s 被 %2$s 使用 帧伤 折磨死了",
@@ -38,23 +37,11 @@
 
 
 
-
-  "fx_undertale.debug.ccd.on": "CCD扫掠: 显示",
-  "fx_undertale.debug.ccd.off": "CCD扫掠: 关闭",
-
-
   "dialogue.fx_undertale.entity.mercy": "%1$s正在%2$s你",
   "dialogue.fx_undertale.mercy": "饶恕",
 
 
 
-
-
-
-
-
-
-  "fx_undertale.configuration.segments": "圆段数",
 
   "fx_undertale.configuration.expPerLv": "每级所需经验基数",
   "fx_undertale.configuration.expCurveExponent": "经验曲线指数",

@@ -1,12 +1,13 @@
 package com.fanxing.fx_undertale.entity.summon;
 
-import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
+import com.fanxing.fx_undertale.data.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.registry.ItemTypes;
 import com.fanxing.fx_undertale.registry.SoundEvents;
 import com.fanxing.lib.client.render.component.SphereEffectEmitter;
 import com.fanxing.lib.entity.capability.Mountable;
+import com.fanxing.lib.entity.summon.LivingSummons;
 import com.fanxing.lib.mixin.LivingEntityAccessor;
 import com.fanxing.lib.util.ColorUtils;
 import com.fanxing.lib.util.CurvesUtils;
