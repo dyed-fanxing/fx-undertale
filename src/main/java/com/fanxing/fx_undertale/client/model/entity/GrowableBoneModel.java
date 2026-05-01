@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.client.model.entity;
 
-import com.fanxing.fx_undertale.entity.capability.Growable;
+import com.fanxing.lib.entity.capability.Growable;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;

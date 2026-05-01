@@ -1,19 +1,13 @@
 package com.fanxing.fx_undertale.entity;
 
-import com.fanxing.fx_undertale.registry.SoundEvnets;
+import com.fanxing.fx_undertale.registry.SoundEvents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Objects;
 
 
 public abstract class AbstractUTMonster extends Monster {
@@ -43,7 +37,7 @@ public abstract class AbstractUTMonster extends Monster {
 
     @Override
     protected @NotNull SoundEvent getDeathSound() {
-        return SoundEvnets.DEATH.get();
+        return SoundEvents.DEATH.get();
     }
 
     protected void dropAllDeathLoot(@NotNull ServerLevel level, @NotNull DamageSource damageSource) {

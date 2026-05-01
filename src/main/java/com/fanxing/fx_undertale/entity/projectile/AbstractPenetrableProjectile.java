@@ -1,6 +1,7 @@
 package com.fanxing.fx_undertale.entity.projectile;
 
-import com.fanxing.fx_undertale.utils.collsion.AABBCCDUtils;
+import com.fanxing.lib.registry.ParticleTypesFxLib;
+import com.fanxing.lib.util.collsion.RayCCDUtils;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -105,7 +106,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         return this.level().clip(new ClipContext(from, from.add(velocity), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
     }
     protected List<EntityHitResult> getEntityHitResults(Vec3 to) {
-        return AABBCCDUtils.getEntityHitResults(this, this.getBoundingBox().getCenter(), to, this::canHitEntity);
+        return RayCCDUtils.getEntityHitResults(this, this.getBoundingBox().getCenter(), to, this::canHitEntity);
     }
 
     @Override
@@ -135,7 +136,7 @@ public abstract class AbstractPenetrableProjectile extends Projectile implements
         }
     }
     protected ParticleOptions getTrailParticle() {
-        return com.fanxing.fx_undertale.registry.ParticleTypes.CUSTOM_WHITE_ASH.get();
+        return ParticleTypesFxLib.CUSTOM_WHITE_ASH.get();
     }
 
     @Override

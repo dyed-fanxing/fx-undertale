@@ -2,5 +2,5 @@
   "exhaustion": 0.0,
   "message_id": "fx_undertale.frame",
   "scaling": "when_caused_by_living_non_player",
-  "death_message_type": "fx_undertale:custom_noun_verb_death"
+  "death_message_type": "fx_lib:custom_noun_verb_death"
 }

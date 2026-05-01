@@ -1,18 +1,9 @@
 package com.fanxing.fx_undertale.entity.boss.sans;
 
-import com.fanxing.fx_undertale.client.render.component.RadialPlaneTrailStrip;
-import com.fanxing.fx_undertale.client.render.effect.WarningTip;
-import com.fanxing.fx_undertale.common.phys.CollisionDeflection;
-import com.fanxing.fx_undertale.common.phys.LocalDirection;
-import com.fanxing.fx_undertale.common.phys.motion.CircularMotionModel;
-import com.fanxing.fx_undertale.common.phys.motion.PhysicsMotionModel;
-import com.fanxing.fx_undertale.common.phys.motion.RoseSpiralMotionModel;
-import com.fanxing.fx_undertale.common.phys.motion.SpringMotionModel;
+import com.fanxing.fx_undertale.client.render.effect.WarningTipGravity;
 import com.fanxing.fx_undertale.entity.AbstractUTMonster;
-import com.fanxing.fx_undertale.entity.ai.control.PatchedMoveControl;
 import com.fanxing.fx_undertale.entity.attachment.KaramJudge;
 import com.fanxing.fx_undertale.entity.block.PlatformBlockEntity;
-import com.fanxing.fx_undertale.entity.capability.Animatable;
 import com.fanxing.fx_undertale.entity.component.EllipsoidProjectileShield;
 import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.entity.projectile.FlyingBone;
@@ -20,6 +11,17 @@ import com.fanxing.fx_undertale.entity.summon.*;
 import com.fanxing.fx_undertale.net.packet.*;
 import com.fanxing.fx_undertale.registry.*;
 import com.fanxing.fx_undertale.utils.*;
+import com.fanxing.lib.client.render.component.RadialPlaneTrailStrip;
+import com.fanxing.lib.client.render.effect.WarningTip;
+import com.fanxing.lib.entity.ai.control.PatchedMoveControl;
+import com.fanxing.lib.entity.capability.Animatable;
+import com.fanxing.lib.net.packet.WarningTipPacket;
+import com.fanxing.lib.phys.LocalDirection;
+import com.fanxing.lib.phys.motion.CircularMotionModel;
+import com.fanxing.lib.phys.motion.RoseSpiralMotionModel;
+import com.fanxing.lib.phys.motion.SpringMotionModel;
+import com.fanxing.lib.registry.MemoryModuleTypesFxLib;
+import com.fanxing.lib.util.*;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Dynamic;
 import net.minecraft.core.Direction;
@@ -51,7 +53,6 @@ import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.entity.projectile.ProjectileDeflection;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
@@ -112,13 +113,13 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             MemoryModuleType.ATTACK_TARGET,
             MemoryModuleType.ATTACK_COOLING_DOWN,
 
-            MemoryModuleTypes.ATTACKING.get(),
-            MemoryModuleTypes.COOLDOWN_1.get(),
-            MemoryModuleTypes.COOLDOWN_2.get(),
-            MemoryModuleTypes.COOLDOWN_3.get(),
-            MemoryModuleTypes.COOLDOWN_4.get(),
-            MemoryModuleTypes.MOVE_LOCKING.get(),
-            MemoryModuleTypes.ACTIVE_ATTACK_NODES.get()
+            MemoryModuleTypesFxLib.ATTACKING.get(),
+            MemoryModuleTypesFxLib.COOLDOWN_1.get(),
+            MemoryModuleTypesFxLib.COOLDOWN_2.get(),
+            MemoryModuleTypesFxLib.COOLDOWN_3.get(),
+            MemoryModuleTypesFxLib.COOLDOWN_4.get(),
+            MemoryModuleTypesFxLib.MOVE_LOCKING.get(),
+            MemoryModuleTypesFxLib.ACTIVE_ATTACK_NODES.get()
     );
 
     private float maxStamina;       // 最大体力/耐力
@@ -197,7 +198,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 Vec3 radial = pos.subtract(this.getBoundingBox().getCenter()).normalize();
                 entity.discard();
                 DisplayBone displayBone = new DisplayBone(this.level(), 10, 1.0f);
-                this.level().playSound(null, pos.x, pos.y, pos.z, SoundEvnets.BLOCK, SoundSource.HOSTILE, 1.0f, 1.0f);
+                this.level().playSound(null, pos.x, pos.y, pos.z, SoundEvents.BLOCK, SoundSource.HOSTILE, 1.0f, 1.0f);
                 displayBone.setPos(hitResult.getLocation());
                 RotUtils.lookVec(displayBone, radial);
                 this.level().addFreshEntity(displayBone);
@@ -879,7 +880,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         float growScale = 2f + getStaminaFactor() * 2f;
         Direction targetG = target.getData(AttachmentTypes.GRAVITY);
         Vec3 targetGroundPos = GravityUtils.findGround(level(), target.position(), targetG);
-        PhysicsMotionModel motionModel = new RoseSpiralMotionModel(0.1f, 0.1f);
+        RoseSpiralMotionModel motionModel = new RoseSpiralMotionModel(0.1f, 0.1f);
         RotationBone bone = createRotationBone(UUID.randomUUID().toString(), scale, growScale, 300 + 100 * getPhaseID()).angularVelocity(new Vector3f(0, angularVelocity * Mth.DEG_TO_RAD, 0)).holdTimeScale(0.9F).motion(motionModel,
                 targetGroundPos.add(GravityUtils.localToWorld(targetG, RotUtils.rotateYXZ(scale * growScale * isRightHand, (float) targetHalfBbHeight, 0, getYHeadRot(), 0, 0)))
         );
@@ -1107,7 +1108,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         }
         this.teleportRelative(0, height + 0.5f, 0);
 
-        target.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvnets.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
+        target.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.SANS_BONE_SPINE.get(), SoundSource.HOSTILE);
         for (int r = 0; r < rows; r++) {
             float dz = (halfRows - r) * rowSpacing;
             if (r == 4) {
@@ -1183,8 +1184,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         Vec3 centerPos = target.position();
         Direction gravity = target.getData(AttachmentTypes.GRAVITY);
         this.level().addFreshEntity(createGroundBone(attackTypeUUID, centerPos, 1.0f, growScale, lifetime, delay, 0f, 0f).gravity(gravity).holdTimeScale(holdTimeScale));
-        this.level().playSound(null, centerPos.x, centerPos.y, centerPos.z, SoundEvnets.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
-        PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.Cylinder((float) centerPos.x, (float) centerPos.y, (float) centerPos.z, layer * spacing, growScale, 10, WarningTip.RED, gravity));
+        this.level().playSound(null, centerPos.x, centerPos.y, centerPos.z, SoundEvents.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+        PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipGravityPacket.Cylinder((float) centerPos.x, (float) centerPos.y, (float) centerPos.z, layer * spacing, growScale, 10, WarningTip.RED, gravity));
         for (int i = 0; i < layer; i++) {
             int count = 8 * (i + 1);
             float interval = 360f / count;
@@ -1213,7 +1214,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         float interval = maxAngle - slope * (float) distance;
         interval = Mth.clamp(interval, 5f, maxAngle);
         Vec3 centerPos = target.position().subtract(this.position()).scale(0.5f).add(this.position());
-        this.level().playSound(null, centerPos.x, centerPos.y, centerPos.z, SoundEvnets.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+        this.level().playSound(null, centerPos.x, centerPos.y, centerPos.z, SoundEvents.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
         Vec3 toTarget = target.position().subtract(this.position());
         float scale = 0.9f + 0.1f * difficulty + 0.2f * phaseFactor;
         float growScale = 1.5f + getStaminaFactor() * 0.5f;
@@ -1296,8 +1297,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         float scale = 1.2f + getPhaseFactor() * 0.2F;
         float spacing = 0.7f * scale;
         float growScale = 1.5F + staminaFactor;
-        this.level().playSound(null, pos.x, pos.y, pos.z, SoundEvnets.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
-        PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.Cylinder((float) pos.x, (float) pos.y, (float) pos.z, layer * spacing, growScale, 20, WarningTip.RED));
+        this.level().playSound(null, pos.x, pos.y, pos.z, SoundEvents.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+        PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipGravityPacket.Cylinder((float) pos.x, (float) pos.y, (float) pos.z, layer * spacing, growScale, 20, WarningTip.RED));
         for (int i = 0; i < layer; i++) {
             int count = 8 * (i + 1);
             float interval = 360f / count;
@@ -1326,7 +1327,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         Vec3 centerPos = dirToTarget.scale(0.5f).add(position);  // 炸开中心点（中点）
         Vec3 dir = dirToTarget.normalize();
         this.level().playSound(null, centerPos.x, centerPos.y, centerPos.z,
-                SoundEvnets.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+                SoundEvents.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
         // 计算列数
         int cols = 2 + difficulty + staminaFactor;
         float scale = 1.7f + 0.3f * staminaFactor;
@@ -1434,17 +1435,17 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         int delay = tipLifetime / 2;
         Function<Float, Vec3> curve = ParametricCurveUtils.reverse(switch (type) {
             case 1 -> {
-                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.RadialPrecessionCurveStripsGravityPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, gravity, ParametricCurveType.FRACTAL_REVERSED, 8, 1.0F));
+                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, gravity, ParametricCurveType.FRACTAL_REVERSED, 8, 1.0F));
                 yield ParametricCurveUtils.fractal(8, 1.0F);
             }
             case 2 -> {
-                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.RadialPrecessionCurveStripsGravityPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, gravity, ParametricCurveType.FLOWER_REVERSED, 4));
+                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, gravity, ParametricCurveType.FLOWER_REVERSED, 4));
                 yield ParametricCurveUtils.flower(4);
             }
             case 3 -> {
                 curveCount -= 2;
                 PacketDistributor.sendToPlayersTrackingEntity(this,
-                        new WarningTipPacket.RadialPrecessionCurveStripsGravityPacket(
+                        new WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket(
                                 (float) targetPos.x, (float) targetPos.y, (float) targetPos.z,
                                 tipLifetime, WarningTip.RED, curveCount, radius, spacing,
                                 pointsPerCurve, gravity, ParametricCurveType.SAWTOOTH_RADIAL_REVERSED,
@@ -1454,7 +1455,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             }
             case 4 -> {
                 PacketDistributor.sendToPlayersTrackingEntity(this,
-                        new WarningTipPacket.RadialPrecessionCurveStripsGravityPacket(
+                        new WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket(
                                 (float) targetPos.x, (float) targetPos.y, (float) targetPos.z,
                                 tipLifetime, WarningTip.RED, curveCount, radius, spacing,
                                 pointsPerCurve, gravity, ParametricCurveType.STARBURST_REVERSED,
@@ -1465,7 +1466,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
             case 5 -> {
                 curveCount -= 1;
                 PacketDistributor.sendToPlayersTrackingEntity(this,
-                        new WarningTipPacket.RadialPrecessionCurveStripsGravityPacket(
+                        new WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket(
                                 (float) targetPos.x, (float) targetPos.y, (float) targetPos.z,
                                 tipLifetime, WarningTip.RED, curveCount, radius, spacing,
                                 pointsPerCurve, gravity, ParametricCurveType.WAVEFOLD_REVERSED,
@@ -1474,11 +1475,11 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 yield ParametricCurveUtils.wavefold(4f, 8f, 0.3f);
             }
             default -> {
-                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipPacket.RadialPrecessionCurveStripsGravityPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, gravity, ParametricCurveType.HEART_REVERSED));
+                PacketDistributor.sendToPlayersTrackingEntity(this, new WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket((float) targetPos.x, (float) targetPos.y, (float) targetPos.z, tipLifetime, WarningTip.RED, curveCount, radius, spacing, pointsPerCurve, gravity, ParametricCurveType.HEART_REVERSED));
                 yield ParametricCurveUtils.heart();
             }
         });
-        this.level().playSound(null, targetPos.x, targetPos.y, targetPos.z, SoundEvnets.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
+        this.level().playSound(null, targetPos.x, targetPos.y, targetPos.z, SoundEvents.ENEMY_ENCOUNTER_ATTACK_TIP.get(), SoundSource.HOSTILE);
         for (int s = 0; s < curveCount; s++) {
             float baseAngle = s * 360f / curveCount;
             delay = 20;
@@ -1709,7 +1710,7 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
 
     public void timeJumpTeleport(LivingEntity target, int duration) {
         PacketDistributor.sendToPlayersTrackingEntity(this, new TimeJumpTeleportPacket(target.getId(), duration));
-        this.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvnets.SANS_TELEPORT_TIME_JUMP.get(), SoundSource.HOSTILE);
+        this.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.SANS_TELEPORT_TIME_JUMP.get(), SoundSource.HOSTILE);
     }
 
     public Vec3 originRela(double dx, double dy, double dz) {

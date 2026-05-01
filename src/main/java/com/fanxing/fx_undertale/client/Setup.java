@@ -6,16 +6,11 @@ import com.fanxing.fx_undertale.client.render.entity.summon.*;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.net.packet.*;
-import com.fanxing.fx_undertale.client.particle.BallGrowParticle;
-import com.fanxing.fx_undertale.client.particle.CustomWhiteAshNoGravityParticle;
-import com.fanxing.fx_undertale.client.particle.CustomWhiteAshParticle;
-import com.fanxing.fx_undertale.client.particle.LightStreakParticle;
 import com.fanxing.fx_undertale.client.render.entity.projectile.FlyingBoneRenderer;
 import com.fanxing.fx_undertale.client.render.entity.boss.SansRender;
 import com.fanxing.fx_undertale.client.screen.GravitySelectionScreen;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.registry.MenuTypes;
-import com.fanxing.fx_undertale.registry.ParticleTypes;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
 import com.zigythebird.playeranimcore.enums.PlayState;
@@ -67,10 +62,6 @@ public class Setup {
      */
     @SubscribeEvent
     public static void registerParticleProviderHandler(final RegisterParticleProvidersEvent event) {
-        event.registerSpriteSet(ParticleTypes.BALL_GROW.get(), BallGrowParticle.Provider::new);
-        event.registerSpriteSet(ParticleTypes.LIGHT_STREAK.get(), LightStreakParticle.Provider::new);
-        event.registerSpriteSet(ParticleTypes.CUSTOM_WHITE_ASH.get(), CustomWhiteAshParticle.Provider::new);
-        event.registerSpriteSet(ParticleTypes.CUSTOM_NO_GRAVITY_WHITE_ASH.get(), CustomWhiteAshNoGravityParticle.Provider::new);
     }
 
     /**
@@ -83,21 +74,12 @@ public class Setup {
         final PayloadRegistrar registrar = event.registrar("1");
         // 仅客户端接收的Payload
 
-        registrar.playToClient(AnimPacket.TYPE, AnimPacket.STREAM_CODEC, AnimPacket::handle);
 
         registrar.playToClient(SoulModePacket.TYPE, SoulModePacket.STREAM_CODEC, SoulModePacket::handle);
 
-        registrar.playToClient(WarningTipAABBPacket.TYPE, WarningTipAABBPacket.STREAM_CODEC, WarningTipAABBPacket::handle);
-        registrar.playToClient(WarningTipPacket.Cylinder.TYPE, WarningTipPacket.Cylinder.STREAM_CODEC, WarningTipPacket.Cylinder::handle);
-        registrar.playToClient(WarningTipPacket.Cube.TYPE, WarningTipPacket.Cube.STREAM_CODEC, WarningTipPacket.Cube::handle);
-        registrar.playToClient(WarningTipPacket.Quad.TYPE, WarningTipPacket.Quad.STREAM_CODEC, WarningTipPacket.Quad::handle);
-        registrar.playToClient(WarningTipPacket.QuadPrecession.TYPE, WarningTipPacket.QuadPrecession.STREAM_CODEC, WarningTipPacket.QuadPrecession::handle);
-        registrar.playToClient(WarningTipPacket.QuadCirclePrecession.TYPE, WarningTipPacket.QuadCirclePrecession.STREAM_CODEC, WarningTipPacket.QuadCirclePrecession::handle);
-        registrar.playToClient(WarningTipPacket.Circle.TYPE, WarningTipPacket.Circle.STREAM_CODEC, WarningTipPacket.Circle::handle);
-        registrar.playToClient(WarningTipPacket.CurveStrip.TYPE, WarningTipPacket.CurveStrip.STREAM_CODEC, WarningTipPacket.CurveStrip::handle);
-        registrar.playToClient(WarningTipPacket.RadialPrecessionCurveStripsPacket.TYPE, WarningTipPacket.RadialPrecessionCurveStripsPacket.STREAM_CODEC, WarningTipPacket.RadialPrecessionCurveStripsPacket::handle);
-        registrar.playToClient(WarningTipPacket.RadialPrecessionCurveStripsGravityPacket.TYPE, WarningTipPacket.RadialPrecessionCurveStripsGravityPacket.STREAM_CODEC, WarningTipPacket.RadialPrecessionCurveStripsGravityPacket::handle);
 
+        registrar.playToClient(WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket.TYPE,WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket.STREAM_CODEC, WarningTipGravityPacket.RadialPrecessionCurveStripsGravityPacket::handle);
+        registrar.playToClient(WarningTipGravityPacket.Cylinder.TYPE,WarningTipGravityPacket.Cylinder.STREAM_CODEC, WarningTipGravityPacket.Cylinder::handle);
 
         registrar.playToClient(GravityPacket.TYPE,GravityPacket.STREAM_CODEC, GravityPacket::handle);
         registrar.playToClient(GravityAccPacket.TYPE, GravityAccPacket.STREAM_CODEC, GravityAccPacket::handle);
@@ -107,12 +89,7 @@ public class Setup {
         registrar.playToClient(KaramTagPacket.TYPE, KaramTagPacket.STREAM_CODEC, KaramTagPacket::handle);
         registrar.playToClient(TimeJumpTeleportPacket.TYPE,TimeJumpTeleportPacket.STREAM_CODEC, TimeJumpTeleportPacket::handle);
 
-
-        registrar.playToClient(SyncMotionPayload.TYPE,SyncMotionPayload.STREAM_CODEC, SyncMotionPayload::handle);
         registrar.playToClient(QuaternionSyncPacket.TYPE,QuaternionSyncPacket.STREAM_CODEC, QuaternionSyncPacket::handle);
-
-
-
 
 
         registrar.playToServer(GravitySelectionPacket.TYPE,GravitySelectionPacket.STREAM_CODEC, GravitySelectionPacket::handle);

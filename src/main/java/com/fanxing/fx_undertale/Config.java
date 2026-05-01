@@ -22,20 +22,11 @@ public class Config {
     }
 
     public static class Common {
-        public final ModConfigSpec.IntValue segments;
         public Common(ModConfigSpec.Builder builder) {
-            this.segments = builder
-                    .comment("控制渲染圆的段数")
-                    .translation(FxUndertale.MOD_ID+".segments")
-                    .defineInRange("segments", 32, 4, 128);
-        }
-        public ModConfigSpec.IntValue getSegments() {
-            return segments;
         }
     }
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
-        // 可在此添加配置加载后的处理（目前留空）
     }
 
 

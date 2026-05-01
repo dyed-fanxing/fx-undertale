@@ -1,14 +1,10 @@
 package com.fanxing.fx_undertale;
 
-import com.fanxing.fx_undertale.common.phys.motion.PhysicsMotionModel;
 import com.fanxing.fx_undertale.registry.*;
+import com.fanxing.lib.phys.motion.PhysicsMotionModel;
+import com.fanxing.lib.registry.MemoryModuleTypesFxLib;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.repository.Pack;
-import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -23,7 +19,6 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.slf4j.Logger;
@@ -49,7 +44,7 @@ public class FxUndertale {
         MobEffectTypes.registry(modEventBus);           // buff注册
 
         MemoryModuleTypes.register(modEventBus);        // 记忆注册
-        SoundEvnets.register(modEventBus);              // 声音注册
+        SoundEvents.register(modEventBus);              // 声音注册
         ParticleTypes.register(modEventBus);            // 粒子注册
         AttachmentTypes.register(modEventBus);          // 附件注册
         MenuTypes.register(modEventBus);                // 菜单注册

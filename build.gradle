@@ -38,6 +38,8 @@ repositories {
 }
 
 dependencies {
+    implementation project(':lib')    // 注意：这里 ':' 表示被 includeBuild 的根项目
+
     // JEI API 声明供编译时使用，而完整的 JEI 工件在运行时使用
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"

@@ -1,17 +1,17 @@
 package com.fanxing.fx_undertale.entity.summon;
 
-import com.fanxing.fx_undertale.client.render.component.SphereEffectEmitter;
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
-import com.fanxing.fx_undertale.entity.capability.Mountable;
-import com.fanxing.fx_undertale.mixin.LivingEntityAccessor;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.registry.ItemTypes;
-import com.fanxing.fx_undertale.registry.SoundEvnets;
-import com.fanxing.fx_undertale.utils.ColorUtils;
-import com.fanxing.fx_undertale.utils.CurvesUtils;
-import com.fanxing.fx_undertale.utils.collsion.CollisionDetectionUtils;
-import com.fanxing.fx_undertale.utils.RotUtils;
+import com.fanxing.fx_undertale.registry.SoundEvents;
+import com.fanxing.lib.client.render.component.SphereEffectEmitter;
+import com.fanxing.lib.entity.capability.Mountable;
+import com.fanxing.lib.mixin.LivingEntityAccessor;
+import com.fanxing.lib.util.ColorUtils;
+import com.fanxing.lib.util.CurvesUtils;
+import com.fanxing.lib.util.RotUtils;
+import com.fanxing.lib.util.collsion.CapsuleCCDUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -21,7 +21,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -282,7 +281,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         if(!this.level().isClientSide){
             Vec3 finalEnd = end;
             List<LivingEntity> livingEntities = level().getEntitiesOfClass(LivingEntity.class, new AABB(start, end).inflate(size), this::canHitEntity)
-                    .stream().filter(target -> CollisionDetectionUtils.capsuleIntersectsAABB(start, finalEnd, size * 0.5f, target.getBoundingBox()))
+                    .stream().filter(target -> CapsuleCCDUtils.capsuleIntersectsAABB(start, finalEnd, size * 0.5f, target.getBoundingBox()))
                     .sorted(Comparator.comparingDouble(e -> e.distanceToSqr(start))).toList();
             for (LivingEntity target : livingEntities) {
                 target.hurt(damageSources().source(DamageTypes.FRAME, this, getOwner() == null ? this : owner), (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE));
@@ -461,7 +460,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         tag.putBoolean("mountable", isMountable());
 
         tag.putFloat("holdTimeScale", holdTimeScale);
-        tag.putIntArray("color",ColorUtils.rgbaArrayToInt(color));
+        tag.putIntArray("color", ColorUtils.rgbaArrayToInt(color));
     }
 
     @Override
@@ -528,7 +527,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         this.holdTimeScale = buffer.readFloat();
         if(buffer.readBoolean()) this.target = this.level().getEntity(buffer.readInt());
         if(!isFollow && !isMountable()) restAnimPosClient();
-        this.color = ColorUtils.intToRGBArrays(buffer.readInt(),buffer.readInt(),buffer.readInt());
+        this.color = ColorUtils.intToRgbaArrays(buffer.readInt(),buffer.readInt(),buffer.readInt());
         this.refreshDimensions();
     }
 
@@ -569,14 +568,14 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
                 }else if(this.tickCount < fireTick) {
                     controller.setAnimation(CHARGE_ANIM);
                     controller.setAnimationSpeed(20.0 / (fireTick - 1));
-                    controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundEvnets.GASTER_BLASTER_CHARGE.get(), SoundSource.NEUTRAL, 1, 1));
+                    controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundEvents.GASTER_BLASTER_CHARGE.get(), SoundSource.NEUTRAL, 1, 1));
                 } else if (this.tickCount < shotTick) {
                     controller.setAnimation(FIRE_ANIM);
                     controller.setAnimationSpeed(20.0 / (shotTick - fireTick));
                 } else if (this.tickCount < decayTick) {
                     controller.setAnimation(SHOT_ANIM);
                     controller.setAnimationSpeed(20.0 / (decayTick - shotTick));
-                    controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundEvnets.GASTER_BLASTER_FIRE.get(), SoundSource.NEUTRAL, 1, 1));
+                    controller.setSoundKeyframeHandler(keyframe -> this.level().playLocalSound(this, SoundEvents.GASTER_BLASTER_FIRE.get(), SoundSource.NEUTRAL, 1, 1));
                 } else {
                     controller.setAnimation(DECAY_ANIM);
                     controller.setAnimationSpeed(6.666667);

@@ -1,8 +1,7 @@
 package com.fanxing.fx_undertale.entity.boss.sans;
 
-import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.entity.dialogue.DialogueMessageProvider;
-import com.fanxing.fx_undertale.entity.dialogue.EntityDialogue;
+import com.fanxing.lib.entity.dialogue.DialogueMessageProvider;
+import com.fanxing.lib.entity.dialogue.EntityDialogue;
 import net.minecraft.ChatFormatting;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.ClickEvent;
@@ -10,9 +9,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.fml.common.EventBusSubscriber;
-
-import javax.swing.text.html.parser.Entity;
 
 /**
  * Sans 对话管理

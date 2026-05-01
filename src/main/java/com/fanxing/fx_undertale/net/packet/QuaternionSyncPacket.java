@@ -1,9 +1,9 @@
 package com.fanxing.fx_undertale.net.packet;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.entity.capability.OBBRotationCollider;
-import com.fanxing.fx_undertale.entity.capability.QuaternionRotatable;
 import com.fanxing.fx_undertale.entity.summon.RotationBone;
+import com.fanxing.lib.entity.capability.OBBRotationCollider;
+import com.fanxing.lib.entity.capability.QuaternionRotatable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.RegistryFriendlyByteBuf;

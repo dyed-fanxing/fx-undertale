@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity.component;
 
-import com.fanxing.fx_undertale.utils.collsion.CollisionDetectionUtils;
+import com.fanxing.lib.util.collsion.CollisionDetectionUtils;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;

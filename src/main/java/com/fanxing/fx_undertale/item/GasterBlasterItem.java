@@ -7,8 +7,9 @@ import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.registry.ItemTypes;
 import com.fanxing.fx_undertale.utils.GravityUtils;
-import com.fanxing.fx_undertale.utils.collsion.AABBCCDUtils;
-import com.fanxing.fx_undertale.utils.RotUtils;
+import com.fanxing.lib.registry.DataComponentsFxLib;
+import com.fanxing.lib.util.RotUtils;
+import com.fanxing.lib.util.collsion.RayCCDUtils;
 import com.zigythebird.playeranim.animation.PlayerAnimResources;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranim.api.PlayerAnimationAccess;
@@ -19,8 +20,6 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -31,7 +30,6 @@ import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
@@ -82,19 +80,17 @@ public class GasterBlasterItem extends Item implements GeoItem {
         if (!level.isClientSide()) {
             if (player.isShiftKeyDown()) {
                 Vec3 relativePos = new Vec3(0, player.getEyeHeight(), 2f); // 玩家前方2格
-                GasterBlaster blaster = new GasterBlaster(level, player,1f,1f,getUseDuration(itemStack,player)).follow(relativePos).color(Sans.ENERGY_AQUA);
+                GasterBlaster blaster = new GasterBlaster(level, player, 1f, 1f, getUseDuration(itemStack, player)).follow(relativePos).color(Sans.ENERGY_AQUA);
                 RotUtils.lookVec(blaster, player.getViewVector(1.0f));
                 level.addFreshEntity(blaster);
-                itemStack.set(DataComponents.CUSTOM_DATA, CustomData.of(new CompoundTag() {{
-                    putInt("entityId", blaster.getId());
-                }}));
+                itemStack.set(DataComponentsFxLib.USING_ENTITY_ID, blaster.getId());
                 player.startUsingItem(hand);
                 return InteractionResultHolder.consume(itemStack);
             } else {
-                HitResult hitResult = AABBCCDUtils.getHitResultOnViewVector(player, entity -> entity.isPickable() && entity != player.getVehicle() && !(entity instanceof TraceableEntity traceable && traceable.getOwner() != player), GasterBlaster.DEFAULT_LENGTH);
+                HitResult hitResult = RayCCDUtils.getHitResultOnViewVector(player, entity -> entity.isPickable() && entity != player.getVehicle() && !(entity instanceof TraceableEntity traceable && traceable.getOwner() != player), GasterBlaster.DEFAULT_LENGTH);
                 GasterBlaster blaster = new GasterBlaster(level, player).color(Sans.ENERGY_AQUA);
                 double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
-                blaster.setPos(player.position().add(GravityUtils.localToWorld(player,RotUtils.rotateYXZ(new Vec3(0, safeDistance, 0.3f), player.getYRot(), player.getXRot(), player.getRandom().nextFloat() * 180f -90f))));
+                blaster.setPos(player.position().add(GravityUtils.localToWorld(player, RotUtils.rotateYXZ(new Vec3(0, safeDistance, 0.3f), player.getYRot(), player.getXRot(), player.getRandom().nextFloat() * 180f - 90f))));
                 blaster.aim(hitResult.getLocation());
                 if (hitResult instanceof EntityHitResult entityHitResult) {
                     Entity target = entityHitResult.getEntity();
@@ -134,7 +130,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
     @Override
     public @NotNull InteractionResult useOn(UseOnContext context) {
         Level level = context.getLevel();
-        if(level.isClientSide()) {
+        if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }
         Player player = context.getPlayer();
@@ -148,7 +144,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
         BlockPos placePos = clickedPos.relative(direction);
         Vec3 pos = new Vec3(placePos.getX() + 0.5f, placePos.getY(), placePos.getZ() + 0.5f);
         // 从数据组件中读取
-        GasterBlaster gb = new GasterBlaster(level, player,100).mountable();
+        GasterBlaster gb = new GasterBlaster(level, player, 100).mountable();
         gb.setPos(pos);
         gb.setYRot(player.getYRot());
         // 检查位置是否合适
@@ -156,7 +152,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
             return InteractionResult.PASS;
         }
         level.addFreshEntity(gb);
-        itemStack.consume(1,player);
+        itemStack.consume(1, player);
         return InteractionResult.SUCCESS;
     }
 
@@ -167,7 +163,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
     @Override
     public void onStopUsing(@NotNull ItemStack stack, @NotNull LivingEntity entity, int count) {
         Level level = entity.level();
-        if(entity instanceof Player player){
+        if (entity instanceof Player player) {
             if (player instanceof AbstractClientPlayer clientPlayer) {
                 PlayerAnimationController controller = (PlayerAnimationController) PlayerAnimationAccess.getPlayerAnimationLayer(clientPlayer, PlayerAnimations.ATTACK);
                 if (controller != null) {
@@ -175,20 +171,14 @@ public class GasterBlasterItem extends Item implements GeoItem {
                 }
             }
             // 从数据组件中读取
-            CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-            if (customData != null) {
-                CompoundTag tag = customData.copyTag();
-                if (tag.contains("entityId")) {
-                    if (level.getEntity(tag.getInt("entityId")) instanceof GasterBlaster blaster) {
-                        if (blaster.isFire()) {
-                            blaster.startDecay();
-                        } else {
-                            blaster.discard();
-                        }
-                    }
+            Integer entityId = stack.get(DataComponentsFxLib.USING_ENTITY_ID);
+            if (entityId != null) {
+                if (level.getEntity(entityId) instanceof GasterBlaster blaster) {
+                    if (blaster.isFire()) blaster.startDecay();
+                    else blaster.discard();
                 }
             }
-            player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER.get(), (getUseDuration(stack,entity) - count)/2);
+            player.getCooldowns().addCooldown(ItemTypes.GASTER_BLASTER.get(), (getUseDuration(stack, entity) - count) / 2);
         }
     }
 

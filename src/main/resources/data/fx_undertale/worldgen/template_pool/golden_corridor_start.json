@@ -12,7 +12,7 @@
         "processors": {
           "processors": [
             {
-              "processor_type": "fx_undertale:origin_wake"
+              "processor_type": "fx_lib:origin_wake"
             }
           ]
         }

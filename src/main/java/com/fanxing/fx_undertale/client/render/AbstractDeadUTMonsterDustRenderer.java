@@ -1,39 +1,27 @@
 package com.fanxing.fx_undertale.client.render;
 
+import com.fanxing.fx_undertale.entity.AbstractUTMonster;
+import com.fanxing.lib.registry.ParticleTypesFxLib;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import com.fanxing.fx_undertale.client.Shaders;
-import com.fanxing.fx_undertale.common.RenderTypes;
-import com.fanxing.fx_undertale.entity.AbstractUTMonster;
-import com.fanxing.fx_undertale.registry.ParticleTypes;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.joml.Vector4f;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import software.bernie.geckolib.animatable.GeoAnimatable;
-import software.bernie.geckolib.cache.object.*;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
-import software.bernie.geckolib.util.RenderUtil;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * 实现UT怪物死亡尘埃消散的效果
@@ -124,7 +112,7 @@ public abstract class AbstractDeadUTMonsterDustRenderer<T extends AbstractUTMons
             double vy = 0.03f; // 向上速度
             double vz = (random.nextDouble() - 0.5) * 0.1;
             // 可以选择多种粒子类型，这里先用默认的烟雾
-            world.addParticle(ParticleTypes.CUSTOM_WHITE_ASH.get(), px, y, pz, vx, vy, vz);
+            world.addParticle(ParticleTypesFxLib.CUSTOM_WHITE_ASH.get(), px, y, pz, vx, vy, vz);
         }
     }
 

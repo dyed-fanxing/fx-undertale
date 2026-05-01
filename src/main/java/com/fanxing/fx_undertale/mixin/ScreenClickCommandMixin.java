@@ -1,9 +1,8 @@
 package com.fanxing.fx_undertale.mixin;
 
-import com.fanxing.fx_undertale.FxUndertale;
 import com.fanxing.fx_undertale.entity.boss.sans.SansDialogue;
-import com.fanxing.fx_undertale.entity.dialogue.EntityDialogue;
 import com.fanxing.fx_undertale.net.packet.MercyTriggerPacket;
+import com.fanxing.lib.entity.dialogue.EntityDialogue;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Style;
@@ -28,7 +27,6 @@ public abstract class ScreenClickCommandMixin {
             if(value.startsWith(EntityDialogue.CLICK_COMMAND_PACKET_PRE)){
                 String action = value.substring(EntityDialogue.CLICK_COMMAND_PACKET_PRE.length());
                 if(action.startsWith(SansDialogue.MERCY)){
-                    log.debug("action: {}", action);
                     PacketDistributor.sendToServer(new MercyTriggerPacket(Integer.parseInt(action.substring(SansDialogue.MERCY.length()+1))));
                     cir.setReturnValue(true);
                     cir.cancel();

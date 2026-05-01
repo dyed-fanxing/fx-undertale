@@ -1,5 +1,6 @@
 package com.fanxing.fx_undertale.client.render.layer;
 
+import com.fanxing.lib.integration.gecklib.client.render.layer.AnimatedGlowingLayer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
@@ -15,7 +16,7 @@ import software.bernie.geckolib.renderer.GeoRenderer;
  * @author Sakpeipei
  * @since 2025/12/31 10:30
  */
-public class SansEyesLayer extends AnimatedGlowingLayer<Sans>{
+public class SansEyesLayer extends AnimatedGlowingLayer<Sans> {
     public SansEyesLayer(GeoRenderer<Sans> entityRendererIn, ResourceLocation texture) {
         super(entityRendererIn, texture);
     }

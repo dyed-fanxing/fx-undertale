@@ -1,8 +1,8 @@
 package com.fanxing.fx_undertale.utils;
 
-import com.fanxing.fx_undertale.common.phys.LocalDirection;
-import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
+import com.fanxing.lib.entity.capability.OBBHolder;
+import com.fanxing.lib.phys.LocalDirection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;

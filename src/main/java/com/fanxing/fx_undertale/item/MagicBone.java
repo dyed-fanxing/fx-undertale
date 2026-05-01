@@ -1,10 +1,10 @@
 package com.fanxing.fx_undertale.item;
 
 import com.fanxing.fx_undertale.client.render.item.MagicBoneItemRender;
-import com.fanxing.fx_undertale.common.phys.motion.GravityMotionModel;    // 根据你的实际包路径调整
-import com.fanxing.fx_undertale.common.phys.motion.ProportionalNavigationModel;
-import com.fanxing.fx_undertale.common.phys.motion.SpringMotionModel;
 import com.fanxing.fx_undertale.entity.summon.RotationBone;
+import com.fanxing.lib.phys.motion.GravityMotionModel;
+import com.fanxing.lib.phys.motion.ProportionalNavigationModel;
+import com.fanxing.lib.phys.motion.SpringMotionModel;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;

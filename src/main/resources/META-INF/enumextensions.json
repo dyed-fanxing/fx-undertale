@@ -1,22 +1,2 @@
 {
-    "entries": [
-        {
-            "enum": "net/minecraft/world/damagesource/DamageEffects",
-            "name": "FX_UNDERTALE_SILENT",
-            "constructor": "(Ljava/lang/String;Ljava/util/function/Supplier;)V",
-            "parameters": {
-                "class": "com/fanxing/fx_undertale/common/EnumParameters",
-                "field": "SILENT"
-            }
-        },
-        {
-            "enum": "net/minecraft/world/damagesource/DeathMessageType",
-            "name": "FX_UNDERTALE_CUSTOM_NOUN_VERB_DEATH",
-            "constructor": "(Ljava/lang/String;Lnet/neoforged/neoforge/common/damagesource/IDeathMessageProvider;)V",
-            "parameters": {
-                "class": "com/fanxing/fx_undertale/common/EnumParameters",
-                "field": "CUSTOM_NOUN_VERB_DEATH"
-            }
-        }
-    ]
 }

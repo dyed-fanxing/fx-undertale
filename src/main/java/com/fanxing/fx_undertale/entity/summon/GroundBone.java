@@ -1,23 +1,19 @@
 package com.fanxing.fx_undertale.entity.summon;
 
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
-import com.fanxing.fx_undertale.entity.capability.Growable;
-import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.entity.ColoredAttacker;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
 import com.fanxing.fx_undertale.registry.EntityTypes;
-import com.fanxing.fx_undertale.registry.MemoryModuleTypes;
-import com.fanxing.fx_undertale.utils.CurvesUtils;
-import com.fanxing.fx_undertale.utils.RotUtils;
-import com.fanxing.fx_undertale.utils.collsion.AABBCCDUtils;
+import com.fanxing.lib.entity.capability.Growable;
+import com.fanxing.lib.util.CurvesUtils;
+import com.fanxing.lib.util.RotUtils;
+import com.fanxing.lib.util.collsion.RayCCDUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
@@ -97,7 +93,7 @@ public class GroundBone extends AbstractBone<GroundBone> implements Growable, Co
 
     @Override
     protected List<EntityHitResult> getEntityHitResults(Vec3 to) {
-        if (this.speed == 0 && this.getDeltaMovement().lengthSqr() == 0) return AABBCCDUtils.getHitResultsOnStill(this.level(),LivingEntity.class,this.getBoundingBox(),this::canHitEntity);
+        if (this.speed == 0 && this.getDeltaMovement().lengthSqr() == 0) return RayCCDUtils.getHitResultsOnStill(this.level(),LivingEntity.class,this.getBoundingBox(),this::canHitEntity);
         else return super.getEntityHitResults(to);
     }
 

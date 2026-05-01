@@ -1,15 +1,13 @@
 package com.fanxing.fx_undertale.client.render.entity.summon;
 
-import com.fanxing.fx_undertale.entity.boss.sans.Sans;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.client.render.layer.AnimatedGlowingLayer;
 import com.fanxing.fx_undertale.client.model.entity.GasterBlasterModel;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.entity.summon.IGasterBlaster;
+import com.fanxing.lib.integration.gecklib.client.render.layer.AnimatedGlowingLayer;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
@@ -28,8 +26,6 @@ import software.bernie.geckolib.animatable.GeoAnimatable;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.renderer.GeoRenderer;
-
-import java.lang.reflect.Field;
 
 public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     public static ResourceLocation EYES = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,"textures/entity/gaster_blaster_eyes.png");

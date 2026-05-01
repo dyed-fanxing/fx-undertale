@@ -1,6 +1,7 @@
 package com.fanxing.fx_undertale.entity;
 
-import com.fanxing.fx_undertale.utils.collsion.AABBCCDUtils;
+import com.fanxing.lib.registry.ParticleTypesFxLib;
+import com.fanxing.lib.util.collsion.RayCCDUtils;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -84,7 +85,7 @@ public abstract class AbstractPosDrivenEntity extends Entity implements IEntityW
     protected abstract Vec3 computeDesiredPos();
 
     protected List<EntityHitResult> getEntityHitResults(Vec3 from, Vec3 to) {
-        return AABBCCDUtils.getEntityHitResults(this, from, to, this.getBoundingBox().expandTowards(to.subtract(from)), this::canHitEntity);
+        return RayCCDUtils.getEntityHitResults(this, from, to, this.getBoundingBox().expandTowards(to.subtract(from)), this::canHitEntity);
     }
     /**
      * 判断是否可击中某实体。子类可重写。
@@ -105,7 +106,7 @@ public abstract class AbstractPosDrivenEntity extends Entity implements IEntityW
     protected void onHitEntity(EntityHitResult result) {}
 
     protected ParticleOptions getTrailParticle() {
-        return com.fanxing.fx_undertale.registry.ParticleTypes.CUSTOM_WHITE_ASH.get();
+        return ParticleTypesFxLib.CUSTOM_WHITE_ASH.get();
     }
 
     @Override

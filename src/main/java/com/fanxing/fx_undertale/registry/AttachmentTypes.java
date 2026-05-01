@@ -1,8 +1,8 @@
 package com.fanxing.fx_undertale.registry;
 
 import com.fanxing.fx_undertale.FxUndertale;
-import com.fanxing.fx_undertale.entity.attachment.KaramJudge;
 import com.fanxing.fx_undertale.entity.attachment.Karam;
+import com.fanxing.fx_undertale.entity.attachment.KaramJudge;
 import com.fanxing.fx_undertale.entity.attachment.PlayerSoul;
 import com.fanxing.fx_undertale.entity.persistentData.SoulMode;
 import com.fanxing.fx_undertale.net.packet.GravityPacket;
@@ -32,7 +32,7 @@ public class AttachmentTypes {
     public static DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, FxUndertale.MOD_ID);
 
     public static final Supplier<AttachmentType<PlayerSoul>> PLAYER_SOUL = ATTACHMENT_TYPES.register("player_soul",
-                    () -> AttachmentType.builder(PlayerSoul::new).serialize(PlayerSoul.PLAYER_SOUL_DATA).copyOnDeath().build()
+            () -> AttachmentType.builder(PlayerSoul::new).serialize(PlayerSoul.PLAYER_SOUL_DATA).copyOnDeath().build()
     );
     public static final Supplier<AttachmentType<Karam>> KARMA = ATTACHMENT_TYPES.register(
             "karma", () -> AttachmentType.builder(Karam::new).serialize(Karam.CODEC).build()
@@ -40,21 +40,19 @@ public class AttachmentTypes {
     public static final Supplier<AttachmentType<KaramJudge>> KARMA_ATTACK = ATTACHMENT_TYPES.register(
             "karma_judge", () -> AttachmentType.builder(KaramJudge::new).serialize(KaramJudge.CODEC).build()
     );
-//    public static final Supplier<AttachmentType<Gravity>> GRAVITY = ATTACHMENT_TYPES.register(
-//            "gravity", () -> AttachmentType.builder(()->new Gravity()).serialize(Gravity.CODEC).build()
-//    );
     public static final Supplier<AttachmentType<Direction>> GRAVITY = ATTACHMENT_TYPES.register(
-            "gravity", () -> AttachmentType.builder(()->Direction.DOWN).serialize(Direction.CODEC).build()
+            "gravity", () -> AttachmentType.builder(() -> Direction.DOWN).serialize(Direction.CODEC).build()
     );
     public static final Supplier<AttachmentType<Boolean>> KARMA_TAG = ATTACHMENT_TYPES.register(
-            "karma_tag", () -> AttachmentType.builder(()->false).build()
+            "karma_tag", () -> AttachmentType.builder(() -> false).build()
     );
     public static final Supplier<AttachmentType<Byte>> SOUL_MODE = ATTACHMENT_TYPES.register(
-            "soul_mode", () -> AttachmentType.builder(()-> SoulMode.DEFAULT).build()
+            "soul_mode", () -> AttachmentType.builder(() -> SoulMode.DEFAULT).build()
     );
     public static final Supplier<AttachmentType<Float>> GRAVITY_ACC = ATTACHMENT_TYPES.register(
-            "gravity_control_acc", () -> AttachmentType.builder(()->0f).build()
+            "gravity_control_acc", () -> AttachmentType.builder(() -> 0f).build()
     );
+
     public static void register(IEventBus bus) {
         ATTACHMENT_TYPES.register(bus);
     }
@@ -65,8 +63,8 @@ public class AttachmentTypes {
         Entity target = event.getTarget();
         ServerPlayer player = (ServerPlayer) event.getEntity();
         Direction gravity = target.getData(AttachmentTypes.GRAVITY);
-        if(gravity != Direction.DOWN){
-            PacketDistributor.sendToPlayer(player,new GravityPacket(target.getId(), gravity));
+        if (gravity != Direction.DOWN) {
+            PacketDistributor.sendToPlayer(player, new GravityPacket(target.getId(), gravity));
         }
     }
 
@@ -75,7 +73,7 @@ public class AttachmentTypes {
         ServerPlayer player = (ServerPlayer) event.getEntity();
         Direction gravity = player.getData(AttachmentTypes.GRAVITY);
         if (gravity != Direction.DOWN) {
-            PacketDistributor.sendToPlayer(player,new GravityPacket(player.getId(),gravity));
+            PacketDistributor.sendToPlayer(player, new GravityPacket(player.getId(), gravity));
         }
     }
 }

@@ -1,11 +1,11 @@
 package com.fanxing.fx_undertale.entity.summon;
 
-import com.fanxing.fx_undertale.client.render.component.TrailFan;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
-import com.fanxing.fx_undertale.entity.capability.Growable;
-import com.fanxing.fx_undertale.entity.capability.Scalable;
 import com.fanxing.fx_undertale.registry.EntityTypes;
-import com.fanxing.fx_undertale.utils.CurvesUtils;
+import com.fanxing.lib.client.render.component.TrailFan;
+import com.fanxing.lib.entity.capability.Growable;
+import com.fanxing.lib.entity.capability.Scalable;
+import com.fanxing.lib.util.CurvesUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -19,7 +19,7 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class DisplayBone extends Entity implements  Scalable, Growable, IEntityWithComplexSpawn,GeoEntity {
+public class DisplayBone extends Entity implements Scalable, Growable, IEntityWithComplexSpawn,GeoEntity {
     private int lifetime = 5; // 0.5秒
     private float scale;
 
@@ -58,7 +58,7 @@ public class DisplayBone extends Entity implements  Scalable, Growable, IEntityW
     }
 
     public float getScaleProgress(float partialTick) {
-        return scale*CurvesUtils.riseHoldFallBezier((tickCount+partialTick)/lifetime,0.5F,1.0f);
+        return scale* CurvesUtils.riseHoldFallBezier((tickCount+partialTick)/lifetime,0.5F,1.0f);
     }
     @Override
     public float getGrowProgress(float partialTick) {

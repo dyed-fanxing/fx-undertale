@@ -1,8 +1,8 @@
 package com.fanxing.fx_undertale.mixin.gravity;
 
-import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import com.fanxing.fx_undertale.registry.AttachmentTypes;
 import com.fanxing.fx_undertale.utils.GravityUtils;
+import com.fanxing.lib.entity.capability.OBBHolder;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
 import it.unimi.dsi.fastutil.floats.FloatArrays;

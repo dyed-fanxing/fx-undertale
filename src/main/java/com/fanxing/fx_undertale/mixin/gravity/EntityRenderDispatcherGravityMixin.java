@@ -1,7 +1,7 @@
 package com.fanxing.fx_undertale.mixin.gravity;
 
-import com.fanxing.fx_undertale.entity.capability.OBBHolder;
 import com.fanxing.fx_undertale.utils.GravityUtils;
+import com.fanxing.lib.entity.capability.OBBHolder;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

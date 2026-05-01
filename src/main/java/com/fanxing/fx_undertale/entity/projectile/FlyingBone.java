@@ -1,12 +1,10 @@
 package com.fanxing.fx_undertale.entity.projectile;
 
 import com.fanxing.fx_undertale.common.damagesource.DamageTypes;
-import com.fanxing.fx_undertale.common.phys.CollisionDeflection;
-import com.fanxing.fx_undertale.common.phys.motion.PhysicsMotionModel;
-import com.fanxing.fx_undertale.entity.capability.Scalable;
-import com.fanxing.fx_undertale.entity.capability.SyncablePhysicsMotion;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
-import com.fanxing.fx_undertale.utils.RotUtils;
+import com.fanxing.lib.entity.capability.Scalable;
+import com.fanxing.lib.phys.CollisionDeflection;
+import com.fanxing.lib.util.RotUtils;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;

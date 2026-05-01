@@ -1,12 +1,12 @@
 package com.fanxing.fx_undertale.entity.summon;
 
-import com.fanxing.fx_undertale.common.phys.OBB;
 import com.fanxing.fx_undertale.entity.ColoredAttacker;
-import com.fanxing.fx_undertale.entity.capability.Growable;
-import com.fanxing.fx_undertale.entity.capability.OBBHolder;
-import com.fanxing.fx_undertale.entity.capability.Scalable;
 import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.utils.GravityUtils;
+import com.fanxing.lib.entity.capability.Growable;
+import com.fanxing.lib.entity.capability.OBBHolder;
+import com.fanxing.lib.entity.capability.Scalable;
+import com.fanxing.lib.phys.OBB;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -17,9 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.entity.IEntityWithComplexSpawn;
 import org.jetbrains.annotations.NotNull;
-import org.joml.Quaterniond;
 import org.joml.Quaternionf;
-import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

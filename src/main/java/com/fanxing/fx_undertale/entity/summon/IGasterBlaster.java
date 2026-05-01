@@ -1,6 +1,6 @@
 package com.fanxing.fx_undertale.entity.summon;
 
-import com.fanxing.fx_undertale.entity.capability.Mountable;
+import com.fanxing.lib.entity.capability.Mountable;
 import net.minecraft.world.level.Level;
 
 public interface IGasterBlaster extends Mountable {
