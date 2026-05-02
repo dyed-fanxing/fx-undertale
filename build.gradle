@@ -95,7 +95,7 @@ neoForge {
     }
 }
 
-sourceSets.main.resources { srcDir 'src/generated/resources' }
+sourceSets.main.resources { srcDir 'src/generated/resources'; exclude '**/*.bbmodel' }
 
 // ========== 动态处理 mods.toml 中的依赖声明 ==========
 def packagingMode = project.findProperty('packaging') ?: 'dependency'
