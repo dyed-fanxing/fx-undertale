@@ -1,6 +1,7 @@
 package com.fanxing.fx_undertale.entity.summon;
 
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
+import com.fanxing.fx_undertale.entity.boss.sans.SansAi;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.lib.client.render.component.TrailFan;
 import com.fanxing.lib.entity.capability.Growable;
@@ -100,8 +101,8 @@ public class DisplayBone extends Entity implements Scalable, Growable, IEntityWi
     @Override
     public void recreateFromPacket(ClientboundAddEntityPacket packet) {
         super.recreateFromPacket(packet);
-        trail1 = new TrailFan(lifetime*0.5f).color(Sans.ENERGY_AQUA[1]);
-        trail2 = new TrailFan(lifetime*0.5f).color(Sans.ENERGY_AQUA[1]);
+        trail1 = new TrailFan(lifetime*0.5f).color(SansAi.ENERGY_AQUA.getLast());
+        trail2 = new TrailFan(lifetime*0.5f).color(SansAi.ENERGY_AQUA.getLast());
     }
 
     @Override

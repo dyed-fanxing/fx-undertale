@@ -28,9 +28,9 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 import software.bernie.geckolib.renderer.GeoRenderer;
 
 public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
-    public static ResourceLocation EYES = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,"textures/entity/gaster_blaster_eyes.png");
+    public static ResourceLocation EYES = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/gaster_blaster_eyes.png");
     public static RenderType EYES_GLOW = RenderType.EYES.apply(EYES, RenderStateShard.TRANSLUCENT_TRANSPARENCY);
-    public static ResourceLocation SHOT_EYES = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID,"textures/entity/gaster_blaster_shot_eyes.png");
+    public static ResourceLocation SHOT_EYES = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "textures/entity/gaster_blaster_shot_eyes.png");
 
 
     public GasterBlasterRender(EntityRendererProvider.Context renderManager) {
@@ -41,22 +41,22 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
     @Override
     public void preRender(PoseStack poseStack, GasterBlaster animatable, BakedGeoModel model, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
 
-        if(!isReRender && !animatable.isMountable()){
-            try {
-                GasterBlasterBeamRenderer.render(animatable, partialTick, poseStack, bufferSource, packedLight, animatable.color);
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-
-        }
         super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
     }
 
     @Override
+    public void postRender(PoseStack poseStack, GasterBlaster animatable, BakedGeoModel model, @Nullable MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, boolean isReRender, float partialTick, int packedLight, int packedOverlay, int colour) {
+        super.postRender(poseStack, animatable, model, bufferSource, buffer, isReRender, partialTick, packedLight, packedOverlay, colour);
+        if (!isReRender && !animatable.isMountable()) {
+            GasterBlasterBeamRenderer.render(animatable,poseStack, bufferSource, partialTick,  animatable.colors);
+        }
+    }
+
+    @Override
     protected void applyRotations(GasterBlaster animatable, PoseStack poseStack, float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
-        if(animatable.isDeadOrDying()){
+        if (animatable.isDeadOrDying()) {
             poseStack.mulPose(Axis.YP.rotationDegrees(180f - rotationYaw));
-        }else{
+        } else {
             super.applyRotations(animatable, poseStack, ageInTicks, rotationYaw, partialTick, nativeScale);
         }
         if (!animatable.isMountable()) {
@@ -75,7 +75,7 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
         if (super.shouldRender(animatable, frustum, cameraX, cameraY, cameraZ)) {
             return true;
         }
-        if(frustum.isVisible( new AABB(animatable.getEyePosition(), animatable.getLookAngle().scale(animatable.getLength())))) {
+        if (frustum.isVisible(new AABB(animatable.getEyePosition(), animatable.getLookAngle().scale(animatable.getLength())))) {
             return true;
         }
         return animatable.position().subtract(cameraX, cameraY, cameraZ).lengthSqr() < 1024;
@@ -83,9 +83,9 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
 
     @Override
     public boolean shouldShowName(@NotNull GasterBlaster animatable) {
-        if(animatable.shouldShowName()){
+        if (animatable.shouldShowName()) {
             return super.shouldShowName(animatable);
-        }else{
+        } else {
             return false;
         }
     }
@@ -99,20 +99,23 @@ public class GasterBlasterRender extends GeoEntityRenderer<GasterBlaster> {
         }
         return OverlayTexture.NO_OVERLAY;
     }
+
     @Override
     protected int getBlockLightLevel(GasterBlaster entity, BlockPos pos) {
         return 15;
     }
+
     public static class GasterBlasterEyesLayer<T extends Entity & GeoAnimatable & IGasterBlaster> extends AnimatedGlowingLayer<T> {
         public GasterBlasterEyesLayer(GeoRenderer<T> entityRendererIn) {
             super(entityRendererIn, SHOT_EYES);
         }
+
         @Override
         public void render(PoseStack poseStack, T animatable, BakedGeoModel bakedModel, @Nullable RenderType renderType, MultiBufferSource bufferSource, @Nullable VertexConsumer buffer, float partialTick, int packedLight, int packedOverlay) {
-            if(animatable.isFire() && !animatable.isMountable()){
+            if (animatable.isFire() && !animatable.isMountable()) {
                 super.render(poseStack, animatable, bakedModel, renderType, bufferSource, buffer, partialTick, packedLight, packedOverlay);
-            }else{
-                this.getRenderer().reRender(bakedModel, poseStack, bufferSource, animatable,EYES_GLOW, bufferSource.getBuffer(EYES_GLOW), partialTick, LightTexture.FULL_SKY, packedOverlay, -1);
+            } else {
+                this.getRenderer().reRender(bakedModel, poseStack, bufferSource, animatable, EYES_GLOW, bufferSource.getBuffer(EYES_GLOW), partialTick, LightTexture.FULL_SKY, packedOverlay, -1);
             }
         }
     }

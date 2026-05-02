@@ -2,6 +2,7 @@ package com.fanxing.fx_undertale.entity.summon;
 
 import com.fanxing.fx_undertale.data.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
+import com.fanxing.fx_undertale.entity.boss.sans.SansAi;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.registry.ItemTypes;
 import com.fanxing.fx_undertale.registry.SoundEvents;
@@ -86,7 +87,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
     private static final EntityDataAccessor<Boolean> DATA_MOUNTABLE = SynchedEntityData.defineId(GasterBlaster.class, EntityDataSerializers.BOOLEAN);
 
     // 光束颜色
-    public int[][] color = Sans.ENERGY_AQUA;
+    public List<Integer> colors = SansAi.ENERGY_AQUA;
     // 吸收光线
     public final SphereEffectEmitter sphereRayEmitter = new SphereEffectEmitter();
 
@@ -155,8 +156,8 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         this.target = target;
         return this;
     }
-    public GasterBlaster color(int[][] color){
-        this.color = color;
+    public GasterBlaster colors(List<Integer> colors){
+        this.colors = colors;
         return this;
     }
 
@@ -189,6 +190,8 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         this.setYRot(Mth.rotLerp(aimSmoothSpeed,this.getYRot(), RotUtils.yRotD(dir)));
         this.setXRot(Mth.rotLerp(aimSmoothSpeed,this.getXRot(), RotUtils.xRotD(dir)));
     }
+
+
 
     @Override
     public @NotNull EntityDimensions getDefaultDimensions(@NotNull Pose pose) {
@@ -289,6 +292,8 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
             }
         }
     }
+
+
     @Override
     protected @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 vec3) {
         double forward = player.zza;
@@ -461,7 +466,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         tag.putBoolean("mountable", isMountable());
 
         tag.putFloat("holdTimeScale", holdTimeScale);
-        tag.putIntArray("color", ColorUtils.rgbaArrayToInt(color));
+        tag.putIntArray("colors", colors);
     }
 
     @Override
@@ -483,7 +488,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
 
         if(tag.contains("mountable")) setMountable(tag.getBoolean("mountable"));
         if(tag.contains("holdTimeScale"))  this.holdTimeScale = tag.getFloat("holdTimeScale");
-        if(tag.contains("color")) tag.getIntArray("color");
+        if(tag.contains("colors")) tag.getIntArray("colors");
     }
 
     @Override
@@ -507,9 +512,8 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         buffer.writeFloat(holdTimeScale);
         buffer.writeBoolean(target != null);
         if(target != null) buffer.writeInt(target.getId());
-        buffer.writeInt(ColorUtils.rgbaArrayToInt(color[0]));
-        buffer.writeInt(ColorUtils.rgbaArrayToInt(color[1]));
-        buffer.writeInt(ColorUtils.rgbaArrayToInt(color[2]));
+        buffer.writeInt(colors.getFirst());
+        buffer.writeInt(colors.getLast());
     }
 
     @Override
@@ -528,7 +532,7 @@ public class GasterBlaster extends LivingSummons implements Mountable,IGasterBla
         this.holdTimeScale = buffer.readFloat();
         if(buffer.readBoolean()) this.target = this.level().getEntity(buffer.readInt());
         if(!isFollow && !isMountable()) restAnimPosClient();
-        this.color = ColorUtils.intToRgbaArrays(buffer.readInt(),buffer.readInt(),buffer.readInt());
+        this.colors = List.of(buffer.readInt(),buffer.readInt());
         this.refreshDimensions();
     }
 

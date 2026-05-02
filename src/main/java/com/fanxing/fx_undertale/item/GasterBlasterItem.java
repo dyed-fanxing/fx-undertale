@@ -1,12 +1,16 @@
 package com.fanxing.fx_undertale.item;
 
 import com.fanxing.fx_undertale.FxUndertale;
+import com.fanxing.fx_undertale.client.KeyBindings;
+import com.fanxing.fx_undertale.client.gui.screen.GasterBlasterConfigScreen;
 import com.fanxing.fx_undertale.client.render.item.GasterBlasterItemRender;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
+import com.fanxing.fx_undertale.entity.boss.sans.SansAi;
 import com.fanxing.fx_undertale.entity.summon.GasterBlaster;
 import com.fanxing.fx_undertale.registry.ItemTypes;
 import com.fanxing.fx_undertale.utils.GravityUtils;
 import com.fanxing.lib.client.PlayerAnimations;
+import com.fanxing.lib.net.packet.StopUsingPacket;
 import com.fanxing.lib.registry.DataComponentsFxLib;
 import com.fanxing.lib.util.RotUtils;
 import com.fanxing.lib.util.collsion.RayCCDUtils;
@@ -16,6 +20,7 @@ import com.zigythebird.playeranim.api.PlayerAnimationAccess;
 import com.zigythebird.playeranimcore.animation.RawAnimation;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonConfiguration;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
@@ -35,6 +40,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +50,7 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public class GasterBlasterItem extends Item implements GeoItem {
@@ -52,12 +59,11 @@ public class GasterBlasterItem extends Item implements GeoItem {
     //    private static final ResourceLocation ALL =  ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "attack.cast.gb.all");
     private static final Logger log = LoggerFactory.getLogger(GasterBlasterItem.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-
     private static final int CD_TICK = 20; // 1秒
     private static final int MAX_USE_DURATION = 200;
 
     public GasterBlasterItem(Properties properties) {
-        super(properties.stacksTo(1));
+        super(properties);
     }
 
     @Override
@@ -78,9 +84,10 @@ public class GasterBlasterItem extends Item implements GeoItem {
         }
 
         if (!level.isClientSide()) {
+            List<Integer> colors = itemStack.get(DataComponentsFxLib.COLOR_SCHEME);
             if (player.isShiftKeyDown()) {
                 Vec3 relativePos = new Vec3(0, player.getEyeHeight(), 2f); // 玩家前方2格
-                GasterBlaster blaster = new GasterBlaster(level, player, 1f, 1f, getUseDuration(itemStack, player)).follow(relativePos).color(Sans.ENERGY_AQUA);
+                GasterBlaster blaster = new GasterBlaster(level, player, 1f, 1f, getUseDuration(itemStack, player)).follow(relativePos).colors(colors);
                 RotUtils.lookVec(blaster, player.getViewVector(1.0f));
                 level.addFreshEntity(blaster);
                 itemStack.set(DataComponentsFxLib.USING_ENTITY_ID, blaster.getId());
@@ -88,7 +95,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
                 return InteractionResultHolder.consume(itemStack);
             } else {
                 HitResult hitResult = RayCCDUtils.getHitResultOnViewVector(player, entity -> entity.isPickable() && entity != player.getVehicle() && !(entity instanceof TraceableEntity traceable && traceable.getOwner() != player), GasterBlaster.DEFAULT_LENGTH);
-                GasterBlaster blaster = new GasterBlaster(level, player).color(Sans.ENERGY_AQUA);
+                GasterBlaster blaster = new GasterBlaster(level, player).colors(colors);
                 double safeDistance = player.getBbWidth() + blaster.getBbWidth() * 1.5;
                 blaster.setPos(player.position().add(GravityUtils.localToWorld(player, RotUtils.rotateYXZ(new Vec3(0, safeDistance, 0.3f), player.getYRot(), player.getXRot(), player.getRandom().nextFloat() * 180f - 90f))));
                 blaster.aim(hitResult.getLocation());
@@ -103,6 +110,7 @@ public class GasterBlasterItem extends Item implements GeoItem {
             }
         } else {
             if (player.isShiftKeyDown()) {
+
                 if (player instanceof AbstractClientPlayer clientPlayer) {
                     PlayerAnimationController controller = (PlayerAnimationController) PlayerAnimationAccess.getPlayerAnimationLayer(clientPlayer, PlayerAnimations.ATTACK);
                     if (controller != null) {
@@ -182,6 +190,18 @@ public class GasterBlasterItem extends Item implements GeoItem {
         }
     }
 
+
+    @Override
+    public void inventoryTick(@NotNull ItemStack stack, Level level, @NotNull Entity entity, int slot, boolean selected) {
+        if (level.isClientSide && selected && KeyBindings.GASTER_BLASTER_CONFIG.isDown() && entity instanceof LivingEntity living) {
+            Minecraft mc = Minecraft.getInstance();
+            mc.options.keyUse.setDown(false);
+            GasterBlaster previewGB = new GasterBlaster(level, living).colors(stack.get(DataComponentsFxLib.COLOR_SCHEME));
+            previewGB.tickCount = 20;
+            mc.setScreen(new GasterBlasterConfigScreen(stack,previewGB));
+            PacketDistributor.sendToServer(StopUsingPacket.INSTANCE);
+        }
+    }
 
     @Override
     public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {

@@ -52,6 +52,12 @@ import java.util.Optional;
 
 public class SansAi {
     private static final Logger log = LoggerFactory.getLogger(SansAi.class);
+    // 蓝色（激光风格）
+    // 格式: ARGB (alpha, red, green, blue)
+    public static final List<Integer> ENERGY_AQUA = List.of(
+            0xFFE2FFFF,    // 内层 能量层：高亮白 (a=255, r=226, g=255, b=255)
+            0xFF0061A5     // 外层 泛光层：加法混合下呈现浅蓝 (a=255, r=0, g=97, b=165)
+    );
 
     public static final float CLOSE_RANGE_FACTOR = 0.333334f;
     public static final float MID_RANGE_FACTOR = 0.6666667f;

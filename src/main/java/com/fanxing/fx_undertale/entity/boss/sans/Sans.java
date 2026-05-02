@@ -1,6 +1,5 @@
 package com.fanxing.fx_undertale.entity.boss.sans;
 
-import com.fanxing.fx_undertale.client.render.effect.WarningTipGravity;
 import com.fanxing.fx_undertale.entity.AbstractUTMonster;
 import com.fanxing.fx_undertale.entity.attachment.KaramJudge;
 import com.fanxing.fx_undertale.entity.block.PlatformBlockEntity;
@@ -9,8 +8,10 @@ import com.fanxing.fx_undertale.entity.mechanism.ColorAttack;
 import com.fanxing.fx_undertale.entity.projectile.FlyingBone;
 import com.fanxing.fx_undertale.entity.summon.*;
 import com.fanxing.fx_undertale.net.packet.*;
-import com.fanxing.fx_undertale.registry.*;
-import com.fanxing.fx_undertale.utils.*;
+import com.fanxing.fx_undertale.registry.AttachmentTypes;
+import com.fanxing.fx_undertale.registry.EntityTypes;
+import com.fanxing.fx_undertale.registry.SoundEvents;
+import com.fanxing.fx_undertale.utils.GravityUtils;
 import com.fanxing.lib.client.render.component.RadialPlaneTrailStrip;
 import com.fanxing.lib.client.render.effect.WarningTip;
 import com.fanxing.lib.entity.ai.control.PatchedMoveControl;
@@ -79,6 +80,8 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.*;
 import java.util.function.Function;
+
+import static com.fanxing.fx_undertale.entity.boss.sans.SansAi.ENERGY_AQUA;
 
 public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IEntityWithComplexSpawn {
     private static final Logger log = LogManager.getLogger(Sans.class);
@@ -185,8 +188,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
                 long time = this.tickCount;
                 float cycle = (Mth.sin(time * 1.0f) + 1.0f) / 2.0f; // 0.1f 控制变化速度
                 int colorB = 0xC0F6FD29;// 原本是 0xFFF6FD29
-                int[] colorA = Sans.ENERGY_AQUA[1];
-                this.level().addParticle(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.lerp(cycle, FastColor.ARGB32.color(colorA[3], colorA[0], colorA[1], colorA[2]), colorB)), vec3.x, vec3.y, vec3.z, 0, 0, 0);
+                int colorA = ENERGY_AQUA.getLast();
+                this.level().addParticle(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.lerp(cycle,colorA, colorB)), vec3.x, vec3.y, vec3.z, 0, 0, 0);
             }
         } else {
             EntityHitResult hitResult = shield.tick((t) -> t.getOwner() != this);
@@ -1866,14 +1869,8 @@ public class Sans extends AbstractUTMonster implements GeoEntity, Animatable, IE
         return false;
     }
 
-    // 蓝色（激光风格）
-    public static final int[][] ENERGY_AQUA = {
-            {226, 255, 255, 255},    // 内层 能量层：高亮白（最亮）
-            {0, 97, 165, 255},       // 外层 泛光层：加法混合下呈现浅蓝
-            {25, 97, 165, 255}     // 外层 流动条纹层：加法混合下呈现亮蓝偏青
-    };
-    public final RadialPlaneTrailStrip leftHandTrail = new RadialPlaneTrailStrip(10f).color(ENERGY_AQUA[1]).progressCurve((t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
-    public final RadialPlaneTrailStrip rightHandTrail = new RadialPlaneTrailStrip(10f).color(ENERGY_AQUA[1]).progressCurve((t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
+    public final RadialPlaneTrailStrip leftHandTrail = new RadialPlaneTrailStrip(10f).color(ENERGY_AQUA.getFirst()).progressCurve((t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
+    public final RadialPlaneTrailStrip rightHandTrail = new RadialPlaneTrailStrip(10f).color(ENERGY_AQUA.getLast()).progressCurve((t) -> CurvesUtils.powerFallEaseOut(t, 2)).width(0.2F);
 
 }
 

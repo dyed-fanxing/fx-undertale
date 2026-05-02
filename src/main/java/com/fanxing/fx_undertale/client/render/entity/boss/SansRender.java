@@ -5,6 +5,7 @@ import com.fanxing.fx_undertale.client.model.entity.SansModel;
 import com.fanxing.fx_undertale.client.render.AbstractDeadUTMonsterDustRenderer;
 import com.fanxing.fx_undertale.client.render.layer.SansFatigueLayer;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
+import com.fanxing.fx_undertale.entity.boss.sans.SansAi;
 import com.fanxing.lib.client.render.type.BeamRenderType;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -82,7 +83,7 @@ public class SansRender extends AbstractDeadUTMonsterDustRenderer<Sans> {
                 animatable.leftHandTrail.color(1f,1f,1f,1f);
             }
             if(Sans.isSameRawAnimation(currentRawAnimation,Sans.THROW_ANIMATIONS)){
-                animatable.leftHandTrail.color(Sans.ENERGY_AQUA[1]);
+                animatable.leftHandTrail.color(SansAi.ENERGY_AQUA.getLast());
             }
             GeoBone leftHand = attackController.getBoneAnimationQueues().get("left_hand").bone();
             GeoBone leftElbow = attackController.getBoneAnimationQueues().get("left_elbow").bone();

@@ -2,6 +2,7 @@ package com.fanxing.fx_undertale.entity.summon;
 
 import com.fanxing.fx_undertale.data.damagesource.DamageTypes;
 import com.fanxing.fx_undertale.entity.boss.sans.Sans;
+import com.fanxing.fx_undertale.entity.boss.sans.SansAi;
 import com.fanxing.fx_undertale.net.packet.QuaternionSyncPacket;
 import com.fanxing.fx_undertale.registry.EntityTypes;
 import com.fanxing.fx_undertale.utils.GravityUtils;
@@ -59,7 +60,7 @@ public class RotationBone extends AbstractBone<RotationBone> implements Quaterni
 
 
 
-    public LineTrailStrip trail1 = new LineTrailStrip(5).color(Sans.ENERGY_AQUA[1]);
+    public LineTrailStrip trail1 = new LineTrailStrip(5).color(SansAi.ENERGY_AQUA.getLast());
     public RotationBone(EntityType<? extends AbstractBone<RotationBone>> type, Level level) {
         super(type, level);
     }
