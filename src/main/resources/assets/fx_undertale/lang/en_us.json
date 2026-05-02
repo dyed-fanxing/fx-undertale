@@ -3,7 +3,7 @@
 
   "item.fx_undertale.gaster_blaster": "GasterBlaster",
   "item.fx_undertale.gravity_debug_stick": "gravity_debug_stick",
-  "item.fx_undertale.gaster_blaster.tooltip": "按下 %s 同时长按 %s 进行手动瞄准攻击\n按下 %s 打开配置界面",
+  "item.fx_undertale.gaster_blaster.tooltip": "Press %s and hold %s to manually aim and attack\nPress %s to open config screen",
 
   "block.fx_undertale.platform": "platform",
   "entity.fx_undertale.platform_block_entity": "platform",
