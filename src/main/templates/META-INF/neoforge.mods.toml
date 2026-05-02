@@ -74,6 +74,17 @@ versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
 
+
+
+[[dependencies."${mod_id}"]] #（可选）
+modId = "fx_lib"
+type = "required" #（必填）
+versionRange = "${fx_lib_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+
+
 [[dependencies."${mod_id}"]] #（可选）
 modId = "geckolib"
 mandatory = true
