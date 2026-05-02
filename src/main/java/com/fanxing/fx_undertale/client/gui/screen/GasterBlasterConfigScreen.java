@@ -24,6 +24,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class GasterBlasterConfigScreen extends Screen {
     public static final int COLOR_SWATCH_SIZE = 20;
@@ -50,12 +51,7 @@ public class GasterBlasterConfigScreen extends Screen {
                 (t) -> savePresetPalettes()).build();
         rootLayout = new HeaderAndFooterLayout(this, TOP_HEIGHT, savePreset.getHeight());
         // 2.4 底部预设栏
-        List<Integer> fallbackColors = SansAi.ENERGY_AQUA;
-        List<ColorPalette> colorPalettes = stack.get(DataComponentsFxLib.COLOR_PALETTES);
-        if (colorPalettes == null || colorPalettes.isEmpty()) {
-            colorPalettes = new ArrayList<>(List.of(new ColorPalette(Component.translatable("options.gamma.default"), fallbackColors)));
-        }
-        presetLayout = creatPresetColorPalette(colorPalettes);
+        presetLayout = creatPresetColorPalette(Objects.requireNonNullElse(stack.get(DataComponentsFxLib.COLOR_PALETTES),new ArrayList<>()));
 
         topLayout = new FlexBoxLayout(width, TOP_HEIGHT).horizontal().justifyContent(FlexBoxLayout.JustifyContent.SPACE_AROUND).padding(PADDING, 0);
         topLayout.addChild(previewWidget);
