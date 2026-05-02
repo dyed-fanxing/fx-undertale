@@ -92,9 +92,6 @@ public class GasterBlasterConfigScreen extends Screen {
         schemeGroup = new RadioGroup<>();
         FlexBoxLayout swatchBarLayout = new FlexBoxLayout(width, 0).justifyContent(FlexBoxLayout.JustifyContent.SPACE_EVENLY).gap(8);
         String[] labels = {"beam_inner", "beam_outer"};
-        if (colors == null || colors.isEmpty()) {
-            colors = SansAi.ENERGY_AQUA;
-        }
         for (int i = 0; i < colors.size(); i++) {
             int color = colors.get(i);
             ColorSwatch swatch = new ColorSwatch(0, 0, 24, color, s -> {
