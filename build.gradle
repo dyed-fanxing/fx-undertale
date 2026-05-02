@@ -182,6 +182,7 @@ if (packagingMode == 'embed') {
     // dependency 模式
     tasks.named('jar') {
         archiveClassifier.set('')
+        exclude '**/*.bbmodel'
     }
 
     publishing {
@@ -198,6 +199,10 @@ if (packagingMode == 'embed') {
 
 java {
     withSourcesJar()
+}
+
+tasks.named('sourcesJar') {
+    exclude '**/*.bbmodel'
 }
 
 idea {
