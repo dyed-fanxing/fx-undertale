@@ -3,6 +3,7 @@
 
   "item.fx_undertale.gaster_blaster": "GasterBlaster",
   "item.fx_undertale.gravity_debug_stick": "gravity_debug_stick",
+  "item.fx_undertale.gaster_blaster.tooltip": "按下 %s 同时长按 %s 进行手动瞄准攻击\n按下 %s 打开配置界面",
 
   "block.fx_undertale.platform": "platform",
   "entity.fx_undertale.platform_block_entity": "platform",
@@ -27,7 +28,10 @@
   "menu.fx_undertale.gravity_selection": "Gravity Direction Selection",
   "gui.fx_undertale.select_direction": "Select gravity direction:",
   "gui.fx_undertale.close": "Close",
-
+  "gui.fx_undertale.gb.beam_inner": "beam inner",
+  "gui.fx_undertale.gb.beam_outer": "beam outer",
+  "key.category.fx_undertale": "fx_undertale",
+  "key.fx_undertale.gaster_blaster.config": "open GasterBlaster config screen",
 
   "death.attack.fx_undertale.frame.player": "%1$s was killed by %2$s using frame damage",
   "death.attack.fx_undertale.frame_blockable.player": "%1$s was tortured to death by %2$s using frame damage",

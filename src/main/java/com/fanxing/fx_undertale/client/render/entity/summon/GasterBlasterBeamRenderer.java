@@ -45,7 +45,7 @@ public class GasterBlasterBeamRenderer {
         if (animatable.tickCount < fireTick) {
             partialSize = Mth.lerp(animTick / fireTick, 0, radius * 0.75f);
             poseStack.pushPose();
-            SphereRenderer.render(poseStack.last(), buffer.getBuffer(BeamRenderType.ENERGY_BEAM_WHITE),new Vector3f(), partialSize, segments, colors.getLast(), OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
+            SphereRenderer.render(poseStack.last(), buffer.getBuffer(BeamRenderType.ENERGY_FLOW_BEAM_WHITE),new Vector3f(), partialSize, segments, colors.getLast(), OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT,3f,1f);
             SphereRenderer.render(poseStack.last(), buffer.getBuffer(BeamRenderType.BEAM_TRANSPARENCY_WHITE),new Vector3f(), partialSize * 0.5f, segments, colors.getFirst(), OverlayTexture.NO_OVERLAY, LightTexture.FULL_BRIGHT);
             poseStack.popPose();
             animatable.sphereRayEmitter.stretchCircleRender(poseStack, buffer.getBuffer(RayRenderTypes.RAY), animTick, radius * (animatable.isFollow() ? 1.5f : 1f), partialSize, colors.getLast());

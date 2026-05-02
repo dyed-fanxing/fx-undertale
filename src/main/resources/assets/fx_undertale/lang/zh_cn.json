@@ -1,6 +1,7 @@
 {
   "itemGroup.fx_undertale": "传说之下",
   "item.fx_undertale.gaster_blaster": "加斯特冲击波",
+  "item.fx_undertale.gaster_blaster.tooltip": "按下 %s 同时长按 %s 进行手动瞄准攻击，在此期间可按下 %s 锁定水平视角\n按下 %s 打开配置界面",
   "item.fx_undertale.gravity_debug_stick": "重力调试棍",
 
   "block.fx_undertale.platform": "平台",
@@ -26,7 +27,11 @@
   "menu.fx_undertale.gravity_selection": "重力方向选择",
   "gui.fx_undertale.select_direction": "请选择重力方向：",
   "gui.fx_undertale.close": "关闭",
+  "gui.fx_undertale.gb.beam_inner": "光束内层",
+  "gui.fx_undertale.gb.beam_outer": "光束外层",
 
+  "key.category.fx_undertale": "传说之下",
+  "key.fx_undertale.gaster_blaster.config": "打开GasterBlaster配置界面",
 
   "death.attack.fx_undertale.frame_blockable.player": "%1$s 被 %2$s 使用 帧伤 折磨死了",
   "death.attack.fx_undertale.frame_blockable.rotation_bone.player": "%1$s 被 %2$s 使用 魔法骨头 砸死了",

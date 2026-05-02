@@ -20,11 +20,17 @@ import com.zigythebird.playeranim.api.PlayerAnimationAccess;
 import com.zigythebird.playeranimcore.animation.RawAnimation;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonConfiguration;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.options.controls.KeyBindsList;
+import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -35,6 +41,7 @@ import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
@@ -53,9 +60,11 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static com.fanxing.fx_undertale.FxUndertale.MOD_ID;
+
 public class GasterBlasterItem extends Item implements GeoItem {
-    private static final ResourceLocation WIND_UP = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "attack.cast.gb.windup");
-    private static final ResourceLocation ATTACK = ResourceLocation.fromNamespaceAndPath(FxUndertale.MOD_ID, "attack.cast.gb");
+    private static final ResourceLocation WIND_UP = ResourceLocation.fromNamespaceAndPath(MOD_ID, "attack.cast.gb.windup");
+    private static final ResourceLocation ATTACK = ResourceLocation.fromNamespaceAndPath(MOD_ID, "attack.cast.gb");
     //    private static final ResourceLocation ALL =  ResourceLocation.fromNamespaceAndPath(Undertale.MOD_ID, "attack.cast.gb.all");
     private static final Logger log = LoggerFactory.getLogger(GasterBlasterItem.class);
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -198,9 +207,20 @@ public class GasterBlasterItem extends Item implements GeoItem {
             mc.options.keyUse.setDown(false);
             GasterBlaster previewGB = new GasterBlaster(level, living).colors(stack.get(DataComponentsFxLib.COLOR_SCHEME));
             previewGB.tickCount = 20;
-            mc.setScreen(new GasterBlasterConfigScreen(stack,previewGB));
+            mc.setScreen(new GasterBlasterConfigScreen(stack, previewGB));
             PacketDistributor.sendToServer(StopUsingPacket.INSTANCE);
         }
+    }
+
+
+    @Override
+    public void appendHoverText(@NotNull ItemStack stack, @NotNull TooltipContext context,
+                                @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
+        tooltip.add(Component.translatable("item." + MOD_ID + ".gaster_blaster.tooltip",
+                Component.keybind(Minecraft.getInstance().options.keyShift.getName()).withStyle(ChatFormatting.BLUE),
+                Component.keybind(Minecraft.getInstance().options.keyUse.getName()).withStyle(ChatFormatting.BLUE),
+                Component.keybind(Minecraft.getInstance().options.keySprint.getName()).withStyle(ChatFormatting.BLUE),
+                Component.keybind(KeyBindings.GASTER_BLASTER_CONFIG.getName()).withStyle(ChatFormatting.BLUE)));
     }
 
     @Override

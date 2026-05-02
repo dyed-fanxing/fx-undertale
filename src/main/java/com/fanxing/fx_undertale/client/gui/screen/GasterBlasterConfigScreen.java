@@ -86,7 +86,7 @@ public class GasterBlasterConfigScreen extends Screen {
     }
 
     private FlexBoxLayout createColorPickerPanel(List<Integer> colors) {
-        int width = 150;
+        int width = 180;
         FlexBoxLayout layout = new FlexBoxLayout(width, 0).vertical().justifyContent(FlexBoxLayout.JustifyContent.SPACE_EVENLY).gap(8);
         // 色块单选组
         schemeGroup = new RadioGroup<>();
@@ -100,7 +100,7 @@ public class GasterBlasterConfigScreen extends Screen {
             ColorSwatch swatch = new ColorSwatch(0, 0, 24, color, s -> {
                 schemeGroup.select(s);
                 colorPicker.setColor(s.getValue());
-            }, Component.translatable("gui." + FxUndertale.MOD_ID + "." + labels[i]));
+            }, Component.translatable("gui." + FxUndertale.MOD_ID + ".gb." + labels[i]));
             swatchBarLayout.addChild(swatch);
             schemeGroup.addOption(swatch);
         }
@@ -111,8 +111,8 @@ public class GasterBlasterConfigScreen extends Screen {
         FlexBoxLayout buttonLayout = new FlexBoxLayout(0, 0, width, 0).horizontal().justifyContent(FlexBoxLayout.JustifyContent.SPACE_EVENLY);
         int buttonWidth = width / 3 - 6;
         buttonLayout.addChild(new Button.Builder(Component.translatable("selectWorld.edit.save"), btn -> saveCurrentColor()).size(buttonWidth, 20).build());
-        buttonLayout.addChild(new Button.Builder(Component.translatable("gui.fx_lib.add").append(
-                Component.translatable("gui.fx_lib.preset")), btn -> savePresetColor()).size(buttonWidth, 20).build());
+        buttonLayout.addChild(new Button.Builder(Component.translatable("gui." + FxLib.MOD_ID + ".add").append(
+                Component.translatable("gui." + FxLib.MOD_ID + ".preset")), btn -> savePresetColor()).size(buttonWidth, 20).build());
         buttonLayout.addChild(new Button.Builder(Component.translatable("controls.reset"), btn -> {
             List<ColorSwatch> options = schemeGroup.getOptions();
             for (int i = 0; i < options.size(); i++) {
@@ -147,8 +147,9 @@ public class GasterBlasterConfigScreen extends Screen {
         presetGroup = new RadioGroup<>();
         for (ColorPaletteWidget palette : options) {
             presetGroup.addOption(palette);
-            if(palette.getValue().stream().mapToInt(Integer::intValue).sum() < 0) presetLayout.addChild(palette);
-            else presetLayout.addChild(createColorPaletteDeletePopup(palette));
+            // 彩虹特殊判断
+//            if (palette.getValue().stream().mapToInt(Integer::intValue).sum() < 0) presetLayout.addChild(palette);
+            presetLayout.addChild(createColorPaletteDeletePopup(palette));
         }
         presetLayout.arrangeElements();
         presetLayout.visitWidgets(this::addRenderableWidget);

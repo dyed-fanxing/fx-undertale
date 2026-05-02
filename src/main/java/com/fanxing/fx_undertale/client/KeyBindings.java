@@ -15,7 +15,7 @@ import static com.fanxing.fx_undertale.FxUndertale.MOD_ID;
 public class KeyBindings {
     public static final String KEY_CATEGORY = "key.category." + MOD_ID;
     public static final KeyMapping GASTER_BLASTER_CONFIG = new KeyMapping(
-            "key." + MOD_ID + ".gaster_blaster_config",
+            "key." + MOD_ID + ".gaster_blaster.config",
             KeyConflictContext.IN_GAME,
             KeyModifier.SHIFT,
             InputConstants.Type.KEYSYM,
