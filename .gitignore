@@ -120,3 +120,4 @@ runs/
 /AGENTS.md
 /src/main/resources/assets/fx_undertale/geo/*/*.bbmodel
 /docs
+/_fix_temp.py
