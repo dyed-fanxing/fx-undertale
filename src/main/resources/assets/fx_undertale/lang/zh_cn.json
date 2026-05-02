@@ -1,7 +1,8 @@
 {
   "itemGroup.fx_undertale": "传说之下",
   "item.fx_undertale.gaster_blaster": "加斯特冲击波",
-  "item.fx_undertale.gaster_blaster.tooltip": "按下 %s 同时长按 %s 进行手动瞄准攻击，在此期间可按下 %s 锁定水平视角\n按下 %s 打开配置界面",
+  "item.fx_undertale.gaster_blaster.tooltip.line1": "按下 %s 同时长按 %s 进行手动瞄准攻击，在此期间可按下 %s 锁定水平视角",
+  "item.fx_undertale.gaster_blaster.tooltip.line2": "按下 %s 打开配置界面",
   "item.fx_undertale.gravity_debug_stick": "重力调试棍",
 
   "block.fx_undertale.platform": "平台",

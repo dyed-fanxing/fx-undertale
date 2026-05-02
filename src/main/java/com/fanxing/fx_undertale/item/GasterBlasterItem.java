@@ -216,10 +216,11 @@ public class GasterBlasterItem extends Item implements GeoItem {
     @Override
     public void appendHoverText(@NotNull ItemStack stack, @NotNull TooltipContext context,
                                 @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
-        tooltip.add(Component.translatable("item." + MOD_ID + ".gaster_blaster.tooltip",
+        tooltip.add(Component.translatable("item." + MOD_ID + ".gaster_blaster.tooltip.line1",
                 Component.keybind(Minecraft.getInstance().options.keyShift.getName()).withStyle(ChatFormatting.BLUE),
                 Component.keybind(Minecraft.getInstance().options.keyUse.getName()).withStyle(ChatFormatting.BLUE),
-                Component.keybind(Minecraft.getInstance().options.keySprint.getName()).withStyle(ChatFormatting.BLUE),
+                Component.keybind(Minecraft.getInstance().options.keySprint.getName()).withStyle(ChatFormatting.BLUE)));
+        tooltip.add(Component.translatable("item." + MOD_ID + ".gaster_blaster.tooltip.line2",
                 Component.keybind(KeyBindings.GASTER_BLASTER_CONFIG.getName()).withStyle(ChatFormatting.BLUE)));
     }
 
